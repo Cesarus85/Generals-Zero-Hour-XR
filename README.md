@@ -22,11 +22,12 @@ and replay XR remain a dedicated future milestone, not validated by Skirmish.
   for update compatibility and existing local data.
 - Java/JNI namespace remains `com.generalsx.zerohour`; underlying engine name
   remains `GeneralsX`. These are technical lineage, not public product names.
-- Android foundation: [Cesarus85/GeneralsZH-Android](https://github.com/Cesarus85/GeneralsZH-Android)
+- Android foundation: the original [tarek369/GeneralsZH-Android](https://github.com/tarek369/GeneralsZH-Android)
   supplies the Android application/packaging, SDL3 device layer, DXVK/GLES
-  runtime and the proven game-data setup path. This repository's `xr` flavor
-  is the Quest-focused extension of that Android build: native OpenXR stereo,
-  tabletop windows, room placement and controller interaction are added here.
+  runtime and the proven game-data setup path. `Cesarus85/GeneralsZH-Android`
+  is the working fork of that project; this repository's `xr` flavor is the
+  Quest-focused extension: native OpenXR stereo, tabletop windows, room
+  placement and controller interaction are added here.
 - Build output: `build/apk/Generals-Zero-Hour-XR.apk`.
 - Own legally obtained retail game data is required and is not included.
 - Current scope, progress and acceptance:

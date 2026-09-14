@@ -6,11 +6,13 @@ Lizenzgründen keine Originalkarten, Texturen, Videos oder `.big`-Archive.
 Benötigt wird eine eigene, rechtmäßig erworbene Installation von *Command &
 Conquer: Generals – Zero Hour* inklusive der Basisdaten von *Generals*.
 
-Technische Grundlage ist der veröffentlichte Android-Port
-[`Cesarus85/GeneralsZH-Android`](https://github.com/Cesarus85/GeneralsZH-Android)
-mit SDL3, Android-Packaging, DXVK/GLES sowie dem Datenordner-Setup. Der XR-
-Flavor dieses Repositories ergänzt diese Android-Basis um OpenXR-Stereo,
-Tabletop-Fenster, Raumplatzierung und Quest-Controller.
+Technische Grundlage ist der ursprüngliche veröffentlichte Android-Port
+[`tarek369/GeneralsZH-Android`](https://github.com/tarek369/GeneralsZH-Android)
+mit SDL3, Android-Packaging, DXVK/GLES sowie dem Datenordner-Setup. Er wurde
+als [`Cesarus85/GeneralsZH-Android`](https://github.com/Cesarus85/GeneralsZH-Android)
+auf deinen GitHub-Account geforkt. Der XR-Flavor dieses Repositories ergänzt
+diese Android-Basis um OpenXR-Stereo, Tabletop-Fenster, Raumplatzierung und
+Quest-Controller.
 
 ## Voraussetzungen
 
