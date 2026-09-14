@@ -49,7 +49,7 @@ two-corner/menu-first path is not the desired primary interaction.
    over automatic drag classification. No accidental movement command follows
    a box selection. Tracking loss, panel crossing, camera motion or cancel
    drops the gesture without an order and requires a fresh press.
-3. A nonmodal persistent **Befehle** console beside the build panel exposes
+3. A nonmodal persistent **Commands** console beside the build panel exposes
    commands and ten group buttons directly. A toggles it in live play; shell
    and explicit arrangement retain existing behavior. Its pose follows the
    freely tilted build window. Game clicks outside it remain available.
@@ -1721,12 +1721,12 @@ inspected read-only; no Tiberian Dawn code was changed.
 
 - A small **UI** button next to the menu/build window replaces the permanent
   controller instructions. Right trigger press/release opens an upright,
-  world-locked **Arbeitsplatz** panel; **Schließen** or **B** closes it.
-- Select **Tisch/Bildschirm** or **Baufenster**, then change size, distance,
-  height, pitch and yaw. **Greifen / Anordnen** retains the established
-  controller arrangement mode; **Position zurücksetzen** recovers a surface.
+  world-locked **Workspace** panel; **Close** or **B** closes it.
+- Select **Table/Display** or **Build window**, then change size, distance,
+  height, pitch and yaw. **Grab / Arrange** retains the established controller
+  arrangement mode; **Reset position** recovers a surface.
   Manual pitch disables snapping, so the chosen window angle survives release.
-- **Mehr Karte / Weniger Karte** changes the world span independently of
+- **More map / Less map** changes the world span independently of
   the old tactical camera zoom, within 0.5x–3x. Right-stick zoom controls the
   same quantity in stereo. Script camera locks remain respected.
 - Physical board width is 0.45–4.0 m; ordinary panels remain 0.45–2.5 m.
@@ -1735,7 +1735,7 @@ inspected read-only; no Tiberian Dawn code was changed.
 - Version-3 layout data stores zoom and placement atomically, accepting old
   v1/v2 files. The established filename is retained for migration; an older
   binary cannot read v3, so preserve the accepted v2 backup for rollback.
-- **Tabletop an / aus** remains opt-in for eligible offline matches. Making
+- **Tabletop on / off** remains opt-in for eligible offline matches. Making
   tabletop the default is recorded as a later user preference, not enabled
   silently by this patch.
 - Build/command hover cards appear after 300 ms and use native localized
@@ -1800,7 +1800,7 @@ again in this step. Do not declare P8 visually accepted from build logs alone.
   health values and game depth occlusion. Names appear in the hover card near
   the build window. Obscured/dead objects are excluded. Decoration is bounded
   to 192 marked objects per frame; this is not an army-selection limit.
-- [x] Four UI tabs: **Fenster**, **Einheiten**, **Gruppen**, **Ansicht**.
+- [x] Four UI tabs: **Windows**, **Units**, **Groups**, **View**.
   Unit controls use existing selection/meta/context messages, not synthetic
   mouse drags or modified simulation rules. World-targeted palette actions
   enable the eligible stereo view; camera locks and modal screens block them.
@@ -1811,26 +1811,26 @@ again in this step. Do not declare P8 visually accepted from build logs alone.
 
 ### Unit controls: practical workflow
 
-1. Open **UI → Einheiten → Bereich: zwei Ecken**. Point at the ground and
+1. Open **UI → Units → Area: two corners**. Point at the ground and
    release the right trigger for the first corner; point at the opposite
    corner and release again. This is **two clicks, not a held drag**. A terrain-
    following rectangle previews the selection. The resulting army immediately
    returns to context orders. An empty selection area preserves the old army.
-2. **Auswahl +/-** toggles individual army units. **Bereich hinzufügen** adds
-   another rectangle. These additive modes remain active until **Kontextbefehl**
+2. **Selection +/-** toggles individual army units. **Add area** adds another
+   rectangle. These additive modes remain active until **Context command**
    or cancellation. Buildings retain native single-selection semantics: use
-   **Einheit wählen** for a building, not additive army selection.
+   **Select unit** for a building, not additive army selection.
 3. In context mode, trigger-release on ground moves the selection; on an enemy
    it issues the native context attack. The explicit palette also provides
-   **Bewegen**, **Angriffsmarsch**, **Zwangsangriff**, **Position bewachen**,
-   **STOPP** and **Auseinanderlaufen**. Right-grip cancellation exits a pending
+   **Move**, **Attack move**, **Force attack**, **Guard position**, **STOP** and
+   **Scatter**. Right-grip cancellation exits a pending
    mode/rectangle/waypoint mode before ordinary cancellation or deselection.
-4. **Wegpunkte an / aus** enables native queued movement. Place successive
+4. **Waypoints on / off** enables native queued movement. Place successive
    destinations with context/move mode; toggle off, cancel or stop to end it.
    This does not claim arbitrary attacks, abilities or guard orders are queued.
-5. **UI → Gruppen** provides ten numbered slots: choose a slot, **Auswahl
-   speichern**, then later **Gruppe auswählen**, **Gruppe hinzufügen** or
-   **Zur Gruppe schauen**. Membership and commands use the engine's hotkey
+5. **UI → Groups** provides ten numbered slots: choose a slot, **Save
+   selection**, then later **Select group**, **Add to group** or **View group**.
+   Membership and commands use the engine's hotkey
    squads. These are match groups, not global persisted armies. Shortcuts also
    select idle/next workers, next unit, hero, aircraft, matching types or all
    eligible mobile units across the map. Native unit caps remain enforced.
@@ -1849,10 +1849,10 @@ must not mask remote tabletop units through its old screen rectangle.
 
 ### Preferred view and appearance
 
-Use **UI → Ansicht → Jetzt Tabletop**, arrange the table/windows and zoom,
-then choose **Als Startansicht**. The next eligible offline match starts in
-stereo. **Jetzt normale Ansicht** switches only the present view;
-**Normalstart zurück** restores normal startup. Health bars, unit rings and
+Use **UI → View → Tabletop now**, arrange the table/windows and zoom, then
+choose **Set as startup view**. The next eligible offline match starts in
+stereo. **Normal view now** switches only the present view; **Restore normal
+startup** restores normal startup. Health bars, unit rings and
 board body can be individually disabled here. Existing physical size (up to
 4 m), coverage (up to 3000 game units), free window tilt and fallback remain.
 This is a user-selected default, not a silently enabled global change.
@@ -1923,17 +1923,17 @@ This is a user-selected default, not a silently enabled global change.
   movement bypass automatic box selection. Tracking/terrain loss, camera motion,
   UI crossing or cancellation discard pending drag intent and preview. Only a
   valid fresh trigger gesture commits; no raw mouse drag is synthesized.
-- [x] Persistent **Befehle** console with 16 directly reachable actions and ten
+- [x] Persistent **Commands** console with 16 directly reachable actions and ten
   group buttons. Native orders, selection squads and original build/ability UI
   remain authoritative. Console clicks/background capture only the ray over
   the console, not the rest of the game. Presses originating elsewhere cannot
   activate it on release; B still reaches pause while pointing at the console.
 - [x] A directly toggles console visibility in eligible live play. A retains
   arrangement in the shell/demo and exits existing arrangement. In a live game,
-  **UI → Fenster → Greifen / Anordnen** remains the explicit layout entry point.
+  **UI → Windows → Grab / Arrange** remains the explicit layout entry point.
   The separate console is docked to the build panel: its offset follows that
   panel's free position/tilt, with a fixed 0.72 m width. It is not a separately
-  grabbable fourth room anchor in this checkpoint. An adjacent **BEFEHLE**
+  grabbable fourth room anchor in this checkpoint. An adjacent **COMMANDS**
   button also toggles it without opening UI settings.
 - [x] v5 layout persists console visibility and migrates older layouts, keeping
   all existing poses/tilt/zoom/startup preferences. Default visibility is on.
@@ -1956,9 +1956,9 @@ This is a user-selected default, not a silently enabled global change.
    test with a building selected first. Small normal-click motion must not
    accidentally select a box. Test a drag with a brief UI crossing or lost
    tracking and confirm it cannot issue an order on release.
-5. Use the visible **STOPP**, **Angriffsmarsch**, **Position bewachen** and worker
-   buttons directly. Select **Speichern**, then group **1**; change selection
-   and click **1** to recall. Test **Hinzufügen** and **Zentrieren** likewise.
+5. Use the visible **STOP**, **Attack move**, **Guard position** and worker
+   buttons directly. Select **Save**, then group **1**; change selection and
+   click **1** to recall. Test **Add** and **Center** likewise.
    The group modifier is one-shot; ordinary numbered clicks recall immediately.
 6. Test three queued movement points, original construction placement/cancel
    and an armed special ability: those gestures must not become selection boxes.
@@ -2032,7 +2032,7 @@ This is a user-selected default, not a silently enabled global change.
   dispatched through `userLookAt`, preserving native camera control/constraints.
   This moves the map within the table, not the physical table in the room.
 - [x] Bind both physical Touch controllers once and map them to dominant/support
-  roles in a pure helper. **UI → Ansicht → Linkshändig: AN/AUS** switches roles,
+  roles in a pure helper. **UI → View → Left-handed: ON/OFF** switches roles,
   closes the menu, cancels grabs/pointer intent and requires buttons/sticks neutral.
   Edge-triggered shortcuts also check their held state before rearming.
 - [x] Layout v6 stores handedness; v1–v5 migrate to right-handed without changing
@@ -2100,7 +2100,7 @@ the default. The console itself stays docked to the freely tilted build window.
    with support grip, issue movement, stop, build and target an ability. Cross
    a panel or lose tracking mid-drag: no order should escape on release.
 3. Pan cardinally and diagonally with the support stick while aiming at ground,
-   empty air, the build panel, and the Befehle console. Confirm visible map
+   empty air, the build panel, and the Commands console. Confirm visible map
    movement, sensible speed/direction after rotation and normal map-edge limits.
    A modal UI settings panel and pause/camera locks must prevent pan.
 4. Toggle left-handed mode, release both controllers, then point/select/drag
@@ -2128,10 +2128,10 @@ the build, test-fixture execution or successful package installation.
   poses, show the command console and select tabletop startup. Existing shell
   pose, map zoom, handedness, camera favorite and appearance choices remain.
   After saving v7, later user poses and normal-start choices are not reset.
-  **UI → Ansicht → Foto-Anordnung** restores the arrangement on demand.
+  **UI → View → Photo arrangement** restores the arrangement on demand.
   Intro/shell remain conventional; stereo startup applies to supported offline
   skirmish/campaign matches, not unsupported network/replay stereo.
-- [x] v7 adds persisted **Auflösung: Hoch / Ausgewogen** under **UI → Ansicht**.
+- [x] v7 adds persisted **Resolution: High / Balanced** under **UI → View**.
   High uses a 1920-pixel eye-width budget (previously 1536), keeping the runtime
   aspect and existing 2048 maximum dimension. Typical Quest aspect yields 25%
   more pixels per axis / about 56% more area. Balanced is the exact old extent.
@@ -2152,9 +2152,9 @@ the build, test-fixture execution or successful package installation.
   pause rule, save format or game command protocol is reimplemented.
 - [x] Console's second status line explicitly asks for a target after selecting
   Guard, Move, Attack Move or Force Attack. One-shot group operations still have
-  priority in that line. **Select unit(s) → Position bewachen → click a terrain
-  position** dispatches the existing native guard-position order. STOPP and
-  Auseinanderlaufen act immediately; guard is not an immediate stop command.
+  priority in that line. **Select unit(s) → Guard position → click a terrain
+  position** dispatches the existing native guard-position order. STOP and
+  Scatter act immediately; guard is not an immediate stop command.
 
 ### Validation and handoff
 
@@ -2196,11 +2196,11 @@ the build, test-fixture execution or successful package installation.
    of quit, options, save/load and confirmation dialogs. Click controls near
    their top/bottom edges. Close them: compact bar and board layout must return.
    No camera movement or world command may leak through a dialog.
-3. Compare **Auflösung: Hoch / Ausgewogen** on infantry and map edges, then
+3. Compare **Resolution: High / Balanced** on infantry and map edges, then
    test a busy scene for sustained smoothness. Use Balanced if High stutters.
    A successful allocation/readback is not evidence of sufficient GPU frame time.
-4. Select an army unit → Position bewachen → click terrain. Confirm the hint
-   and actual response; repeat Attack Move, then STOPP. Recheck additive drag,
+4. Select an army unit → Guard position → click terrain. Confirm the hint and
+   actual response; repeat Attack Move, then STOP. Recheck additive drag,
    handedness and building/ability targeting for input regressions.
 
 ## 29. P10.3 — upright command console, native communicator, groups and languages
@@ -2488,7 +2488,7 @@ not rewritten approximations. Existing gesture/selection/layout tests remain.
 
 1. **Arrangement:** `updateXrMenu` and command-console capture could consume
    Back/A before the arrangement exit. Closing the workspace did not itself
-   leave arrangement. The UI entry becomes **Fertig / Done** while arranging;
+   leave arrangement. The UI entry becomes **Done** while arranging;
    it exits directly. Back/A is handled before panel capture, close routes
    cancel grabs/click latches, save placement and require neutral controls.
 2. **Science tree:** purchase science is a visible ControlBar child, not a
@@ -2656,16 +2656,16 @@ FBO switches, not new game-logic work to disable speculatively.
 
 ### Implemented, reversible first optimization
 
-Under **UI -> Ansicht / View** there are two new direct controls:
+Under **UI -> View** there are two new direct controls:
 
-- **Schatten A: Original / Shadows A: Original**: current P11.1 rendering.
-  Clicking toggles **Schatten B: Leicht / Shadows B: Light**, and vice versa.
+- **Shadows A: Original**: current P11.1 rendering. Clicking toggles
+  **Shadows B: Light**, and vice versa.
   B disables volumetric shadows in the XR frame, keeping existing decal shadows,
   textures, resolution, board coverage, native world and gameplay unchanged.
   Volume-only templates lose their shadow in B; no replacement contact shadows
   or improved visual fidelity are claimed. The production manager reads this
   flag at its volume-render gate. Keep resources resident for instant A/B.
-- **Messung: AN/AUS / Timing: ON/OFF**: opt-in CPU/GPU measurement; current
+- **Timing: ON/OFF**: opt-in CPU/GPU measurement; current
   engine CPU/GPU averages appear in the View panel. Approximately every two
   seconds a `[xr] P12 perf` line records detailed values in the existing log.
 
@@ -3049,7 +3049,7 @@ input, audio, multiplayer or game-asset changes are included in P14.
 - Flat/native Android and unready/empty-eye cases keep the old copying path.
   Split-ineligible movies and opaque shell screens keep full presentation.
   Dialogs that retain stereo continue to receive the complete detached UI.
-- View -> **World copy: Auto / Always** (DE: **Weltkopie: Auto / Immer**) is an
+- View -> **World copy: Auto / Always** is an
   independent, session-only comparison. Auto is the candidate default; Always
   restores P13 copying. Neither changes saved layout or quality. Existing
   Compact/Reference and Original/Light choices remain independent and unchanged.
@@ -3495,10 +3495,10 @@ acceptance. The section 41 controlled scene A/B gate remains open.
 
 ### Controls and observability
 
-- View settings: Zusatzwelt: Auto / Immer (Extra world: Auto / Always).
+- View settings: Extra world: Auto / Always.
 - Auto: conditionally omit the extra ordinary world; Always: full reserve
   for direct comparison. Neither setting enables selectable flat gameplay.
-- Presentation status shows Zusatzwelt aus/aktiv from the published number
+- Presentation status shows Extra world off/active from the published number
   of skipped draws, rather than echoing the requested toggle.
 - P17 ordinary-world logs count actual saved submissions per 120 native
   Presents. No GPU timer queries or per-draw log output were added.
@@ -3527,7 +3527,7 @@ FPS gain. There is no measured same-scene P16.1/P17 speedup claim.
 
 ### Physical acceptance and rollback
 
-Check actual Multiview and Zusatzwelt aus while playing. Compare Auto/Immer
+Check actual Multiview and Extra world off while playing. Compare Auto/Always
 in the same paused/calm camera view, after warmup, then exercise movement,
 selection, building, particles and shadows. Run campaign intro through to
 tabletop, loading, pause/options, general-powers tree and Communicator.

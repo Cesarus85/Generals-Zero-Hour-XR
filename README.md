@@ -89,7 +89,7 @@ surface is selected, the current build restores the saved arrangement; the next
 XR milestone changes that fallback so a fresh board and build window appear in
 front of the player instead of inheriting an inconvenient travelling setup.
 
-`UI → Windows` (`Fenster` in the German UI) selects the object to edit. The
+`UI → Windows` selects the object to edit. The
 selected table or build window receives an orange outline and check mark. One Grip moves and tilts it;
 both Grips scale it uniformly. With no Grip, the pointing-hand stick changes
 size and the other-hand stick changes distance. Press the pointing-hand stick to
