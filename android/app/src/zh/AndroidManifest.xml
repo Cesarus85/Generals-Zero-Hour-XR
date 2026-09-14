@@ -8,6 +8,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <application>
+        <!-- Validate in a plain Activity before SDL initializes native code. -->
+        <activity android:name="com.generalsx.zerohour.GameDataSetupActivity"
+            android:exported="true" tools:replace="android:exported"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
             android:name="com.generalsx.zerohour.XrHelloActivity"
             tools:node="remove" />

@@ -49,17 +49,44 @@ outside the scope of this project; see
    window positions. Do not uninstall the previous build when updating.
    SideQuest can install the same APK.
 4. Launch **Generals: Zero Hour XR** from the Quest app library. On first
-   launch, the setup window opens automatically. Select the game-data folder and
-   grant the requested file and scene permissions.
+   launch, the game-data assistant opens automatically. Grant file access when
+   requested. Scene permission is separate and optional, requested later when
+   choosing real-surface placement.
 
 ## Select game data
 
-The setup window opens the Android file browser. Select the folder that directly
-contains `INIZH.big` and the data archives; do not select a parent Downloads or
-PC folder. The checker reports missing base archives before the native game
-starts. If the wrong folder was selected, choose **Select Game Folder** again.
-Room permission is optional: if it is denied, free-board and manual placement
-remain available.
+The current release provides a three-step assistant:
+
+1. **Prepare your game files.** Copy your own complete installed Generals and
+   Zero Hour folders to the Quest, for example `Download/GeneralsZH`.
+   **Steam or CD / ISO: which files?** explains the layouts. Steam installations
+   often contain `ZH_Generals`; preserve that subfolder. CD/ISO editions must
+   first be installed or fully extracted on a computer. Copy installed game
+   data, not an ISO, `setup.exe`, MSI or CAB. The Quest app does not mount
+   images, run Windows installers, download retail files or duplicate the game.
+2. **Choose Zero Hour folder.** Select the folder containing `INIZH.big`, or
+   its parent (bounded search: two levels, 128 folders). The in-app filesystem
+   browser needs All files access; it is not Android's document-tree picker.
+   After granting access, return and selection continues automatically.
+   Nested `ZH_Generals`, merged data and an unambiguous adjacent base folder
+   are detected. Otherwise use **Choose separate Generals folder**. When
+   several Zero Hour installs exist, choose the intended one explicitly.
+3. **Review and start.** Setup lists resolved folders, missing archives,
+   incomplete/unreadable archive indexes and missing text/configuration data.
+   Only **Use these folders and play** saves a valid choice. Choosing a wrong
+   folder, cancelling or switching interface language preserves the previous
+   configuration. Returning Quest launches recheck saved files silently inside
+   the XR Activity: no importer window or 2D environment round trip. Setup
+   opens automatically only when the files are missing or unusable.
+
+The **English / Deutsch** button is visible on the assistant. System Default
+remains available; changing the assistant language does not change game speech
+or force a different game-text language. Keep all original `.big` archives and
+the complete `Data`/video directories. No full payload/checksum or video-decoder
+verification is performed: an accepted index alone does not certify every
+asset. The launch step adds the port's fonts/configuration and Window overrides
+without deleting retail archives. Use **Select Game Folder** in advanced Setup
+to reopen the assistant without discarding the current configuration.
 
 ## Set up the tabletop board
 

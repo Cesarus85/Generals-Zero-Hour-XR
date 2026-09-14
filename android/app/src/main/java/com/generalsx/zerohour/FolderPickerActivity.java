@@ -68,10 +68,17 @@ public class FolderPickerActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle(R.string.folderpicker_title);
+        setTitle(getIntent().getBooleanExtra("base_generals", false) ? R.string.data_pick_base : R.string.data_pick_zh);
 
         File start = Environment.getExternalStorageDirectory();
         currentDir = (start != null && start.isDirectory()) ? start : new File("/storage/emulated/0");
+        if (savedInstanceState != null) {
+            File previous = new File(savedInstanceState.getString("current_dir", currentDir.getAbsolutePath()));
+            if (previous.isDirectory()) currentDir = previous;
+        } else {
+            String initial = getIntent().getStringExtra("initial_path");
+            if (initial != null && new File(initial).isDirectory()) currentDir = new File(initial);
+        }
 
         // GeneralsX @feature Android port launcher-ui-2026 08/09/2026 Same
         // shell as the rest of the launcher: an app bar carrying the current
@@ -82,7 +89,7 @@ public class FolderPickerActivity extends Activity {
         root.setBackgroundColor(UiKit.color(this, R.color.gzh_background));
 
         UiKit.appBar(root, getString(R.string.setup_window_title),
-            getString(R.string.folderpicker_title), 0, null, null);
+            getTitle(), 0, null, null);
 
         int gutter = UiKit.dim(this, R.dimen.gzh_gutter);
 
@@ -153,9 +160,8 @@ public class FolderPickerActivity extends Activity {
 
     private void refresh() {
         pathLabel.setText(currentDir.getAbsolutePath());
-        hintLabel.setText(SetupActivity.isValidGameFolder(currentDir)
-            ? getString(R.string.folderpicker_hint_valid)
-            : getString(R.string.folderpicker_hint_invalid));
+        hintLabel.setText(getIntent().getBooleanExtra("base_generals", false)
+            ? R.string.data_picker_base_hint : R.string.data_picker_game_hint);
 
         List<String> entries = new ArrayList<>();
         if (currentDir.getParentFile() != null) {
@@ -211,6 +217,11 @@ public class FolderPickerActivity extends Activity {
         result.putExtra(EXTRA_SELECTED_PATH, currentDir.getAbsolutePath());
         setResult(RESULT_OK, result);
         finish();
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        super.onSaveInstanceState(state);
+        state.putString("current_dir", currentDir.getAbsolutePath());
     }
 
 }

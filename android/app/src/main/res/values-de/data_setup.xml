@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="data_setup_title">Spieldaten einrichten</string>
+    <string name="data_step_prepare">1. Spieldateien vorbereiten</string>
+    <string name="data_prepare">Du benötigst eigene installierte Exemplare von Command &amp; Conquer: Generals UND Zero Hour. Kopiere die vollständigen Spielordner auf dieses Gerät, zum Beispiel nach Download/GeneralsZH. Spielkauf und Download sind nicht enthalten. Die App verwendet die Dateien an ihrem Speicherort und erstellt keine zweite vollständige Spielkopie.</string>
+    <string name="data_sources">Steam oder CD / ISO: welche Dateien?</string>
+    <string name="data_sources_help">Steam: Installiere Zero Hour auf deinem Computer und kopiere den vollständigen Installationsordner. Behalte den Unterordner ZH_Generals bei, falls vorhanden. Ist Generals getrennt installiert, kopiere auch diesen Ordner.\n\nCD / ISO: Installiere oder extrahiere zunächst beide Spiele vollständig auf deinem Computer. Kopiere die daraus entstandenen installierten Spielordner, nicht nur das Datenträgerabbild oder die Installationsdateien. Eine rohe ISO, setup.exe, MSI oder CAB ist kein spielbarer Spielordner. Diese App führt keine Windows-Installer aus und bindet keine Datenträgerabbilder ein.\n\nZero Hour enthält INIZH.big, TexturesZH.big und W3DZH.big. Das Basisspiel enthält INI.big, Terrain.big, Textures.big und W3D.big sowie Audio-, Karten- und weitere Archive. Behalte den vollständigen Ordnerinhalt einschließlich Data und Videos. Benenne .big-Archive nicht um und entpacke sie nicht.\n\nGemeinsame Ordner, ZH_Generals-Unterordner und getrennte Generals-Ordner werden unterstützt. In einem übergeordneten Ordner wird bis zu zwei Ebenen tief gesucht. Bei mehreren Installationen wähle den gewünschten Spielordner.\n\nDeine Originaldateien bleiben an ihrem Ort. Nach der Bestätigung ergänzt die App Laufzeitkonfiguration, Schriftarten und ihre Window-Anpassungen im Spielordner. Spieltexte und Sprachausgabe hängen von deinen Sprachdateien ab.</string>
+    <string name="data_step_select">2. Installierte Spielordner auswählen</string>
+    <string name="data_select_help">Wähle zuerst Zero Hour. Ein enthaltenes oder benachbartes Generals wird automatisch erkannt, wenn die Zuordnung eindeutig ist. Andernfalls wähle das Basisspiel getrennt aus. Deine bisherige Konfiguration bleibt aktiv, bis ein vollständiger Datensatz bestätigt ist.</string>
+    <string name="data_pick_zh">Zero-Hour-Ordner auswählen</string>
+    <string name="data_pick_base">Getrennten Generals-Ordner auswählen</string>
+    <string name="data_step_check">3. Prüfen und starten</string>
+    <string name="data_no_folder">Noch kein Spielordner ausgewählt. Beginne mit „Zero-Hour-Ordner auswählen“.</string>
+    <string name="data_recheck">Dateien erneut prüfen</string>
+    <string name="data_use_launch">Diese Ordner verwenden und spielen</string>
+    <string name="data_permission_title">Zugriff auf deine Spieldateien erlauben</string>
+    <string name="data_permission_help">Die Engine benötigt direkten Zugriff auf die kopierten Ordner. Erlaube auf dem nächsten Systembildschirm den Dateizugriff und kehre hierher zurück. Die Ordnerauswahl wird automatisch fortgesetzt. Root-Zugriff ist nicht nötig.</string>
+    <string name="data_continue">Weiter</string>
+    <string name="data_permission_denied">Der Dateizugriff wurde nicht erlaubt. Wähle erneut einen Spielordner, um es noch einmal zu versuchen, oder brich die Einrichtung ab. Deine gespeicherte Konfiguration wurde nicht geändert.</string>
+    <string name="data_checking">Spielarchive werden geprüft … Dabei werden Archivverzeichnisse gelesen und keine zweite Spielkopie erstellt. Bitte warten.</string>
+    <string name="data_installer">Installationsmedium erkannt. Installiere oder extrahiere Generals und Zero Hour zuerst vollständig auf deinem Computer und kopiere anschließend die installierten Spielordner hierher. Hilfe findest du unter „Steam oder CD / ISO: welche Dateien?“.</string>
+    <string name="data_unreadable">Dieser Ordner fehlt oder ist nicht lesbar. Prüfe den Dateizugriff und verbinde externe Datenträger erneut oder wähle den Ordner noch einmal.</string>
+    <string name="data_multiple">Mehrere Zero-Hour-Ordner gefunden. Wähle einen dieser Ordner gezielt aus:</string>
+    <string name="data_no_zh">Keine installierten Zero-Hour-Daten gefunden. Wähle den Ordner mit INIZH.big. Das Basisspiel Generals allein reicht nicht aus.</string>
+    <string name="data_paths">Zero Hour: %1$s\nGenerals: %2$s</string>
+    <string name="data_not_found">nicht gefunden — Basisspielordner auswählen</string>
+    <string name="data_missing">Benötigte Archive fehlen. Kopiere die vollständige Installation oder wähle den richtigen Basisspielordner:</string>
+    <string name="data_damaged">Diese Archive sind nicht lesbar, beschädigt oder unvollständig. Kopiere sie erneut aus deiner Installation:</string>
+    <string name="data_no_weather">Benötigte Basisspielkonfiguration fehlt (Weather.ini). Prüfe die Generals-Installation.</string>
+    <string name="data_no_language">Keine Spieltexte gefunden. Kopiere die Spracharchive und Data-Ordner aus deiner Installation.</string>
+    <string name="data_ready">Bereit: Zero Hour, Generals-Basisdaten, Archivverzeichnisse und Spieltexte haben die Prüfung bestanden. Bestätige unten, um die Ordner zu speichern und zu spielen. Dies ist keine Prüfsummenprüfung jeder Textur oder jedes Videos.</string>
+    <string name="data_changed">Die Dateien wurden verändert oder sind nicht mehr verfügbar. Prüfe die Ordner erneut.</string>
+    <string name="data_save_failed">Das Spiel konnte nicht vorbereitet werden: %1$s. Prüfe den Speicher und versuche es erneut.</string>
+    <string name="data_picker_base_hint">Wähle den installierten Generals-Basisordner mit Terrain.big, Textures.big und W3D.big und bestätige „Diesen Ordner verwenden“.</string>
+    <string name="data_picker_game_hint">Wähle den Zero-Hour-Installationsordner mit INIZH.big. Du kannst auch den übergeordneten Ordner wählen; die Einrichtung sucht darin nach Installationen.</string>
+</resources>

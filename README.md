@@ -66,9 +66,20 @@ The complete Quest installation and controls guide is
    trusted APK sideloader works as well. The release APK is a development
    preview, not a Play Store package.
 4. Start **Generals: Zero Hour XR** from the Quest app library. If this is the
-   first launch, the setup screen opens automatically. Select the game folder
-   and grant the requested file/scene permissions. A denied scene permission
-   does not block the manual placement mode.
+   first launch, the game-data assistant opens automatically. Follow **Prepare
+   files → Choose Zero Hour folder → Review → Use these folders and play**.
+   Allow file access when asked; the folder browser resumes automatically.
+   The base Generals folder is detected when unambiguous, or can be selected
+   separately. Steam and installed/extracted CD/ISO data use this same flow;
+   raw disc images and Windows installers cannot be opened by the app.
+   **English / Deutsch** is available directly in setup; system-language
+   behavior is unchanged. Optional room permission is requested later by
+   play-space setup; denying it does not block manual placement.
+
+   Returning launches validate the saved folders silently inside XR. The
+   assistant appears again only if the configured data is missing or unusable;
+   a valid installation goes directly to the game without a 2D window or Meta
+   home-environment round trip.
 
 ### First tabletop setup
 

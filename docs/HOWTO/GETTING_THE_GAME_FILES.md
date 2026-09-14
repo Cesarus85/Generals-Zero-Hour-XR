@@ -6,6 +6,16 @@ We build and test against the [Steam version](https://store.steampowered.com/app
 
 Once you have the game files, see [INSTALLATION.md](INSTALLATION.md) for how to set up GeneralsX on your platform.
 
+For **Generals: Zero Hour XR on Quest**, follow
+[INSTALLATION_XR.md](INSTALLATION_XR.md#select-game-data). Its setup accepts
+complete installed Steam data and installed/extracted CD/ISO layouts, including
+separate base-game folders. It does not install a raw ISO, CAB, MSI or Windows
+executable. Install or fully extract both games on your computer, then transfer
+all resulting game files, including language and video data. A structural
+validation pass is not a compatibility guarantee for every retail edition or
+mod; the currently verified real dataset is the developer's Steam-derived
+installation with a nested `ZH_Generals` base folder.
+
 ---
 
 ## Steam Availability on macOS and Linux

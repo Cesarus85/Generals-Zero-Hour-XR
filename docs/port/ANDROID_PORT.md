@@ -234,27 +234,42 @@ export ANDROID_NDK_HOME=~/Android/Sdk/ndk/<version>
 The first configure builds vcpkg deps (ffmpeg, curl+openssl, freetype…) for
 `arm64-android` — expect 30–60 minutes cold.
 
-## 4. Game data and first run — the in-app Setup flow (no adb, no PC needed)
+## 4. Game data and first run — guided setup
 
 No assets ship in the APK (2.7 GB, and they're the user's own). Installing
 the APK also installs a **second launcher icon, "GeneralsZH Setup"**
 (`SetupActivity`) — a standalone screen for everything that used to require
 `adb`:
 
-1. **Install the APK, then open "GeneralsZH Setup"** (not the game icon yet).
-2. Tap **Select Game Folder**. First time, Android will ask for the "All
-   files access" permission (`MANAGE_EXTERNAL_STORAGE`) — a normal system
-   permission screen, no root, no PC. Grant it, come back, tap the button
-   again.
-3. A plain folder browser opens, starting at the device's internal storage
-   root. Copy your own Command & Conquer Generals Zero Hour install (the
-   `*.big` archives, `Data/`, `ZH_Generals/`) into **any** folder you like
-   first — e.g. `Downloads/GeneralsZH/`, reachable from any file manager or a
-   normal USB-cable "transfer files" connection, no special app needed — then
-   navigate to it in the picker and tap **Use This Folder**. The picker
-   flags a folder green once it sees `INIZH.big`/`INI.big`.
-4. Tap **Launch Game** (or go back to the regular game icon — both work; the
-   folder choice is saved).
+The updated source uses `GameDataSetupActivity` before native game startup.
+The 2D game launcher enters this plain Activity directly, before SDL can load
+the engine. The XR launcher checks saved files on a worker without leaving its
+immersive Activity; only unavailable/invalid data opens the 2D importer. Setup's folder actions
+open the same assistant. Current release builds include this path.
+
+1. Copy your own complete installed Generals **and** Zero Hour data to the
+   device. Steam's nested `ZH_Generals` and separate installed CD/ISO game
+   folders are supported. Raw ISO/MSI/CAB installers are not extracted by the
+   app: prepare them on a computer first.
+2. Start the game or Setup. **English / Deutsch** is directly accessible;
+   existing system-language behavior and the independent game-text setting
+   are unchanged.
+3. Use **Choose Zero Hour folder**, grant All files access if requested, and
+   return. The requested picker resumes without a second button press. The
+   base folder picker uses the same permission flow on API 28/29 and 30+.
+4. Choose the game folder or an immediate parent. Discovery searches at most
+   two levels/128 directories; ambiguous installs require a narrower choice.
+   An unambiguous nested/adjacent Generals directory is resolved to an explicit
+   native base path, or use **Choose separate Generals folder**.
+5. Review missing/unreadable archives, BIGF index/payload bounds, base Weather
+   configuration and expansion text. Empty retail patch placeholders are
+   allowed. **Use these folders and play** revalidates and saves both paths;
+   invalid choices and cancellation do not replace the saved configuration.
+
+The assistant works in place, not as a second full game copy. See
+[the Quest instructions](../HOWTO/INSTALLATION_XR.md#select-game-data) for
+limits and source preparation. Archive-index checks are not full payload
+checksums or verification that every campaign video can decode.
 
 The engine reads the picked path from a marker file
 (`SDL3Main.cpp` chdir logic) written by Setup — no `adb push` into the

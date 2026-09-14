@@ -80,6 +80,8 @@ public class GeneralsZHActivity extends SDLActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // GeneralsX @feature Codex 14/09/2026 The launcher validates data in
+        // GameDataSetupActivity before entering this non-exported SDL activity.
         // TheSuperHackers @bugfix Android port 07/07/2026 Belt-and-suspenders
         // on top of the manifest's screenOrientation="landscape": a real
         // device log still showed Resolve_Present_BackBuffer_Size catching a

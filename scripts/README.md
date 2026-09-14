@@ -8,6 +8,18 @@ unchanged package IDs, the unaffected Android flavor and the named APK export.
 
 ## Directory Structure
 
+Game-data setup checks: `JAVA_HOME=/path/to/jdk bash scripts/qa/game-data-validator-test.sh`
+runs synthetic archive/layout tests. Pass a Zero Hour folder and optional
+Generals folder to additionally validate real files read-only. No retail data
+is bundled with the tests. With the app installed and already configured on a
+test device, build `:app:assembleXrDebugAndroidTest`, install the separate test
+APK, and run `adb -s <serial> shell am instrument -w
+com.generalsx.zerohour.xr.test/com.generalsx.zerohour.GameDataSetupSmoke`.
+This smoke verifies live files, invalid selection/cancellation, locale resources,
+and recreation without committing folders or changing language preferences.
+It interrupts the running app; finish any match first. Remove the separate
+`.xr.test` package after testing, never the main app or its data.
+
 ### `build/` - Build & Deployment Scripts per Platform
 
 #### `build/linux/` - Linux & Docker Build

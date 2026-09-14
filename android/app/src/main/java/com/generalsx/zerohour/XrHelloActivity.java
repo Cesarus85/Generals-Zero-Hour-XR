@@ -56,6 +56,9 @@ public class XrHelloActivity extends Activity {
 
     private Thread mThread;
     private boolean mXrStarted = false;
+    private Thread mDataCheck;
+    private Boolean mStartupReady;
+    private boolean mResumed, mStartDispatched;
 
     static {
         System.loadLibrary("main");
@@ -68,6 +71,50 @@ public class XrHelloActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // GeneralsX @bugfix Codex 14/09/2026 Stay in the immersive launcher:
+        // showing a 2D importer on every launch makes Horizon switch environments.
+        mDataCheck = new Thread(() -> {
+            boolean ready = false;
+            try {
+                GameDataValidator.Result checked = GameDataConfiguration.checkSaved(getApplicationContext());
+                if (Thread.currentThread().isInterrupted()) return;
+                if (checked.ready()) {
+                    GameDataConfiguration.ensureNativePaths(getApplicationContext(), checked);
+                    ready = true;
+                }
+            } catch (IOException | RuntimeException e) {
+                Log.w(TAG, "Saved data unavailable; setup required", e);
+            }
+            final boolean approved = ready;
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                mStartupReady = approved;
+                continueStartup();
+            });
+        }, "xr-data-check");
+        mDataCheck.start();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        mResumed = true;
+        continueStartup();
+    }
+
+    private void continueStartup() {
+        if (!mResumed || mStartupReady == null || mStartDispatched || isFinishing() || isDestroyed()) return;
+        mStartDispatched = true;
+        if (!mStartupReady) {
+            Log.i(TAG, "Saved data needs setup; opening importer");
+            startActivity(new Intent(this, GameDataSetupActivity.class));
+            finish();
+            return;
+        }
+        Log.i(TAG, "Saved data ready; direct XR startup (no importer)");
+        startGame();
+    }
+
+    private void startGame() {
         extractBundledRuntime();
 
         String gamePath = readSavedGamePath();
@@ -179,6 +226,7 @@ public class XrHelloActivity extends Activity {
 
     @Override
     protected void onPause() {
+        mResumed = false;
         super.onPause();
         // GeneralsX @fix Codex 13/09/2026 System overlays and doffing are
         // transient. OpenXR visibility/focus owns suspension, not Activity pause.
@@ -187,7 +235,10 @@ public class XrHelloActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        stopHello();
+        if (mDataCheck != null) mDataCheck.interrupt();
+        // A setup redirect must not stop a newly approved XR activity when
+        // Android destroys the old, never-started entry asynchronously.
+        if (mXrStarted) stopHello();
         super.onDestroy();
         // The engine's singletons are not restart-safe: a second boot in
         // this process would re-init over live state. End the process with

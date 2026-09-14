@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="data_setup_title">Set up game data</string>
+    <string name="data_step_prepare">1. Prepare your game files</string>
+    <string name="data_prepare">You need your own installed copies of Command &amp; Conquer: Generals AND Zero Hour. Copy the complete game folders to this device, for example Download/GeneralsZH. No game purchase or download is included. The app uses these files where they are; it does not duplicate the full game.</string>
+    <string name="data_sources">Steam or CD / ISO: which files?</string>
+    <string name="data_sources_help">Steam: install Zero Hour on your computer and copy its complete installation folder. Keep ZH_Generals inside it if present. If Generals is installed separately, copy that folder too.\n\nCD / ISO: first install or fully extract both games on your computer. Copy the resulting installed game folders, not just the disc image or setup files. A raw ISO, setup.exe, MSI or CAB is not a playable game folder. This app does not run Windows installers or mount disc images.\n\nZero Hour contains INIZH.big, TexturesZH.big and W3DZH.big. The base game contains INI.big, Terrain.big, Textures.big and W3D.big, plus audio, maps and other archives. Keep the complete folder contents, including Data and videos. Do not rename or unpack the .big archives.\n\nMerged folders, ZH_Generals subfolders and separate Generals folders are supported. Selecting a parent searches up to two folder levels; if several installations are found, choose the intended game folder.\n\nYour originals stay in place. After confirmation, the app adds runtime configuration, fonts and its Window overrides to the selected game folder. Game text and speech depend on the language files you own.</string>
+    <string name="data_step_select">2. Select the installed game folders</string>
+    <string name="data_select_help">Choose Zero Hour first. A contained or adjacent Generals folder is detected automatically when unambiguous. Otherwise choose the base game separately. Your previous configuration stays active until a complete set is confirmed.</string>
+    <string name="data_pick_zh">Choose Zero Hour folder</string>
+    <string name="data_pick_base">Choose separate Generals folder</string>
+    <string name="data_step_check">3. Review and start</string>
+    <string name="data_no_folder">No game folder selected yet. Start with “Choose Zero Hour folder”.</string>
+    <string name="data_recheck">Check files again</string>
+    <string name="data_use_launch">Use these folders and play</string>
+    <string name="data_permission_title">Allow access to your game files</string>
+    <string name="data_permission_help">The engine needs direct access to the folders you copied. On the next system screen, allow file access, then return here. Folder selection continues automatically. No root access is needed.</string>
+    <string name="data_continue">Continue</string>
+    <string name="data_permission_denied">File access was not granted. Choose a game folder again to retry, or cancel setup. Your saved configuration has not been changed.</string>
+    <string name="data_checking">Checking game archives… This reads archive indexes, not a second copy of the game. Please wait.</string>
+    <string name="data_installer">Installation media found. Install or fully extract Generals and Zero Hour on your computer first, then copy the installed game folders here. Open “Steam or CD / ISO: which files?” for help.</string>
+    <string name="data_unreadable">This folder is missing or cannot be read. Check file access and reconnect any external storage, or select the folder again.</string>
+    <string name="data_multiple">Several Zero Hour folders were found. Choose one of these folders explicitly:</string>
+    <string name="data_no_zh">No installed Zero Hour data found. Select the folder containing INIZH.big. A base Generals folder alone is not enough.</string>
+    <string name="data_paths">Zero Hour: %1$s\nGenerals: %2$s</string>
+    <string name="data_not_found">not found — choose the base game folder</string>
+    <string name="data_missing">Required archives are missing. Copy the complete installation or choose the correct base folder:</string>
+    <string name="data_damaged">These archives are unreadable, damaged or incomplete. Copy them again from your installation:</string>
+    <string name="data_no_weather">Required base-game configuration is missing (Weather.ini). Check the Generals installation.</string>
+    <string name="data_no_language">No game text was found. Copy the language archives and Data folders from your installation.</string>
+    <string name="data_ready">Ready: Zero Hour, base Generals, archive indexes and game text passed the checks. Confirm below to save these folders and play. This is not a checksum verification of every texture or video.</string>
+    <string name="data_changed">The files changed or became unavailable. Check the folders again.</string>
+    <string name="data_save_failed">Could not prepare the game: %1$s. Check storage and try again.</string>
+    <string name="data_picker_base_hint">Choose the installed base Generals folder containing Terrain.big, Textures.big and W3D.big, then use this folder.</string>
+    <string name="data_picker_game_hint">Choose the Zero Hour installation folder containing INIZH.big. You may also choose its parent; setup will check for installations inside.</string>
+</resources>

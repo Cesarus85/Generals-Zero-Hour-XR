@@ -115,6 +115,13 @@ public class SetupActivity extends Activity {
         super.onCreate(savedInstanceState);
         setTitle(R.string.setup_window_title);
 
+        // GeneralsX @feature Codex 14/09/2026 First-time setup precedes advanced settings.
+        if (getSavedGamePath() == null) {
+            startActivity(new Intent(this, GameDataSetupActivity.class));
+            finish();
+            return;
+        }
+
         // GeneralsX @feature Android port launcher-ui-2026 08/09/2026 Which
         // bottom-navigation section to open on. Survives the recreate() the
         // language picker performs, so changing the launcher language leaves
@@ -2169,7 +2176,7 @@ public class SetupActivity extends Activity {
         return root != null ? new File(root, EXTERNAL_MARKER_NAME) : null;
     }
 
-    private static String readExternalMarker() {
+    static String readExternalMarker() {
         File marker = externalMarkerFile();
         if (marker == null || !marker.isFile()) {
             return null;
@@ -2187,7 +2194,7 @@ public class SetupActivity extends Activity {
             return false;
         }
         for (String name : REQUIRED_GAME_FILES) {
-            if (new File(dir, name).exists()) {
+            if (GameDataValidator.named(dir, name) != null) {
                 return true;
             }
         }
@@ -2531,30 +2538,8 @@ public class SetupActivity extends Activity {
     private static final int REQUEST_LEGACY_STORAGE_PERMISSION = 1003;
 
     private void onSelectGameFolder() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (!Environment.isExternalStorageManager()) {
-                Toast.makeText(this, R.string.setup_toast_grant_all_files, Toast.LENGTH_LONG).show();
-                try {
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                    intent.setData(Uri.parse("package:" + getPackageName()));
-                    startActivity(intent);
-                } catch (Exception e) {
-                    startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION));
-                }
-                return;
-            }
-        } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            // MANAGE_EXTERNAL_STORAGE / isExternalStorageManager() don't exist
-            // before API 30 -- this is the pre-R equivalent, otherwise
-            // FolderPickerActivity opens with no storage permission at all
-            // and its File.listFiles() silently comes back empty.
-            ActivityCompat.requestPermissions(this,
-                new String[] { Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE },
-                REQUEST_LEGACY_STORAGE_PERMISSION);
-            return;
-        }
-        startActivityForResult(new Intent(this, FolderPickerActivity.class), 1001);
+        // GeneralsX @feature Codex 14/09/2026 All folder changes use the guided validator.
+        startActivity(new Intent(this, GameDataSetupActivity.class));
     }
 
     // GeneralsX @feature Android port 06/09/2026 Second picker, same browser,
@@ -2562,7 +2547,8 @@ public class SetupActivity extends Activity {
     // that one validates what it is given as a Zero Hour folder, and this one
     // must accept the opposite -- a folder with base archives and no *ZH.big.
     private void onSelectBaseGeneralsFolder() {
-        startActivityForResult(new Intent(this, FolderPickerActivity.class), REQUEST_PICK_BASE_GENERALS);
+        // GeneralsX @feature Codex 14/09/2026 All folder changes use the guided validator.
+        startActivity(new Intent(this, GameDataSetupActivity.class));
     }
 
     private void onClearBaseGeneralsFolder() {
@@ -2846,8 +2832,8 @@ public class SetupActivity extends Activity {
     private void launchGameActivity() {
         Class<?> target = getPackageName().endsWith(".xr")
                 ? XrHelloActivity.class
-                : GeneralsZHActivity.class;
-        startActivity(new Intent(this, target));
+                : GameDataSetupActivity.class;
+        startActivity(new Intent(this, target).putExtra("auto_launch", true));
     }
 
     private int dp(int value) {

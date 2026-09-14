@@ -28,6 +28,7 @@ android {
 
     defaultConfig {
         applicationId 'com.generalsx.zerohour'
+        testInstrumentationRunner 'com.generalsx.zerohour.GameDataSetupSmoke'
         // API 28 (Android 9): floor that still covers the Redmi Note 8 Pro
         // line while giving bionic glob(3) and stable Vulkan loader behavior.
         // The real graphics gate is the GPU driver, not the OS version — see
@@ -173,4 +174,3 @@ dependencies {
     // Material already, but declared directly since we call its APIs.
     implementation 'androidx.core:core:1.13.1'
 }
-

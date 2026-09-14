@@ -91,16 +91,12 @@
 
         <activity
             android:name=".GeneralsZHActivity"
-            android:exported="true"
+            android:exported="false"
             android:screenOrientation="landscape"
             android:launchMode="singleInstance"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             android:preferMinimalPostProcessing="true"
             android:configChanges="layoutDirection|locale|orientation|uiMode|screenLayout|screenSize|smallestScreenSize|keyboard|keyboardHidden|navigation">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
 
         <!-- GeneralsX @build Android port 07/07/2026 A second, always-present
@@ -133,6 +129,12 @@
             android:exported="true"
             android:label="@string/setup_window_title"
             android:icon="@mipmap/ic_launcher_setup"
+            android:theme="@style/Theme.GeneralsZHSettings"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
+
+        <activity
+            android:name=".GameDataSetupActivity"
+            android:exported="false"
             android:theme="@style/Theme.GeneralsZHSettings"
             android:configChanges="orientation|screenSize|keyboardHidden" />
 
