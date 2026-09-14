@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Generals Zero Hour</string>
+    <string name="common_cancel">Annuler</string>
+
+    <!-- SetupActivity: title / fallback -->
+    <string name="setup_window_title">Paramètres GeneralsZH</string>
+    <string name="setup_title">Command &amp; Conquer Generals: Zero Hour</string>
+    <string name="setup_subtitle">Paramètres Android</string>
+    <string name="setup_fallback_warning">L\'interface normale des paramètres n\'a pas pu se charger (%1$s). Une interface de secours simplifiée s\'affiche pour que vous puissiez quand même accéder aux journaux/au dossier du jeu.</string>
+
+    <!-- SetupActivity: Game Folder card -->
+    <string name="setup_card_game_folder">Dossier du jeu</string>
+    <string name="setup_button_select_game_folder">Sélectionner le dossier du jeu</string>
+    <string name="setup_button_launch_game">Lancer le jeu</string>
+    <string name="setup_button_view_logs">Afficher les journaux</string>
+    <string name="setup_button_clear_game_folder">Réinitialiser le dossier du jeu</string>
+
+    <!-- SetupActivity: status text -->
+    <string name="setup_status_folder_not_set">Dossier du jeu : non défini.\n</string>
+    <string name="setup_status_folder_line">Dossier du jeu : %1$s\n</string>
+    <string name="setup_status_folder_valid">État : semble valide (fichiers d\'archives du jeu trouvés).\n</string>
+    <string name="setup_status_folder_invalid">État : ce dossier ne contient PAS les fichiers INIZH.big / INI.big attendus — vérifiez que vous avez choisi le bon dossier.\n</string>
+    <string name="setup_status_folder_incomplete">Statut : archives du jeu trouvées, mais l\'ensemble est incomplet :\n%1$s\n</string>
+    <string name="setup_dialog_folder_problem_title">Problème avec le dossier du jeu</string>
+    <string name="setup_folder_issue_empty_file">%1$s est vide (0 octet)</string>
+    <string name="setup_folder_issue_bad_header">%1$s ne ressemble pas à une archive de jeu valide</string>
+    <string name="setup_folder_issue_missing_data">Il manque des données de jeu attendues dans %1$s — probablement une copie incomplète</string>
+    <string name="setup_folder_issue_no_base_game">Données du jeu de base Generals manquantes :%1$s\n\nOu indiquez à Setup le dossier qui les contient déjà — le bouton « Dossier du jeu de base Generals… » ci-dessous (en général ZH_Generals ou Command and Conquer Generals).</string>
+    <string name="setup_status_logs_note">Les journaux de plantage/du moteur sont stockés dans le stockage privé de cette application et ne sont accessibles que via « Afficher les journaux » ci-dessus — Android les masque intentionnellement des gestionnaires de fichiers classiques (c\'est le fonctionnement standard du bac à sable Android, pas une particularité de cette application).</string>
+
+    <!-- SetupActivity: Language card -->
+    <string name="setup_card_language">Langue</string>
+    <string name="setup_language_help">Change la langue de cette application de réglages, du visionneur de journaux et du navigateur de dossiers. Les textes du jeu sont un réglage distinct ci-dessous : choisissez parmi les langues réellement présentes dans votre dossier de jeu, ou téléchargez-en une. « Par défaut du système » suit la langue du téléphone, avec repli sur l\'anglais si elle ne figure pas dans la liste.</string>
+    <string name="setup_language_status">Langue : %1$s</string>
+    <string name="setup_button_change_language">Changer de langue</string>
+    <string name="setup_language_dialog_title">Choisir une langue</string>
+    <string name="setup_language_system_default">Par défaut du système</string>
+    <string name="setup_language_game_status_default">Texte du jeu : non affecté par ce paramètre (utilise la langue propre au jeu depuis registry.ini, ou l\'anglais par défaut).</string>
+    <string name="setup_language_game_status_override">Texte du jeu : également changé (data/%1$s/generals.csf trouvé dans votre dossier de jeu).</string>
+    <string name="setup_language_game_status_missing">Texte du jeu : PAS changé — data/%1$s/generals.csf introuvable dans votre dossier de jeu, le jeu conserve donc sa propre langue.</string>
+
+    <!-- SetupActivity: Menu Text Size card -->
+    <string name="setup_card_text_size">Taille du texte des menus</string>
+    <string name="setup_text_size_label">Échelle : %1$d%%</string>
+    <string name="setup_button_apply_text_size">Appliquer la taille du texte des menus</string>
+    <string name="setup_text_size_help">Redimensionne la plupart des textes de boutons/étiquettes de menu selon la résolution de l\'écran. 70 est la valeur par défaut du jeu ; des valeurs plus élevées agrandissent le texte des menus. Prend effet au prochain lancement du jeu, pas immédiatement.</string>
+    <string name="setup_toast_text_size_saved">Enregistré. Prendra effet au prochain lancement du jeu.</string>
+
+    <!-- SetupActivity: Render Backend card -->
+    <string name="setup_card_render_backend">Moteur de rendu</string>
+    <string name="setup_render_backend_help">Quelle API graphique le jeu utilise. Prend effet au prochain lancement du jeu, pas immédiatement.\n\nOpenGL ES (par défaut) : un moteur de rendu natif écrit pour ce portage. Il est par défaut parce qu\u0027il fonctionne sur tous les appareils testés jusqu\u0027ici, y compris ceux où Vulkan affiche des graphismes corrompus. Commencez ici et ne changez que si vous avez une raison.\n\nOpenGL ES + ANGLE : le même moteur, mais passant par ANGLE de Google, qui le traduit en Vulkan, au lieu du pilote GLES de votre téléphone. ANGLE est intégré à cette application : ni version minimale d\u0027Android ni réglage système requis. Souvent plus rapide une fois lancé, même si un menu chargé (options d\u0027escarmouche) peut saccader à sa première ouverture pendant qu\u0027ANGLE compile ce dont il a besoin ; cela ne se reproduit pas tant que vous ne quittez pas puis rouvrez ce menu.\n\nVulkan : le backend d\u0027origine, via la traduction Direct3D 8 vers Vulkan de DXVK. Plus rapide que les autres sur les téléphones dont le pilote le gère bien, typiquement les Snapdragon récents. Mais tout dépend de ce pilote, et sur certains GPU il produit des taches magenta, une géométrie déformée ou des menus corrompus qu\u0027aucun réglage d\u0027ici ne corrige \u2014 PowerVR BXM et Samsung Xclipse ont tous deux été signalés. Si Vulkan s\u0027affiche mal sur votre appareil, c\u0027est précisément à cela que sert le choix par défaut.\n\nLes sections « Pilote Vulkan personnalisé » et « Configuration DXVK » n\u0027apparaissent que si Vulkan est sélectionné.</string>
+    <string name="setup_render_backend_gpu">Votre GPU : %1$s</string>
+    <string name="setup_render_backend_status">Actuel : %1$s</string>
+    <string name="setup_button_change_render_backend">Changer de moteur de rendu</string>
+    <string name="setup_render_backend_dialog_title">Choisir un moteur de rendu</string>
+    <string name="setup_render_backend_vulkan">Vulkan</string>
+    <string name="setup_render_backend_gles">OpenGL ES (par défaut)</string>
+    <string name="setup_render_backend_gles_angle">OpenGL ES + ANGLE</string>
+    <string name="setup_toast_render_backend_saved">Enregistré. Prendra effet au prochain lancement du jeu.</string>
+    <string name="setup_toast_render_backend_failed">Impossible d\'enregistrer le choix du moteur de rendu : %1$s</string>
+
+    <!-- SetupActivity: Custom Vulkan Driver card -->
+    <string name="setup_card_vulkan_driver">Pilote Vulkan personnalisé (avancé, GPU Adreno uniquement)</string>
+    <string name="setup_button_import_driver">Importer un pilote (.zip)</string>
+    <string name="setup_button_reset_driver">Réinitialiser au pilote recommandé</string>
+    <string name="setup_driver_help">Charge un pilote Vulkan (une version de Mesa Turnip) à la place du pilote intégré de votre téléphone — la même technique qu\'utilisent Winlator et AetherSX2. DXVK lui-même n\'a désormais besoin que de Vulkan 1.1, mais certains anciens pilotes d\'origine Qualcomm Adreno en rapportent encore moins (ou ont d\'autres bugs) — cette version de Turnip peut quand même permettre à ces téléphones de faire tourner le jeu. Sur un téléphone Adreno compatible, cela s\'applique automatiquement — « Réinitialiser au pilote recommandé » restaure ce choix automatique après avoir importé autre chose.\n\nCela n\'aide PAS Mali, PowerVR ou d\'autres GPU non-Adreno — mais ils n\'en ont pas besoin non plus : la plupart des GPU Mali (Mali-G76, Mali-G57 et similaires) répondent déjà nativement à l\'exigence Vulkan 1.1 de DXVK, sans changement de pilote nécessaire. Cette option est réservée à Adreno parce que Turnip ne cible que le matériel Adreno, pas parce que les autres GPU ne seraient pas pris en charge.\n\n« Importer un pilote » vous permet de remplacer le choix automatique par votre propre fichier .zip de pilote au format adrenotools (par exemple depuis K11MCH1/AdrenoToolsDrivers ou The412Banner/Banners-Turnip sur GitHub). Prend effet au prochain lancement, pas immédiatement.</string>
+    <string name="setup_driver_status_none">Aucun pilote personnalisé actif — le pilote Vulkan intégré du téléphone est utilisé.</string>
+    <string name="setup_driver_status_auto">Pilote recommandé (sélectionné automatiquement pour cet appareil) : %1$s</string>
+    <string name="setup_driver_status_manual">Pilote personnalisé (importé manuellement) : %1$s</string>
+    <string name="setup_driver_unknown">(inconnu)</string>
+    <string name="setup_toast_no_file_picker">Aucun sélecteur de fichiers disponible : %1$s</string>
+    <string name="setup_toast_reset_auto">Réinitialisation effectuée. Le pilote recommandé pour cet appareil a été réappliqué.</string>
+    <string name="setup_toast_reset_stock">Réinitialisation effectuée. Le pilote Vulkan intégré du téléphone sera utilisé.</string>
+    <string name="setup_toast_driver_import_no_tmp">Impossible de créer le dossier de travail pour l\'importation du pilote</string>
+    <string name="setup_toast_driver_import_failed">Échec de l\'importation : %1$s</string>
+    <string name="setup_toast_driver_import_no_meta">Échec de l\'importation : meta.json introuvable dans le .zip (ce n\'est pas un paquet de pilote adrenotools valide)</string>
+    <string name="setup_toast_driver_import_bad_meta">Échec de l\'importation : meta.json invalide (%1$s)</string>
+    <string name="setup_toast_driver_import_no_finalize">Échec de l\'importation : impossible de finaliser le dossier du pilote</string>
+    <string name="setup_toast_driver_config_failed">Impossible d\'enregistrer la configuration du pilote : %1$s</string>
+    <string name="setup_toast_driver_imported">Pilote importé : %1$s. Prendra effet au prochain lancement.</string>
+
+    <!-- SetupActivity: Diagnostics card -->
+    <string name="setup_card_diagnostics">Diagnostic</string>
+    <string name="setup_diagnostics_help">Ces interrupteurs activent une journalisation supplémentaire pour les rapports de bug — laissez-les tous désactivés en jeu normal, ils peuvent ralentir le jeu ou produire d\'énormes journaux. Si la personne qui signale un problème vous demande d\'en activer un, activez-le, reproduisez le problème, puis utilisez « Voir les journaux » ci-dessus pour envoyer le résultat.</string>
+    <string name="setup_diagnostics_no_folder">Sélectionnez d\'abord un dossier de jeu (ci-dessus) pour utiliser ces interrupteurs</string>
+    <string name="setup_switch_gx_trace">Journal de trace détaillé</string>
+    <string name="setup_switch_gx_trace_desc">Journalisation interne très détaillée (interface, polices, fichiers INI) pour traquer un blocage ou un bug précis. Peut atteindre 50 à 100+ Mo sur une longue session — utilisez plutôt « Résumé des performances » si vous n\'avez besoin que des chiffres de FPS. (gx_trace.txt)</string>
+    <string name="setup_switch_touch_debug">Superposition de saisie tactile</string>
+    <string name="setup_switch_touch_debug_desc">Affiche par-dessus le jeu l\'état de la couche tactile : geste en cours, position de votre doigt, position où le moteur croit que se trouve le pointeur, et ancre de défilement de la caméra. Activez ceci pour signaler des problèmes de contrôle : carte qui défile toute seule, bâtiment fantôme au mauvais endroit, capacité qui vise là où vous n\'avez pas touché. (gx_touch_debug.txt)</string>
+    <string name="setup_switch_gx_perf">Résumé des performances</string>
+    <string name="setup_switch_gx_perf_desc">Ajoute une courte ligne par seconde indiquant où passe le temps de trame (radar, audio, réseau, logique du jeu, rendu). Peut rester activé toute la session sans risque — activez-le pour les rapports de FPS/ralentissements. (gx_perf.txt)</string>
+    <string name="setup_switch_gx_audio_trace">Journal audio</string>
+    <string name="setup_switch_gx_audio_trace_desc">Enregistre ce que fait le système sonore : niveau des tampons de musique et de voix, audio des vidéos, et chaque source qui démarre ou s\'arrête. Activez-le si un journal audio vous est demandé après un signalement de son absent, haché ou muet. (gx_audio_trace.txt)</string>
+    <string name="setup_button_download_langpack">Télécharger le pack de langue</string>
+    <string name="setup_langpack_downloading">Téléchargement du pack de langue…</string>
+    <string name="setup_langpack_done">Pack de langue installé. Le jeu l\'utilisera au prochain lancement.</string>
+    <string name="setup_langpack_done_n">%1$d pack(s) de langue installé(s) : %2$s. Choisissez ci-dessous.</string>
+    <string name="setup_langpack_failed">Impossible de télécharger le pack de langue : %1$s</string>
+    <string name="setup_langpack_not_available">Cette langue du lanceur n\'a pas de pack de texte de jeu.</string>
+    <string name="setup_langpack_no_folder">Sélectionnez d\'abord votre dossier de jeu.</string>
+    <string name="setup_langpack_err_none_yet">Il n\'y a pas encore de pack pour cette langue. Les traductions sont bienvenues — voir languages/README.md dans le dépôt du projet.</string>
+    <string name="setup_langpack_err_mkdir">impossible de créer le dossier de langue dans le dossier du jeu</string>
+    <string name="setup_langpack_err_empty">le fichier téléchargé était vide</string>
+    <string name="setup_langpack_err_replace">impossible de remplacer le fichier existant</string>
+    <string name="setup_button_game_text_language">Langue des textes du jeu</string>
+    <string name="setup_game_text_dialog_title">Langue des textes du jeu</string>
+    <string name="setup_game_text_default">Par défaut (.big prioritaire)</string>
+    <string name="setup_game_text_status">Textes du jeu : %1$s</string>
+    <string name="setup_game_text_status_default">Textes du jeu : anglais, sauf si un .big du dossier de jeu le remplace</string>
+    <string name="setup_game_text_none_found">Aucun pack de langue dans le dossier du jeu pour le moment. Téléchargez-en un.</string>
+    <string name="setup_langpack_dialog_title">Quelle langue ?</string>
+    <string name="setup_switch_dxvk_hud">Overlay de performances à l\'écran</string>
+    <string name="setup_switch_dxvk_hud_desc">Affiche les FPS, le nombre d\'appels de dessin, de soumissions et de pipelines directement à l\'écran et dans le journal. Activez-le pour les rapports de performances GPU. (dxvk_hud.txt)</string>
+    <string name="setup_switch_dxvk_validation">Couche de validation Vulkan</string>
+    <string name="setup_switch_dxvk_validation_desc">Vérifie la validité de chaque appel graphique — détecte de vrais bugs de rendu mais ralentit nettement le jeu. Activez-le uniquement si on vous demande de reproduire un plantage ou un glitch précis, pas pour jouer normalement. (dxvk_validation.txt)</string>
+    <string name="setup_switch_dxvk_verbose_log">Journal détaillé du moteur de rendu</string>
+    <string name="setup_switch_dxvk_verbose_log_desc">Ajoute des détails supplémentaires au démarrage sur la façon dont le jeu communique avec le pilote de votre GPU (format d\'affichage exact et paramètres négociés). Activez-le si on vous demande de traquer un glitch graphique propre à votre appareil. (dxvk_verbose_log.txt)</string>
+
+    <!-- SetupActivity: Online Multiplayer card -->
+    <string name="setup_card_online">Multijoueur en ligne</string>
+    <string name="setup_button_online_account">Compte GeneralsOnline</string>
+    <string name="setup_online_signed_in">Connecté en tant que %1$s.</string>
+    <string name="setup_online_signed_out">Non connecté — requis pour les parties en ligne.</string>
+
+    <!-- SetupActivity: How this works card -->
+    <string name="setup_card_how_it_works">Comment ça marche</string>
+    <string name="setup_how_it_works_body">1. « Sélectionner le dossier du jeu » ouvre un explorateur de dossiers sur le stockage de votre téléphone. Accédez à l\'endroit où vous avez copié votre propre installation de Command &amp; Conquer Generals Zero Hour (le dossier contenant INIZH.big, Data\\, ZH_Generals\\, etc.) et appuyez sur « Utiliser ce dossier ».\n\n2. Si la liste semble vide, Android demande d\'abord la permission « Accès à tous les fichiers » — accordez-la sur l\'écran qui s\'ouvre (il s\'agit d\'une permission Android normale, aucun root nécessaire).\n\n3. « Afficher les journaux » montre le journal du moteur et, si le jeu a planté, un journal de plantage natif — sans ordinateur ni adb. Utilisez le bouton Partager pour vous envoyer le journal.\n\n4. « Lancer le jeu » démarre le jeu avec le dossier que vous avez choisi.</string>
+
+    <!-- SetupActivity: folder selection / misc toasts -->
+    <string name="setup_toast_grant_all_files">Accordez « Autoriser l\'accès pour gérer tous les fichiers » sur l\'écran suivant, puis revenez et appuyez à nouveau sur Sélectionner le dossier du jeu.</string>
+    <string name="setup_toast_folder_saved">Dossier du jeu enregistré.</string>
+    <string name="setup_toast_folder_saved_invalid">Enregistré, mais aucun INIZH.big/INI.big trouvé — vérifiez le dossier.</string>
+    <string name="setup_toast_folder_saved_incomplete">Enregistré, mais certains fichiers du jeu semblent incomplets ou corrompus — consultez les détails sur l\'écran principal avant de lancer le jeu.</string>
+    <string name="setup_toast_marker_save_failed">Impossible d\'enregistrer le repère du dossier : %1$s</string>
+    <string name="setup_toast_folder_cleared">Réinitialisé. Le jeu utilisera à nouveau son dossier par défaut.</string>
+    <string name="setup_toast_options_dir_failed">Impossible de créer le dossier pour Options.ini</string>
+    <string name="setup_toast_options_save_failed">Impossible d\'enregistrer Options.ini : %1$s</string>
+
+    <!-- FolderPickerActivity -->
+    <string name="folderpicker_title">Sélectionner le dossier du jeu</string>
+    <string name="folderpicker_up_entry">⬆️  .. (remonter)</string>
+    <string name="folderpicker_button_use">Utiliser ce dossier</string>
+    <string name="folderpicker_hint_valid">✓ Ce dossier contient INIZH.big/INI.big — semble correct.</string>
+    <string name="folderpicker_hint_invalid">Accédez à votre dossier de jeu, puis appuyez sur « Utiliser ce dossier ».</string>
+    <string name="folderpicker_toast_cant_read">Impossible de lire ce dossier. Si la liste semble vide partout, accordez d\'abord « Accès à tous les fichiers » depuis l\'écran des paramètres.</string>
+
+    <!-- LogViewerActivity -->
+    <string name="logviewer_title">Journaux</string>
+    <string name="logviewer_button_clear">Effacer les journaux</string>
+    <string name="logviewer_button_copy">Copier</string>
+    <string name="logviewer_button_share">Partager</string>
+    <string name="logviewer_toast_copied">Copié dans le presse-papiers.</string>
+    <string name="logviewer_section_crash_log">=== crash.log (gestionnaire de plantage natif, stockage interne) ===\n</string>
+    <string name="logviewer_crash_log_absent">(absent — aucun plantage natif enregistré depuis l\'installation, ou l\'application n\'a jamais dépassé le chargement de la bibliothèque)</string>
+    <string name="logviewer_section_stderr_log">=== generals-stderr.log (journal du moteur, stockage externe) ===\n</string>
+    <string name="logviewer_stderr_log_absent">(absent — le main() du moteur n\'a pas encore démarré, ou le stockage externe n\'est pas disponible)</string>
+    <string name="logviewer_section_prev_log">=== generals-stderr-prev.log (session précédente) ===\n</string>
+    <string name="logviewer_prev_log_absent">(absent)</string>
+    <string name="logviewer_dialog_clear_title">Effacer les journaux</string>
+    <string name="logviewer_dialog_clear_message">Supprimer le journal de plantage et les fichiers de journal du moteur ? Cette action est irréversible.</string>
+    <string name="logviewer_dialog_clear_confirm">Effacer</string>
+    <string name="logviewer_dialog_clear_cancel">Annuler</string>
+    <string name="logviewer_toast_cleared">Journaux effacés.</string>
+    <string name="logviewer_share_subject">Journal GeneralsZH Android</string>
+    <string name="logviewer_share_chooser_title">Partager le journal</string>
+    <string name="logviewer_toast_share_failed">Impossible de préparer le fichier journal pour le partage : %1$s</string>
+    <string name="logviewer_read_failed">(impossible de lire %1$s : %2$s)</string>
+
+    <!-- GeneralsOnlineActivity -->
+    <string name="online_window_title">Compte GeneralsOnline</string>
+    <string name="online_subtitle">Connectez-vous pour le multijoueur en ligne (playgenerals.online)</string>
+    <string name="online_button_sign_out">Se déconnecter</string>
+    <string name="online_card_sign_in">Connexion</string>
+    <string name="online_signin_help">Appuyez sur Se connecter. Le premier appui peut demander d\'exempter cette application de l\'optimisation de la batterie — autorisez-le, puis revenez et appuyez à nouveau sur Se connecter. Un navigateur s\'ouvre alors sur playgenerals.online, déjà avec un code à usage unique pour cet appareil. Choisissez Steam, Discord ou GameReplays, puis revenez simplement à cette application ; la connexion se termine d\'elle-même.</string>
+    <string name="online_button_sign_in">Se connecter</string>
+    <string name="online_status_signing_in">Connexion en cours...</string>
+    <string name="online_status_battery_opt">Autorisez GeneralsZH à s\'exécuter en arrière-plan sur l\'écran suivant, puis revenez et appuyez à nouveau sur Se connecter — sinon Android pourrait interrompre la vérification de connexion pendant que vous êtes dans le navigateur.</string>
+    <string name="online_toast_no_browser">Aucun navigateur disponible : %1$s</string>
+    <string name="online_status_continue_browser">Continuez dans votre navigateur — revenez ici une fois connecté.</string>
+    <string name="online_status_network_error">Erreur réseau — vérifiez votre connexion et réessayez.</string>
+    <string name="online_toast_signed_in_as">Connecté en tant que %1$s</string>
+    <string name="online_status_signin_failed">La connexion a échoué ou a été annulée — appuyez sur Se connecter pour réessayer.</string>
+    <string name="online_status_timed_out">Délai d\'attente dépassé — appuyez sur Se connecter pour réessayer.</string>
+    <string name="online_status_unexpected">Réponse inattendue — appuyez sur Se connecter pour réessayer.</string>
+    <string name="online_toast_signed_out">Déconnecté.</string>
+    <string name="online_status_signed_in_as">Connecté en tant que %1$s.</string>
+    <string name="online_status_not_signed_in">Non connecté.</string>
+    <string name="setup_button_select_base_generals">Dossier du jeu de base Generals…</string>
+    <string name="setup_button_clear_base_generals">Réinitialiser le dossier du jeu de base</string>
+    <string name="setup_toast_base_generals_saved">Dossier du jeu de base Generals : %1$s</string>
+    <string name="setup_toast_base_generals_cleared">Dossier du jeu de base réinitialisé</string>
+    <string name="setup_base_generals_not_here">Aucune archive du jeu de base Generals dans %1$s — choisissez le dossier contenant Terrain.big, Textures.big et W3D.big.</string>
+    <string name="setup_status_base_generals_line">Generals de base : %1$s\n</string>
+    <string name="logviewer_crash_prev_log_absent">(absent)</string>
+    <string name="logviewer_elided_notice">\n...(%1$d caractères omis ici ; le début de session ci-dessus et la sortie la plus récente ci-dessous sont conservés)...\n\n</string>
+    <string name="logviewer_section_crash_prev_log">=== crash-prev.log (gestionnaire de plantage natif, session précédente) ===\n</string>
+    <string name="logviewer_toast_share_none">Aucun fichier journal à partager pour l\u0027instant.</string>
+    <string name="setup_button_dxvk_config_reset">Réinitialiser</string>
+    <string name="setup_button_dxvk_config_save">Enregistrer</string>
+    <string name="setup_card_dxvk_config">Configuration DXVK (dxvk.conf, avancé)</string>
+    <string name="setup_dxvk_config_help">Modifie directement dxvk.conf, le fichier que le moteur lit au démarrage : aucune recompilation nécessaire, l\u0027effet est immédiat au prochain lancement. Réglages utiles si le jeu est lent sur votre appareil :\n\nd3d9.samplerAnisotropy = 2 (ou 0 pour désactiver) — inférieur à la valeur par défaut de 16, allège le travail du GPU sur le matériel modeste.\ndxvk.hud = fps,drawcalls,submissions,pipelines — affiche une petite surcouche de performances.\ndxvk.logLevel = none — à laisser tel quel sauf demande contraire ; les niveaux plus bavards ralentissent le jeu.\n\nUn « key = value » par ligne. DXVK ignore simplement une ligne invalide : une faute de frappe ne cassera pas le jeu, au pire votre modification restera sans effet.</string>
+    <string name="setup_dxvk_config_no_folder">Sélectionnez d\u0027abord un dossier de jeu (ci-dessus)</string>
+    <string name="setup_toast_dxvk_config_no_default">Aucun dxvk.conf par défaut fourni dans cette version.</string>
+    <string name="setup_toast_dxvk_config_reset">Réinitialisé au dxvk.conf par défaut.</string>
+    <string name="setup_toast_dxvk_config_saved">Enregistré. Prendra effet au prochain lancement du jeu.</string>
+    <string name="setup_toast_storage_permission_denied">L\u0027autorisation de stockage est nécessaire pour parcourir le dossier du jeu. Appuyez à nouveau sur « Sélectionner le dossier du jeu ».</string>
+
+    <!-- Launcher bottom navigation + short render-backend names -->
+    <string name="nav_tab_home">Accueil</string>
+    <string name="nav_tab_graphics">Graphismes</string>
+    <string name="nav_tab_interface">Interface</string>
+    <string name="nav_tab_tools">Outils</string>
+    <string name="nav_tab_help">Aide</string>
+    <string name="setup_render_backend_gles_short">GLES</string>
+    <string name="setup_render_backend_gles_angle_short">ANGLE</string>
+    <string name="setup_render_backend_vulkan_short">Vulkan</string>
+</resources>

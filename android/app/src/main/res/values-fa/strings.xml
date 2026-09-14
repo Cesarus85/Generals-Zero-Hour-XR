@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Generals Zero Hour</string>
+    <string name="common_cancel">لغو</string>
+
+    <!-- SetupActivity: title / fallback -->
+    <string name="setup_window_title">تنظیمات GeneralsZH</string>
+    <string name="setup_title">Command &amp; Conquer Generals: Zero Hour</string>
+    <string name="setup_subtitle">تنظیمات اندروید</string>
+    <string name="setup_fallback_warning">رابط تنظیمات معمولی بارگذاری نشد (%1$s). یک رابط ساده جایگزین نمایش داده می‌شود تا همچنان بتوانید به گزارش‌ها/پوشه بازی دسترسی داشته باشید.</string>
+
+    <!-- SetupActivity: Game Folder card -->
+    <string name="setup_card_game_folder">پوشه بازی</string>
+    <string name="setup_button_select_game_folder">انتخاب پوشه بازی</string>
+    <string name="setup_button_launch_game">اجرای بازی</string>
+    <string name="setup_button_view_logs">مشاهده گزارش‌ها</string>
+    <string name="setup_button_clear_game_folder">بازنشانی پوشه بازی</string>
+
+    <!-- SetupActivity: status text -->
+    <string name="setup_status_folder_not_set">پوشه بازی: تنظیم نشده است.\n</string>
+    <string name="setup_status_folder_line">پوشه بازی: %1$s\n</string>
+    <string name="setup_status_folder_valid">وضعیت: معتبر به نظر می‌رسد (فایل‌های آرشیو بازی پیدا شدند).\n</string>
+    <string name="setup_status_folder_invalid">وضعیت: این پوشه حاوی INIZH.big / INI.big مورد انتظار نیست — بررسی کنید پوشه درست را انتخاب کرده باشید.\n</string>
+    <string name="setup_status_folder_incomplete">وضعیت: آرشیوهای بازی پیدا شدند، اما مجموعه ناقص است:\n%1$s\n</string>
+    <string name="setup_dialog_folder_problem_title">مشکل پوشهٔ بازی</string>
+    <string name="setup_folder_issue_empty_file">%1$s خالی است (۰ بایت)</string>
+    <string name="setup_folder_issue_bad_header">%1$s شبیه یک آرشیو معتبر بازی نیست</string>
+    <string name="setup_folder_issue_missing_data">در %1$s داده‌های موردانتظار بازی کم است — احتمالاً یک نسخهٔ ناقص</string>
+    <string name="setup_folder_issue_no_base_game">داده‌های بازی پایه Generals موجود نیست:%1$s\n\nیا پوشه‌ای را که از قبل آن‌ها را دارد مشخص کنید — دکمهٔ «پوشهٔ بازی پایه Generals…» در پایین (معمولاً ZH_Generals یا Command and Conquer Generals).</string>
+    <string name="setup_status_logs_note">گزارش‌های خرابی/موتور در حافظه خصوصی این برنامه ذخیره می‌شوند و فقط از طریق «مشاهده گزارش‌ها» در بالا قابل دسترسی هستند — اندروید عمداً آن‌ها را از مدیرهای فایل معمولی پنهان می‌کند (این رفتار استاندارد سندباکس اندروید است، نه ویژگی خاص این برنامه).</string>
+
+    <!-- SetupActivity: Language card -->
+    <string name="setup_card_language">زبان</string>
+    <string name="setup_language_help">زبان این برنامهٔ تنظیمات، نمایشگر گزارش‌ها و مرورگر پوشه را تغییر می‌دهد. متن خود بازی تنظیمی جداگانه در پایین است — از میان زبان‌هایی که واقعاً در پوشهٔ بازی هستند انتخاب کنید یا یکی دانلود کنید. «پیش‌فرض سامانه» از زبان گوشی پیروی می‌کند و اگر در فهرست نباشد به انگلیسی بازمی‌گردد.</string>
+    <string name="setup_language_status">زبان: %1$s</string>
+    <string name="setup_button_change_language">تغییر زبان</string>
+    <string name="setup_language_dialog_title">یک زبان انتخاب کنید</string>
+    <string name="setup_language_system_default">پیش‌فرض سیستم</string>
+    <string name="setup_language_game_status_default">متن بازی: تحت تأثیر این تنظیم قرار نمی‌گیرد (از زبان خود بازی طبق registry.ini، یا انگلیسی به‌صورت پیش‌فرض استفاده می‌شود).</string>
+    <string name="setup_language_game_status_override">متن بازی: نیز تغییر یافت (data/%1$s/generals.csf در پوشه بازی پیدا شد).</string>
+    <string name="setup_language_game_status_missing">متن بازی: تغییر نیافت — data/%1$s/generals.csf در پوشه بازی یافت نشد، بنابراین بازی زبان خود را حفظ می‌کند.</string>
+
+    <!-- SetupActivity: Menu Text Size card -->
+    <string name="setup_card_text_size">اندازه متن منو</string>
+    <string name="setup_text_size_label">مقیاس: %1$d%%</string>
+    <string name="setup_button_apply_text_size">اعمال اندازه متن منو</string>
+    <string name="setup_text_size_help">اندازه متن بیشتر دکمه‌ها/برچسب‌های منو را متناسب با وضوح صفحه تنظیم می‌کند. مقدار پیش‌فرض خود بازی ۷۰ است؛ مقادیر بالاتر متن منو را بزرگ‌تر می‌کنند. این تغییر در اجرای بعدی بازی اعمال می‌شود، نه بلافاصله.</string>
+    <string name="setup_toast_text_size_saved">ذخیره شد. در اجرای بعدی بازی اعمال خواهد شد.</string>
+
+    <!-- SetupActivity: Render Backend card -->
+    <string name="setup_card_render_backend">بک‌اند رندر</string>
+    <string name="setup_render_backend_help">بازی از کدام رابط گرافیکی استفاده کند. در اجرای بعدی بازی اثر می‌کند، نه بی‌درنگ.\n\nOpenGL ES (پیش‌فرض): یک رندرگر بومی که برای همین نسخه نوشته شده است. پیش‌فرض است چون روی هر دستگاهی که تاکنون آزموده شده کار می‌کند، از جمله دستگاه‌هایی که Vulkan روی آن‌ها تصویر خراب می‌کشد. از همین‌جا شروع کنید و تنها با دلیل تغییرش دهید.\n\nOpenGL ES + ANGLE: همان رندرگر، اما به‌جای درایور GLES خود گوشی از ANGLE گوگل می‌گذرد که آن را به Vulkan ترجمه می‌کند. ANGLE درون همین برنامه جای گرفته، پس نه نسخه حداقلی اندروید می‌خواهد و نه تنظیمی در سیستم. پس از راه‌افتادن معمولاً سریع‌تر است، هرچند منویی با عناصر فراوان (تنظیمات نبرد کوتاه) ممکن است بار نخست کمی گیر کند تا ANGLE آنچه لازم است را ترجمه کند؛ تا وقتی از آن منو بیرون نروید و دوباره بازش نکنید تکرار نمی‌شود.\n\nVulkan: پشتوانه اصلی، از راه ترجمه Direct3D 8 به Vulkan توسط DXVK. روی گوشی‌هایی که درایورشان از پس آن برمی‌آید، معمولاً اسنپدراگون‌های تازه، از بقیه سریع‌تر است. اما کاملاً به همان درایور وابسته است و روی برخی پردازنده‌های گرافیکی لکه‌های سرخابی، هندسه درهم‌ریخته یا منوهای خراب پدید می‌آورد که هیچ تنظیمی در اینجا آن را درست نمی‌کند \u2014 از PowerVR BXM و Samsung Xclipse گزارش شده است. اگر Vulkan روی دستگاه شما نادرست به نظر می‌رسد، گزینه پیش‌فرض دقیقاً برای همین است.\n\nبخش‌های «درایور Vulkan سفارشی» و «پیکربندی DXVK» تنها با انتخاب Vulkan نمایان می‌شوند.</string>
+    <string name="setup_render_backend_gpu">پردازنده گرافیکی شما: %1$s</string>
+    <string name="setup_render_backend_status">کنونی: %1$s</string>
+    <string name="setup_button_change_render_backend">تغییر بک‌اند رندر</string>
+    <string name="setup_render_backend_dialog_title">یک بک‌اند رندر انتخاب کنید</string>
+    <string name="setup_render_backend_vulkan">Vulkan</string>
+    <string name="setup_render_backend_gles">OpenGL ES (پیش‌فرض)</string>
+    <string name="setup_render_backend_gles_angle">OpenGL ES + ANGLE</string>
+    <string name="setup_toast_render_backend_saved">ذخیره شد. در اجرای بعدی بازی اعمال خواهد شد.</string>
+    <string name="setup_toast_render_backend_failed">ذخیرهٔ انتخاب بک‌اند رندر ممکن نشد: %1$s</string>
+
+    <!-- SetupActivity: Custom Vulkan Driver card -->
+    <string name="setup_card_vulkan_driver">درایور Vulkan سفارشی (پیشرفته، فقط پردازنده‌های گرافیکی Adreno)</string>
+    <string name="setup_button_import_driver">وارد کردن درایور (.zip)</string>
+    <string name="setup_button_reset_driver">بازنشانی به حالت پیشنهادی</string>
+    <string name="setup_driver_help">به‌جای درایور پیش‌فرض گوشی شما، یک درایور Vulkan (نسخه‌ای ساخته‌شده از Mesa Turnip) بارگذاری می‌کند؛ همان روشی که Winlator و AetherSX2 استفاده می‌کنند. خود DXVK اکنون فقط به Vulkan 1.1 نیاز دارد، اما برخی درایورهای پیش‌فرض قدیمی‌تر Qualcomm Adreno نسخه‌ای پایین‌تر از آن را گزارش می‌دهند (یا مشکلات دیگری دارند) — این نسخه Turnip می‌تواند با این حال به این گوشی‌ها اجازه اجرای بازی را بدهد. در گوشی Adreno مناسب، این کار به‌طور خودکار انجام می‌شود — «بازنشانی به حالت پیشنهادی» پس از وارد کردن درایور دیگری، این انتخاب خودکار را بازمی‌گرداند.\n\nاین گزینه به Mali، PowerVR یا سایر پردازنده‌های گرافیکی غیر از Adreno کمکی نمی‌کند — اما آن‌ها اصلاً به این نیازی ندارند: بیشتر پردازنده‌های گرافیکی Mali (مانند Mali-G76 و Mali-G57 و مشابه آن‌ها) از قبل به‌صورت بومی نیاز Vulkan 1.1 مربوط به DXVK را برآورده می‌کنند و نیازی به تعویض درایور نیست. این گزینه فقط مخصوص Adreno است زیرا Turnip تنها سخت‌افزار Adreno را هدف قرار می‌دهد، نه اینکه سایر پردازنده‌های گرافیکی پشتیبانی نشوند.\n\n«وارد کردن درایور» به شما اجازه می‌دهد انتخاب خودکار را با فایل .zip درایور خودتان با قالب adrenotools جایگزین کنید (مثلاً از K11MCH1/AdrenoToolsDrivers یا The412Banner/Banners-Turnip در GitHub). این تغییر در اجرای بعدی اعمال می‌شود، نه بلافاصله.</string>
+    <string name="setup_driver_status_none">هیچ درایور سفارشی فعال نیست — از درایور Vulkan پیش‌فرض گوشی استفاده می‌شود.</string>
+    <string name="setup_driver_status_auto">درایور پیشنهادی (به‌طور خودکار برای این دستگاه انتخاب شده): %1$s</string>
+    <string name="setup_driver_status_manual">درایور سفارشی (به‌صورت دستی وارد شده): %1$s</string>
+    <string name="setup_driver_unknown">(نامشخص)</string>
+    <string name="setup_toast_no_file_picker">هیچ انتخاب‌گر فایلی در دسترس نیست: %1$s</string>
+    <string name="setup_toast_reset_auto">بازنشانی انجام شد. درایور پیشنهادی برای این دستگاه دوباره اعمال شد.</string>
+    <string name="setup_toast_reset_stock">بازنشانی انجام شد. از درایور Vulkan پیش‌فرض گوشی استفاده خواهد شد.</string>
+    <string name="setup_toast_driver_import_no_tmp">ایجاد پوشه موقت برای وارد کردن درایور ممکن نشد</string>
+    <string name="setup_toast_driver_import_failed">وارد کردن ناموفق بود: %1$s</string>
+    <string name="setup_toast_driver_import_no_meta">وارد کردن ناموفق بود: فایل meta.json در .zip یافت نشد (بسته درایور adrenotools معتبر نیست)</string>
+    <string name="setup_toast_driver_import_bad_meta">وارد کردن ناموفق بود: meta.json نامعتبر است (%1$s)</string>
+    <string name="setup_toast_driver_import_no_finalize">وارد کردن ناموفق بود: نهایی‌سازی پوشه درایور ممکن نشد</string>
+    <string name="setup_toast_driver_config_failed">ذخیره تنظیمات درایور ممکن نشد: %1$s</string>
+    <string name="setup_toast_driver_imported">درایور وارد شد: %1$s. در اجرای بعدی اعمال خواهد شد.</string>
+
+    <!-- SetupActivity: Diagnostics card -->
+    <string name="setup_card_diagnostics">عیب‌یابی</string>
+    <string name="setup_diagnostics_help">این کلیدها گزارش‌گیری اضافی برای گزارش خطاها را فعال می‌کنند — در بازی عادی همه را خاموش نگه دارید، چون می‌توانند بازی را کند کنند یا گزارش‌های بسیار بزرگ ایجاد کنند. اگر گزارش‌دهنده یک مشکل از شما خواست یکی را روشن کنید، آن را فعال کنید، مشکل را دوباره ایجاد کنید، سپس نتیجه را با «مشاهده گزارش‌ها» در بالا ارسال کنید.</string>
+    <string name="setup_diagnostics_no_folder">برای استفاده از این کلیدها ابتدا یک پوشه بازی (بالا) انتخاب کنید</string>
+    <string name="setup_switch_gx_trace">گزارش ردیابی مفصل</string>
+    <string name="setup_switch_gx_trace_desc">گزارش‌گیری داخلی بسیار مفصل (رابط کاربری، فونت‌ها، فایل‌های INI) برای ردیابی یک هنگ یا باگ خاص. ممکن است در یک نشست طولانی به ۵۰ تا ۱۰۰+ مگابایت برسد — اگر فقط به اعداد FPS نیاز دارید، به‌جای آن «خلاصه عملکرد» را فعال کنید. (gx_trace.txt)</string>
+    <string name="setup_switch_touch_debug">پوشش اشکال‌زدایی لمسی</string>
+    <string name="setup_switch_touch_debug_desc">وضعیت لایه لمسی را روی بازی می‌کشد: حرکت فعلی، جای انگشت شما، جایی که موتور بازی فکر می‌کند نشانگر است، و لنگر پیمایش دوربین. برای گزارش مشکلات کنترل این را روشن کنید — نقشه‌ای که خودش حرکت می‌کند، ساختمان شبح در جای اشتباه، توانایی که جایی را نشانه می‌رود که لمس نکرده‌اید. (gx_touch_debug.txt)</string>
+    <string name="setup_switch_gx_perf">خلاصه عملکرد</string>
+    <string name="setup_switch_gx_perf_desc">هر ثانیه یک خط کوتاه اضافه می‌کند که نشان می‌دهد زمان هر فریم صرف چه چیزی می‌شود (رادار، صدا، شبکه، منطق بازی، رندر). فعال نگه‌داشتن آن در کل نشست بازی بی‌خطر است — برای گزارش‌های FPS/کندی فعال کنید. (gx_perf.txt)</string>
+    <string name="setup_switch_gx_audio_trace">گزارش صدا</string>
+    <string name="setup_switch_gx_audio_trace_desc">ثبت می‌کند سامانهٔ صدا چه می‌کند: میزان پر بودن بافرهای موسیقی و گفتار، صدای ویدیوها، و هر منبعی که آغاز یا متوقف می‌شود. اگر پس از گزارش صدای ناموجود، بریده‌بریده یا خاموش از شما گزارش صدا خواستند، این را روشن کنید. ‎(gx_audio_trace.txt)</string>
+    <string name="setup_button_download_langpack">دانلود بستهٔ زبان</string>
+    <string name="setup_langpack_downloading">در حال دانلود بستهٔ زبان…</string>
+    <string name="setup_langpack_done">بستهٔ زبان نصب شد. بازی در اجرای بعدی از آن استفاده می‌کند.</string>
+    <string name="setup_langpack_done_n">%1$d بستهٔ زبان نصب شد: %2$s. از پایین یکی را انتخاب کنید.</string>
+    <string name="setup_langpack_failed">دانلود بستهٔ زبان ممکن نشد: %1$s</string>
+    <string name="setup_langpack_not_available">برای این زبانِ راه‌انداز بستهٔ متن بازی وجود ندارد.</string>
+    <string name="setup_langpack_no_folder">ابتدا پوشهٔ بازی را انتخاب کنید.</string>
+    <string name="setup_langpack_err_none_yet">هنوز بسته‌ای برای این زبان نیست. ترجمه‌ها خوش‌آمدند — languages/README.md را در مخزن پروژه ببینید.</string>
+    <string name="setup_langpack_err_mkdir">ساخت پوشهٔ زبان در پوشهٔ بازی ممکن نشد</string>
+    <string name="setup_langpack_err_empty">فایل دانلودشده خالی بود</string>
+    <string name="setup_langpack_err_replace">جایگزینی فایل موجود ممکن نشد</string>
+    <string name="setup_button_game_text_language">زبان متن بازی</string>
+    <string name="setup_game_text_dialog_title">زبان متن بازی</string>
+    <string name="setup_game_text_default">پیش‌فرض (اولویت با ‎.big)</string>
+    <string name="setup_game_text_status">متن بازی: %1$s</string>
+    <string name="setup_game_text_status_default">متن بازی: انگلیسی — مگر آنکه یک ‎.big در پوشهٔ بازی جایگزینش کند</string>
+    <string name="setup_game_text_none_found">هنوز بستهٔ زبانی در پوشهٔ بازی نیست. ابتدا یکی دانلود کنید.</string>
+    <string name="setup_langpack_dialog_title">کدام زبان؟</string>
+    <string name="setup_switch_dxvk_hud">نمایش عملکرد روی صفحه</string>
+    <string name="setup_switch_dxvk_hud_desc">FPS، تعداد draw call، ارسال‌ها و تعداد پایپ‌لاین‌ها را مستقیماً روی صفحه و در گزارش نشان می‌دهد. برای گزارش‌های عملکرد GPU فعال کنید. (dxvk_hud.txt)</string>
+    <string name="setup_switch_dxvk_validation">لایه اعتبارسنجی Vulkan</string>
+    <string name="setup_switch_dxvk_validation_desc">صحت هر فراخوانی گرافیکی را بررسی می‌کند — باگ‌های واقعی رندر را پیدا می‌کند اما بازی را به‌طور محسوسی کند می‌کند. فقط زمانی فعال کنید که از شما خواسته شده یک کرش یا مشکل گرافیکی خاص را بازتولید کنید، نه برای بازی روزمره. (dxvk_validation.txt)</string>
+    <string name="setup_switch_dxvk_verbose_log">گزارش مفصل رندرر</string>
+    <string name="setup_switch_dxvk_verbose_log_desc">جزئیات اضافی هنگام راه‌اندازی درباره نحوه ارتباط بازی با درایور GPU شما اضافه می‌کند (قالب دقیق نمایش و تنظیمات مذاکره‌شده). زمانی فعال کنید که از شما خواسته شده یک مشکل گرافیکی مخصوص دستگاهتان را پیگیری کنید. (dxvk_verbose_log.txt)</string>
+
+    <!-- SetupActivity: Online Multiplayer card -->
+    <string name="setup_card_online">بازی چندنفره آنلاین</string>
+    <string name="setup_button_online_account">حساب GeneralsOnline</string>
+    <string name="setup_online_signed_in">واردشده به‌عنوان %1$s.</string>
+    <string name="setup_online_signed_out">وارد نشده‌اید — برای بازی‌های آنلاین لازم است.</string>
+
+    <!-- SetupActivity: How this works card -->
+    <string name="setup_card_how_it_works">این چگونه کار می‌کند</string>
+    <string name="setup_how_it_works_body">۱. «انتخاب پوشه بازی» یک مرورگر پوشه در حافظه گوشی شما باز می‌کند. به جایی که نصب خودتان از Command &amp; Conquer Generals Zero Hour را کپی کرده‌اید بروید (پوشه‌ای شامل INIZH.big، Data\\، ZH_Generals\\ و غیره) و روی «استفاده از این پوشه» ضربه بزنید.\n\n۲. اگر فهرست خالی به نظر می‌رسد، یعنی اندروید ابتدا مجوز «دسترسی برای مدیریت همه فایل‌ها» را درخواست می‌کند — آن را در صفحه‌ای که باز می‌شود اعطا کنید (این یک مجوز معمولی اندروید است و نیازی به روت ندارد).\n\n۳. «مشاهده گزارش‌ها» گزارش موتور را نشان می‌دهد و در صورت خراب شدن بازی، یک گزارش خرابی بومی را نیز نمایش می‌دهد — بدون نیاز به رایانه یا adb. از دکمه اشتراک‌گذاری آنجا برای ارسال گزارش به خودتان استفاده کنید.\n\n۴. «اجرای بازی» بازی را با پوشه‌ای که انتخاب کرده‌اید اجرا می‌کند.</string>
+
+    <!-- SetupActivity: folder selection / misc toasts -->
+    <string name="setup_toast_grant_all_files">مجوز «اجازه دسترسی برای مدیریت همه فایل‌ها» را در صفحه بعدی اعطا کنید، سپس بازگردید و دوباره روی انتخاب پوشه بازی ضربه بزنید.</string>
+    <string name="setup_toast_folder_saved">پوشه بازی ذخیره شد.</string>
+    <string name="setup_toast_folder_saved_invalid">ذخیره شد، اما INIZH.big/INI.big در آنجا یافت نشد — پوشه را بررسی کنید.</string>
+    <string name="setup_toast_folder_saved_incomplete">ذخیره شد، اما برخی فایل‌های بازی ناقص یا خراب به‌نظر می‌رسند — پیش از اجرا، جزئیات را در صفحهٔ اصلی بررسی کنید.</string>
+    <string name="setup_toast_marker_save_failed">ذخیره نشانه پوشه ممکن نشد: %1$s</string>
+    <string name="setup_toast_folder_cleared">بازنشانی شد. بازی از پوشه پیش‌فرض خود استفاده خواهد کرد.</string>
+    <string name="setup_toast_options_dir_failed">ایجاد پوشه برای Options.ini ممکن نشد</string>
+    <string name="setup_toast_options_save_failed">ذخیره Options.ini ممکن نشد: %1$s</string>
+
+    <!-- FolderPickerActivity -->
+    <string name="folderpicker_title">انتخاب پوشه بازی</string>
+    <string name="folderpicker_up_entry">⬆️  .. (بالا)</string>
+    <string name="folderpicker_button_use">استفاده از این پوشه</string>
+    <string name="folderpicker_hint_valid">✓ این پوشه شامل INIZH.big/INI.big است — درست به نظر می‌رسد.</string>
+    <string name="folderpicker_hint_invalid">به پوشه بازی خود بروید، سپس روی «استفاده از این پوشه» ضربه بزنید.</string>
+    <string name="folderpicker_toast_cant_read">خواندن این پوشه ممکن نیست. اگر فهرست‌ها همه‌جا خالی به نظر می‌رسند، ابتدا از صفحه تنظیمات مجوز «دسترسی به همه فایل‌ها» را اعطا کنید.</string>
+
+    <!-- LogViewerActivity -->
+    <string name="logviewer_title">گزارش‌ها</string>
+    <string name="logviewer_button_clear">پاک کردن گزارش‌ها</string>
+    <string name="logviewer_button_copy">کپی</string>
+    <string name="logviewer_button_share">اشتراک‌گذاری</string>
+    <string name="logviewer_toast_copied">در کلیپ‌بورد کپی شد.</string>
+    <string name="logviewer_section_crash_log">=== crash.log (پردازشگر خرابی بومی، حافظه داخلی) ===\n</string>
+    <string name="logviewer_crash_log_absent">(وجود ندارد — از زمان نصب هیچ خرابی بومی ثبت نشده، یا برنامه هرگز فراتر از بارگذاری کتابخانه اجرا نشده است)</string>
+    <string name="logviewer_section_stderr_log">=== generals-stderr.log (گزارش موتور، حافظه خارجی) ===\n</string>
+    <string name="logviewer_stderr_log_absent">(وجود ندارد — تابع main() موتور هنوز شروع نشده، یا حافظه خارجی در دسترس نیست)</string>
+    <string name="logviewer_section_prev_log">=== generals-stderr-prev.log (نشست قبلی) ===\n</string>
+    <string name="logviewer_prev_log_absent">(وجود ندارد)</string>
+    <string name="logviewer_dialog_clear_title">پاک کردن گزارش‌ها</string>
+    <string name="logviewer_dialog_clear_message">فایل‌های گزارش خرابی و گزارش موتور حذف شوند؟ این کار قابل بازگشت نیست.</string>
+    <string name="logviewer_dialog_clear_confirm">پاک کردن</string>
+    <string name="logviewer_dialog_clear_cancel">لغو</string>
+    <string name="logviewer_toast_cleared">گزارش‌ها پاک شدند.</string>
+    <string name="logviewer_share_subject">گزارش GeneralsZH Android</string>
+    <string name="logviewer_share_chooser_title">اشتراک‌گذاری گزارش</string>
+    <string name="logviewer_toast_share_failed">آماده‌سازی فایل گزارش برای اشتراک‌گذاری ممکن نشد: %1$s</string>
+    <string name="logviewer_read_failed">(خواندن %1$s ممکن نشد: %2$s)</string>
+
+    <!-- GeneralsOnlineActivity -->
+    <string name="online_window_title">حساب GeneralsOnline</string>
+    <string name="online_subtitle">برای بازی چندنفره آنلاین وارد شوید (playgenerals.online)</string>
+    <string name="online_button_sign_out">خروج از حساب</string>
+    <string name="online_card_sign_in">ورود</string>
+    <string name="online_signin_help">روی «ورود» ضربه بزنید. ممکن است در اولین ضربه از شما خواسته شود این برنامه را از بهینه‌سازی باتری مستثنی کنید — آن را اجازه دهید، سپس بازگردید و دوباره روی «ورود» ضربه بزنید. سپس مرورگری باز می‌شود که به playgenerals.online می‌رود و از قبل حاوی یک کد یک‌بارمصرف برای این دستگاه است. در آنجا Steam، Discord یا GameReplays را انتخاب کنید و سپس فقط به این برنامه بازگردید؛ فرآیند به‌طور خودکار کامل می‌شود.</string>
+    <string name="online_button_sign_in">ورود</string>
+    <string name="online_status_signing_in">در حال ورود...</string>
+    <string name="online_status_battery_opt">در صفحه بعدی اجازه دهید GeneralsZH در پس‌زمینه اجرا شود، سپس بازگردید و دوباره روی «ورود» ضربه بزنید — در غیر این صورت ممکن است اندروید بررسی ورود را در حالی که در مرورگر هستید متوقف کند.</string>
+    <string name="online_toast_no_browser">هیچ مرورگری در دسترس نیست: %1$s</string>
+    <string name="online_status_continue_browser">در مرورگر خود ادامه دهید — پس از ورود به اینجا بازگردید.</string>
+    <string name="online_status_network_error">خطای شبکه — اتصال خود را بررسی کرده و دوباره تلاش کنید.</string>
+    <string name="online_toast_signed_in_as">واردشده به‌عنوان %1$s</string>
+    <string name="online_status_signin_failed">ورود ناموفق بود یا لغو شد — برای تلاش دوباره روی «ورود» ضربه بزنید.</string>
+    <string name="online_status_timed_out">زمان انتظار به پایان رسید — برای تلاش دوباره روی «ورود» ضربه بزنید.</string>
+    <string name="online_status_unexpected">پاسخ غیرمنتظره — برای تلاش دوباره روی «ورود» ضربه بزنید.</string>
+    <string name="online_toast_signed_out">از حساب خارج شدید.</string>
+    <string name="online_status_signed_in_as">واردشده به‌عنوان %1$s.</string>
+    <string name="online_status_not_signed_in">وارد نشده‌اید.</string>
+    <string name="setup_button_select_base_generals">پوشهٔ بازی پایه Generals…</string>
+    <string name="setup_button_clear_base_generals">پاک کردن پوشهٔ بازی پایه</string>
+    <string name="setup_toast_base_generals_saved">پوشهٔ بازی پایه Generals: %1$s</string>
+    <string name="setup_toast_base_generals_cleared">پوشهٔ بازی پایه پاک شد</string>
+    <string name="setup_base_generals_not_here">در %1$s آرشیو بازی پایه Generals وجود ندارد — پوشه‌ای را انتخاب کنید که Terrain.big و Textures.big و W3D.big در آن باشد.</string>
+    <string name="setup_status_base_generals_line">Generals پایه: %1$s\n</string>
+    <string name="logviewer_crash_prev_log_absent">(موجود نیست)</string>
+    <string name="logviewer_elided_notice">\n...(%1$d نویسه در اینجا حذف شد؛ آغاز نشست در بالا و تازه‌ترین خروجی در پایین نگه داشته شده‌اند)...\n\n</string>
+    <string name="logviewer_section_crash_prev_log">=== crash-prev.log (مدیر خرابی بومی، نشست پیشین) ===\n</string>
+    <string name="logviewer_toast_share_none">هنوز پرونده گزارشی برای هم‌رسانی نیست.</string>
+    <string name="setup_button_dxvk_config_reset">بازگردانی به پیش‌فرض</string>
+    <string name="setup_button_dxvk_config_save">ذخیره</string>
+    <string name="setup_card_dxvk_config">پیکربندی DXVK (dxvk.conf، پیشرفته)</string>
+    <string name="setup_dxvk_config_help">مستقیماً dxvk.conf را ویرایش می‌کند؛ همان پرونده‌ای که موتور بازی هنگام راه‌اندازی می‌خواند — نیازی به ساخت دوباره نیست و از اجرای بعدی اثر می‌کند. تنظیمات سودمند اگر بازی روی دستگاه شما کند است:\n\nd3d9.samplerAnisotropy = 2 (یا 0 برای خاموش کردن) — کمتر از پیش‌فرض ۱۶، بار پردازنده گرافیکی را روی سخت‌افزار ضعیف‌تر کم می‌کند.\ndxvk.hud = fps,drawcalls,submissions,pipelines — یک نمایه کوچک کارایی روی صفحه نشان می‌دهد.\ndxvk.logLevel = none — جز در صورت درخواست، همین بماند؛ سطوح پرجزئیات‌تر بازی را کند می‌کنند.\n\nدر هر خط یک «key = value». DXVK خط نامعتبر را نادیده می‌گیرد، پس یک غلط تایپی بازی را خراب نمی‌کند — در بدترین حالت تغییر شما اثری ندارد.</string>
+    <string name="setup_dxvk_config_no_folder">نخست پوشه بازی را انتخاب کنید (بالا)</string>
+    <string name="setup_toast_dxvk_config_no_default">در این نسخه پرونده dxvk.conf پیش‌فرض همراه یافت نشد.</string>
+    <string name="setup_toast_dxvk_config_reset">به dxvk.conf پیش‌فرض بازگردانده شد.</string>
+    <string name="setup_toast_dxvk_config_saved">ذخیره شد. در اجرای بعدی بازی اثر می‌کند.</string>
+    <string name="setup_toast_storage_permission_denied">برای مرور پوشه بازی به اجازه دسترسی به حافظه نیاز است. دوباره «انتخاب پوشه بازی» را بزنید.</string>
+
+    <!-- Launcher bottom navigation + short render-backend names -->
+    <string name="nav_tab_home">خانه</string>
+    <string name="nav_tab_graphics">گرافیک</string>
+    <string name="nav_tab_interface">رابط</string>
+    <string name="nav_tab_tools">ابزارها</string>
+    <string name="nav_tab_help">راهنما</string>
+    <string name="setup_render_backend_gles_short">GLES</string>
+    <string name="setup_render_backend_gles_angle_short">ANGLE</string>
+    <string name="setup_render_backend_vulkan_short">Vulkan</string>
+</resources>

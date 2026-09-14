@@ -1,0 +1,49 @@
+diff --git a/src/d3d9/d3d9_format.cpp b/src/d3d9/d3d9_format.cpp
+index a3af186..bb65872 100644
+--- a/src/d3d9/d3d9_format.cpp
++++ b/src/d3d9/d3d9_format.cpp
+@@ -38,9 +38,23 @@ namespace dxvk {
+         VK_FORMAT_UNDEFINED,
+         VK_IMAGE_ASPECT_COLOR_BIT };
+ 
++      // GeneralsX @bugfix Android port 30/07/2026 VK_FORMAT_A4R4G4B4_UNORM_PACK16
++      // is core-only since Vulkan 1.3 (VK_EXT_4444_formats backports it to
++      // older versions). Registering that extension wasn't enough on
++      // Mali-G76 (Vulkan 1.1) -- vkGetPhysicalDeviceImageFormatProperties2
++      // still reported the format as unusable for actual image creation
++      // even with the extension present, so CreateTexture kept silently
++      // failing (confirmed via a real Android tombstone: SIGSEGV in
++      // WaterRenderObjClass::init, which locks a surface DXVK never
++      // actually created). Mapping to the same 8-bit BGRA format already
++      // used for A8R8G8B8 sidesteps the whole "does this specific driver's
++      // 4444-format support actually work" question -- it's universally
++      // supported, and the handful of low-res UI/placeholder textures that
++      // use this D3D9 format (fonts, radar, shroud, thumbnails) don't
++      // notice the extra memory.
+       case D3D9Format::A4R4G4B4: return {
+-        VK_FORMAT_A4R4G4B4_UNORM_PACK16,
+-        VK_FORMAT_UNDEFINED,
++        VK_FORMAT_B8G8R8A8_UNORM,
++        VK_FORMAT_B8G8R8A8_SRGB,
+         VK_IMAGE_ASPECT_COLOR_BIT };
+ 
+       case D3D9Format::R3G3B2: return {}; // Unsupported
+@@ -54,10 +68,15 @@ namespace dxvk {
+ 
+       case D3D9Format::A8R3G3B2: return {}; // Unsupported
+ 
++      // GeneralsX @bugfix Android port 30/07/2026 Same fix as A4R4G4B4 above,
++      // same reason (Mali-G76 can't actually create VK_FORMAT_A4R4G4B4_UNORM_PACK16
++      // images). Alpha forced to 1 via swizzle, same pattern as X8R8G8B8.
+       case D3D9Format::X4R4G4B4: return {
+-        VK_FORMAT_A4R4G4B4_UNORM_PACK16,
+-        VK_FORMAT_UNDEFINED,
+-        VK_IMAGE_ASPECT_COLOR_BIT };
++        VK_FORMAT_B8G8R8A8_UNORM,
++        VK_FORMAT_B8G8R8A8_SRGB,
++        VK_IMAGE_ASPECT_COLOR_BIT,
++        { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G,
++          VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_ONE }};
+ 
+       case D3D9Format::A2B10G10R10: return {
+         VK_FORMAT_A2B10G10R10_UNORM_PACK32, // The A2 is out of place here. This should be investigated.

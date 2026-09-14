@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- GeneralsX @feature Codex 14/09/2026 XR identity overrides every locale. -->
+    <string name="app_name">Generals: Zero Hour XR</string>
+    <string name="setup_window_title">Generals: Zero Hour XR 设置</string>
+    <string name="setup_title">Generals: Zero Hour XR</string>
+    <string name="setup_subtitle">Meta Quest 设置</string>
+    <string name="logviewer_share_subject">Generals: Zero Hour XR 日志</string>
+    <string name="online_status_battery_opt">请在下一个界面中允许 Generals: Zero Hour XR 在后台运行，然后返回并再次点击"登录"——否则 Android 可能会在你使用浏览器期间中止登录检查。</string>
+</resources>

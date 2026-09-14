@@ -1,0 +1,623 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 25,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "vc6",
+            "displayName": "Windows 32bit VC6 Release",
+            "generator": "Ninja",
+            "hidden": false,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL",
+                "CMAKE_MSVC_DEBUG_INFORMATION_FORMAT": "",
+                "CMAKE_BUILD_TYPE": "Release",
+                "RTS_FLAGS": "/W3"
+            },
+            "vendor": {
+                "jetbrains.com/clion": {
+                    "toolchain": "Visual Studio 6"
+                }
+            }
+        },
+        {
+            "name": "vc6-profile",
+            "displayName": "Windows 32bit VC6 Profile",
+            "hidden": false,
+            "inherits": "vc6",
+            "cacheVariables": {
+                "RTS_BUILD_OPTION_PROFILE": "ON"
+            }
+        },
+        {
+            "name": "vc6-debug",
+            "displayName": "Windows 32bit VC6 Debug",
+            "hidden": false,
+            "inherits": "vc6",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "RTS_BUILD_OPTION_DEBUG": "ON"
+            }
+        },
+        {
+            "name": "vc6-releaselog",
+            "displayName": "Windows 32bit VC6 Release Logging",
+            "inherits": "vc6",
+            "cacheVariables": {
+                "RTS_DEBUG_LOGGING": "ON",
+                "RTS_DEBUG_CRASHING": "ON"
+            }
+        },
+        {
+            "name": "vc6-weekly",
+            "displayName": "Windows 32bit VC6 Weekly Release",
+            "inherits": "vc6",
+            "cacheVariables": {
+                "RTS_BUILD_OPTION_VC6_FULL_DEBUG": "ON"
+            }
+        },
+        {
+            "name": "default",
+            "displayName": "Default Config (don't use directly!)",
+            "generator": "Ninja Multi-Config",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_MSVC_DEBUG_INFORMATION_FORMAT": "$<$<CONFIG:Release,Debug,RelWithDebInfo>:Embedded>",
+                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+            }
+        },
+        {
+            "name": "default-vcpkg",
+            "displayName": "Default Config for vcpkg (don't use directly!)",
+            "generator": "Ninja Multi-Config",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_MSVC_DEBUG_INFORMATION_FORMAT": "$<$<CONFIG:Release,Debug,RelWithDebInfo>:Embedded>",
+                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets"
+            }
+        },
+        {
+            "name": "win32",
+            "inherits": "default",
+            "hidden": false,
+            "displayName": "Windows 32bit Release",
+            "architecture": {
+                "value": "Win32",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "RTS_FLAGS": "/W3"
+            },
+            "vendor": {
+                "jetbrains.com/clion": {
+                    "toolchain": "Visual Studio"
+                }
+            }
+        },
+        {
+            "name": "win32-profile",
+            "inherits": "win32",
+            "displayName": "Windows 32bit Profile",
+            "cacheVariables": {
+                "RTS_BUILD_OPTION_PROFILE": "ON",
+                "RTS_BUILD_OPTION_PROFILE_TRACY": "ON"
+            }
+        },
+        {
+            "name": "win32-debug",
+            "inherits": "win32",
+            "displayName": "Windows 32bit Debug",
+            "cacheVariables": {
+                "RTS_BUILD_OPTION_DEBUG": "ON"
+            }
+        },
+        {
+            "name": "win32-vcpkg",
+            "inherits": "default-vcpkg",
+            "hidden": false,
+            "displayName": "Windows 32bit VCPKG Release",
+            "architecture": {
+                "value": "Win32",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "RTS_FLAGS": "/W3"
+            },
+            "vendor": {
+                "jetbrains.com/clion": {
+                    "toolchain": "Visual Studio"
+                }
+            }
+        },
+        {
+            "name": "win32-vcpkg-profile",
+            "inherits": "win32-vcpkg",
+            "displayName": "Windows 32bit VCPKG Profile",
+            "cacheVariables": {
+                "RTS_BUILD_OPTION_PROFILE": "ON"
+            }
+        },
+        {
+            "name": "win32-vcpkg-debug",
+            "inherits": "win32-vcpkg",
+            "displayName": "Windows 32bit VCPKG Debug",
+            "cacheVariables": {
+                "RTS_BUILD_OPTION_DEBUG": "ON"
+            }
+        },
+        {
+            "name": "unix",
+            "inherits": "default-vcpkg",
+            "hidden": false,
+            "displayName": "Unix 32bit VCPKG Release"
+        },
+        {
+            "name": "mingw-w64-i686",
+            "displayName": "MinGW-w64 32-bit (i686) Release",
+            "generator": "Unix Makefiles",
+            "hidden": false,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "toolchainFile": "${sourceDir}/cmake/toolchains/mingw-w64-i686.cmake",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "mingw-w64-i686-debug",
+            "displayName": "MinGW-w64 32-bit (i686) Debug",
+            "hidden": false,
+            "inherits": "mingw-w64-i686",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "RTS_BUILD_OPTION_DEBUG": "ON"
+            }
+        },
+        {
+            "name": "mingw-w64-i686-profile",
+            "displayName": "MinGW-w64 32-bit (i686) Profile",
+            "hidden": false,
+            "inherits": "mingw-w64-i686",
+            "cacheVariables": {
+                "RTS_BUILD_OPTION_PROFILE": "ON"
+            }
+        },
+        {
+            "name": "linux64-deploy",
+            "displayName": "Linux 64-bit DXVK/SDL3/OpenAL Release",
+            "inherits": "default-vcpkg",
+            "generator": "Ninja",
+            "hidden": false,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "SAGE_USE_DX8": "OFF",
+                "SAGE_USE_SDL3": "ON",
+                "SAGE_USE_OPENAL": "ON",
+                "SAGE_USE_GLM": "ON",
+                "SAGE_UPDATE_CHECK": "ON",
+                "RTS_CRASHDUMP_ENABLE": "OFF",
+                "RTS_BUILD_OPTION_FFMPEG": "ON"
+            }
+        },
+        {
+            "name": "macos-vulkan",
+            "displayName": "macOS (MoltenVK + SDL3 + OpenAL) arm64 Native",
+            "inherits": "default-vcpkg",
+            "generator": "Ninja",
+            "hidden": false,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_OSX_ARCHITECTURES": "arm64",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "15.0",
+                "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets",
+                "SAGE_USE_DX8": "OFF",
+                "SAGE_USE_SDL3": "ON",
+                "SAGE_USE_OPENAL": "ON",
+                "SAGE_USE_GLM": "ON",
+                "SAGE_USE_MOLTENVK": "ON",
+                "SAGE_UPDATE_CHECK": "ON",
+                "RTS_CRASHDUMP_ENABLE": "OFF",
+                "RTS_BUILD_OPTION_FFMPEG": "ON",
+                "RTS_BUILD_OPTION_SAGE_PATCH": "ON"
+            },
+            "environment": {
+                "PKG_CONFIG_PATH": "/opt/homebrew/lib/pkgconfig"
+            },
+            "description": "Phase 5 macOS port: arm64 native (Apple Silicon) with MoltenVK for graphics, SDL3 for windowing, OpenAL for audio. Universal binary deferred until all dylib deps have fat versions."
+        },
+        {
+            "name": "ios-vulkan",
+            "displayName": "iOS (MoltenVK + SDL3 + OpenAL) arm64 Device",
+            "inherits": "default-vcpkg",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "description": "iOS port: arm64 device build with MoltenVK (static, from $VULKAN_SDK) for graphics, SDL3 for windowing/touch, OpenAL for audio, FFmpeg (vcpkg) for video. Requires the LunarG Vulkan SDK with the iOS MoltenVK xcframework; export VULKAN_SDK=$HOME/VulkanSDK/<version>/macOS.",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_SYSTEM_NAME": "iOS",
+                "CMAKE_OSX_ARCHITECTURES": "arm64",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "16.0",
+                "CMAKE_OSX_SYSROOT": "iphoneos",
+                "VCPKG_TARGET_TRIPLET": "arm64-ios",
+                "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets",
+                "SAGE_USE_DX8": "OFF",
+                "SAGE_USE_SDL3": "ON",
+                "SAGE_USE_OPENAL": "ON",
+                "SAGE_USE_GLM": "ON",
+                "SAGE_USE_MOLTENVK": "ON",
+                "SAGE_DXVK_USE_LOCAL_FORK": "ON",
+                "SAGE_UPDATE_CHECK": "OFF",
+                "RTS_CRASHDUMP_ENABLE": "OFF",
+                "RTS_BUILD_OPTION_FFMPEG": "ON",
+                "RTS_BUILD_OPTION_SAGE_PATCH": "OFF",
+                "RTS_BUILD_GENERALS": "OFF",
+                "RTS_BUILD_CORE_TOOLS": "OFF",
+                "RTS_BUILD_ZEROHOUR_TOOLS": "OFF",
+                "RTS_BUILD_ZEROHOUR_EXTRAS": "OFF",
+                "Vulkan_INCLUDE_DIR": "$env{VULKAN_SDK}/include",
+                "Vulkan_LIBRARY": "$env{VULKAN_SDK}/lib/MoltenVK.xcframework/ios-arm64/libMoltenVK.a",
+                "Vulkan_MoltenVK_LIBRARY": "$env{VULKAN_SDK}/lib/MoltenVK.xcframework/ios-arm64/libMoltenVK.a",
+                "Vulkan_MoltenVK_INCLUDE_DIR": "$env{VULKAN_SDK}/include"
+            },
+            "environment": {
+                "PKG_CONFIG_PATH": ""
+            }
+        },
+        {
+            "name": "android-vulkan",
+            "displayName": "Android (Vulkan + SDL3 + OpenAL) arm64-v8a Device",
+            "inherits": "default-vcpkg",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "description": "Android port: arm64-v8a build with native Vulkan for graphics (DXVK d3d8, no MoltenVK needed), SDL3 for windowing/touch, OpenAL for audio (OpenSL/AAudio backends), FFmpeg (vcpkg) for video. Requires the Android NDK (r26+); export ANDROID_NDK_HOME=<ndk dir>. The game builds as libmain.so, loaded by the SDLActivity shell in android/. RTS_GAMEMEMORY_ENABLE is OFF: the engine's custom pool allocator intercepts global operator delete process-wide, and freeing memory that OpenAL/libc++ allocated through the system allocator via that pool corrupts its bookkeeping (same class of bug the ASAN build config disables it for) -- plain malloc/free is used instead.",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "VCPKG_TARGET_TRIPLET": "arm64-android",
+                "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/cmake/vcpkg-ports",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake",
+                "ANDROID_ABI": "arm64-v8a",
+                "ANDROID_PLATFORM": "android-28",
+                "ANDROID_STL": "c++_shared",
+                "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
+                "SAGE_USE_DX8": "OFF",
+                "SAGE_USE_SDL3": "ON",
+                "SAGE_USE_OPENAL": "ON",
+                "SAGE_USE_GLM": "ON",
+                "SAGE_USE_MOLTENVK": "OFF",
+                "SAGE_DXVK_USE_LOCAL_FORK": "ON",
+                "SAGE_UPDATE_CHECK": "OFF",
+                "RTS_CRASHDUMP_ENABLE": "OFF",
+                "RTS_BUILD_OPTION_FFMPEG": "ON",
+                "RTS_BUILD_OPTION_SAGE_PATCH": "OFF",
+                "RTS_BUILD_GENERALS": "OFF",
+                "RTS_BUILD_CORE_TOOLS": "OFF",
+                "RTS_BUILD_ZEROHOUR_TOOLS": "OFF",
+                "RTS_BUILD_ZEROHOUR_EXTRAS": "OFF",
+                "RTS_GAMEMEMORY_ENABLE": "OFF"
+            },
+            "environment": {
+                "PKG_CONFIG_PATH": ""
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "vc6",
+            "configurePreset": "vc6",
+            "displayName": "Build Windows 32bit VC6 Release",
+            "description": "Build Windows 32bit VC6 Release"
+        },
+        {
+            "name": "vc6-profile",
+            "configurePreset": "vc6-profile",
+            "displayName": "Build Windows 32bit VC6 Profile",
+            "description": "Build Windows 32bit VC6 Profile"
+        },
+        {
+            "name": "vc6-debug",
+            "configurePreset": "vc6-debug",
+            "displayName": "Build Windows 32bit VC6 Debug",
+            "description": "Build Windows 32bit VC6 Debug"
+        },
+        {
+            "name": "vc6-releaselog",
+            "configurePreset": "vc6-releaselog",
+            "displayName": "Build Windows 32bit VC6 Release Logging",
+            "description": "Build Windows 32bit VC6 Release Logging"
+        },
+        {
+            "name": "vc6-weekly",
+            "configurePreset": "vc6-weekly",
+            "displayName": "Build Windows 32bit VC6 Weekly Release",
+            "description": "Build Windows 32bit VC6 Weekly Release"
+        },
+        {
+            "name": "win32",
+            "configurePreset": "win32",
+            "displayName": "Build Windows 32bit Release",
+            "description": "Build Windows 32bit Release",
+            "configuration": "Release"
+        },
+        {
+            "name": "win32-profile",
+            "configurePreset": "win32-profile",
+            "displayName": "Build Windows 32bit Profile",
+            "description": "Build Windows 32bit Profile",
+            "configuration": "Release"
+        },
+        {
+            "name": "win32-debug",
+            "configurePreset": "win32-debug",
+            "displayName": "Build Windows 32bit Debug",
+            "description": "Build Windows 32bit Debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "win32-vcpkg",
+            "configurePreset": "win32-vcpkg",
+            "displayName": "Build Windows 32bit VCPKG Release",
+            "description": "Build Windows 32bit VCPKG Release",
+            "configuration": "Release"
+        },
+        {
+            "name": "win32-vcpkg-profile",
+            "configurePreset": "win32-vcpkg-profile",
+            "displayName": "Build Windows 32bit VCPKG Profile",
+            "description": "Build Windows 32bit VCPKG Profile",
+            "configuration": "Release"
+        },
+        {
+            "name": "win32-vcpkg-debug",
+            "configurePreset": "win32-vcpkg-debug",
+            "displayName": "Build Windows 32bit VCPKG Debug",
+            "description": "Build Windows 32bit VCPKG Debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "unix",
+            "configurePreset": "unix",
+            "displayName": "Build Unix 32bit VCPKG Release",
+            "description": "Build Unix 32bit VCPKG Release",
+            "configuration": "Release"
+        },
+        {
+            "name": "mingw-w64-i686",
+            "configurePreset": "mingw-w64-i686",
+            "displayName": "Build MinGW-w64 32-bit (i686) Release",
+            "description": "Build MinGW-w64 32-bit (i686) Release"
+        },
+        {
+            "name": "mingw-w64-i686-debug",
+            "configurePreset": "mingw-w64-i686-debug",
+            "displayName": "Build MinGW-w64 32-bit (i686) Debug",
+            "description": "Build MinGW-w64 32-bit (i686) Debug"
+        },
+        {
+            "name": "mingw-w64-i686-profile",
+            "configurePreset": "mingw-w64-i686-profile",
+            "displayName": "Build MinGW-w64 32-bit (i686) Profile",
+            "description": "Build MinGW-w64 32-bit (i686) Profile"
+        },
+        {
+            "name": "linux64-deploy",
+            "configurePreset": "linux64-deploy",
+            "displayName": "Build Linux 64-bit DXVK/SDL3/OpenAL Release",
+            "description": "Build Linux 64-bit with DXVK graphics, SDL3 windowing, and OpenAL audio"
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "vc6",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "vc6"
+                },
+                {
+                    "type": "build",
+                    "name": "vc6"
+                }
+            ]
+        },
+        {
+            "name": "vc6-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "vc6-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "vc6-debug"
+                }
+            ]
+        },
+        {
+            "name": "vc6-profile",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "vc6-profile"
+                },
+                {
+                    "type": "build",
+                    "name": "vc6-profile"
+                }
+            ]
+        },
+        {
+            "name": "vc6-releaselog",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "vc6-releaselog"
+                },
+                {
+                    "type": "build",
+                    "name": "vc6-releaselog"
+                }
+            ]
+        },
+        {
+            "name": "vc6-weekly",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "vc6-weekly"
+                },
+                {
+                    "type": "build",
+                    "name": "vc6-weekly"
+                }
+            ]
+        },
+        {
+            "name": "win32",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "win32"
+                },
+                {
+                    "type": "build",
+                    "name": "win32"
+                }
+            ]
+        },
+        {
+            "name": "win32-profile",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "win32-profile"
+                },
+                {
+                    "type": "build",
+                    "name": "win32-profile"
+                }
+            ]
+        },
+        {
+            "name": "win32-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "win32-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "win32-debug"
+                }
+            ]
+        },
+        {
+            "name": "win32-vcpkg",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "win32-vcpkg"
+                },
+                {
+                    "type": "build",
+                    "name": "win32-vcpkg"
+                }
+            ]
+        },
+        {
+            "name": "win32-vcpkg-profile",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "win32-vcpkg-profile"
+                },
+                {
+                    "type": "build",
+                    "name": "win32-vcpkg-profile"
+                }
+            ]
+        },
+        {
+            "name": "win32-vcpkg-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "win32-vcpkg-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "win32-vcpkg-debug"
+                }
+            ]
+        },
+        {
+            "name": "unix",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "unix"
+                },
+                {
+                    "type": "build",
+                    "name": "unix"
+                }
+            ]
+        },
+        {
+            "name": "mingw-w64-i686",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "mingw-w64-i686"
+                },
+                {
+                    "type": "build",
+                    "name": "mingw-w64-i686"
+                }
+            ]
+        },
+        {
+            "name": "mingw-w64-i686-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "mingw-w64-i686-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "mingw-w64-i686-debug"
+                }
+            ]
+        },
+        {
+            "name": "mingw-w64-i686-profile",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "mingw-w64-i686-profile"
+                },
+                {
+                    "type": "build",
+                    "name": "mingw-w64-i686-profile"
+                }
+            ]
+        }
+    ]
+}

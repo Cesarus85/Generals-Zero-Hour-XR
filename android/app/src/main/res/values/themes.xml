@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- GeneralsX @feature Android port launcher-ui-2026 08/09/2026 The
+         launcher's Material 3 theme, applied per-Activity in
+         AndroidManifest.xml (Setup / Folder Picker / Log Viewer /
+         GeneralsOnline). The application-level Theme.NoTitleBar.Fullscreen
+         stays the default for GeneralsZHActivity (the game surface), which
+         must never pick any of this up.
+
+         Deliberately Theme.Material3.Dark rather than .DayNight: this
+         launcher has always drawn on a dark ground, its accent palette is
+         designed for one, and committing to it means the contrast of every
+         colour pair below can be reasoned about once instead of twice. -->
+    <style name="Theme.GeneralsZHSettings" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- M3 colour roles -->
+        <item name="colorPrimary">@color/gzh_primary</item>
+        <item name="colorOnPrimary">@color/gzh_on_primary</item>
+        <item name="colorPrimaryContainer">@color/gzh_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/gzh_on_primary_container</item>
+        <item name="colorSecondary">@color/gzh_secondary</item>
+        <item name="colorOnSecondary">@color/gzh_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/gzh_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/gzh_on_secondary_container</item>
+        <item name="colorTertiary">@color/gzh_tertiary</item>
+        <item name="colorOnTertiary">@color/gzh_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/gzh_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/gzh_on_tertiary_container</item>
+        <item name="colorError">@color/gzh_error</item>
+        <item name="colorOnError">@color/gzh_on_error</item>
+        <item name="colorErrorContainer">@color/gzh_error_container</item>
+        <item name="colorOnErrorContainer">@color/gzh_on_error_container</item>
+        <item name="colorSurface">@color/gzh_surface</item>
+        <item name="colorOnSurface">@color/gzh_on_surface</item>
+        <item name="colorSurfaceVariant">@color/gzh_surface_container_high</item>
+        <item name="colorOnSurfaceVariant">@color/gzh_on_surface_variant</item>
+        <item name="colorOutline">@color/gzh_outline</item>
+        <item name="android:colorBackground">@color/gzh_background</item>
+        <item name="colorOnBackground">@color/gzh_on_surface</item>
+
+        <!-- Framework slots the plain android.* widgets (AlertDialog, Toast
+             anchors, ListView, EditText) still read. -->
+        <item name="colorPrimaryDark">@color/gzh_primary_dark</item>
+        <item name="colorAccent">@color/gzh_accent</item>
+        <item name="android:windowBackground">@color/gzh_background</item>
+        <item name="android:textColorPrimary">@color/gzh_on_surface</item>
+        <item name="android:textColorSecondary">@color/gzh_on_surface_variant</item>
+        <item name="android:textColorTertiary">@color/gzh_on_surface_faint</item>
+        <item name="android:textColorHint">@color/gzh_on_surface_faint</item>
+        <item name="android:textColorHighlight">@color/gzh_primary_container</item>
+
+        <!-- Edge-to-edge: targetSdk 35 draws behind the bars anyway, and
+             InsetUtil.applySafeInsets() pads the content out from under
+             them. Painting the bars transparent lets the page colour run
+             all the way to the physical edges instead of banding. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+
+        <!-- Material's own dialogs/alerts follow the same palette. -->
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.GeneralsZH.Dialog</item>
+        <item name="android:alertDialogTheme">@style/Theme.GeneralsZH.AlertDialog</item>
+    </style>
+
+    <style name="ThemeOverlay.GeneralsZH.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurface">@color/gzh_surface_container_high</item>
+        <item name="colorPrimary">@color/gzh_primary</item>
+        <item name="android:textColorPrimary">@color/gzh_on_surface</item>
+        <item name="android:textColorSecondary">@color/gzh_on_surface_variant</item>
+    </style>
+
+    <!-- SetupActivity/LogViewerActivity still build a couple of plain
+         android.app.AlertDialogs (single-choice language / render-backend
+         pickers, "clear logs?"). Give those the same ground and text
+         colours so they don't flash a light-grey Holo box on a near-black
+         screen. -->
+    <style name="Theme.GeneralsZH.AlertDialog" parent="android:Theme.Material.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/gzh_dialog_background</item>
+        <item name="android:colorAccent">@color/gzh_primary</item>
+        <item name="android:textColorPrimary">@color/gzh_on_surface</item>
+        <item name="android:textColorSecondary">@color/gzh_on_surface_variant</item>
+        <item name="android:textColorAlertDialogListItem">@color/gzh_on_surface</item>
+    </style>
+
+    <!-- Applied with a ContextThemeWrapper where an outlined text field is
+         wanted: TextInputLayout resolves its style from ?attr/textInputStyle,
+         so swapping that attribute is the way to pick OutlinedBox for a
+         view built in code rather than inflated from XML. -->
+    <style name="ThemeOverlay.GeneralsZH.OutlinedField" parent="">
+        <item name="textInputStyle">@style/Widget.Material3.TextInputLayout.OutlinedBox</item>
+    </style>
+</resources>

@@ -1,0 +1,84 @@
+diff --git a/src/d3d9/d3d9_device.cpp b/src/d3d9/d3d9_device.cpp
+index 4313f6a..c98275f 100644
+--- a/src/d3d9/d3d9_device.cpp
++++ b/src/d3d9/d3d9_device.cpp
+@@ -4547,8 +4547,16 @@ namespace dxvk {
+     enabled.core.features.pipelineStatisticsQuery = supported.core.features.pipelineStatisticsQuery;
+     enabled.core.features.sampleRateShading = VK_TRUE;
+     enabled.core.features.samplerAnisotropy = supported.core.features.samplerAnisotropy;
+-    enabled.core.features.shaderClipDistance = VK_TRUE;
+-    enabled.core.features.shaderCullDistance = VK_TRUE;
++    // GeneralsX @bugfix Android port 30/07/2026 These were unconditional
++    // VK_TRUE regardless of what the physical device actually reports --
++    // true on every desktop GPU and Adreno, but not on all mobile GPUs
++    // (Mali G57 lacks shaderClipDistance). Requesting an unsupported
++    // feature at device creation, then having the DXSO compiler declare
++    // the matching SPIR-V capability unconditionally (dxso_compiler.cpp,
++    // gated on DxsoOptions::supportsClipDistance now), produced
++    // VUID-VkShaderModuleCreateInfo-pCode-08740 on every vertex shader.
++    enabled.core.features.shaderClipDistance = supported.core.features.shaderClipDistance;
++    enabled.core.features.shaderCullDistance = supported.core.features.shaderCullDistance;
+ 
+     // Ensure we support real BC formats and unofficial vendor ones.
+     enabled.core.features.textureCompressionBC = VK_TRUE;
+diff --git a/src/dxso/dxso_compiler.cpp b/src/dxso/dxso_compiler.cpp
+index d4df654..dfaeeb2 100644
+--- a/src/dxso/dxso_compiler.cpp
++++ b/src/dxso/dxso_compiler.cpp
+@@ -451,7 +451,8 @@ namespace dxvk {
+ 
+ 
+   void DxsoCompiler::emitVsInit() {
+-    m_module.enableCapability(spv::CapabilityClipDistance);
++    if (m_moduleInfo.options.supportsClipDistance)
++      m_module.enableCapability(spv::CapabilityClipDistance);
+ 
+     // Only VS needs this, because PS has
+     // non-indexable specialized output regs
+@@ -3679,7 +3680,8 @@ void DxsoCompiler::emitControlFlowGenericLoop(
+       m_vs.functionId, 0, nullptr);
+     this->emitLinkerOutputSetup();
+ 
+-    this->emitVsClipping();
++    if (m_moduleInfo.options.supportsClipDistance)
++      this->emitVsClipping();
+ 
+     this->emitFunctionEnd();
+   }
+diff --git a/src/dxso/dxso_options.cpp b/src/dxso/dxso_options.cpp
+index 28400af..24ba92e 100644
+--- a/src/dxso/dxso_options.cpp
++++ b/src/dxso/dxso_options.cpp
+@@ -30,6 +30,8 @@ namespace dxvk {
+     robustness2Supported = devFeatures.extRobustness2.robustBufferAccess2;
+ 
+     drefScaling         = options.drefScaling;
++
++    supportsClipDistance = devFeatures.core.features.shaderClipDistance;
+   }
+ 
+ }
+\ No newline at end of file
+diff --git a/src/dxso/dxso_options.h b/src/dxso/dxso_options.h
+index 132b99a..1e390e5 100644
+--- a/src/dxso/dxso_options.h
++++ b/src/dxso/dxso_options.h
+@@ -47,6 +47,17 @@ namespace dxvk {
+     /// that expect a different depth test range, which was typically a D3D8 quirk on
+     /// early NVIDIA hardware.
+     int32_t drefScaling = 0;
++
++    /// GeneralsX @bugfix Android port 30/07/2026 Whether the device actually
++    /// supports VkPhysicalDeviceFeatures::shaderClipDistance. D3D9's vertex
++    /// shader output signature always reserves clip-plane output slots
++    /// regardless of whether a given shader/game uses them, so emitVsInit()
++    /// unconditionally declared SPIR-V's ClipDistance capability -- true on
++    /// every desktop GPU and Adreno, but not universal on mobile (Mali G57:
++    /// VUID-VkShaderModuleCreateInfo-pCode-08740, "Capability ClipDistance
++    /// was declared, but ... shaderClipDistance" is required). Gate emission
++    /// on this instead of assuming it's always available.
++    bool supportsClipDistance;
+   };
+ 
+ }
+\ No newline at end of file

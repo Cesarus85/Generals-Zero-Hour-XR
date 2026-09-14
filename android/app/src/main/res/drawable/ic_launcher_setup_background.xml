@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Distinct background color from the game's ic_launcher_background (army
+     green) so the two launcher icons are never confusable at a glance, even
+     before reading either label. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#26313D" />
+</shape>

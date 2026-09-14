@@ -1,0 +1,279 @@
+diff --git a/src/dxvk/dxvk_cmdlist.cpp b/src/dxvk/dxvk_cmdlist.cpp
+index 4af4f02..28e6b35 100644
+--- a/src/dxvk/dxvk_cmdlist.cpp
++++ b/src/dxvk/dxvk_cmdlist.cpp
+@@ -79,8 +79,62 @@ namespace dxvk {
+ 
+     VkResult vr = VK_SUCCESS;
+ 
+-    if (!this->isEmpty())
+-      vr = vk->vkQueueSubmit2(queue, 1, &submitInfo, VK_NULL_HANDLE);
++    if (!this->isEmpty()) {
++      if (likely(device->features().vk13.synchronization2)) {
++        vr = vk->vkQueueSubmit2(queue, 1, &submitInfo, VK_NULL_HANDLE);
++      } else {
++        // See convertStageMask2 (dxvk_cmdlist.h) for why this path exists:
++        // no VK_KHR_synchronization2 on this device, so vkQueueSubmit2/2KHR
++        // both resolved to nullptr. Every wait/signal here is already a
++        // timeline-semaphore submission (DxvkCommandSubmission always sets
++        // .value), and VK_KHR_timeline_semaphore is a separate extension
++        // this device does have (confirmed working), so the legacy
++        // VkSubmitInfo + VkTimelineSemaphoreSubmitInfo combination is a
++        // faithful translation, not a reduced-functionality fallback.
++        std::vector<VkSemaphore> waitSemaphores;
++        std::vector<VkPipelineStageFlags> waitStages;
++        std::vector<uint64_t> waitValues;
++
++        // small_vector (util_small_vector.h) only exposes size()/operator[],
++        // no begin()/end() -- index-based loops instead of range-for.
++        for (size_t i = 0; i < m_semaphoreWaits.size(); i++) {
++          const auto& s = m_semaphoreWaits[i];
++          waitSemaphores.push_back(s.semaphore);
++          waitStages.push_back(convertStageMask2(s.stageMask));
++          waitValues.push_back(s.value);
++        }
++
++        std::vector<VkSemaphore> signalSemaphores;
++        std::vector<uint64_t> signalValues;
++
++        for (size_t i = 0; i < m_semaphoreSignals.size(); i++) {
++          const auto& s = m_semaphoreSignals[i];
++          signalSemaphores.push_back(s.semaphore);
++          signalValues.push_back(s.value);
++        }
++
++        std::vector<VkCommandBuffer> commandBuffers;
++        for (size_t i = 0; i < m_commandBuffers.size(); i++)
++          commandBuffers.push_back(m_commandBuffers[i].commandBuffer);
++
++        VkTimelineSemaphoreSubmitInfo timelineInfo = { VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO };
++        timelineInfo.waitSemaphoreValueCount = waitValues.size();
++        timelineInfo.pWaitSemaphoreValues = waitValues.data();
++        timelineInfo.signalSemaphoreValueCount = signalValues.size();
++        timelineInfo.pSignalSemaphoreValues = signalValues.data();
++
++        VkSubmitInfo legacySubmitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO, &timelineInfo };
++        legacySubmitInfo.waitSemaphoreCount = waitSemaphores.size();
++        legacySubmitInfo.pWaitSemaphores = waitSemaphores.data();
++        legacySubmitInfo.pWaitDstStageMask = waitStages.data();
++        legacySubmitInfo.commandBufferCount = commandBuffers.size();
++        legacySubmitInfo.pCommandBuffers = commandBuffers.data();
++        legacySubmitInfo.signalSemaphoreCount = signalSemaphores.size();
++        legacySubmitInfo.pSignalSemaphores = signalSemaphores.data();
++
++        vr = vk->vkQueueSubmit(queue, 1, &legacySubmitInfo, VK_NULL_HANDLE);
++      }
++    }
+ 
+     this->reset();
+     return vr;
+@@ -222,7 +276,14 @@ namespace dxvk {
+   DxvkCommandList::DxvkCommandList(DxvkDevice* device)
+   : m_device        (device),
+     m_vkd           (device->vkd()),
+-    m_vki           (device->vki()) {
++    m_vki           (device->vki()),
++    // GeneralsX @bugfix Android port 30/07/2026 Cached here, not read via
++    // m_device->features() directly from cmdPipelineBarrier/cmdSetEvent,
++    // because those are inline methods defined in dxvk_cmdlist.h, which
++    // only forward-declares DxvkDevice -- calling a method on it there
++    // fails to compile (incomplete type). The constructor is defined here
++    // in the .cpp, which does have the full DxvkDevice definition.
++    m_hasSync2      (device->features().vk13.synchronization2) {
+     const auto& graphicsQueue = m_device->queues().graphics;
+     const auto& transferQueue = m_device->queues().transfer;
+ 
+diff --git a/src/dxvk/dxvk_cmdlist.h b/src/dxvk/dxvk_cmdlist.h
+index 6d99b81..fe86618 100644
+--- a/src/dxvk/dxvk_cmdlist.h
++++ b/src/dxvk/dxvk_cmdlist.h
+@@ -17,7 +17,88 @@
+ #include "dxvk_stats.h"
+ 
+ namespace dxvk {
+-  
++
++  // GeneralsX @bugfix Android port 30/07/2026 VK_KHR_synchronization2
++  // fallback: DXVK 2.x's whole barrier/submission model is built on
++  // VkDependencyInfo/VkPipelineStageFlags2/VkAccessFlags2 (vkCmdPipelineBarrier2,
++  // vkCmdSetEvent2, vkQueueSubmit2), which VULKAN_FN_FALLBACK only resolves via
++  // the Vulkan 1.3 core name OR the VK_KHR_synchronization2 extension name.
++  // Real-device testing (Mali-G76 MC4, Bifrost) found a driver with neither --
++  // apiVersion 1.1 and no VK_KHR_synchronization2 at all -- so every one of
++  // those function pointers stayed null and the first barrier flush after
++  // device creation crashed with a null-pointer-call SIGSEGV (confirmed via a
++  // real Android tombstone: `Cause: null pointer dereference`, `pc 0x0`, on
++  // the dxvk-cs thread, in DxvkBarrierBatch::flush -> cmdPipelineBarrier).
++  //
++  // These two convert the 64-bit sync2 stage/access flags down to their
++  // legacy 32-bit equivalents so cmdPipelineBarrier/cmdSetEvent/queue
++  // submission can fall back to plain vkCmdPipelineBarrier/vkCmdSetEvent/
++  // vkQueueSubmit (all core 1.0, always available) when synchronization2
++  // isn't. Every stage/access bit that predates sync2 is spec-guaranteed to
++  // keep the identical numeric value in both enums, so a straight mask+cast
++  // handles those; only the handful of genuinely new sync2-only bits (finer
++  // subdivisions of pre-existing stages/access types) need an explicit
++  // fold-back to their nearest legacy superset. Any high bit (>31, can't
++  // exist in the 32-bit legacy type at all) that isn't one of those known
++  // cases falls back to the broadest possible legacy stage/access bit
++  // instead of being silently dropped -- always safe (over-synchronizing is
++  // a perf cost, never a correctness bug), unlike losing a bit entirely.
++  inline VkPipelineStageFlags convertStageMask2(VkPipelineStageFlags2 flags2) {
++    if (!flags2)
++      return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
++
++    VkPipelineStageFlags legacy = 0;
++
++    if (flags2 & (VK_PIPELINE_STAGE_2_COPY_BIT | VK_PIPELINE_STAGE_2_RESOLVE_BIT
++                | VK_PIPELINE_STAGE_2_BLIT_BIT | VK_PIPELINE_STAGE_2_CLEAR_BIT))
++      legacy |= VK_PIPELINE_STAGE_TRANSFER_BIT;
++
++    if (flags2 & (VK_PIPELINE_STAGE_2_INDEX_INPUT_BIT | VK_PIPELINE_STAGE_2_VERTEX_ATTRIBUTE_INPUT_BIT))
++      legacy |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
++
++    if (flags2 & VK_PIPELINE_STAGE_2_PRE_RASTERIZATION_SHADERS_BIT) {
++      legacy |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
++              | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
++              | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT
++              | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
++    }
++
++    constexpr VkPipelineStageFlags2 handled =
++      VK_PIPELINE_STAGE_2_COPY_BIT | VK_PIPELINE_STAGE_2_RESOLVE_BIT
++    | VK_PIPELINE_STAGE_2_BLIT_BIT | VK_PIPELINE_STAGE_2_CLEAR_BIT
++    | VK_PIPELINE_STAGE_2_INDEX_INPUT_BIT | VK_PIPELINE_STAGE_2_VERTEX_ATTRIBUTE_INPUT_BIT
++    | VK_PIPELINE_STAGE_2_PRE_RASTERIZATION_SHADERS_BIT;
++
++    VkPipelineStageFlags2 remainder = flags2 & ~handled;
++
++    if (remainder & ~VkPipelineStageFlags2(0xFFFFFFFFu))
++      legacy |= VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
++
++    legacy |= VkPipelineStageFlags(remainder & 0xFFFFFFFFu);
++    return legacy;
++  }
++
++  inline VkAccessFlags convertAccessMask2(VkAccessFlags2 flags2) {
++    VkAccessFlags legacy = 0;
++
++    if (flags2 & (VK_ACCESS_2_SHADER_SAMPLED_READ_BIT | VK_ACCESS_2_SHADER_STORAGE_READ_BIT))
++      legacy |= VK_ACCESS_SHADER_READ_BIT;
++    if (flags2 & VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT)
++      legacy |= VK_ACCESS_SHADER_WRITE_BIT;
++
++    constexpr VkAccessFlags2 handled =
++      VK_ACCESS_2_SHADER_SAMPLED_READ_BIT | VK_ACCESS_2_SHADER_STORAGE_READ_BIT
++    | VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT;
++
++    VkAccessFlags2 remainder = flags2 & ~handled;
++
++    if (remainder & ~VkAccessFlags2(0xFFFFFFFFu))
++      legacy |= VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
++
++    legacy |= VkAccessFlags(remainder & 0xFFFFFFFFu);
++    return legacy;
++  }
++
+   /**
+    * \brief Timeline semaphore pair
+    *
+@@ -868,7 +949,56 @@ namespace dxvk {
+       m_cmd.execCommands |= cmdBuffer == DxvkCmdBuffer::ExecBuffer;
+       m_statCounters.addCtr(DxvkStatCounter::CmdBarrierCount, 1);
+ 
+-      m_vkd->vkCmdPipelineBarrier2(getCmdBuffer(cmdBuffer), dependencyInfo);
++      if (likely(m_hasSync2)) {
++        m_vkd->vkCmdPipelineBarrier2(getCmdBuffer(cmdBuffer), dependencyInfo);
++        return;
++      }
++
++      // See convertStageMask2/convertAccessMask2 above for why this path
++      // exists at all: no VK_KHR_synchronization2 on this device, so
++      // vkCmdPipelineBarrier2/2KHR both resolved to nullptr.
++      VkPipelineStageFlags srcStageMask = 0;
++      VkPipelineStageFlags dstStageMask = 0;
++
++      std::vector<VkMemoryBarrier> memoryBarriers;
++      std::vector<VkImageMemoryBarrier> imageBarriers;
++
++      for (uint32_t i = 0; i < dependencyInfo->memoryBarrierCount; i++) {
++        const auto& b = dependencyInfo->pMemoryBarriers[i];
++        srcStageMask |= convertStageMask2(b.srcStageMask);
++        dstStageMask |= convertStageMask2(b.dstStageMask);
++
++        VkMemoryBarrier legacy = { VK_STRUCTURE_TYPE_MEMORY_BARRIER };
++        legacy.srcAccessMask = convertAccessMask2(b.srcAccessMask);
++        legacy.dstAccessMask = convertAccessMask2(b.dstAccessMask);
++        memoryBarriers.push_back(legacy);
++      }
++
++      for (uint32_t i = 0; i < dependencyInfo->imageMemoryBarrierCount; i++) {
++        const auto& b = dependencyInfo->pImageMemoryBarriers[i];
++        srcStageMask |= convertStageMask2(b.srcStageMask);
++        dstStageMask |= convertStageMask2(b.dstStageMask);
++
++        VkImageMemoryBarrier legacy = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
++        legacy.srcAccessMask = convertAccessMask2(b.srcAccessMask);
++        legacy.dstAccessMask = convertAccessMask2(b.dstAccessMask);
++        legacy.oldLayout = b.oldLayout;
++        legacy.newLayout = b.newLayout;
++        legacy.srcQueueFamilyIndex = b.srcQueueFamilyIndex;
++        legacy.dstQueueFamilyIndex = b.dstQueueFamilyIndex;
++        legacy.image = b.image;
++        legacy.subresourceRange = b.subresourceRange;
++        imageBarriers.push_back(legacy);
++      }
++
++      if (!srcStageMask) srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
++      if (!dstStageMask) dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
++
++      m_vkd->vkCmdPipelineBarrier(getCmdBuffer(cmdBuffer),
++        srcStageMask, dstStageMask, dependencyInfo->dependencyFlags,
++        memoryBarriers.size(), memoryBarriers.data(),
++        0, nullptr,
++        imageBarriers.size(), imageBarriers.data());
+     }
+     
+     
+@@ -994,7 +1124,26 @@ namespace dxvk {
+       const VkDependencyInfo*       dependencyInfo) {
+       m_cmd.execCommands = true;
+ 
+-      m_vkd->vkCmdSetEvent2(getCmdBuffer(), event, dependencyInfo);
++      if (likely(m_hasSync2)) {
++        m_vkd->vkCmdSetEvent2(getCmdBuffer(), event, dependencyInfo);
++        return;
++      }
++
++      // Same synchronization2-less fallback as cmdPipelineBarrier above.
++      // Legacy vkCmdSetEvent only takes a single aggregate stage mask (no
++      // access masks, no per-barrier granularity), so aggregate every
++      // barrier's srcStageMask into one -- over-synchronizing here is safe.
++      VkPipelineStageFlags stageMask = 0;
++
++      for (uint32_t i = 0; i < dependencyInfo->memoryBarrierCount; i++)
++        stageMask |= convertStageMask2(dependencyInfo->pMemoryBarriers[i].srcStageMask);
++      for (uint32_t i = 0; i < dependencyInfo->imageMemoryBarrierCount; i++)
++        stageMask |= convertStageMask2(dependencyInfo->pImageMemoryBarriers[i].srcStageMask);
++
++      if (!stageMask)
++        stageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
++
++      m_vkd->vkCmdSetEvent(getCmdBuffer(), event, stageMask);
+     }
+ 
+ 
+@@ -1169,7 +1318,12 @@ namespace dxvk {
+     DxvkDevice*               m_device;
+     Rc<vk::DeviceFn>          m_vkd;
+     Rc<vk::InstanceFn>        m_vki;
+-    
++
++    // GeneralsX @bugfix Android port 30/07/2026 See the constructor
++    // (dxvk_cmdlist.cpp) for why this is cached instead of read via
++    // m_device->features() from the inline methods below.
++    bool                      m_hasSync2;
++
+     Rc<DxvkCommandPool>       m_graphicsPool;
+     Rc<DxvkCommandPool>       m_transferPool;
+ 

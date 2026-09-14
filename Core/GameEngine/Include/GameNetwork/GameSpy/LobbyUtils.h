@@ -1,0 +1,64 @@
+/*
+**	Command & Conquer Generals Zero Hour(tm)
+**	Copyright 2025 Electronic Arts Inc.
+**
+**	This program is free software: you can redistribute it and/or modify
+**	it under the terms of the GNU General Public License as published by
+**	the Free Software Foundation, either version 3 of the License, or
+**	(at your option) any later version.
+**
+**	This program is distributed in the hope that it will be useful,
+**	but WITHOUT ANY WARRANTY; without even the implied warranty of
+**	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**	GNU General Public License for more details.
+**
+**	You should have received a copy of the GNU General Public License
+**	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+////////////////////////////////////////////////////////////////////////////////
+//																																						//
+//  (c) 2001-2003 Electronic Arts Inc.																				//
+//																																						//
+////////////////////////////////////////////////////////////////////////////////
+
+// FILE: LobbyUtils.h //////////////////////////////////////////////////////
+// Generals lobby utils
+// Author: Matthew D. Campbell, Sept 2002
+
+#pragma once
+
+class GameWindow;
+
+GameWindow *GetGameListBox();
+GameWindow *GetGameInfoListBox();
+NameKeyType GetGameListBoxID();
+NameKeyType GetGameInfoListBoxID();
+void GrabWindowInfo();
+void ReleaseWindowInfo();
+void RefreshGameInfoListBox( GameWindow *mainWin, GameWindow *win );
+void RefreshGameListBoxes();
+void ToggleGameListType();
+
+void playerTemplateComboBoxTooltip(GameWindow *wndComboBox, WinInstanceData *instData, UnsignedInt mouse);
+void playerTemplateListBoxTooltip(GameWindow *wndListBox, WinInstanceData *instData, UnsignedInt mouse);
+
+enum GameSortType CPP_11(: Int)
+{
+	GAMESORT_AGE_ASCENDING = 0, // was alpha
+    GAMESORT_AGE_DESCENDING,	// was alpha
+	GAMESORT_MAP_ASCENDING,		// was ping
+	GAMESORT_MAP_DESCENDING,	// was ping
+};
+
+Bool HandleSortButton( NameKeyType sortButton );
+void PopulateLobbyPlayerListbox();
+
+enum LobbyGameModeFilter CPP_11(: Int)
+{
+    LOBBY_FILTER_ALL = 0,
+    LOBBY_FILTER_1V1,
+    LOBBY_FILTER_TEAM,
+    LOBBY_FILTER_FFA,
+    LOBBY_FILTER_AOD,
+};

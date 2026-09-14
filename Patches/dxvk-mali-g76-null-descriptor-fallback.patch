@@ -1,0 +1,342 @@
+diff --git a/src/dxvk/dxvk_context.cpp b/src/dxvk/dxvk_context.cpp
+index d43498b..ee6f691 100644
+--- a/src/dxvk/dxvk_context.cpp
++++ b/src/dxvk/dxvk_context.cpp
+@@ -6220,10 +6220,14 @@ namespace dxvk {
+ 
+                 m_cmd->track(view->image(), DxvkAccess::Read);
+               }
+-            } else {
++            } else if (m_device->features().extRobustness2.nullDescriptor) {
+               descriptorInfo.image.sampler = VK_NULL_HANDLE;
+               descriptorInfo.image.imageView = VK_NULL_HANDLE;
+               descriptorInfo.image.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
++            } else {
++              descriptorInfo.image.sampler = VK_NULL_HANDLE;
++              descriptorInfo.image.imageView = m_common->dummyResources().imageViewHandle(binding.viewType);
++              descriptorInfo.image.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+             }
+           } break;
+ 
+@@ -6245,10 +6249,14 @@ namespace dxvk {
+ 
+               m_cmd->track(res.imageView->image(), (binding.access & vk::AccessWriteMask)
+                 ? DxvkAccess::Write : DxvkAccess::Read);
+-            } else {
++            } else if (m_device->features().extRobustness2.nullDescriptor) {
+               descriptorInfo.image.sampler = VK_NULL_HANDLE;
+               descriptorInfo.image.imageView = VK_NULL_HANDLE;
+               descriptorInfo.image.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
++            } else {
++              descriptorInfo.image.sampler = VK_NULL_HANDLE;
++              descriptorInfo.image.imageView = m_common->dummyResources().imageViewHandle(binding.viewType);
++              descriptorInfo.image.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+             }
+           } break;
+ 
+@@ -6283,8 +6291,14 @@ namespace dxvk {
+               }
+             } else {
+               descriptorInfo.image.sampler = m_common->dummyResources().samplerHandle();
+-              descriptorInfo.image.imageView = VK_NULL_HANDLE;
+-              descriptorInfo.image.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
++
++              if (m_device->features().extRobustness2.nullDescriptor) {
++                descriptorInfo.image.imageView = VK_NULL_HANDLE;
++                descriptorInfo.image.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
++              } else {
++                descriptorInfo.image.imageView = m_common->dummyResources().imageViewHandle(binding.viewType);
++                descriptorInfo.image.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
++              }
+             }
+           } break;
+ 
+@@ -6329,10 +6343,14 @@ namespace dxvk {
+                 accessBuffer(DxvkCmdBuffer::ExecBuffer, res.bufferSlice, util::pipelineStages(binding.stage), binding.access, DxvkAccessOp::None);
+ 
+               m_cmd->track(res.bufferSlice.buffer(), DxvkAccess::Read);
+-            } else {
++            } else if (m_device->features().extRobustness2.nullDescriptor) {
+               descriptorInfo.buffer.buffer = VK_NULL_HANDLE;
+               descriptorInfo.buffer.offset = 0;
+               descriptorInfo.buffer.range = VK_WHOLE_SIZE;
++            } else {
++              descriptorInfo.buffer.buffer = m_common->dummyResources().bufferHandle();
++              descriptorInfo.buffer.offset = 0;
++              descriptorInfo.buffer.range = VK_WHOLE_SIZE;
+             }
+           } break;
+ 
+@@ -6347,10 +6365,14 @@ namespace dxvk {
+ 
+               m_cmd->track(res.bufferSlice.buffer(), (binding.access & vk::AccessWriteMask)
+                 ? DxvkAccess::Write : DxvkAccess::Read);
+-            } else {
++            } else if (m_device->features().extRobustness2.nullDescriptor) {
+               descriptorInfo.buffer.buffer = VK_NULL_HANDLE;
+               descriptorInfo.buffer.offset = 0;
+               descriptorInfo.buffer.range = VK_WHOLE_SIZE;
++            } else {
++              descriptorInfo.buffer.buffer = m_common->dummyResources().bufferHandle();
++              descriptorInfo.buffer.offset = 0;
++              descriptorInfo.buffer.range = VK_WHOLE_SIZE;
+             }
+           } break;
+ 
+diff --git a/src/dxvk/dxvk_unbound.cpp b/src/dxvk/dxvk_unbound.cpp
+--- a/src/dxvk/dxvk_unbound.cpp
++++ b/src/dxvk/dxvk_unbound.cpp
+@@ -67,6 +67,184 @@
+   }
+   
+   
++  VkImageView DxvkUnboundResources::imageViewHandle(VkImageViewType viewType) {
++    std::lock_guard lock(m_mutex);
++
++    uint32_t index = uint32_t(viewType);
++
++    if (m_imageViews[index] == nullptr) {
++      DxvkImageViewKey viewInfo = { };
++      viewInfo.viewType   = viewType;
++      viewInfo.usage      = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
++      viewInfo.format     = VK_FORMAT_R8G8B8A8_UNORM;
++      viewInfo.aspects    = VK_IMAGE_ASPECT_COLOR_BIT;
++      viewInfo.mipIndex   = 0u;
++      viewInfo.mipCount   = 1u;
++      viewInfo.layerIndex = 0u;
++
++      Rc<DxvkImage> image;
++
++      switch (viewType) {
++        case VK_IMAGE_VIEW_TYPE_1D:
++        case VK_IMAGE_VIEW_TYPE_1D_ARRAY:
++          image = getImage1D();
++          viewInfo.layerCount = 1u;
++          break;
++
++        case VK_IMAGE_VIEW_TYPE_3D:
++          image = getImage3D();
++          viewInfo.layerCount = 1u;
++          break;
++
++        case VK_IMAGE_VIEW_TYPE_CUBE:
++        case VK_IMAGE_VIEW_TYPE_CUBE_ARRAY:
++          image = getImage2D();
++          viewInfo.layerCount = 6u;
++          break;
++
++        case VK_IMAGE_VIEW_TYPE_2D:
++        case VK_IMAGE_VIEW_TYPE_2D_ARRAY:
++        default:
++          image = getImage2D();
++          viewInfo.layerCount = 1u;
++          break;
++      }
++
++      m_imageViews[index] = image->createView(viewInfo);
++    }
++
++    return m_imageViews[index]->handle(viewType);
++  }
++
++
++  Rc<DxvkImage> DxvkUnboundResources::getImage1D() {
++    if (m_image1D == nullptr)
++      m_image1D = createImage(VK_IMAGE_TYPE_1D, 1u, 0u);
++    return m_image1D;
++  }
++
++
++  Rc<DxvkImage> DxvkUnboundResources::getImage2D() {
++    if (m_image2D == nullptr)
++      m_image2D = createImage(VK_IMAGE_TYPE_2D, 6u, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
++    return m_image2D;
++  }
++
++
++  Rc<DxvkImage> DxvkUnboundResources::getImage3D() {
++    if (m_image3D == nullptr)
++      m_image3D = createImage(VK_IMAGE_TYPE_3D, 1u, 0u);
++    return m_image3D;
++  }
++
++
++  Rc<DxvkImage> DxvkUnboundResources::createImage(
++          VkImageType         type,
++          uint32_t            layers,
++          VkImageCreateFlags  flags) {
++    DxvkImageCreateInfo info;
++    info.type         = type;
++    info.format        = VK_FORMAT_R8G8B8A8_UNORM;
++    info.flags         = flags;
++    info.sampleCount   = VK_SAMPLE_COUNT_1_BIT;
++    info.extent        = { 1u, 1u, 1u };
++    info.numLayers     = layers;
++    info.mipLevels     = 1u;
++    info.usage         = VK_IMAGE_USAGE_SAMPLED_BIT
++                        | VK_IMAGE_USAGE_STORAGE_BIT
++                        | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
++    info.stages        = VK_PIPELINE_STAGE_TRANSFER_BIT
++                        | m_device->getShaderPipelineStages();
++    info.access        = VK_ACCESS_TRANSFER_WRITE_BIT
++                        | VK_ACCESS_SHADER_READ_BIT
++                        | VK_ACCESS_SHADER_WRITE_BIT;
++    info.tiling        = VK_IMAGE_TILING_OPTIMAL;
++    info.layout         = VK_IMAGE_LAYOUT_GENERAL;
++    info.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
++    info.debugName     = "Null image";
++
++    Rc<DxvkImage> image = m_device->createImage(info, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
++    transitionImage(image);
++    return image;
++  }
++
++
++  void DxvkUnboundResources::transitionImage(const Rc<DxvkImage>& image) {
++    Rc<vk::DeviceFn> vkd = m_device->vkd();
++
++    VkCommandPoolCreateInfo poolInfo = { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
++    poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
++    poolInfo.queueFamilyIndex = m_device->queues().graphics.queueFamily;
++
++    VkCommandPool pool = VK_NULL_HANDLE;
++    if (vkd->vkCreateCommandPool(vkd->device(), &poolInfo, nullptr, &pool) != VK_SUCCESS)
++      return;
++
++    VkCommandBufferAllocateInfo cmdInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
++    cmdInfo.commandPool = pool;
++    cmdInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
++    cmdInfo.commandBufferCount = 1u;
++
++    VkCommandBuffer cmd = VK_NULL_HANDLE;
++    if (vkd->vkAllocateCommandBuffers(vkd->device(), &cmdInfo, &cmd) == VK_SUCCESS) {
++      VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
++      beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
++
++      vkd->vkBeginCommandBuffer(cmd, &beginInfo);
++
++      VkImageSubresourceRange subresources =
++        { VK_IMAGE_ASPECT_COLOR_BIT, 0u, VK_REMAINING_MIP_LEVELS, 0u, VK_REMAINING_ARRAY_LAYERS };
++
++      // Transitioning out of UNDEFINED explicitly discards whatever happened
++      // to be in the freshly allocated memory, so the image must actually be
++      // cleared -- otherwise every unbound texture slot samples uninitialised
++      // VRAM. Zero matches what a real nullDescriptor device returns when
++      // sampling a null descriptor, which is exactly what this stands in for.
++      VkImageMemoryBarrier barrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
++      barrier.srcAccessMask = 0u;
++      barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
++      barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
++      barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
++      barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
++      barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
++      barrier.image = image->handle();
++      barrier.subresourceRange = subresources;
++
++      vkd->vkCmdPipelineBarrier(cmd,
++        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
++        VK_PIPELINE_STAGE_TRANSFER_BIT,
++        0u, 0u, nullptr, 0u, nullptr, 1u, &barrier);
++
++      VkClearColorValue clearValue = { };
++
++      vkd->vkCmdClearColorImage(cmd, image->handle(),
++        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue, 1u, &subresources);
++
++      barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
++      barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
++      barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
++      barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
++
++      vkd->vkCmdPipelineBarrier(cmd,
++        VK_PIPELINE_STAGE_TRANSFER_BIT,
++        VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
++        0u, 0u, nullptr, 0u, nullptr, 1u, &barrier);
++
++      vkd->vkEndCommandBuffer(cmd);
++
++      VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
++      submitInfo.commandBufferCount = 1u;
++      submitInfo.pCommandBuffers = &cmd;
++
++      VkQueue queue = m_device->queues().graphics.queueHandle;
++      vkd->vkQueueSubmit(queue, 1u, &submitInfo, VK_NULL_HANDLE);
++      vkd->vkQueueWaitIdle(queue);
++    }
++
++    vkd->vkDestroyCommandPool(vkd->device(), pool, nullptr);
++  }
++
++
+   Rc<DxvkBuffer> DxvkUnboundResources::createBuffer() {
+     DxvkBufferCreateInfo info;
+     info.size       = MaxUniformBufferSize;
+diff --git a/src/dxvk/dxvk_unbound.h b/src/dxvk/dxvk_unbound.h
+--- a/src/dxvk/dxvk_unbound.h
++++ b/src/dxvk/dxvk_unbound.h
+@@ -1,5 +1,6 @@
+ #pragma once
+ 
++#include <array>
+ #include <mutex>
+ 
+ #include "dxvk_buffer.h"
+@@ -43,9 +44,23 @@
+      * \returns Dummy sampler descriptor
+      */
+     VkSampler samplerHandle();
+-    
++
++    /**
++     * \brief Dummy image view handle
++     *
++     * Returns a handle to an image view backed by a small
++     * dummy image. Use for unbound sampled/storage image and
++     * combined-image-sampler slots on drivers that do not
++     * support VK_EXT_robustness2's nullDescriptor feature,
++     * since VK_NULL_HANDLE is not a valid image view in that
++     * case.
++     * \param [in] viewType Requested image view type
++     * \returns Dummy image view handle
++     */
++    VkImageView imageViewHandle(VkImageViewType viewType);
++
+   private:
+-    
++
+     DxvkDevice*             m_device;
+ 
+     std::atomic<VkSampler>  m_samplerHandle = { VK_NULL_HANDLE };
+@@ -54,11 +69,28 @@
+     dxvk::mutex             m_mutex;
+     Rc<DxvkSampler>         m_sampler;
+     Rc<DxvkBuffer>          m_buffer;
+-    
++
++    std::array<Rc<DxvkImageView>, VK_IMAGE_VIEW_TYPE_CUBE_ARRAY + 1> m_imageViews;
++
++    Rc<DxvkImage>           m_image1D;
++    Rc<DxvkImage>           m_image2D;
++    Rc<DxvkImage>           m_image3D;
++
+     Rc<DxvkSampler> createSampler();
+-    
++
+     Rc<DxvkBuffer> createBuffer();
+-    
++
++    Rc<DxvkImage> createImage(
++            VkImageType       type,
++            uint32_t          layers,
++            VkImageCreateFlags flags);
++
++    Rc<DxvkImage> getImage1D();
++    Rc<DxvkImage> getImage2D();
++    Rc<DxvkImage> getImage3D();
++
++    void transitionImage(const Rc<DxvkImage>& image);
++
+   };
+   
+ }
+\ No newline at end of file

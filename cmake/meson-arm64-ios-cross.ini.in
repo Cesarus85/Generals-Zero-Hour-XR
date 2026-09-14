@@ -1,0 +1,24 @@
+# Meson cross file: build DXVK for iOS (arm64, device) on a macOS host.
+# Mirrors meson-arm64-native.ini but targets the iPhoneOS SDK.
+# SDL3 for iOS must be discoverable via PKG_CONFIG_PATH (build/ios/sdl3-install/lib/pkgconfig).
+
+[binaries]
+c = 'clang'
+cpp = 'clang++'
+objc = 'clang'
+objcpp = 'clang++'
+ar = 'ar'
+strip = 'strip'
+pkg-config = 'pkg-config'
+
+[host_machine]
+system = 'darwin'
+cpu_family = 'aarch64'
+cpu = 'arm64'
+endian = 'little'
+
+[built-in options]
+c_args = ['-arch', 'arm64', '-isysroot', '@IOS_SDK@', '-miphoneos-version-min=16.0']
+cpp_args = ['-arch', 'arm64', '-isysroot', '@IOS_SDK@', '-miphoneos-version-min=16.0']
+c_link_args = ['-arch', 'arm64', '-isysroot', '@IOS_SDK@', '-miphoneos-version-min=16.0']
+cpp_link_args = ['-arch', 'arm64', '-isysroot', '@IOS_SDK@', '-miphoneos-version-min=16.0']

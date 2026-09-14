@@ -1,0 +1,40 @@
+--- a/src/dxvk/dxvk_swapchain_blitter.cpp
++++ b/src/dxvk/dxvk_swapchain_blitter.cpp
+@@ -1094,9 +1094,37 @@
+       VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+       VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+ 
++    // GeneralsX @bugfix Android port 01/08/2026 Force the swapchain image's
++    // alpha channel to a constant 1.0, independent of whatever the source
++    // (the game's own backbuffer) actually has in its alpha channel. RGB
++    // still passes straight through (srcColorBlendFactor=ONE, dstColorBlend
++    // Factor=ZERO is mathematically identical to no blending at all). Real-
++    // device testing (POCO / Snapdragon 8 Elite) found supportedCompositeAlpha
++    // == VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR only -- OPAQUE isn't available, so
++    // pickCompositeAlpha() (dxvk_presenter.cpp) has to fall back to INHERIT,
++    // same as the existing Mali-G76 fix, just a different vendor. Under
++    // INHERIT the swapchain's real per-pixel alpha is exactly what a
++    // screenshot/task-switcher snapshot reads back, unlike the live
++    // compositor which treats a normal fullscreen app window as opaque
++    // regardless -- so any place upstream that leaves alpha < 1 (a menu
++    // vignette/mask texture, a UI element blended instead of fully opaque,
++    // etc.) was invisible on the live screen but showed through as solid
++    // black in screenshots and Recents thumbnails, always in the same shape
++    // since it's the same static asset every time. This app is never
++    // actually meant to have a transparent window, so forcing 1.0 here is
++    // safe on every platform, not just where compositeAlpha is non-opaque.
++    cbAttachment.blendEnable         = VK_TRUE;
++    cbAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
++    cbAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
++    cbAttachment.colorBlendOp        = VK_BLEND_OP_ADD;
++    cbAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_CONSTANT_ALPHA;
++    cbAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
++    cbAttachment.alphaBlendOp        = VK_BLEND_OP_ADD;
++
+     VkPipelineColorBlendStateCreateInfo cbState = { VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
+     cbState.attachmentCount = 1;
+     cbState.pAttachments = &cbAttachment;
++    cbState.blendConstants[3] = 1.0f;
+ 
+     const std::array<VkDynamicState, 2> dynStates = hasExtendedDynamicState
+       ? std::array<VkDynamicState, 2>{ VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT, VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT }

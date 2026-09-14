@@ -1,0 +1,69 @@
+diff --git a/src/dxvk/dxvk_swapchain_blitter.cpp b/src/dxvk/dxvk_swapchain_blitter.cpp
+index 044c3ea..1bd581d 100644
+--- a/src/dxvk/dxvk_swapchain_blitter.cpp
++++ b/src/dxvk/dxvk_swapchain_blitter.cpp
+@@ -125,7 +125,51 @@ namespace dxvk {
+     renderInfo.colorAttachmentCount = 1;
+     renderInfo.pColorAttachments = &attachmentInfo;
+ 
+-    ctx.cmd->cmdBeginRendering(&renderInfo);
++    // GeneralsX @bugfix Android port 30/07/2026 the swapchain blitter's
++    // present path is a separate consumer of dynamic rendering that
++    // doesn't go through DxvkContext::renderPassBindFramebuffer at all,
++    // so it was missed by the earlier legacy-render-pass fallback --
++    // confirmed via a real tombstone: SIGSEGV at pc=0x0 (null function
++    // pointer call, vkCmdBeginRendering) inside DxvkSwapchainBlitter::
++    // present on a device without VK_KHR_dynamic_rendering.
++    auto* legacyPool = m_device->legacyRenderPasses();
++
++    VkRenderPass legacyRenderPass = VK_NULL_HANDLE;
++    VkFramebuffer legacyFramebuffer = VK_NULL_HANDLE;
++
++    if (legacyPool) {
++      DxvkRenderTargets renderTargets = { };
++      renderTargets.color[0].view = dstView;
++      renderTargets.color[0].layout = attachmentInfo.imageLayout;
++
++      DxvkRenderPassOps ops = { };
++      ops.colorOps[0].loadOp = attachmentInfo.loadOp;
++      ops.colorOps[0].loadLayout = attachmentInfo.imageLayout;
++      ops.colorOps[0].storeLayout = attachmentInfo.imageLayout;
++
++      DxvkFramebufferInfo framebufferInfo(renderTargets,
++        DxvkFramebufferSize { dstExtent.width, dstExtent.height, 1u });
++
++      legacyRenderPass = legacyPool->getRenderPass(framebufferInfo, ops);
++      legacyFramebuffer = legacyPool->getFramebuffer(legacyRenderPass, framebufferInfo);
++
++      VkClearValue clearValue = { };
++
++      VkRenderPassBeginInfo passBeginInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
++      passBeginInfo.renderPass = legacyRenderPass;
++      passBeginInfo.framebuffer = legacyFramebuffer;
++      passBeginInfo.renderArea.offset = { 0, 0 };
++      passBeginInfo.renderArea.extent = { dstExtent.width, dstExtent.height };
++
++      if (attachmentInfo.loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR) {
++        passBeginInfo.clearValueCount = 1;
++        passBeginInfo.pClearValues = &clearValue;
++      }
++
++      ctx.cmd->cmdBeginRenderPass(&passBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
++    } else {
++      ctx.cmd->cmdBeginRendering(&renderInfo);
++    }
+ 
+     performDraw(ctx, dstView, dstRect,
+       srcView, srcRect, composite);
+@@ -138,7 +182,10 @@ namespace dxvk {
+         renderCursor(ctx, dstView);
+     }
+ 
+-    ctx.cmd->cmdEndRendering();
++    if (legacyPool)
++      ctx.cmd->cmdEndRenderPass();
++    else
++      ctx.cmd->cmdEndRendering();
+ 
+     barrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2 };
+     barrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;

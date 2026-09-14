@@ -1,0 +1,171 @@
+diff --git a/src/dxvk/dxvk_cmdlist.h b/src/dxvk/dxvk_cmdlist.h
+index fe86618..5e9896c 100644
+--- a/src/dxvk/dxvk_cmdlist.h
++++ b/src/dxvk/dxvk_cmdlist.h
+@@ -671,7 +671,32 @@ namespace dxvk {
+         const VkBlitImageInfo2*     pBlitInfo) {
+       m_cmd.execCommands = true;
+ 
+-      m_vkd->vkCmdBlitImage2(getCmdBuffer(), pBlitInfo);
++      // GeneralsX @bugfix Android port 30/07/2026 VK_KHR_copy_commands2
++      // fallback: same class of bug as the barrier/queue-submit fix, but
++      // this time it's not a missing registration -- Mali-G76 genuinely
++      // doesn't support VK_KHR_copy_commands2 (or Vulkan 1.3 core), so
++      // vkCmdBlitImage2/2KHR both resolve to null. Checking the resolved
++      // function pointer directly (rather than caching a device-feature
++      // bool, which dxvk_cmdlist.h can't reach -- DxvkDevice is only
++      // forward-declared here) is simpler and doesn't depend on any
++      // extension-query API existing on DxvkDevice/DxvkAdapter.
++      if (likely(m_vkd->vkCmdBlitImage2 != nullptr)) {
++        m_vkd->vkCmdBlitImage2(getCmdBuffer(), pBlitInfo);
++        return;
++      }
++
++      std::vector<VkImageBlit> regions(pBlitInfo->regionCount);
++      for (uint32_t i = 0; i < pBlitInfo->regionCount; i++) {
++        const auto& r = pBlitInfo->pRegions[i];
++        regions[i] = VkImageBlit {
++          r.srcSubresource, { r.srcOffsets[0], r.srcOffsets[1] },
++          r.dstSubresource, { r.dstOffsets[0], r.dstOffsets[1] } };
++      }
++
++      m_vkd->vkCmdBlitImage(getCmdBuffer(),
++        pBlitInfo->srcImage, pBlitInfo->srcImageLayout,
++        pBlitInfo->dstImage, pBlitInfo->dstImageLayout,
++        pBlitInfo->regionCount, regions.data(), pBlitInfo->filter);
+     }
+     
+     
+@@ -720,7 +745,22 @@ namespace dxvk {
+       const VkCopyBufferInfo2*      copyInfo) {
+       m_cmd.execCommands |= cmdBuffer == DxvkCmdBuffer::ExecBuffer;
+ 
+-      m_vkd->vkCmdCopyBuffer2(getCmdBuffer(cmdBuffer), copyInfo);
++      // See cmdBlitImage above for why this checks the function pointer
++      // directly instead of a cached device-feature bool.
++      if (likely(m_vkd->vkCmdCopyBuffer2 != nullptr)) {
++        m_vkd->vkCmdCopyBuffer2(getCmdBuffer(cmdBuffer), copyInfo);
++        return;
++      }
++
++      std::vector<VkBufferCopy> regions(copyInfo->regionCount);
++      for (uint32_t i = 0; i < copyInfo->regionCount; i++) {
++        const auto& r = copyInfo->pRegions[i];
++        regions[i] = VkBufferCopy { r.srcOffset, r.dstOffset, r.size };
++      }
++
++      m_vkd->vkCmdCopyBuffer(getCmdBuffer(cmdBuffer),
++        copyInfo->srcBuffer, copyInfo->dstBuffer,
++        copyInfo->regionCount, regions.data());
+     }
+     
+     
+@@ -729,7 +769,29 @@ namespace dxvk {
+       const VkCopyBufferToImageInfo2* copyInfo) {
+       m_cmd.execCommands |= cmdBuffer == DxvkCmdBuffer::ExecBuffer;
+ 
+-      m_vkd->vkCmdCopyBufferToImage2(getCmdBuffer(cmdBuffer), copyInfo);
++      // See cmdBlitImage above for why this checks the function pointer
++      // directly instead of a cached device-feature bool. This is the
++      // specific call site that crashed on Mali-G76 (SIGSEGV in
++      // DxvkContext::copyImageBufferData, confirmed via a real Android
++      // tombstone) -- registering VK_KHR_copy_commands2 in
++      // getExtensionList wasn't enough, this driver genuinely doesn't
++      // support it (unlike the earlier six-extension registration bug).
++      if (likely(m_vkd->vkCmdCopyBufferToImage2 != nullptr)) {
++        m_vkd->vkCmdCopyBufferToImage2(getCmdBuffer(cmdBuffer), copyInfo);
++        return;
++      }
++
++      std::vector<VkBufferImageCopy> regions(copyInfo->regionCount);
++      for (uint32_t i = 0; i < copyInfo->regionCount; i++) {
++        const auto& r = copyInfo->pRegions[i];
++        regions[i] = VkBufferImageCopy {
++          r.bufferOffset, r.bufferRowLength, r.bufferImageHeight,
++          r.imageSubresource, r.imageOffset, r.imageExtent };
++      }
++
++      m_vkd->vkCmdCopyBufferToImage(getCmdBuffer(cmdBuffer),
++        copyInfo->srcBuffer, copyInfo->dstImage, copyInfo->dstImageLayout,
++        copyInfo->regionCount, regions.data());
+     }
+     
+     
+@@ -738,7 +800,24 @@ namespace dxvk {
+       const VkCopyImageInfo2*       copyInfo) {
+       m_cmd.execCommands |= cmdBuffer == DxvkCmdBuffer::ExecBuffer;
+ 
+-      m_vkd->vkCmdCopyImage2(getCmdBuffer(cmdBuffer), copyInfo);
++      // See cmdBlitImage above for why this checks the function pointer
++      // directly instead of a cached device-feature bool.
++      if (likely(m_vkd->vkCmdCopyImage2 != nullptr)) {
++        m_vkd->vkCmdCopyImage2(getCmdBuffer(cmdBuffer), copyInfo);
++        return;
++      }
++
++      std::vector<VkImageCopy> regions(copyInfo->regionCount);
++      for (uint32_t i = 0; i < copyInfo->regionCount; i++) {
++        const auto& r = copyInfo->pRegions[i];
++        regions[i] = VkImageCopy {
++          r.srcSubresource, r.srcOffset, r.dstSubresource, r.dstOffset, r.extent };
++      }
++
++      m_vkd->vkCmdCopyImage(getCmdBuffer(cmdBuffer),
++        copyInfo->srcImage, copyInfo->srcImageLayout,
++        copyInfo->dstImage, copyInfo->dstImageLayout,
++        copyInfo->regionCount, regions.data());
+     }
+     
+     
+@@ -747,7 +826,24 @@ namespace dxvk {
+       const VkCopyImageToBufferInfo2* copyInfo) {
+       m_cmd.execCommands |= cmdBuffer == DxvkCmdBuffer::ExecBuffer;
+ 
+-      m_vkd->vkCmdCopyImageToBuffer2(getCmdBuffer(cmdBuffer), copyInfo);
++      // See cmdBlitImage above for why this checks the function pointer
++      // directly instead of a cached device-feature bool.
++      if (likely(m_vkd->vkCmdCopyImageToBuffer2 != nullptr)) {
++        m_vkd->vkCmdCopyImageToBuffer2(getCmdBuffer(cmdBuffer), copyInfo);
++        return;
++      }
++
++      std::vector<VkBufferImageCopy> regions(copyInfo->regionCount);
++      for (uint32_t i = 0; i < copyInfo->regionCount; i++) {
++        const auto& r = copyInfo->pRegions[i];
++        regions[i] = VkBufferImageCopy {
++          r.bufferOffset, r.bufferRowLength, r.bufferImageHeight,
++          r.imageSubresource, r.imageOffset, r.imageExtent };
++      }
++
++      m_vkd->vkCmdCopyImageToBuffer(getCmdBuffer(cmdBuffer),
++        copyInfo->srcImage, copyInfo->srcImageLayout, copyInfo->dstBuffer,
++        copyInfo->regionCount, regions.data());
+     }
+ 
+ 
+@@ -1030,7 +1126,24 @@ namespace dxvk {
+       const VkResolveImageInfo2*    resolveInfo) {
+       m_cmd.execCommands = true;
+ 
+-      m_vkd->vkCmdResolveImage2(getCmdBuffer(), resolveInfo);
++      // See cmdBlitImage above for why this checks the function pointer
++      // directly instead of a cached device-feature bool.
++      if (likely(m_vkd->vkCmdResolveImage2 != nullptr)) {
++        m_vkd->vkCmdResolveImage2(getCmdBuffer(), resolveInfo);
++        return;
++      }
++
++      std::vector<VkImageResolve> regions(resolveInfo->regionCount);
++      for (uint32_t i = 0; i < resolveInfo->regionCount; i++) {
++        const auto& r = resolveInfo->pRegions[i];
++        regions[i] = VkImageResolve {
++          r.srcSubresource, r.srcOffset, r.dstSubresource, r.dstOffset, r.extent };
++      }
++
++      m_vkd->vkCmdResolveImage(getCmdBuffer(),
++        resolveInfo->srcImage, resolveInfo->srcImageLayout,
++        resolveInfo->dstImage, resolveInfo->dstImageLayout,
++        resolveInfo->regionCount, regions.data());
+     }
+     
+     

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GeneralsX @spike XR port Phase 0.5 - zh flavor manifest surgery: strip
+     the XR activity so the 2D APK keeps exactly its two known launcher
+     entries (game + setup) and no invisible dead XR activity.
+     GeneralsX @feature XR port Phase 1.0 - also re-adds SetupActivity's
+     LAUNCHER filter (removed from the main manifest so the xr flavor can
+     keep Setup iconless): the 2D APK is unchanged, still game + setup. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <activity
+            android:name="com.generalsx.zerohour.XrHelloActivity"
+            tools:node="remove" />
+        <activity android:name="com.generalsx.zerohour.SetupActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

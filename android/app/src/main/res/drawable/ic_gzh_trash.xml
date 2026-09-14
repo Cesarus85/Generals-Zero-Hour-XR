@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GeneralsX @feature Android port launcher-ui-2026 08/09/2026 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="nonZero"
+        android:pathData="M9 2.4 h6 v1.6 h5 v2.1 h-16 v-2.1 h5 Z M6.4 7.6 h11.2 l-1 14 h-9.2 Z" />
+</vector>

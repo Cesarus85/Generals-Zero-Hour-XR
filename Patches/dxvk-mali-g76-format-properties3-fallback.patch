@@ -1,0 +1,80 @@
+diff --git a/src/dxvk/dxvk_adapter.cpp b/src/dxvk/dxvk_adapter.cpp
+index 04e5ba4..f4801fc 100644
+--- a/src/dxvk/dxvk_adapter.cpp
++++ b/src/dxvk/dxvk_adapter.cpp
+@@ -46,6 +46,11 @@ namespace dxvk {
+     this->queryDeviceQueues();
+ 
+     m_hasMemoryBudget = m_deviceExtensions.supports(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
++
++    // GeneralsX @bugfix Android port 30/07/2026 see getFormatFeatures() below.
++    m_hasFormatFeatureFlags2 =
++      m_deviceInfo.core.properties.apiVersion >= VK_API_VERSION_1_3
++      || m_deviceExtensions.supports(VK_KHR_FORMAT_FEATURE_FLAGS_2_EXTENSION_NAME);
+   }
+   
+   
+@@ -94,14 +99,43 @@ namespace dxvk {
+   
+   
+   DxvkFormatFeatures DxvkAdapter::getFormatFeatures(VkFormat format) const {
++    // GeneralsX @bugfix Android port 30/07/2026 VkFormatProperties3 is core
++    // only in Vulkan 1.3, otherwise it needs VK_KHR_format_feature_flags2.
++    // A driver that supports neither silently ignores the unrecognised pNext
++    // node and never writes to it, leaving the zero-initialised struct
++    // untouched -- so this used to report *no* features for *every* format on
++    // Vulkan 1.1 adapters (Mali, Unisoc, PowerVR). That is invisible to the
++    // validation layers and produced no error anywhere, but it made
++    // IDirect3D9::CheckDeviceFormat answer D3DERR_NOTAVAILABLE for every
++    // format, which in turn collapsed the engine's texture format
++    // negotiation and left textures unwritten (green) or replaced by the
++    // engine's magenta "missing texture" placeholder.
++    //
++    // VkFormatFeatureFlagBits2 deliberately keeps the same values as
++    // VkFormatFeatureFlagBits for the low 32 bits, so widening the core
++    // VkFormatProperties flags is exact -- only bits that require the
++    // newer query (e.g. STORAGE_READ_WITHOUT_FORMAT) are unavailable, and
++    // those are not reachable on such devices anyway.
+     VkFormatProperties3 properties3 = { VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_3 };
+-    VkFormatProperties2 properties2 = { VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2, &properties3 };
++    VkFormatProperties2 properties2 = { VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2 };
++
++    if (m_hasFormatFeatureFlags2)
++      properties2.pNext = &properties3;
++
+     m_vki->vkGetPhysicalDeviceFormatProperties2(m_handle, format, &properties2);
+ 
+     DxvkFormatFeatures result;
+-    result.optimal = properties3.optimalTilingFeatures;
+-    result.linear  = properties3.linearTilingFeatures;
+-    result.buffer  = properties3.bufferFeatures;
++
++    if (m_hasFormatFeatureFlags2) {
++      result.optimal = properties3.optimalTilingFeatures;
++      result.linear  = properties3.linearTilingFeatures;
++      result.buffer  = properties3.bufferFeatures;
++    } else {
++      result.optimal = VkFormatFeatureFlags2(properties2.formatProperties.optimalTilingFeatures);
++      result.linear  = VkFormatFeatureFlags2(properties2.formatProperties.linearTilingFeatures);
++      result.buffer  = VkFormatFeatureFlags2(properties2.formatProperties.bufferFeatures);
++    }
++
+     return result;
+   }
+ 
+diff --git a/src/dxvk/dxvk_adapter.h b/src/dxvk/dxvk_adapter.h
+index 4aaaa50..59b9f96 100644
+--- a/src/dxvk/dxvk_adapter.h
++++ b/src/dxvk/dxvk_adapter.h
+@@ -326,6 +326,11 @@ namespace dxvk {
+ 
+     bool                m_hasMemoryBudget;
+ 
++    // GeneralsX @bugfix Android port 30/07/2026 whether VkFormatProperties3
++    // may be chained into vkGetPhysicalDeviceFormatProperties2. See
++    // getFormatFeatures() in dxvk_adapter.cpp.
++    bool                m_hasFormatFeatureFlags2;
++
+     Rc<DxvkAdapter>     m_linkedIGPUAdapter;
+     bool                m_linkedToDGPU = false;
+ 

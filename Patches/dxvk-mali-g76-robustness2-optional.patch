@@ -1,0 +1,26 @@
+diff --git a/src/dxvk/dxvk_extensions.h b/src/dxvk/dxvk_extensions.h
+index 435b2be..b7ba732 100644
+--- a/src/dxvk/dxvk_extensions.h
++++ b/src/dxvk/dxvk_extensions.h
+@@ -313,7 +313,20 @@ namespace dxvk {
+     DxvkExt extMultiDraw                      = { VK_EXT_MULTI_DRAW_EXTENSION_NAME,                         DxvkExtMode::Optional };
+     DxvkExt extNonSeamlessCubeMap             = { VK_EXT_NON_SEAMLESS_CUBE_MAP_EXTENSION_NAME,              DxvkExtMode::Optional };
+     DxvkExt extPageableDeviceLocalMemory      = { VK_EXT_PAGEABLE_DEVICE_LOCAL_MEMORY_EXTENSION_NAME,       DxvkExtMode::Optional };
+-    DxvkExt extRobustness2                    = { VK_EXT_ROBUSTNESS_2_EXTENSION_NAME,                       DxvkExtMode::Required };
++    // GeneralsX @bugfix Android port 30/07/2026 Was Required -- fine on
++    // desktop/Adreno (always present), but Mali-G76 (issue #9 follow-up,
++    // Redmi Note 8 Pro) reports Vulkan 1.1 with no VK_EXT_robustness2 at
++    // all, which made vkCreateDevice refuse to even try. The two features
++    // this fork actually leans on for correctness -- null vertex-buffer
++    // bindings (dxvk_context.cpp, "GeneralsX Patch 12") and unbound
++    // resource robustness -- already have to survive without it on macOS
++    // (MoltenVK doesn't support this extension either, see the
++    // #ifdef __APPLE__ block in DxvkAdapter::createDevice below), so the
++    // same "run without it" path is already shipped and working elsewhere.
++    // Everything else that reads these bits (D3D9ConstantSets robust
++    // access, DxsoOptions::robustness2Supported) already treats them as an
++    // optimization, not a hard requirement.
++    DxvkExt extRobustness2                    = { VK_EXT_ROBUSTNESS_2_EXTENSION_NAME,                       DxvkExtMode::Optional };
+     DxvkExt extShaderModuleIdentifier         = { VK_EXT_SHADER_MODULE_IDENTIFIER_EXTENSION_NAME,           DxvkExtMode::Optional };
+     DxvkExt extShaderStencilExport            = { VK_EXT_SHADER_STENCIL_EXPORT_EXTENSION_NAME,              DxvkExtMode::Optional };
+     DxvkExt extSwapchainColorSpace            = { VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME,              DxvkExtMode::Optional };

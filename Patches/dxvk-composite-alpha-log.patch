@@ -1,0 +1,19 @@
+--- a/src/dxvk/dxvk_presenter.cpp
++++ b/src/dxvk/dxvk_presenter.cpp
+@@ -715,7 +715,15 @@
+       "\n  Color space:  ", swapInfo.imageColorSpace,
+       "\n  Present mode: ", swapInfo.presentMode, " (dynamic: ", (dynamicModes.empty() ? "no)" : "yes)"),
+       "\n  Buffer size:  ", swapInfo.imageExtent.width, "x", swapInfo.imageExtent.height,
+-      "\n  Image count:  ", swapInfo.minImageCount));
++      "\n  Image count:  ", swapInfo.minImageCount,
++      // GeneralsX @bugfix Android port 01/08/2026 Log the composite alpha mode
++      // actually picked, plus the raw supported mask, so a real-device log
++      // capture can tell whether a device fell back to a non-opaque mode (see
++      // pickCompositeAlpha below / dxvk-mali-g76-composite-alpha.patch) --
++      // suspected of causing screenshot/task-switcher-only black regions on
++      // at least one Adreno device where the on-screen composited image looks
++      // correct but a raw-alpha-aware capture does not.
++      "\n  Composite alpha: ", swapInfo.compositeAlpha, " (supported mask: ", caps.surfaceCapabilities.supportedCompositeAlpha, ")"));
+     
+     if ((status = m_vkd->vkCreateSwapchainKHR(m_vkd->device(), &swapInfo, nullptr, &m_swapchain))) {
+       Logger::err(str::format("Presenter: Failed to create Vulkan swapchain: ", status));

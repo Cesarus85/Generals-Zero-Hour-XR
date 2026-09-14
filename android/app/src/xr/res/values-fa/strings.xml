@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- GeneralsX @feature Codex 14/09/2026 XR identity overrides every locale. -->
+    <string name="app_name">Generals: Zero Hour XR</string>
+    <string name="setup_window_title">تنظیمات Generals: Zero Hour XR</string>
+    <string name="setup_title">Generals: Zero Hour XR</string>
+    <string name="setup_subtitle">تنظیمات اندروید</string>
+    <string name="logviewer_share_subject">گزارش Generals: Zero Hour XR</string>
+    <string name="online_status_battery_opt">در صفحه بعدی اجازه دهید Generals: Zero Hour XR در پس‌زمینه اجرا شود، سپس بازگردید و دوباره روی «ورود» ضربه بزنید — در غیر این صورت ممکن است اندروید بررسی ورود را در حالی که در مرورگر هستید متوقف کند.</string>
+</resources>

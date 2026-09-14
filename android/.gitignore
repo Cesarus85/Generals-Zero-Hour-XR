@@ -1,0 +1,12 @@
+# Gradle
+.gradle/
+build/
+local.properties
+
+# Staged by scripts/build/android/package-android-zh.sh — never commit:
+app/src/main/jniLibs/
+app/src/main/java-sdl/
+app/src/main/assets/gamedata/*
+!app/src/main/assets/gamedata/Window/
+!app/src/main/assets/gamedata/Window/**
+app/src/main/assets/default_driver/

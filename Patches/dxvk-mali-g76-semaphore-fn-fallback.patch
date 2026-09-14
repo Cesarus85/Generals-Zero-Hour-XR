@@ -1,0 +1,32 @@
+diff --git a/src/vulkan/vulkan_loader.h b/src/vulkan/vulkan_loader.h
+index 836b05e..365f7c7 100644
+--- a/src/vulkan/vulkan_loader.h
++++ b/src/vulkan/vulkan_loader.h
+@@ -280,11 +280,23 @@ namespace dxvk::vk {
+     VULKAN_FN(vkCreateDescriptorUpdateTemplate);
+     VULKAN_FN(vkDestroyDescriptorUpdateTemplate);
+     VULKAN_FN(vkUpdateDescriptorSetWithTemplate);
+-    VULKAN_FN(vkResetQueryPool);
++    // GeneralsX @bugfix Android port 30/07/2026 Same class of bug as the
++    // vkCmdPipelineBarrier2/vkQueueSubmit2 fix: these four are promoted-in-
++    // 1.2 core functions whose unsuffixed name only resolves via
++    // vkGetDeviceProcAddr when apiVersion >= 1.2. On a 1.1-only adapter that
++    // has the corresponding extension enabled (timelineSemaphore via
++    // VK_KHR_timeline_semaphore, hostQueryReset via VK_EXT_host_query_reset
++    // -- both already registered in DxvkAdapter::getExtensionList, see the
++    // dxvk-android-missing-fallback-extensions patch), only the KHR/EXT-
++    // suffixed name is guaranteed. Mali-G76 (Redmi Note 8 Pro) crashed with
++    // a null-pointer-call SIGSEGV in DxvkSubmissionQueue::finishCmdLists's
++    // vkWaitSemaphores call after the barrier fallback fix got it past
++    // device creation -- confirmed via a real Android tombstone.
++    VULKAN_FN_FALLBACK(vkResetQueryPool, vkResetQueryPoolEXT);
+     VULKAN_FN(vkGetBufferDeviceAddress);
+-    VULKAN_FN(vkGetSemaphoreCounterValue);
+-    VULKAN_FN(vkSignalSemaphore);
+-    VULKAN_FN(vkWaitSemaphores);
++    VULKAN_FN_FALLBACK(vkGetSemaphoreCounterValue, vkGetSemaphoreCounterValueKHR);
++    VULKAN_FN_FALLBACK(vkSignalSemaphore, vkSignalSemaphoreKHR);
++    VULKAN_FN_FALLBACK(vkWaitSemaphores, vkWaitSemaphoresKHR);
+     VULKAN_FN(vkCmdBindPipeline);
+     VULKAN_FN(vkCmdSetViewport);
+     VULKAN_FN(vkCmdSetScissor);

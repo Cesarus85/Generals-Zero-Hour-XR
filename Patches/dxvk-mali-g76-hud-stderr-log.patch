@@ -1,0 +1,92 @@
+diff --git a/src/dxvk/hud/dxvk_hud_item.cpp b/src/dxvk/hud/dxvk_hud_item.cpp
+index 9502470..229efcf 100644
+--- a/src/dxvk/hud/dxvk_hud_item.cpp
++++ b/src/dxvk/hud/dxvk_hud_item.cpp
+@@ -10,6 +10,7 @@
+ #include <hud_graph_frag.h>
+ #include <hud_graph_vert.h>
+ 
++#include <cstdio>
+ #include <iomanip>
+ #include <version.h>
+ 
+@@ -192,6 +193,11 @@ namespace dxvk::hud {
+       m_frameRate = str::format(fps / 10, ".", fps % 10);
+       m_frameCount = 0;
+       m_lastUpdate = time;
++
++      // GeneralsX @bugfix Android port 31/07/2026 mirror the on-screen HUD
++      // value into the game log, so it can be read off generalszhlogNN.txt
++      // instead of a screenshot of the overlay.
++      fprintf(stderr, "DXVK_HUD: fps=%s\n", m_frameRate.c_str());
+     }
+   }
+ 
+@@ -759,6 +765,10 @@ namespace dxvk::hud {
+       m_maxSyncTicks = 0;
+ 
+       m_lastUpdate = time;
++
++      // GeneralsX @bugfix Android port 31/07/2026 see HudFpsItem::update.
++      fprintf(stderr, "DXVK_HUD: submits=%s syncs=%s\n",
++        m_submitString.c_str(), m_syncString.c_str());
+     }
+   }
+ 
+@@ -807,6 +817,12 @@ namespace dxvk::hud {
+       m_barrierCount    = diffCounters.getCtr(DxvkStatCounter::CmdBarrierCount);
+ 
+       m_lastUpdate = time;
++
++      // GeneralsX @bugfix Android port 31/07/2026 see HudFpsItem::update.
++      fprintf(stderr, "DXVK_HUD: drawcalls=%llu merged=%llu dispatches=%llu renderpasses=%llu barriers=%llu\n",
++        (unsigned long long)m_drawCallCount, (unsigned long long)m_drawCount,
++        (unsigned long long)m_dispatchCount, (unsigned long long)m_renderPassCount,
++        (unsigned long long)m_barrierCount);
+     }
+ 
+     m_prevCounters = counters;
+@@ -861,6 +877,18 @@ namespace dxvk::hud {
+     m_graphicsPipelines = counters.getCtr(DxvkStatCounter::PipeCountGraphics);
+     m_graphicsLibraries = counters.getCtr(DxvkStatCounter::PipeCountLibrary);
+     m_computePipelines  = counters.getCtr(DxvkStatCounter::PipeCountCompute);
++
++    // GeneralsX @bugfix Android port 31/07/2026 unlike the other HUD items,
++    // this one has no built-in throttle (it recomputes every frame), so log
++    // on our own timer to avoid spamming the log at frame rate.
++    auto logElapsed = std::chrono::duration_cast<std::chrono::microseconds>(time - m_lastLogTime);
++
++    if (logElapsed.count() >= LogInterval) {
++      fprintf(stderr, "DXVK_HUD: pipelines_graphics=%llu shaders_graphics=%llu pipelines_compute=%llu\n",
++        (unsigned long long)m_graphicsPipelines, (unsigned long long)m_graphicsLibraries,
++        (unsigned long long)m_computePipelines);
++      m_lastLogTime = time;
++    }
+   }
+ 
+ 
+diff --git a/src/dxvk/hud/dxvk_hud_item.h b/src/dxvk/hud/dxvk_hud_item.h
+index ce0ede4..dc33fbb 100644
+--- a/src/dxvk/hud/dxvk_hud_item.h
++++ b/src/dxvk/hud/dxvk_hud_item.h
+@@ -438,7 +438,9 @@ namespace dxvk::hud {
+    * \brief HUD item to display pipeline counts
+    */
+   class HudPipelineStatsItem : public HudItem {
+-
++    // GeneralsX @bugfix Android port 31/07/2026 needed to throttle the
++    // stderr log line added in update() -- see dxvk_hud_item.cpp.
++    constexpr static int64_t LogInterval = 500'000;
+   public:
+ 
+     HudPipelineStatsItem(const Rc<DxvkDevice>& device);
+@@ -462,6 +464,9 @@ namespace dxvk::hud {
+     uint64_t m_graphicsLibraries  = 0;
+     uint64_t m_computePipelines   = 0;
+ 
++    dxvk::high_resolution_clock::time_point m_lastLogTime
++      = dxvk::high_resolution_clock::now();
++
+   };
+ 
+ 

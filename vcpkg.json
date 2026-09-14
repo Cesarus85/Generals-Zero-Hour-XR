@@ -1,0 +1,55 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+    "builtin-baseline": "533a5fda5c0646d1771345fb572e759283444d5f",
+    "dependencies": [
+      "zlib",
+      "glm",
+      "gli",
+      {
+        "name": "freetype",
+        "platform": "!windows"
+      },
+      {
+        "name": "fontconfig",
+        "platform": "!windows & !ios & !android"
+      },
+      {
+        "name": "openal-soft",
+        "platform": "!windows",
+        "features": []
+      },
+      {
+        "name": "curl",
+        "platform": "!windows",
+        "features": ["ssl", "websockets"]
+      },
+      {
+        "name": "gamenetworkingsockets",
+        "platform": "android"
+      },
+      {
+        "name": "ffmpeg",
+        "platform": "ios | android",
+        "features": ["avcodec", "avformat", "swscale", "swresample"]
+      },
+      {
+        "name": "openxr-loader",
+        "platform": "android"
+      }
+    ],
+    "overrides": [
+      {
+        "name": "ffmpeg",
+        "version": "8.1.1",
+        "port-version": 2
+      },
+      {
+        "name": "gamenetworkingsockets",
+        "version": "1.6.0"
+      },
+      {
+        "name": "ffmpeg-bin2c",
+        "version": "8.1.1"
+      }
+    ]
+  }

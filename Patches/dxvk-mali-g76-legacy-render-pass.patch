@@ -1,0 +1,747 @@
+diff --git a/src/dxvk/dxvk_cmdlist.h b/src/dxvk/dxvk_cmdlist.h
+index 5e9896c..cc0f1ee 100644
+--- a/src/dxvk/dxvk_cmdlist.h
++++ b/src/dxvk/dxvk_cmdlist.h
+@@ -571,6 +571,19 @@ namespace dxvk {
+     }
+ 
+ 
++    // GeneralsX @bugfix Android port 30/07/2026 legacy VkRenderPass/
++    // VkFramebuffer path used on devices without VK_KHR_dynamic_rendering
++    // (see dxvk_legacy_renderpass.h). vkCreateRenderPass/vkCmdBeginRenderPass
++    // are core 1.0 functions, always resolved via plain VULKAN_FN.
++    void cmdBeginRenderPass(
++      const VkRenderPassBeginInfo*  pRenderPassBegin,
++            VkSubpassContents       contents) {
++      m_cmd.execCommands = true;
++
++      m_vkd->vkCmdBeginRenderPass(getCmdBuffer(), pRenderPassBegin, contents);
++    }
++
++
+     void cmdBeginTransformFeedback(
+             uint32_t                  firstBuffer,
+             uint32_t                  bufferCount,
+@@ -1006,6 +1019,12 @@ namespace dxvk {
+       m_vkd->vkCmdEndRendering(getCmdBuffer());
+     }
+ 
++
++    // GeneralsX @bugfix Android port 30/07/2026 see cmdBeginRenderPass above.
++    void cmdEndRenderPass() {
++      m_vkd->vkCmdEndRenderPass(getCmdBuffer());
++    }
++
+     
+     void cmdEndTransformFeedback(
+             uint32_t                  firstBuffer,
+diff --git a/src/dxvk/dxvk_context.cpp b/src/dxvk/dxvk_context.cpp
+index e3d2a92..e5cebb7 100644
+--- a/src/dxvk/dxvk_context.cpp
++++ b/src/dxvk/dxvk_context.cpp
+@@ -5522,6 +5522,16 @@ namespace dxvk {
+   void DxvkContext::renderPassBindFramebuffer(
+     const DxvkFramebufferInfo&  framebufferInfo,
+     const DxvkRenderPassOps&    ops) {
++    // GeneralsX @bugfix Android port 30/07/2026 real-device testing
++    // (Mali-G76 MC4, Bifrost, Vulkan 1.1 only) found a driver that
++    // genuinely lacks VK_KHR_dynamic_rendering (null vkCmdBeginRendering,
++    // confirmed via a real Android tombstone crashing right here on the
++    // very first draw call). See dxvk_legacy_renderpass.h.
++    if (unlikely(!m_device->features().vk13.dynamicRendering)) {
++      this->renderPassBindFramebufferLegacy(framebufferInfo, ops);
++      return;
++    }
++
+     const DxvkFramebufferSize fbSize = framebufferInfo.size();
+ 
+     this->renderPassEmitInitBarriers(framebufferInfo, ops);
+@@ -5674,9 +5684,87 @@ namespace dxvk {
+ 
+     m_cmd->addStatCtr(DxvkStatCounter::CmdRenderPassCount, 1u);
+   }
+-  
+-  
++
++
++  // GeneralsX @bugfix Android port 30/07/2026 legacy VkRenderPass/
++  // VkFramebuffer equivalent of renderPassBindFramebuffer above, used only
++  // on devices without VK_KHR_dynamic_rendering. See
++  // dxvk_legacy_renderpass.h. Unlike the dynamic-rendering path, this
++  // always uses a primary command buffer -- the secondary-command-buffer
++  // optimization above is a tiling-GPU perf hint, not a correctness
++  // requirement, and isn't worth the added complexity of also threading
++  // legacy render pass/subpass info through command buffer inheritance.
++  void DxvkContext::renderPassBindFramebufferLegacy(
++    const DxvkFramebufferInfo&  framebufferInfo,
++    const DxvkRenderPassOps&    ops) {
++    const DxvkFramebufferSize fbSize = framebufferInfo.size();
++
++    this->renderPassEmitInitBarriers(framebufferInfo, ops);
++    this->renderPassEmitPostBarriers(framebufferInfo, ops);
++
++    auto* legacyPool = m_device->legacyRenderPasses();
++
++    VkRenderPass renderPass = legacyPool->getRenderPass(framebufferInfo, ops);
++    VkFramebuffer framebuffer = legacyPool->getFramebuffer(renderPass, framebufferInfo);
++
++    // Note: pClearValues is indexed by the *compacted* attachment number
++    // from VkRenderPassCreateInfo::pAttachments (see createRenderPass in
++    // dxvk_legacy_renderpass.cpp), not by color target slot -- so this
++    // must skip absent slots the same way that compaction does, rather
++    // than writing to clearValues[i].
++    std::array<VkClearValue, MaxNumRenderTargets + 1> clearValues = { };
++    uint32_t clearValueCount = 0;
++
++    for (uint32_t i = 0; i < MaxNumRenderTargets; i++) {
++      const auto& colorTarget = framebufferInfo.getColorTarget(i);
++
++      if (colorTarget.view != nullptr)
++        clearValues[clearValueCount++].color = ops.colorOps[i].clearValue;
++    }
++
++    if (framebufferInfo.getDepthTarget().view != nullptr)
++      clearValues[clearValueCount++].depthStencil = ops.depthOps.clearValue;
++
++    VkRenderPassBeginInfo info = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
++    info.renderPass             = renderPass;
++    info.framebuffer            = framebuffer;
++    info.renderArea.offset      = VkOffset2D { 0, 0 };
++    info.renderArea.extent      = VkExtent2D { fbSize.width, fbSize.height };
++    info.clearValueCount        = clearValueCount;
++    info.pClearValues           = clearValues.data();
++
++    m_cmd->cmdBeginRenderPass(&info, VK_SUBPASS_CONTENTS_INLINE);
++
++    for (uint32_t i = 0; i < framebufferInfo.numAttachments(); i++) {
++      const auto& attachment = framebufferInfo.getAttachment(i);
++      m_cmd->track(attachment.view->image(), DxvkAccess::Write);
++
++      if (attachment.view->isMultisampled()) {
++        VkImageSubresourceRange subresources = attachment.view->imageSubresources();
++
++        if (subresources.aspectMask & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT))
++          subresources.aspectMask = vk::getWritableAspectsForLayout(attachment.layout);
++
++        m_implicitResolves.invalidate(*attachment.view->image(), subresources);
++      }
++    }
++
++    m_cmd->addStatCtr(DxvkStatCounter::CmdRenderPassCount, 1u);
++  }
++
++
+   void DxvkContext::renderPassUnbindFramebuffer() {
++    // GeneralsX @bugfix Android port 30/07/2026 see
++    // renderPassBindFramebufferLegacy above -- the legacy path never uses
++    // a secondary command buffer, so this just ends the render pass.
++    if (unlikely(!m_device->features().vk13.dynamicRendering)) {
++      m_cmd->cmdEndRenderPass();
++
++      if (m_execBarriers.hasLayoutTransitions())
++        flushBarriers();
++      return;
++    }
++
+     if (m_flags.test(DxvkContextFlag::GpRenderPassSecondaryCmd)) {
+       m_flags.clr(DxvkContextFlag::GpRenderPassSecondaryCmd);
+       VkCommandBuffer cmdBuffer = m_cmd->endSecondaryCommandBuffer();
+diff --git a/src/dxvk/dxvk_context.h b/src/dxvk/dxvk_context.h
+index de223e3..85a0506 100644
+--- a/src/dxvk/dxvk_context.h
++++ b/src/dxvk/dxvk_context.h
+@@ -1687,7 +1687,15 @@ namespace dxvk {
+     void renderPassBindFramebuffer(
+       const DxvkFramebufferInfo&  framebufferInfo,
+       const DxvkRenderPassOps&    ops);
+-    
++
++    // GeneralsX @bugfix Android port 30/07/2026 legacy VkRenderPass path
++    // used on devices without VK_KHR_dynamic_rendering, dispatched to from
++    // renderPassBindFramebuffer/renderPassUnbindFramebuffer. See
++    // dxvk_legacy_renderpass.h.
++    void renderPassBindFramebufferLegacy(
++      const DxvkFramebufferInfo&  framebufferInfo,
++      const DxvkRenderPassOps&    ops);
++
+     void renderPassUnbindFramebuffer();
+     
+     void resetRenderPassOps(
+diff --git a/src/dxvk/dxvk_device.cpp b/src/dxvk/dxvk_device.cpp
+index c509071..f0d9feb 100644
+--- a/src/dxvk/dxvk_device.cpp
++++ b/src/dxvk/dxvk_device.cpp
+@@ -23,7 +23,11 @@ namespace dxvk {
+     m_perfHints         (getPerfHints()),
+     m_objects           (this),
+     m_submissionQueue   (this, queueCallback) {
+-
++    // GeneralsX @bugfix Android port 30/07/2026 real-device testing (Mali-G76
++    // MC4, Bifrost, Vulkan 1.1 only) found a driver that genuinely lacks
++    // VK_KHR_dynamic_rendering. See dxvk_legacy_renderpass.h.
++    if (!m_features.vk13.dynamicRendering)
++      m_legacyRenderPasses = std::make_unique<DxvkLegacyRenderPassPool>(this);
+   }
+   
+   
+diff --git a/src/dxvk/dxvk_device.h b/src/dxvk/dxvk_device.h
+index 0a1e622..7cf7a41 100644
+--- a/src/dxvk/dxvk_device.h
++++ b/src/dxvk/dxvk_device.h
+@@ -1,5 +1,7 @@
+ #pragma once
+ 
++#include <memory>
++
+ #include "dxvk_adapter.h"
+ #include "dxvk_buffer.h"
+ #include "dxvk_compute.h"
+@@ -26,6 +28,11 @@
+ #include "dxvk_stats.h"
+ #include "dxvk_unbound.h"
+ 
++// GeneralsX @bugfix Android port 30/07/2026 legacy render pass pool, only
++// instantiated on devices without VK_KHR_dynamic_rendering. See
++// dxvk_legacy_renderpass.h for the full rationale.
++#include "dxvk_legacy_renderpass.h"
++
+ namespace dxvk {
+   
+   class DxvkInstance;
+@@ -592,7 +599,18 @@ namespace dxvk {
+      * used by the GPU can be safely destroyed.
+      */
+     void waitForIdle();
+-    
++
++    /**
++     * \brief Legacy render pass pool
++     *
++     * Only non-null on devices without VK_KHR_dynamic_rendering.
++     * See dxvk_legacy_renderpass.h.
++     * \returns Legacy render pass pool, or \c nullptr
++     */
++    DxvkLegacyRenderPassPool* legacyRenderPasses() const {
++      return m_legacyRenderPasses.get();
++    }
++
+   private:
+     
+     DxvkOptions                 m_options;
+@@ -617,6 +635,9 @@ namespace dxvk {
+     
+     DxvkSubmissionQueue         m_submissionQueue;
+ 
++    // GeneralsX @bugfix Android port 30/07/2026 see legacyRenderPasses() above.
++    std::unique_ptr<DxvkLegacyRenderPassPool> m_legacyRenderPasses;
++
+     DxvkDevicePerfHints getPerfHints();
+     
+     void recycleCommandList(
+diff --git a/src/dxvk/dxvk_graphics.cpp b/src/dxvk/dxvk_graphics.cpp
+index 72ed345..d589567 100644
+--- a/src/dxvk/dxvk_graphics.cpp
++++ b/src/dxvk/dxvk_graphics.cpp
+@@ -1393,7 +1393,7 @@ namespace dxvk {
+     if (m_shaders.fs != nullptr)
+       stageInfo.addStage(VK_SHADER_STAGE_FRAGMENT_BIT, getShaderCode(m_shaders.fs, key.shState.fsInfo), &key.scState.scInfo);
+ 
+-    VkGraphicsPipelineCreateInfo info = { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, &key.foState.rtInfo };
++    VkGraphicsPipelineCreateInfo info = { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
+     info.stageCount               = stageInfo.getStageCount();
+     info.pStages                  = stageInfo.getStageInfos();
+     info.pVertexInputState        = &key.viState.viInfo;
+@@ -1407,7 +1407,20 @@ namespace dxvk {
+     info.pDynamicState            = &key.dyState.dyInfo;
+     info.layout                   = m_bindings->getPipelineLayout(false);
+     info.basePipelineIndex        = -1;
+-    
++
++    // GeneralsX @bugfix Android port 30/07/2026 devices without
++    // VK_KHR_dynamic_rendering (see dxvk_legacy_renderpass.h) can't chain
++    // VkPipelineRenderingCreateInfo into pNext; use a legacy VkRenderPass
++    // that is merely format/sample-count compatible with the real one used
++    // at draw time instead, which is all Vulkan's render pass compatibility
++    // rules require for pipeline creation purposes.
++    if (likely(m_device->features().vk13.dynamicRendering)) {
++      info.pNext = &key.foState.rtInfo;
++    } else {
++      info.renderPass = m_device->legacyRenderPasses()->getCompatibleRenderPass(
++        key.foState.rtInfo, key.foState.msInfo.rasterizationSamples);
++    }
++
+     if (!key.prState.tsInfo.patchControlPoints)
+       info.pTessellationState = nullptr;
+     
+diff --git a/src/dxvk/meson.build b/src/dxvk/meson.build
+index b6222dd..7bc8626 100644
+--- a/src/dxvk/meson.build
++++ b/src/dxvk/meson.build
+@@ -92,6 +92,7 @@ dxvk_src = [
+   'dxvk_instance.cpp',
+   'dxvk_latency_builtin.cpp',
+   'dxvk_latency_reflex.cpp',
++  'dxvk_legacy_renderpass.cpp',
+   'dxvk_memory.cpp',
+   'dxvk_meta_blit.cpp',
+   'dxvk_meta_clear.cpp',
+diff --git a/src/dxvk/dxvk_legacy_renderpass.cpp b/src/dxvk/dxvk_legacy_renderpass.cpp
+new file mode 100644
+index 0000000..bff4df0
+--- /dev/null
++++ b/src/dxvk/dxvk_legacy_renderpass.cpp
+@@ -0,0 +1,260 @@
++#include "dxvk_legacy_renderpass.h"
++#include "dxvk_device.h"
++
++namespace dxvk {
++
++  DxvkLegacyRenderPassPool::DxvkLegacyRenderPassPool(DxvkDevice* device)
++  : m_device(device) {
++
++  }
++
++
++  DxvkLegacyRenderPassPool::~DxvkLegacyRenderPassPool() {
++    auto vk = m_device->vkd();
++
++    for (const auto& pair : m_framebuffers)
++      vk->vkDestroyFramebuffer(vk->device(), pair.second, nullptr);
++
++    for (const auto& pair : m_renderPasses)
++      vk->vkDestroyRenderPass(vk->device(), pair.second, nullptr);
++  }
++
++
++  VkRenderPass DxvkLegacyRenderPassPool::getCompatibleRenderPass(
++    const VkPipelineRenderingCreateInfo& rtInfo,
++          VkSampleCountFlagBits          sampleCount) {
++    DxvkLegacyRenderPassKey key;
++    key.sampleCount = sampleCount;
++
++    for (uint32_t i = 0; i < rtInfo.colorAttachmentCount && i < MaxNumRenderTargets; i++) {
++      if (rtInfo.pColorAttachmentFormats[i] == VK_FORMAT_UNDEFINED)
++        continue;
++
++      key.colorFormats[i] = rtInfo.pColorAttachmentFormats[i];
++      key.colorLoadOps[i] = VK_ATTACHMENT_LOAD_OP_LOAD;
++      key.colorLayouts[i] = VK_IMAGE_LAYOUT_GENERAL;
++    }
++
++    key.depthStencilFormat = rtInfo.depthAttachmentFormat != VK_FORMAT_UNDEFINED
++      ? rtInfo.depthAttachmentFormat
++      : rtInfo.stencilAttachmentFormat;
++
++    if (key.depthStencilFormat != VK_FORMAT_UNDEFINED) {
++      key.depthLoadOp        = VK_ATTACHMENT_LOAD_OP_LOAD;
++      key.stencilLoadOp      = VK_ATTACHMENT_LOAD_OP_LOAD;
++      key.depthStencilLayout = VK_IMAGE_LAYOUT_GENERAL;
++    }
++
++    std::lock_guard<dxvk::mutex> lock(m_mutex);
++
++    auto entry = m_renderPasses.find(key);
++
++    if (entry != m_renderPasses.end())
++      return entry->second;
++
++    VkRenderPass renderPass = createRenderPass(key);
++    m_renderPasses.insert({ key, renderPass });
++    return renderPass;
++  }
++
++
++  VkRenderPass DxvkLegacyRenderPassPool::getRenderPass(
++    const DxvkFramebufferInfo&     framebufferInfo,
++    const DxvkRenderPassOps&       ops) {
++    DxvkLegacyRenderPassKey key;
++
++    for (uint32_t i = 0; i < MaxNumRenderTargets; i++) {
++      const auto& target = framebufferInfo.getColorTarget(i);
++
++      if (target.view != nullptr) {
++        key.colorFormats[i] = target.view->info().format;
++        key.colorLoadOps[i] = ops.colorOps[i].loadOp;
++        key.colorLayouts[i] = target.layout;
++        key.sampleCount     = target.view->image()->info().sampleCount;
++      }
++    }
++
++    const auto& depthTarget = framebufferInfo.getDepthTarget();
++
++    if (depthTarget.view != nullptr) {
++      key.depthStencilFormat = depthTarget.view->info().format;
++      key.depthLoadOp        = ops.depthOps.loadOpD;
++      key.stencilLoadOp      = ops.depthOps.loadOpS;
++      key.depthStencilLayout = depthTarget.layout;
++      key.sampleCount        = depthTarget.view->image()->info().sampleCount;
++    }
++
++    std::lock_guard<dxvk::mutex> lock(m_mutex);
++
++    auto entry = m_renderPasses.find(key);
++
++    if (entry != m_renderPasses.end())
++      return entry->second;
++
++    VkRenderPass renderPass = createRenderPass(key);
++    m_renderPasses.insert({ key, renderPass });
++    return renderPass;
++  }
++
++
++  VkFramebuffer DxvkLegacyRenderPassPool::getFramebuffer(
++          VkRenderPass              renderPass,
++    const DxvkFramebufferInfo&     framebufferInfo) {
++    DxvkLegacyFramebufferKey key;
++    key.renderPass = renderPass;
++
++    for (uint32_t i = 0; i < MaxNumRenderTargets; i++) {
++      const auto& target = framebufferInfo.getColorTarget(i);
++
++      if (target.view != nullptr)
++        key.colorViews[i] = target.view->handle();
++    }
++
++    const auto& depthTarget = framebufferInfo.getDepthTarget();
++
++    if (depthTarget.view != nullptr)
++      key.depthStencilView = depthTarget.view->handle();
++
++    DxvkFramebufferSize size = framebufferInfo.size();
++    key.extent = VkExtent3D { size.width, size.height, size.layers };
++
++    std::lock_guard<dxvk::mutex> lock(m_mutex);
++
++    auto entry = m_framebuffers.find(key);
++
++    if (entry != m_framebuffers.end())
++      return entry->second;
++
++    VkFramebuffer framebuffer = createFramebuffer(renderPass, framebufferInfo);
++    m_framebuffers.insert({ key, framebuffer });
++    return framebuffer;
++  }
++
++
++  VkRenderPass DxvkLegacyRenderPassPool::createRenderPass(
++    const DxvkLegacyRenderPassKey& key) {
++    auto vk = m_device->vkd();
++
++    std::array<VkAttachmentDescription, MaxNumRenderTargets + 1> attachments = { };
++    std::array<VkAttachmentReference, MaxNumRenderTargets> colorRefs = { };
++
++    for (uint32_t i = 0; i < MaxNumRenderTargets; i++) {
++      colorRefs[i].attachment = VK_ATTACHMENT_UNUSED;
++      colorRefs[i].layout     = VK_IMAGE_LAYOUT_UNDEFINED;
++    }
++
++    VkAttachmentReference depthRef = { VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_UNDEFINED };
++
++    uint32_t attachmentCount = 0;
++    uint32_t colorAttachmentCount = 0;
++
++    for (uint32_t i = 0; i < MaxNumRenderTargets; i++) {
++      if (key.colorFormats[i] == VK_FORMAT_UNDEFINED)
++        continue;
++
++      auto& desc = attachments[attachmentCount];
++      desc.format        = key.colorFormats[i];
++      desc.samples       = key.sampleCount;
++      desc.loadOp        = key.colorLoadOps[i];
++      desc.storeOp       = VK_ATTACHMENT_STORE_OP_STORE;
++      desc.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
++      desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
++      desc.initialLayout = key.colorLoadOps[i] == VK_ATTACHMENT_LOAD_OP_LOAD
++        ? key.colorLayouts[i] : VK_IMAGE_LAYOUT_UNDEFINED;
++      desc.finalLayout   = key.colorLayouts[i];
++
++      colorRefs[i].attachment = attachmentCount;
++      colorRefs[i].layout     = key.colorLayouts[i];
++
++      attachmentCount++;
++      colorAttachmentCount = i + 1;
++    }
++
++    bool hasDepthStencil = key.depthStencilFormat != VK_FORMAT_UNDEFINED;
++
++    if (hasDepthStencil) {
++      bool loadDepth = key.depthLoadOp == VK_ATTACHMENT_LOAD_OP_LOAD
++                     || key.stencilLoadOp == VK_ATTACHMENT_LOAD_OP_LOAD;
++
++      auto& desc = attachments[attachmentCount];
++      desc.format         = key.depthStencilFormat;
++      desc.samples        = key.sampleCount;
++      desc.loadOp         = key.depthLoadOp;
++      desc.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
++      desc.stencilLoadOp  = key.stencilLoadOp;
++      desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
++      desc.initialLayout  = loadDepth ? key.depthStencilLayout : VK_IMAGE_LAYOUT_UNDEFINED;
++      desc.finalLayout    = key.depthStencilLayout;
++
++      depthRef.attachment = attachmentCount;
++      depthRef.layout     = key.depthStencilLayout;
++
++      attachmentCount++;
++    }
++
++    VkSubpassDescription subpass = { };
++    subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
++    subpass.colorAttachmentCount    = colorAttachmentCount;
++    subpass.pColorAttachments       = colorAttachmentCount ? colorRefs.data() : nullptr;
++    subpass.pDepthStencilAttachment = hasDepthStencil ? &depthRef : nullptr;
++
++    VkRenderPassCreateInfo info = { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
++    info.attachmentCount = attachmentCount;
++    info.pAttachments    = attachments.data();
++    info.subpassCount    = 1;
++    info.pSubpasses      = &subpass;
++
++    VkRenderPass renderPass = VK_NULL_HANDLE;
++    VkResult vr = vk->vkCreateRenderPass(vk->device(), &info, nullptr, &renderPass);
++
++    if (vr != VK_SUCCESS) {
++      Logger::err(str::format("DxvkLegacyRenderPassPool: Failed to create render pass: ", vr));
++      return VK_NULL_HANDLE;
++    }
++
++    return renderPass;
++  }
++
++
++  VkFramebuffer DxvkLegacyRenderPassPool::createFramebuffer(
++          VkRenderPass              renderPass,
++    const DxvkFramebufferInfo&     framebufferInfo) {
++    auto vk = m_device->vkd();
++
++    std::array<VkImageView, MaxNumRenderTargets + 1> views = { };
++    uint32_t viewCount = 0;
++
++    for (uint32_t i = 0; i < MaxNumRenderTargets; i++) {
++      const auto& target = framebufferInfo.getColorTarget(i);
++
++      if (target.view != nullptr)
++        views[viewCount++] = target.view->handle();
++    }
++
++    const auto& depthTarget = framebufferInfo.getDepthTarget();
++
++    if (depthTarget.view != nullptr)
++      views[viewCount++] = depthTarget.view->handle();
++
++    DxvkFramebufferSize size = framebufferInfo.size();
++
++    VkFramebufferCreateInfo info = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
++    info.renderPass      = renderPass;
++    info.attachmentCount = viewCount;
++    info.pAttachments    = views.data();
++    info.width  = size.width;
++    info.height = size.height;
++    info.layers = size.layers;
++
++    VkFramebuffer framebuffer = VK_NULL_HANDLE;
++    VkResult vr = vk->vkCreateFramebuffer(vk->device(), &info, nullptr, &framebuffer);
++
++    if (vr != VK_SUCCESS) {
++      Logger::err(str::format("DxvkLegacyRenderPassPool: Failed to create framebuffer: ", vr));
++      return VK_NULL_HANDLE;
++    }
++
++    return framebuffer;
++  }
++
++}
+diff --git a/src/dxvk/dxvk_legacy_renderpass.h b/src/dxvk/dxvk_legacy_renderpass.h
+new file mode 100644
+index 0000000..f27870b
+--- /dev/null
++++ b/src/dxvk/dxvk_legacy_renderpass.h
+@@ -0,0 +1,188 @@
++#pragma once
++
++// GeneralsX @bugfix Android port 30/07/2026 DXVK 2.x's entire rendering
++// architecture (both DxvkContext::renderPassBindFramebuffer's actual
++// vkCmdBeginRendering/vkCmdEndRendering calls, and every graphics pipeline
++// creation path via VkPipelineRenderingCreateInfo) is built unconditionally
++// on VK_KHR_dynamic_rendering. Real-device testing (Mali-G76 MC4, Bifrost)
++// found a driver that genuinely lacks it (apiVersion 1.1, and unlike the
++// earlier six/copy_commands2 registration bugs, registering the extension
++// changes nothing -- confirmed via a real Android tombstone: SIGSEGV in
++// DxvkContext::renderPassBindFramebuffer right as the first draw call
++// tries to start a render pass).
++//
++// Unlike the barrier/copy-command fallbacks, there is no 1:1 legacy
++// function to swap in: the legacy equivalent is the classic
++// VkRenderPass/VkFramebuffer object model, which this DXVK version has no
++// remaining implementation of at all (only a vestigial, unused
++// DxvkFramebufferKey struct with a VkRenderPass field survives from
++// before the 1.3 rewrite). This file adds a minimal one back, used only
++// on devices without dynamicRendering.
++//
++// Two caches, because Vulkan's "render pass compatibility" rules for pipeline
++// binding only require matching attachment formats/sample counts -- not load/
++// store ops or layouts -- so a pipeline created against one render pass can
++// be used with any other "compatible" one at draw time:
++//  - getCompatibleRenderPass(): keyed on format+sample signature only, with
++//    fixed LOAD_OP_LOAD/STORE_OP_STORE and a GENERAL layout. Used purely so
++//    DxvkGraphicsPipeline::createOptimizedPipeline has *a* valid VkRenderPass
++//    handle to give vkCreateGraphicsPipelines when it can't chain
++//    VkPipelineRenderingCreateInfo; this render pass is never actually used
++//    in a vkCmdBeginRenderPass call, so its load/store ops and layouts don't
++//    matter for correctness, only the format/sample signature does.
++//  - getRenderPass(): keyed on the real DxvkFramebufferInfo + DxvkRenderPassOps
++//    for this specific draw (same data DXVK already computes for the
++//    dynamic-rendering path in DxvkContext::renderPassBindFramebuffer) --
++//    formats, sample count, load ops, and the actual image layouts in use,
++//    so no extra transition is needed beyond what DXVK's own barrier calls
++//    already do before/after the render pass.
++//
++// Framebuffers are cached separately, keyed on the actual render pass
++// handle + image views + extent, since unlike dynamic rendering the legacy
++// model needs a real VkFramebuffer object bound to a specific VkRenderPass.
++
++#include <unordered_map>
++
++#include "../util/thread.h"
++
++#include "dxvk_framebuffer.h"
++#include "dxvk_hash.h"
++#include "dxvk_include.h"
++#include "dxvk_limits.h"
++#include "dxvk_renderpass.h"
++
++namespace dxvk {
++
++  class DxvkDevice;
++
++  struct DxvkLegacyRenderPassKey {
++    std::array<VkFormat, MaxNumRenderTargets>          colorFormats  = { };
++    std::array<VkAttachmentLoadOp, MaxNumRenderTargets> colorLoadOps  = { };
++    std::array<VkImageLayout, MaxNumRenderTargets>      colorLayouts  = { };
++    VkFormat              depthStencilFormat = VK_FORMAT_UNDEFINED;
++    VkAttachmentLoadOp    depthLoadOp        = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
++    VkAttachmentLoadOp    stencilLoadOp      = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
++    VkImageLayout         depthStencilLayout = VK_IMAGE_LAYOUT_UNDEFINED;
++    VkSampleCountFlagBits sampleCount        = VK_SAMPLE_COUNT_1_BIT;
++
++    size_t hash() const {
++      DxvkHashState state;
++      for (uint32_t i = 0; i < MaxNumRenderTargets; i++) {
++        state.add(uint32_t(colorFormats[i]));
++        state.add(uint32_t(colorLoadOps[i]));
++        state.add(uint32_t(colorLayouts[i]));
++      }
++      state.add(uint32_t(depthStencilFormat));
++      state.add(uint32_t(depthLoadOp));
++      state.add(uint32_t(stencilLoadOp));
++      state.add(uint32_t(depthStencilLayout));
++      state.add(uint32_t(sampleCount));
++      return state;
++    }
++
++    bool eq(const DxvkLegacyRenderPassKey& other) const {
++      bool eq = depthStencilFormat == other.depthStencilFormat
++             && depthLoadOp        == other.depthLoadOp
++             && stencilLoadOp      == other.stencilLoadOp
++             && depthStencilLayout == other.depthStencilLayout
++             && sampleCount        == other.sampleCount;
++      for (uint32_t i = 0; i < MaxNumRenderTargets && eq; i++) {
++        eq &= colorFormats[i] == other.colorFormats[i]
++           && colorLoadOps[i] == other.colorLoadOps[i]
++           && colorLayouts[i] == other.colorLayouts[i];
++      }
++      return eq;
++    }
++  };
++
++
++  struct DxvkLegacyFramebufferKey {
++    VkRenderPass renderPass = VK_NULL_HANDLE;
++    std::array<VkImageView, MaxNumRenderTargets> colorViews = { };
++    VkImageView  depthStencilView = VK_NULL_HANDLE;
++    VkExtent3D   extent = { 0u, 0u, 0u };
++
++    size_t hash() const {
++      DxvkHashState state;
++      state.add(uint64_t(renderPass));
++      state.add(uint64_t(depthStencilView));
++      for (uint32_t i = 0; i < MaxNumRenderTargets; i++)
++        state.add(uint64_t(colorViews[i]));
++      state.add(extent.width);
++      state.add(extent.height);
++      state.add(extent.depth);
++      return state;
++    }
++
++    bool eq(const DxvkLegacyFramebufferKey& other) const {
++      bool eq = renderPass       == other.renderPass
++             && depthStencilView == other.depthStencilView
++             && extent.width     == other.extent.width
++             && extent.height    == other.extent.height
++             && extent.depth     == other.extent.depth;
++      for (uint32_t i = 0; i < MaxNumRenderTargets && eq; i++)
++        eq &= colorViews[i] == other.colorViews[i];
++      return eq;
++    }
++  };
++
++
++  /**
++   * \brief Legacy render pass / framebuffer pool
++   *
++   * Only instantiated and used when the device does not support
++   * VK_KHR_dynamic_rendering. See the file header comment above.
++   */
++  class DxvkLegacyRenderPassPool {
++
++  public:
++
++    DxvkLegacyRenderPassPool(DxvkDevice* device);
++
++    ~DxvkLegacyRenderPassPool();
++
++    /**
++     * \brief Gets a render pass suitable for pipeline creation only
++     *
++     * Never actually used in vkCmdBeginRenderPass, so its load/store
++     * ops and layouts are irrelevant -- only the format/sample
++     * signature matters for render pass compatibility with the real
++     * one used at draw time.
++     */
++    VkRenderPass getCompatibleRenderPass(
++      const VkPipelineRenderingCreateInfo& rtInfo,
++            VkSampleCountFlagBits          sampleCount);
++
++    /**
++     * \brief Gets a render pass matching the given attachments and ops
++     */
++    VkRenderPass getRenderPass(
++      const DxvkFramebufferInfo&     framebufferInfo,
++      const DxvkRenderPassOps&       ops);
++
++    /**
++     * \brief Gets a framebuffer for the given render pass and targets
++     */
++    VkFramebuffer getFramebuffer(
++            VkRenderPass              renderPass,
++      const DxvkFramebufferInfo&     framebufferInfo);
++
++  private:
++
++    DxvkDevice* m_device;
++
++    dxvk::mutex m_mutex;
++
++    std::unordered_map<DxvkLegacyRenderPassKey,  VkRenderPass,  DxvkHash, DxvkEq> m_renderPasses;
++    std::unordered_map<DxvkLegacyFramebufferKey, VkFramebuffer, DxvkHash, DxvkEq> m_framebuffers;
++
++    VkRenderPass createRenderPass(
++      const DxvkLegacyRenderPassKey& key);
++
++    VkFramebuffer createFramebuffer(
++            VkRenderPass              renderPass,
++      const DxvkFramebufferInfo&     framebufferInfo);
++
++  };
++
++}

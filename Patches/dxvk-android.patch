@@ -1,0 +1,208 @@
+# DXVK Android patch
+#
+# Local modification to references/fbraz3-dxvk (at 46a3bc01) used to build the
+# libdxvk_d3d8/d3d9 .so libraries that the Android APK packages as jniLibs:
+#
+# Android's APK/jniLibs model only installs plain `lib<name>.so` files — the
+# versioned `libdxvk_d3d9.so.0.20600` + symlink chain meson emits for other
+# Unix targets cannot be packaged (the PackageManager extracts real files
+# only, no symlinks), and a DT_NEEDED on `libdxvk_d3d9.so.0` would then never
+# resolve inside the app's linker namespace. Build unversioned .so on Android.
+#
+# Applied together with Patches/dxvk-ios.patch (its SDL3 WSI pixel-size fix is
+# platform-neutral and wanted on Android's high-density displays too; its
+# @executable_path Vulkan loader entries live in an __APPLE__ branch that does
+# not compile into the Android build).
+#
+# Apply with: git -C references/fbraz3-dxvk apply ../../Patches/dxvk-android.patch
+# Then build with: meson setup --cross-file build/<preset>/meson-arm64-android-cross.ini ...
+diff --git a/src/dxvk/dxvk_adapter.cpp b/src/dxvk/dxvk_adapter.cpp
+index 981b0003..6f865466 100644
+--- a/src/dxvk/dxvk_adapter.cpp
++++ b/src/dxvk/dxvk_adapter.cpp
+@@ -926,7 +926,21 @@ namespace dxvk {
+     const auto memoryInfo = this->memoryProperties();
+     
+     Logger::info(str::format(deviceInfo.core.properties.deviceName, ":",
+-      "\n  Driver : ", deviceInfo.vk12.driverName, " ", deviceInfo.driverVersion.toString()));
++      "\n  Vendor ID            : 0x", std::hex, deviceInfo.core.properties.vendorID,
++      "\n  Device ID            : 0x", std::hex, deviceInfo.core.properties.deviceID,
++      "\n  Vulkan API           : ", std::dec,
++        VK_VERSION_MAJOR(deviceInfo.core.properties.apiVersion), ".",
++        VK_VERSION_MINOR(deviceInfo.core.properties.apiVersion), ".",
++        VK_VERSION_PATCH(deviceInfo.core.properties.apiVersion),
++      "\n  Driver               : ", deviceInfo.vk12.driverName, " ", deviceInfo.driverVersion.toString(),
++      "\n  textureCompressionBC : ", m_deviceFeatures.core.features.textureCompressionBC ? "1" : "0"));
++    // GeneralsX @build Android port issue-triage 07/09/2026 richer adapter
++    // log line for future crash-report triage (issues #11/#16): vendor/
++    // device ID and the exact reported Vulkan API version are what
++    // distinguish "this GPU/driver combo is known-bad" from "another
++    // untested one" when matching a new report against fixes already made
++    // for a specific chip, without waiting on the reporter to separately
++    // provide them.
+ 
+     for (uint32_t i = 0; i < memoryInfo.memoryHeapCount; i++) {
+       constexpr VkDeviceSize mib = 1024 * 1024;
+diff --git a/meson.build b/meson.build
+index 8f725104..3e6bd9d5 100644
+--- a/meson.build
++++ b/meson.build
+@@ -137,6 +137,13 @@ else
+     dxvk_version += [ padded ]
+   endforeach
+-  dxvk_so_version = {'version': dxvk_abi_version + '.' + dxvk_version[0] + dxvk_version[1] + dxvk_version[2]}
++  if host_machine.system() == 'android'
++    # Android cannot package versioned shared objects or symlinks in an APK;
++    # the libraries must be plain libdxvk_d3d8.so / libdxvk_d3d9.so with
++    # matching sonames so the in-app dlopen()/DT_NEEDED resolution works.
++    dxvk_so_version = {}
++  else
++    dxvk_so_version = {'version': dxvk_abi_version + '.' + dxvk_version[0] + dxvk_version[1] + dxvk_version[2]}
++  endif
+
+   wrc           = find_program('touch')
+   wrc_generator = generator(wrc, output : [ '@BASENAME@_ignored.h' ], arguments : [ '@OUTPUT@' ] )
+diff --git a/src/wsi/sdl3/wsi_platform_sdl3.cpp b/src/wsi/sdl3/wsi_platform_sdl3.cpp
+index 9975cda..f29ca37 100644
+--- a/src/wsi/sdl3/wsi_platform_sdl3.cpp
++++ b/src/wsi/sdl3/wsi_platform_sdl3.cpp
+@@ -15,6 +15,14 @@ namespace dxvk::wsi {
+         "SDL3.dll"
+ #elif defined(__APPLE__)
+         "libSDL3.0.dylib"
++#elif defined(__ANDROID__)
++        // GeneralsX @bugfix Android port 07/07/2026 Android's linker has no
++        // SONAME symlink resolution like glibc's ld.so — an installed APK's
++        // lib/<abi>/ only ever contains the exact filename Gradle packaged
++        // (libSDL3.so, no ".0" suffix), so dlopen("libSDL3.so.0") always
++        // fails here even though the very same library loads fine via
++        // System.loadLibrary("SDL3") elsewhere in the same process.
++        "libSDL3.so"
+ #else
+         "libSDL3.so.0"
+ #endif
+diff --git a/src/dxvk/dxvk_sparse.cpp b/src/dxvk/dxvk_sparse.cpp
+index 8c469f2..cbc30a0 100644
+--- a/src/dxvk/dxvk_sparse.cpp
++++ b/src/dxvk/dxvk_sparse.cpp
+@@ -127,8 +127,28 @@ namespace dxvk {
+       std::vector<Rc<DxvkResourceAllocation>> newPages;
+       newPages.reserve(pageCount - m_pageCount);
+ 
+-      for (size_t i = 0; i < pageCount - m_pageCount; i++)
+-        newPages.push_back(m_memory->createSparsePage());
++      for (size_t i = 0; i < pageCount - m_pageCount; i++) {
++        Rc<DxvkResourceAllocation> page = m_memory->createSparsePage();
++
++        // TheSuperHackers @bugfix createSparsePage() legitimately returns
++        // null when no memory type supports sparse residency (observed on
++        // Android GPUs/drivers reporting a zero memory-type mask for sparse
++        // resources). This used to push the null Rc anyway and then
++        // unconditionally dereference every entry below (both in the sort
++        // comparator and via acquirePage() indexing up to the requested
++        // pageCount), segfaulting the first time sparse page capacity had
++        // to grow on such a device. Stop growing early instead: capping
++        // capacity below what was requested is recoverable, a null-page
++        // dereference is not.
++        if (page == nullptr) {
++          Logger::err("DxvkSparsePageAllocator::setCapacity: Failed to allocate a sparse page "
++            "(no memory type supports sparse residency on this device?); capping capacity below "
++            "the requested page count");
++          break;
++        }
++
++        newPages.push_back(std::move(page));
++      }
+ 
+       // Sort page by memory and offset to enable more
+       // batching opportunities during page table updates
+@@ -144,6 +164,11 @@ namespace dxvk {
+           return aHandle.offset < bHandle.offset;
+         });
+ 
++      // Reflect however many pages we actually got, not the requested
++      // count, so m_pageCount never claims more valid entries than
++      // m_pages actually holds (acquirePage() bounds-checks against it).
++      pageCount = uint32_t(m_pages.size() + newPages.size());
++
+       for (auto& page : newPages)
+         m_pages.push_back(std::move(page));
+     }
+diff --git a/src/dxvk/dxvk_memory.h b/src/dxvk/dxvk_memory.h
+index c432df0..2c1ebc2 100644
+--- a/src/dxvk/dxvk_memory.h
++++ b/src/dxvk/dxvk_memory.h
+@@ -704,6 +704,21 @@ namespace dxvk {
+       if (unlikely(!m_next))
+         createPool();
+ 
++      // TheSuperHackers @bugfix Survive a corrupted free list instead of
++      // dereferencing a garbage next pointer. Real-device crash reports
++      // (Android/Adreno) showed the popped head holding a live allocation's
++      // counter words (e.g. 0x2000000001) — i.e. an allocation was recycled
++      // while still referenced and its user overwrote the embedded
++      // StorageList. Storage is alignas(DxvkResourceAllocation), so any
++      // misaligned head is definitely poisoned: log, abandon the poisoned
++      // chain (a bounded leak) and continue from a fresh pool page.
++      if (unlikely(reinterpret_cast<uintptr_t>(m_next) & (alignof(Storage) - 1u))) {
++        Logger::err(str::format("DxvkResourceAllocationPool: corrupted free list head ",
++          reinterpret_cast<void*>(m_next), ", abandoning chain"));
++        m_next = nullptr;
++        createPool();
++      }
++
+       StorageList* list = m_next;
+       m_next = list->next;
+       list->~StorageList();
+diff --git a/src/wsi/sdl3/wsi_window_sdl3.cpp b/src/wsi/sdl3/wsi_window_sdl3.cpp
+index 10fca47..e9129c6 100644
+--- a/src/wsi/sdl3/wsi_window_sdl3.cpp
++++ b/src/wsi/sdl3/wsi_window_sdl3.cpp
+@@ -11,6 +11,10 @@
+ #include <windows.h>
+ #include <SDL3/SDL_vulkan.h>
+ 
++// GeneralsX @bugfix Android port 13/07/2026 - see createSurface() below.
++#include <chrono>
++#include <thread>
++
+ namespace dxvk::wsi {
+ 
+   void Sdl3WsiDriver::getWindowSize(
+@@ -168,6 +172,36 @@ namespace dxvk::wsi {
+           VkSurfaceKHR*             pSurface) {
+     SDL_Window* window = fromHwnd(hWindow);
+ 
++    if (window == nullptr)
++      return VK_ERROR_OUT_OF_HOST_MEMORY;
++
++#if defined(__ANDROID__)
++    // GeneralsX @bugfix Android port 13/07/2026 - a real device crash traced
++    // (via addr2line against the exact build's DXVK .so) to this exact call:
++    // SDL_Vulkan_CreateSurface() segfaulting several frames deep inside the
++    // Android system libvulkan.so loader (fault_addr near-null), specifically
++    // when this createSurface() runs for a presenter created right as a match
++    // starts loading -- i.e. not the very first surface of the session (menus
++    // had already rendered fine), but a later one, most likely triggered by a
++    // resolution/render-target change on match start forcing DXVK to tear
++    // down and recreate its presenter while the underlying ANativeWindow is
++    // itself mid-recreation on the Android side. It reproduced on 2 of 4 app
++    // launches (same action each time) and did not reproduce once the window
++    // had settled. SDL3Main.cpp already works around the same class of
++    // Android surface-timing race elsewhere (polling for the window to
++    // report its landscape size before injecting resolution); mirror that
++    // pattern here: SDL_GetWindowSize() reporting a real size is the
++    // documented SDL3 signal that a surface is actually attached, so wait
++    // for that before handing the window to SDL_Vulkan_CreateSurface instead
++    // of assuming a live SDL_Window* means a live native surface.
++    int w = 0, h = 0;
++    for (int attempt = 0; attempt < 20; ++attempt) {
++      if (SDL_GetWindowSize(window, &w, &h) && w > 0 && h > 0)
++        break;
++      std::this_thread::sleep_for(std::chrono::milliseconds(50));
++    }
++#endif
++
+     return SDL_Vulkan_CreateSurface(window, instance, nullptr, pSurface)
+       ? VK_SUCCESS : VK_ERROR_OUT_OF_HOST_MEMORY;
+   }

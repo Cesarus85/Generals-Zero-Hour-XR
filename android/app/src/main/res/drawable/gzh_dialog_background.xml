@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GeneralsX @feature Android port launcher-ui-2026 08/09/2026 Rounded dark
+     panel behind the plain android.app.AlertDialogs the launcher still
+     uses (language picker, render-backend picker, clear-logs confirm). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/gzh_surface_container_high" />
+    <corners android:radius="28dp" />
+</shape>

@@ -1,0 +1,61 @@
+diff --git a/src/dxvk/dxvk_swapchain_blitter.cpp b/src/dxvk/dxvk_swapchain_blitter.cpp
+index 951730c..a6d978d 100644
+--- a/src/dxvk/dxvk_swapchain_blitter.cpp
++++ b/src/dxvk/dxvk_swapchain_blitter.cpp
+@@ -530,11 +530,54 @@ namespace dxvk {
+     renderInfo.colorAttachmentCount = 1;
+     renderInfo.pColorAttachments = &attachmentInfo;
+ 
+-    ctx.cmd->cmdBeginRendering(&renderInfo);
++    // GeneralsX @bugfix Android port 31/07/2026 the HUD's own compositing
++    // step is a third consumer of dynamic rendering in this file, separate
++    // from present() below and from the pipeline creation paths -- it was
++    // missed when those were converted, and enabling the HUD on a device
++    // without VK_KHR_dynamic_rendering crashed here on a null function
++    // pointer (tombstone: pc=0x0 in renderHudImage). Routes through the same
++    // DxvkLegacyRenderPassPool. Note loadOp is CLEAR here, so unlike
++    // present() this pass always needs a clear value; zero is transparent
++    // black, which is what the HUD composites over.
++    auto* legacyPool = m_device->legacyRenderPasses();
++
++    if (legacyPool) {
++      DxvkRenderTargets renderTargets = { };
++      renderTargets.color[0].view = m_hudView;
++      renderTargets.color[0].layout = attachmentInfo.imageLayout;
++
++      DxvkRenderPassOps ops = { };
++      ops.colorOps[0].loadOp = attachmentInfo.loadOp;
++      ops.colorOps[0].loadLayout = attachmentInfo.imageLayout;
++      ops.colorOps[0].storeLayout = attachmentInfo.imageLayout;
++
++      DxvkFramebufferInfo framebufferInfo(renderTargets,
++        DxvkFramebufferSize { extent.width, extent.height, 1u });
++
++      VkRenderPass legacyRenderPass = legacyPool->getRenderPass(framebufferInfo, ops);
++      VkFramebuffer legacyFramebuffer = legacyPool->getFramebuffer(legacyRenderPass, framebufferInfo);
++
++      VkClearValue clearValue = { };
++
++      VkRenderPassBeginInfo passBeginInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
++      passBeginInfo.renderPass = legacyRenderPass;
++      passBeginInfo.framebuffer = legacyFramebuffer;
++      passBeginInfo.renderArea.offset = { 0, 0 };
++      passBeginInfo.renderArea.extent = { extent.width, extent.height };
++      passBeginInfo.clearValueCount = 1;
++      passBeginInfo.pClearValues = &clearValue;
++
++      ctx.cmd->cmdBeginRenderPass(&passBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
++    } else {
++      ctx.cmd->cmdBeginRendering(&renderInfo);
++    }
+ 
+     m_hud->render(ctx, m_hudView);
+ 
+-    ctx.cmd->cmdEndRendering();
++    if (legacyPool)
++      ctx.cmd->cmdEndRenderPass();
++    else
++      ctx.cmd->cmdEndRendering();
+ 
+     // Make image shader-readable
+     barrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;

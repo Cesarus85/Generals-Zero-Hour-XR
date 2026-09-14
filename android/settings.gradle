@@ -1,0 +1,21 @@
+// GeneralsX Zero Hour — Android shell project.
+// The C++ game builds with CMake (preset android-vulkan) OUTSIDE Gradle; this
+// project only compiles the thin Java shell (SDLActivity + asset extraction)
+// and packages the staged native libraries into an APK. See
+// scripts/build/android/package-android-zh.sh for the full pipeline.
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "GeneralsXZH"
+include ':app'

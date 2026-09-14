@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- GeneralsX @feature Codex 14/09/2026 XR identity overrides every locale. -->
+    <string name="app_name">Generals: Zero Hour XR</string>
+    <string name="setup_window_title">Ajustes de Generals: Zero Hour XR</string>
+    <string name="setup_title">Generals: Zero Hour XR</string>
+    <string name="setup_subtitle">Ajustes de Meta Quest</string>
+    <string name="logviewer_share_subject">Registro de Generals: Zero Hour XR</string>
+    <string name="online_status_battery_opt">Permite que Generals: Zero Hour XR se ejecute en segundo plano en la siguiente pantalla, luego vuelve y toca Iniciar sesión otra vez — de lo contrario Android podría detener la verificación de inicio de sesión mientras estás en el navegador.</string>
+</resources>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+GeneralsX @bugfix Android port 11/07/2026 backs the FileProvider declared in
+AndroidManifest.xml; exposes only the app's cache dir (where
+LogViewerActivity used to write the combined log text before sharing it),
+not the whole app-private storage tree.
+
+GeneralsX @bugfix Android port 31/07/2026 also expose getFilesDir()
+(crash.log/crash-prev.log) and getExternalFilesDir() (generals-stderr.log,
+generals-stderr-prev.log) at their roots. LogViewerActivity's Share button
+now hands these real on-disk files straight to FileProvider instead of the
+old capped/combined text export, so a multi-minute session's real size
+(tens of MB observed on a real device) survives intact rather than being
+truncated to the in-app viewer's head-and-tail limit. FileProvider only
+ever grants read access to whatever specific Uri a given share Intent
+names, never these whole trees.
+-->
+<paths>
+    <cache-path name="logs" path="." />
+    <files-path name="internal_logs" path="." />
+    <external-files-path name="external_logs" path="." />
+</paths>

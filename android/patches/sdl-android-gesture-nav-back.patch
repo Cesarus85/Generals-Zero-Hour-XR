@@ -1,0 +1,200 @@
+--- a/org/libsdl/app/SDLActivity.java	2026-09-07 05:48:08.035026371 +0000
++++ b/org/libsdl/app/SDLActivity.java	2026-09-07 05:48:37.355688684 +0000
+@@ -14,6 +14,7 @@
+ import android.content.pm.ApplicationInfo;
+ import android.content.pm.PackageManager;
+ import android.content.res.Configuration;
++import android.content.res.Resources;
+ import android.graphics.Bitmap;
+ import android.graphics.Color;
+ import android.graphics.PorterDuff;
+@@ -48,6 +49,10 @@
+ import android.widget.TextView;
+ import android.widget.Toast;
+ 
++import androidx.core.view.WindowCompat;
++import androidx.core.view.WindowInsetsCompat;
++import androidx.core.view.WindowInsetsControllerCompat;
++
+ import java.io.FileNotFoundException;
+ import java.util.ArrayList;
+ import java.util.Hashtable;
+@@ -912,22 +917,41 @@
+                 if (context instanceof Activity) {
+                     Window window = ((Activity) context).getWindow();
+                     if (window != null) {
++                        // GeneralsX @bugfix Android port 04/08/2026 Two
++                        // earlier fixes kept the legacy View.SYSTEM_UI_FLAG_*
++                        // API (SYSTEM_UI_FLAG_IMMERSIVE_STICKY/HIDE_NAVIGATION)
++                        // and only ADDED an explicit
++                        // WindowInsetsControllerCompat.setSystemBarsBehavior
++                        // call alongside it -- but ViewRootImpl silently
++                        // remaps those legacy flags back to insets behavior
++                        // BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE whenever
++                        // anything re-touches them, and with the nav bar
++                        // hidden under THAT specific behavior SystemUI
++                        // disables the edge back-gesture entirely at the
++                        // source (EdgeBackGestureHandler never arms). A
++                        // second call site (onSystemUiVisibilityChange's
++                        // rehideSystemUi, further down this file) reasserted
++                        // the legacy flags on a 2-second timer WITHOUT this
++                        // fix -- explaining a tester's report that the back
++                        // gesture would work briefly then "snap back"/die: it
++                        // only stayed fixed until that timer fired. Replacing
++                        // the legacy flags with the modern
++                        // WindowCompat.setDecorFitsSystemWindows() +
++                        // WindowInsetsControllerCompat.hide()/show() pair
++                        // everywhere they're used (this switch case AND
++                        // rehideSystemUi) removes the legacy/modern mixing
++                        // that was the actual root cause, instead of patching
++                        // one call site at a time.
++                        WindowInsetsControllerCompat controller =
++                            WindowCompat.getInsetsController(window, window.getDecorView());
+                         if ((msg.obj instanceof Integer) && ((Integer) msg.obj != 0)) {
+-                            int flags = View.SYSTEM_UI_FLAG_FULLSCREEN |
+-                                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+-                                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+-                                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+-                                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+-                                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.INVISIBLE;
+-                            window.getDecorView().setSystemUiVisibility(flags);
+-                            window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+-                            window.clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
++                            WindowCompat.setDecorFitsSystemWindows(window, false);
++                            controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_DEFAULT);
++                            controller.hide(WindowInsetsCompat.Type.systemBars());
+                             SDLActivity.mFullscreenModeActive = true;
+                         } else {
+-                            int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_VISIBLE;
+-                            window.getDecorView().setSystemUiVisibility(flags);
+-                            window.addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+-                            window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
++                            WindowCompat.setDecorFitsSystemWindows(window, true);
++                            controller.show(WindowInsetsCompat.Type.systemBars());
+                             SDLActivity.mFullscreenModeActive = false;
+                         }
+                         if (Build.VERSION.SDK_INT >= 30 /* Android 11 (R) */) {
+@@ -1758,29 +1782,104 @@
+         dialog.show();
+     }
+ 
+-    private final Runnable rehideSystemUi = new Runnable() {
+-        @Override
+-        public void run() {
+-            int flags = View.SYSTEM_UI_FLAG_FULLSCREEN |
+-                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+-                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+-                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.INVISIBLE;
++    // GeneralsX @bugfix Android port 04/08/2026 Used to re-apply the legacy
++    // SYSTEM_UI_FLAG_* set (without the modern behavior fix -- this call
++    // site was never covered by the earlier BEHAVIOR_DEFAULT patch, only
++    // COMMAND_CHANGE_WINDOW_STYLE above was) on a 2-SECOND DELAY via
++    // Handler.postDelayed. Any bar-visibility change -- including a real
++    // edge back-gesture attempt -- retriggered this, so for up to 2s after
++    // every peek the window sat in the legacy state that disables
++    // EdgeBackGestureHandler entirely, and once the delayed callback fired
++    // it reasserted that exact broken state again. Reported by a tester as
++    // the back gesture registering briefly, then "snapping back"/dying
++    // within a couple of swipes. Re-hiding immediately (no delay) through
++    // the same modern WindowCompat/WindowInsetsControllerCompat pair used
++    // in COMMAND_CHANGE_WINDOW_STYLE removes both the delay window and the
++    // legacy-flag regression at once.
++    // GeneralsX @bugfix Android port 07/09/2026 On gesture navigation, hide the status
++    // bar but LEAVE the navigation bar alone, and with it the home gesture.
++    //
++    // Reported with video: dragging the home pill upward makes it flash for a few
++    // milliseconds and the game does not minimize. The back gesture works. That pairing
++    // is the whole diagnosis.
++    //
++    // BEHAVIOR_DEFAULT is what keeps the back gesture alive (see the note below), but
++    // BEHAVIOR_DEFAULT is the deprecated SHOW_BARS_BY_TOUCH: with the bars hidden, ANY
++    // touch reveals them. So the very touch that begins the home swipe raises the bar,
++    // onSystemUiVisibilityChange fires, we hide it again -- that is the flash -- and the
++    // system never carries the drag through to Home. The other behaviour,
++    // SHOW_TRANSIENT_BARS_BY_SWIPE, fixes home and kills back instead: AOSP only sets
++    // SYSUI_STATE_ALLOW_GESTURE_IGNORING_BAR_VISIBILITY when the behaviour is NOT that
++    // one. Two earlier passes here each picked one of the two and lost the other.
++    //
++    // There is no need to choose. The fight exists only because we hide the very bar the
++    // gestures live in. Under gesture navigation that bar is a thin translucent pill over
++    // a game already drawing edge to edge -- hiding it buys almost nothing and costs both
++    // gestures their reliability. Leave it, and the system arbitrates home and back
++    // exactly as it does for every other app: no callback, no race, no flash.
++    //
++    // Three-button navigation is a different bargain: there the bar is a tall opaque strip
++    // worth real screen space, and there are no swipe gestures to protect because the
++    // buttons ARE the navigation. So it stays hidden, exactly as before.
++    private static boolean usesGestureNavigation(Context context) {
++        try {
++            Resources res = context.getResources();
++            int id = res.getIdentifier("config_navBarInteractionMode", "integer", "android");
++            // 0 = three button, 1 = two button, 2 = fully gestural
++            return id > 0 && res.getInteger(id) == 2;
++        } catch (Throwable t) {
++            // Unknown navigation mode: assume gestural, which is the safe side. The worst
++            // case there is a visible pill, not an app the user cannot leave.
++            return true;
++        }
++    }
+ 
+-            SDLActivity.this.getWindow().getDecorView().setSystemUiVisibility(flags);
++    private void hideSystemUiModern() {
++        Window window = SDLActivity.this.getWindow();
++        WindowCompat.setDecorFitsSystemWindows(window, false);
++        WindowInsetsControllerCompat controller =
++            WindowCompat.getInsetsController(window, window.getDecorView());
++        controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_DEFAULT);
++        if (usesGestureNavigation(SDLActivity.this)) {
++            controller.hide(WindowInsetsCompat.Type.statusBars());
++        } else {
++            controller.hide(WindowInsetsCompat.Type.systemBars());
+         }
+-    };
++    }
+ 
+     public void onSystemUiVisibilityChange(int visibility) {
+-        if (SDLActivity.mFullscreenModeActive && ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0 || (visibility & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0)) {
+-
+-            Handler handler = getWindow().getDecorView().getHandler();
+-            if (handler != null) {
+-                handler.removeCallbacks(rehideSystemUi); // Prevent a hide loop.
+-                handler.postDelayed(rehideSystemUi, 2000);
+-            }
+-
++        // GeneralsX @bugfix Android port 05/08/2026 AOSP arbitrates system-bar
++        // control by the currently-FOCUSED window (see
++        // InsetsPolicy.updateBarControlTarget/getStatusControlTarget/
++        // getNavControlTarget in frameworks/base) -- not by whoever last
++        // called hide()/show(). A Home or Recents gesture transfers window
++        // focus away from this Activity early in the system transition
++        // (QuickStep's launcher/recents surface takes focus mid-drag, well
++        // before the drag completes), and this callback fires repeatedly
++        // during that same transition as the launcher's bars transiently
++        // show/hide underneath. Calling hideSystemUiModern() unconditionally
++        // here meant we kept issuing hide(systemBars()) after this window had
++        // already stopped being the insets control target -- a live
++        // relayout/IPC request racing the system's own Home/Recents
++        // transition, which some OEM SystemUI forks don't tolerate well
++        // (reported: game "no longer minimizes," must lock the device to
++        // exit; not reproducible on every device, consistent with
++        // OEM-dependent transition-churn tolerance). An in-app edge
++        // back-gesture never loses window focus (no other window becomes
++        // focused mid-swipe), so gating on mHasFocus -- already tracked by
++        // this file, set in onWindowFocusChanged() -- keeps the back-gesture
++        // fix intact while suppressing the interfering re-hide during
++        // Home/Recents transitions, matching what AOSP itself uses to decide
++        // whether this window even still owns the bars.
++        // GeneralsX @bugfix Android port 07/09/2026 Under gesture navigation the navigation
++        // bar is deliberately left visible (see hideSystemUiModern), so HIDE_NAVIGATION
++        // being clear is not a reason to act -- reacting to it would re-open the very
++        // re-hide race this gate exists to close. Only the status bar is ours there.
++        final boolean gestureNav = usesGestureNavigation(SDLActivity.this);
++        final boolean needsRehide = ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0)
++            || (!gestureNav && (visibility & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0);
++        if (SDLActivity.mFullscreenModeActive && SDLActivity.mHasFocus && needsRehide) {
++            hideSystemUiModern();
+         }
+     }
+ 

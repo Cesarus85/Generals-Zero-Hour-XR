@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Generals Zero Hour</string>
+    <string name="common_cancel">Otkazati</string>
+
+    <!-- SetupActivity: title / fallback -->
+    <string name="setup_window_title">Nastojenja GeneralsZH</string>
+    <string name="setup_title">Command &amp; Conquer Generals: Zero Hour</string>
+    <string name="setup_subtitle">Nastojenja Android</string>
+    <string name="setup_fallback_warning">Normalny interfejs nastojenj ne uspěl zagruziti sę (%1$s). Pokazan jest prosty zapasny interfejs, aby ty vsjedno mogl dostupiti do logov/papky igry.</string>
+
+    <!-- SetupActivity: Game Folder card -->
+    <string name="setup_card_game_folder">Papka igry</string>
+    <string name="setup_button_select_game_folder">Izbrati papku igry</string>
+    <string name="setup_button_launch_game">Spustiti igru</string>
+    <string name="setup_button_view_logs">Prokazati logi</string>
+    <string name="setup_button_clear_game_folder">Izbrisati nastojenje papky igry</string>
+
+    <!-- SetupActivity: status text -->
+    <string name="setup_status_folder_not_set">Papka igry: ne nastojena.\n</string>
+    <string name="setup_status_folder_line">Papka igry: %1$s\n</string>
+    <string name="setup_status_folder_valid">Status: vygledaje validno (najdene sut datoteky arhiva igry).\n</string>
+    <string name="setup_status_folder_invalid">Status: ta papka NE sodrži očekivane INIZH.big / INI.big — prověri, či ty izbral pravilnu papku.\n</string>
+    <string name="setup_status_folder_incomplete">Status: arhivy igry sut najdene, ale komplet jest nepolny:\n%1$s\n</string>
+    <string name="setup_dialog_folder_problem_title">Problema s papkoju igry</string>
+    <string name="setup_folder_issue_empty_file">%1$s jest prazdny (0 bajtov)</string>
+    <string name="setup_folder_issue_bad_header">%1$s ne izgledaje kako validny arhiv igry</string>
+    <string name="setup_folder_issue_missing_data">V %1$s ne dostaje očekyvanyh dat igry — najvěrojatno nekompletna kopija</string>
+    <string name="setup_folder_issue_no_base_game">Ne dostajut dannyh osnovnoj igry Generals:%1$s\n\nAbo ukaži papku, v kojej oni uže sut — gomba „Papka osnovnoj igry Generals…“ nizše (obyčno ZH_Generals abo Command and Conquer Generals).</string>
+    <string name="setup_status_logs_note">Logi padu/jadra sut v privatnom skladišču aplikacije i dostupni tolko čerez \"Prokazati logi\" vyše — Android namerno skryva jih od normalnyh upravitelev datotek (to jest standardny Android peskovnik, ne osobitost sej aplikacije).</string>
+
+    <!-- SetupActivity: Language card -->
+    <string name="setup_card_language">Jezyk</string>
+    <string name="setup_language_help">Měnjaje jezyk tutoj aplikacije nastrojenj, pregleda dnevnikov i izbora papky. Tekst samoj igry jest odděljeno nastrojenje nizše — izberite iz jezykov, ktore vistinno sut v papkě igry, ili sņimite jedin. «Kako v sistemě» slěduje jezyku telefona, a ako jego ne jest v spisku — jest upotrěbjeny anglijsky.</string>
+    <string name="setup_language_status">Jezyk: %1$s</string>
+    <string name="setup_button_change_language">Změniti jezyk</string>
+    <string name="setup_language_dialog_title">Izberi jezyk</string>
+    <string name="setup_language_system_default">Sistemny</string>
+    <string name="setup_language_game_status_default">Tekst igry: ne zatronuty tym nastojenjem (upotrěbjaje sobstveny jezyk igry iz registry.ini, ili anglijsky po děfoltu).</string>
+    <string name="setup_language_game_status_override">Tekst igry: takože pěreključen (najdeny data/%1$s/generals.csf v papce igry).</string>
+    <string name="setup_language_game_status_missing">Tekst igry: NE pěreključen — v papce igry ne jest data/%1$s/generals.csf, tako igra sohranjaje svoj jezyk.</string>
+
+    <!-- SetupActivity: Menu Text Size card -->
+    <string name="setup_card_text_size">Věličina teksta menija</string>
+    <string name="setup_text_size_label">Měrilo: %1$d%%</string>
+    <string name="setup_button_apply_text_size">Naložiti věličinu teksta</string>
+    <string name="setup_text_size_help">Měri věličinu teksta bolšiny ključev/oznak menija po ekranovoj rezoluciji. 70 jest sobstvena děfoltna věličina igry; věće hodnoty čine tekst menija bolšim. Dějstvuje pri sledujućem spuštěniju igry, ne odmah.</string>
+    <string name="setup_toast_text_size_saved">Sohranjeno. Dějstvovati bude pri sledujućem spuštěniju igry.</string>
+
+    <!-- SetupActivity: Render Backend card -->
+    <string name="setup_card_render_backend">Grafičen backend</string>
+    <string name="setup_render_backend_help">Kotory grafičny API igra upotrěbljaje. Dějstvuje od naslědujučego zapuska igry, ne odrazu.\n\nOpenGL ES (izhodno): nativny renderer, napisany za tot port. Jest izhodnym, ibo rabotaje na vsih dosud prověrenyh uređajah, tože na tyh, gdě Vulkan risuje popsovanu grafiku. Načinaj odsud i směnjaj samo pri pričině.\n\nOpenGL ES + ANGLE: tot že renderer, ale prěz ANGLE od Google, ktory prěvodi jego v Vulkan, město sobstvenogo GLES-drajvera telefona. ANGLE vgraditeljny v tuto aplikaciju, tako ne trěbuje ni minimalnoj versije Androida, ni sistemnoj nastrojki. Často byrše v rabotě, ale menu s mnogymi elementami (nastrojki sråženja) može zaviseti pri prvom otvorenju, poka ANGLE kompiluje potrěbno; vtorično to ne povtori sę, poka ne vyjdeš i ne otvoriš to menu iznova.\n\nVulkan: iznačalny bekend, prěz prěvod Direct3D 8 v Vulkan sredstvami DXVK. Byrše ostalnyh na telefonah, čij drajver s njim spravlja sę \u2014 obyčno svěže Snapdragon. Ale vse zavisi imenno od drajvera, i na někotoryh GPU pojavljajut sę purpurne pjatna, iskrivjena geometrija ili popsovane menu, čego nijakoju nastrojkoju odsud ne popraviti \u2014 soobщali pro PowerVR BXM i Samsung Xclipse. Ako Vulkan vygleda nepravilno na tvojem uređaju, izhodny variant iznačalno jest za to.\n\nRazdely «Svoj drajver Vulkan» i «Konfiguracija DXVK» pokazyvajut sę samo pri izbranom Vulkanu.</string>
+    <string name="setup_render_backend_gpu">Tvoj GPU: %1$s</string>
+    <string name="setup_render_backend_status">Sejčas: %1$s</string>
+    <string name="setup_button_change_render_backend">Změniti grafičen backend</string>
+    <string name="setup_render_backend_dialog_title">Izberi grafičen backend</string>
+    <string name="setup_render_backend_vulkan">Vulkan</string>
+    <string name="setup_render_backend_gles">OpenGL ES (izhodno)</string>
+    <string name="setup_render_backend_gles_angle">OpenGL ES + ANGLE</string>
+    <string name="setup_toast_render_backend_saved">Sohranjeno. Dějstvovati bude pri sledujućem spuštěniju igry.</string>
+    <string name="setup_toast_render_backend_failed">Ne uspělo sohraniti izbor grafičnogo backenda: %1$s</string>
+
+    <!-- SetupActivity: Custom Vulkan Driver card -->
+    <string name="setup_card_vulkan_driver">Sobstveny Vulkan draiver (za napredne, tolko Adreno GPU)</string>
+    <string name="setup_button_import_driver">Importovati draiver (.zip)</string>
+    <string name="setup_button_reset_driver">Vrnuti na preporučeny</string>
+    <string name="setup_driver_help">Zagružaje Vulkan draiver (sborku Mesa Turnip) město vgrajenogo v telefon — ista tehnika, kotoru upotrěbjaju Winlator i AetherSX2. Samomu DXVK sejčas trěba tolko Vulkan 1.1, no někotori stari standardni draiveri Qualcomm Adreno javjajut ešče manje (ili iměju druge greški) — ta sborka Turnip vsjo jedno može pozvoliti takim telefonam spustiti igru. Na prigodnom telefonu Adreno to jest naloženo avtomatično — \"Vrnuti na preporučeny\" vraća tu avtomatičnu izbor pošto ste importovali čto drugo.\n\nTo NE pomože Mali, PowerVR ili drugim ne-Adreno GPU — no jim to i ne trěba: većina GPU Mali (Mali-G76, Mali-G57 i podobni) već nativno ispolnjaju trěbovanje DXVK za Vulkan 1.1, zaměna draivera ne trěba. Ta opcija jest samo za Adreno, zato že Turnip podderživaje samo Adreno hardver, a ne zato že drugi GPU ne sut podderžani.\n\n\"Importovati draiver\" pozvoljaje zaměniti avtomatičnu izbor svojim .zip vo formatě adrenotools (naprimer, od K11MCH1/AdrenoToolsDrivers ili The412Banner/Banners-Turnip na GitHub). Dějstvuje pri sledujućem spuštěniju, ne odmah.</string>
+    <string name="setup_driver_status_none">Sobstveny draiver ne aktivny — upotrěbjaje sę vgrajeny Vulkan draiver telefona.</string>
+    <string name="setup_driver_status_auto">Preporučeny draiver (izbran avtomatično za tu děvicu): %1$s</string>
+    <string name="setup_driver_status_manual">Sobstveny draiver (importovan ručno): %1$s</string>
+    <string name="setup_driver_unknown">(nepoznato)</string>
+    <string name="setup_toast_no_file_picker">Ne jest dostupny izbirač datotek: %1$s</string>
+    <string name="setup_toast_reset_auto">Vrnjenje izvršeno. Preporučeny draiver za tu děvicu jest znova naložen.</string>
+    <string name="setup_toast_reset_stock">Vrnjenje izvršeno. Bude upotrěbjeny vgrajeny Vulkan draiver telefona.</string>
+    <string name="setup_toast_driver_import_no_tmp">Ne uspělo storiti radnu papku za import draivera</string>
+    <string name="setup_toast_driver_import_failed">Import ne uspěl: %1$s</string>
+    <string name="setup_toast_driver_import_no_meta">Import ne uspěl: meta.json ne najden vo .zip (to ne jest validny paket draivera vo formatě adrenotools)</string>
+    <string name="setup_toast_driver_import_bad_meta">Import ne uspěl: nevalidny meta.json (%1$s)</string>
+    <string name="setup_toast_driver_import_no_finalize">Import ne uspěl: ne uspělo zaveršiti papku draivera</string>
+    <string name="setup_toast_driver_config_failed">Ne uspělo sohraniti konfiguraciju draivera: %1$s</string>
+    <string name="setup_toast_driver_imported">Draiver importovan: %1$s. Dějstvovati bude pri sledujućem spuštěniju.</string>
+
+    <!-- SetupActivity: Diagnostics card -->
+    <string name="setup_card_diagnostics">Diagnostika</string>
+    <string name="setup_diagnostics_help">Ti pereklopniki uklapjaju dodatno logovanje za izvěšćenja o greškah — pri normalnoj igrě děrjte ih vsi vyklopjeni, oni mogu zapovolniti igru ili stvoriti věliki log. Jesli izvěstitelj problema prosi uklopiti někotory, uklopte jego, reproducirajte problem, potom upotrěbte "Prikazati logi" vyše da pošlete rezultat.</string>
+    <string name="setup_diagnostics_no_folder">Naprvo izběrte papku igry (vyše) da upotrěbite ti pereklopniki</string>
+    <string name="setup_switch_gx_trace">Podrobny log tracovanja</string>
+    <string name="setup_switch_gx_trace_desc">Věoma podrobno vnutrněje logovanje (interfejs, šrifti, INI datoteki) za iskanje konkretnogo zavisanja ili greški. Za dolgu sesiju log može narosti do vělikoj věličiny (50-100+ MB) — upotrěbte město togo "Rezimě proizvoditelnosti" jesli trěbujete tolko čisla FPS. (gx_trace.txt)</string>
+    <string name="setup_switch_touch_debug">Nakladka sensornogo vvoda</string>
+    <string name="setup_switch_touch_debug_desc">Risuje sostojanje sensornogo sloja poverh igry: tekuщij žest, gdě tvoj palec, gdě dvižok sčitaje ukazatelj, i jakorj prokrutki kamery. Vklučaj, kogda soobщaješ o problemah upravlenja — karta uhodi sama, prizračnoje zdanje ne na svojem městu, sposobnostj cělitsja tuda, gdě ty ne kasal sę. (gx_touch_debug.txt)</string>
+    <string name="setup_switch_gx_perf">Rezimě proizvoditelnosti</string>
+    <string name="setup_switch_gx_perf_desc">Dodaje odnu kratku liniju na sekundu, kotora pokazuje kde ide vrěmě kadra (radar, zvuk, sěť, logika igry, renderovanje). Bezpečno ostaviti uklopjeno za cělu sesiju igry — uklopte za izvěšćenja o FPS/zapovolnjenjih. (gx_perf.txt)</string>
+    <string name="setup_switch_gx_audio_trace">Dnevnik zvuka</string>
+    <string name="setup_switch_gx_audio_trace_desc">Zapisyvaje, čto dělaje zvukova sistema: napolnjenje buferov muziky i govora, zvuk video i vsakoje počenje i zastavjenje izvora. Vključite, ako po žalobě na izgubjeny, preryvny ili tihy zvuk od vas poprosjut dnevnik zvuka. (gx_audio_trace.txt)</string>
+    <string name="setup_button_download_langpack">Sņeti jezyčny paket</string>
+    <string name="setup_langpack_downloading">Sņimaje se jezyčny paket…</string>
+    <string name="setup_langpack_done">Jezyčny paket instalovany. Igra jego upotrěbi pri slědujučem pusku.</string>
+    <string name="setup_langpack_done_n">Instalovano jezyčnyh paketov: %1$d (%2$s). Izberite nizše.</string>
+    <string name="setup_langpack_failed">Ne bylo možno sņeti jezyčny paket: %1$s</string>
+    <string name="setup_langpack_not_available">Za tutu jezyk pusknika ne jest paketa igrovogo teksta.</string>
+    <string name="setup_langpack_no_folder">Najprvo izberite papku igry.</string>
+    <string name="setup_langpack_err_none_yet">Za tutu jezyk hče ne jest paketa. Prěvody sut vitajemy — glejte languages/README.md v repozitoriju projekta.</string>
+    <string name="setup_langpack_err_mkdir">ne bylo možno stvoriti jezyčnu papku v papkě igry</string>
+    <string name="setup_langpack_err_empty">sņety fajl byl prazdny</string>
+    <string name="setup_langpack_err_replace">ne bylo možno zaměniti postoječi fajl</string>
+    <string name="setup_button_game_text_language">Jezyk teksta igry</string>
+    <string name="setup_game_text_dialog_title">Jezyk teksta igry</string>
+    <string name="setup_game_text_default">Podrazuměvano (.big ima prioritet)</string>
+    <string name="setup_game_text_status">Tekst igry: %1$s</string>
+    <string name="setup_game_text_status_default">Tekst igry: anglijsky — ako jego ne zaměnjaje .big v papkě igry</string>
+    <string name="setup_game_text_none_found">V papkě igry hče ne jest jezyčnyh paketov. Najprvo sņimite jedin.</string>
+    <string name="setup_langpack_dialog_title">Kotory jezyk?</string>
+    <string name="setup_switch_dxvk_hud">Ekranny overlej proizvoditelnosti</string>
+    <string name="setup_switch_dxvk_hud_desc">Pokazuje FPS, čislo draw call, otprav i pajplajnov prěmo na ekranu i v logu. Uklopte za izvěšćenja o proizvoditelnosti GPU. (dxvk_hud.txt)</string>
+    <string name="setup_switch_dxvk_validation">Sloj validacije Vulkan</string>
+    <string name="setup_switch_dxvk_validation_desc">Prověrjaje sekoj vyzov Vulkan na korektnosť — nahodi realne greški renderovanja, no zamětno zapovolnjaje igru. Uklopte tolko kogda prošeno reproducirati konkretny padnjenje ili grafičny glič, ne za normalnu igru. (dxvk_validation.txt)</string>
+    <string name="setup_switch_dxvk_verbose_log">Podrobny log renderera</string>
+    <string name="setup_switch_dxvk_verbose_log_desc">Dodaje v log dodatne podrobnosti o tom, kako igra obćuje sę s draiverom vašego GPU (točny format ekrana i dogovorene nastavjenja). Uklopte kogda prošeno razrěšiti grafičny glič konkretno na vašej děvici. (dxvk_verbose_log.txt)</string>
+
+    <!-- SetupActivity: Online Multiplayer card -->
+    <string name="setup_card_online">Onlajn multiigra</string>
+    <string name="setup_button_online_account">Konto GeneralsOnline</string>
+    <string name="setup_online_signed_in">Vy sut prijaveni kako %1$s.</string>
+    <string name="setup_online_signed_out">Prijava ne izvršena — trěbovana za onlajn igry.</string>
+
+    <!-- SetupActivity: How this works card -->
+    <string name="setup_card_how_it_works">Kako to dějstvuje</string>
+    <string name="setup_how_it_works_body">1. \"Izbrati papku igry\" otvorjaje pregledovatelj papok v pamjati vašego telefona. Idi tamo, kde ste kopirovali svoju sobstvenu instalaciju Command &amp; Conquer Generals Zero Hour (papku sodrživšu INIZH.big, Data\\, ZH_Generals\\ itd.) i klikni \"Upotrěbiti tu papku\".\n\n2. Jestli spisok vygledaje prazny, Android snačala prosi dozvolu \"Dostup ko vsim datotekam\" — daj ju na ekranu, kotory sę otvorja (to jest normalna dozvola Android, root ne trěbuje sę).\n\n3. \"Prokazati logi\" pokazuje log jadra i, jestli igra padla, log padu — bez komputera ili adb. Upotrěbi tam gumb \"Poděliti sę\", aby poslati log sebě.\n\n4. \"Spustiti igru\" spuštaje igru s izbranu papku.</string>
+
+    <!-- SetupActivity: folder selection / misc toasts -->
+    <string name="setup_toast_grant_all_files">Daj dozvolu \"Pozvoliti dostup ko upravjenju vsimi datotekami\" na sledujućem ekranu, potom vrni sę i znova klikni Izbrati papku igry.</string>
+    <string name="setup_toast_folder_saved">Papka igry sohranjena.</string>
+    <string name="setup_toast_folder_saved_invalid">Sohranjeno, no INIZH.big/INI.big tam ne najdeny — prověri papku.</string>
+    <string name="setup_toast_folder_saved_incomplete">Sohranjeno, no někotori fajly igry izgledaju nekompletnymi ili poškoděnymi — pogledaj detali na glavnom ekranu prěd spuštěnjem.</string>
+    <string name="setup_toast_marker_save_failed">Ne uspělo sohraniti marker papky: %1$s</string>
+    <string name="setup_toast_folder_cleared">Izbrisano. Igra bude upotrěbjati svoju děfoltnu papku.</string>
+    <string name="setup_toast_options_dir_failed">Ne uspělo storiti papku za Options.ini</string>
+    <string name="setup_toast_options_save_failed">Ne uspělo sohraniti Options.ini: %1$s</string>
+
+    <!-- FolderPickerActivity -->
+    <string name="folderpicker_title">Izbor papky igry</string>
+    <string name="folderpicker_up_entry">⬆️  .. (gore)</string>
+    <string name="folderpicker_button_use">Upotrěbiti tu papku</string>
+    <string name="folderpicker_hint_valid">✓ Ta papka sodrži INIZH.big/INI.big — vygledaje pravilno.</string>
+    <string name="folderpicker_hint_invalid">Idi v papku igry i klikni \"Upotrěbiti tu papku\".</string>
+    <string name="folderpicker_toast_cant_read">Ne uspěvaje sę čtenje tej papky. Jestli spiski vsjude vygledaju prazni, snačala daj \"Dostup ko vsim datotekam\" na ekranu Nastojenj.</string>
+
+    <!-- LogViewerActivity -->
+    <string name="logviewer_title">Logi</string>
+    <string name="logviewer_button_clear">Izbrisati logi</string>
+    <string name="logviewer_button_copy">Kopirovati</string>
+    <string name="logviewer_button_share">Poděliti sę</string>
+    <string name="logviewer_toast_copied">Kopirovano v mežuskladišče.</string>
+    <string name="logviewer_section_crash_log">=== crash.log (nativny obradnik padu, vnutrěšnje skladišče) ===\n</string>
+    <string name="logviewer_crash_log_absent">(ne prisutny — nijeden nativny pad ne zapisan od instalacije, ili aplikacija nikada ne byla spuštena dalje zagruzky biblioteky)</string>
+    <string name="logviewer_section_stderr_log">=== generals-stderr.log (log jadra, vnějšnje skladišče) ===\n</string>
+    <string name="logviewer_stderr_log_absent">(ne prisutny — main() jadra ješče ne spuščeny, ili vnějšnje skladišče ne dostupno)</string>
+    <string name="logviewer_section_prev_log">=== generals-stderr-prev.log (prědhodna sesija) ===\n</string>
+    <string name="logviewer_prev_log_absent">(ne prisutny)</string>
+    <string name="logviewer_dialog_clear_title">Izbrisati logi</string>
+    <string name="logviewer_dialog_clear_message">Izbrisati datoteky loga padu i loga jadra? To ne može biti otvrnjeno.</string>
+    <string name="logviewer_dialog_clear_confirm">Izbrisati</string>
+    <string name="logviewer_dialog_clear_cancel">Otkazati</string>
+    <string name="logviewer_toast_cleared">Logi izbrisani.</string>
+    <string name="logviewer_share_subject">Log GeneralsZH Android</string>
+    <string name="logviewer_share_chooser_title">Poděliti log</string>
+    <string name="logviewer_toast_share_failed">Ne uspělo prigotoviti datoteku loga za dělenje: %1$s</string>
+    <string name="logviewer_read_failed">(ne uspělo pročitati %1$s: %2$s)</string>
+
+    <!-- GeneralsOnlineActivity -->
+    <string name="online_window_title">Konto GeneralsOnline</string>
+    <string name="online_subtitle">Prijavi sę za onlajn multiigru (playgenerals.online)</string>
+    <string name="online_button_sign_out">Odjaviti sę</string>
+    <string name="online_card_sign_in">Prijava</string>
+    <string name="online_signin_help">Klikni Prijaviti sę. Prvy klik može prositi izbaviti tu aplikaciju od optimizacije bateriji — dopusti to, potom vrni sę i znova klikni Prijaviti sę. Potom sę otvorja brauzer na playgenerals.online, već nosivši jednorazovy kod za tu děvicu. Izberi tam Steam, Discord ili GameReplays, potom prosto vrni sę v tu aplikaciju — prijava sę zaveršaje sama.</string>
+    <string name="online_button_sign_in">Prijaviti sę</string>
+    <string name="online_status_signing_in">Prijavjuje sę...</string>
+    <string name="online_status_battery_opt">Dopusti GeneralsZH rabotiti na zadnem planě na sledujućem ekranu, potom vrni sę i znova klikni Prijaviti sę — inako Android može prekinuti prověrku prijavy, dokel ty sut v brauzeru.</string>
+    <string name="online_toast_no_browser">Ne jest dostupny brauzer: %1$s</string>
+    <string name="online_status_continue_browser">Prodolži v svojem brauzeru — vrni sę sjuda, kogda sę prijaviš.</string>
+    <string name="online_status_network_error">Grěška sětje — prověri svoje spojenje i pokušaj znova.</string>
+    <string name="online_toast_signed_in_as">Prijavjeny kako %1$s</string>
+    <string name="online_status_signin_failed">Prijava ne uspěla ili byla otkazana — klikni Prijaviti sę, aby pokušati znova.</string>
+    <string name="online_status_timed_out">Vrěmja čekanja izčrpano — klikni Prijaviti sę, aby pokušati znova.</string>
+    <string name="online_status_unexpected">Neočekivany otvět — klikni Prijaviti sę, aby pokušati znova.</string>
+    <string name="online_toast_signed_out">Odjavjeny.</string>
+    <string name="online_status_signed_in_as">Prijavjeny kako %1$s.</string>
+    <string name="online_status_not_signed_in">Ne prijavjeny.</string>
+    <string name="setup_button_select_base_generals">Papka osnovnoj igry Generals…</string>
+    <string name="setup_button_clear_base_generals">Odstraniti papku osnovnoj igry</string>
+    <string name="setup_toast_base_generals_saved">Papka osnovnoj igry Generals: %1$s</string>
+    <string name="setup_toast_base_generals_cleared">Papka osnovnoj igry odstranjena</string>
+    <string name="setup_base_generals_not_here">V %1$s ne ima arhivov osnovnoj igry Generals — izberi papku, v kojej sut Terrain.big, Textures.big i W3D.big.</string>
+    <string name="setup_status_base_generals_line">Osnovna Generals: %1$s\n</string>
+    <string name="logviewer_crash_prev_log_absent">(néma)</string>
+    <string name="logviewer_elided_notice">\n...(%1$d znakov tut propuščeno; početok sesije vyše i najnovějši vyvod nižeje sohranjeni)...\n\n</string>
+    <string name="logviewer_section_crash_prev_log">=== crash-prev.log (nativny obrabotnik padenij, prědiduča sesija) ===\n</string>
+    <string name="logviewer_toast_share_none">Ješče něma fajlov žurnala za dělenje.</string>
+    <string name="setup_button_dxvk_config_reset">Vrnuti izhodno</string>
+    <string name="setup_button_dxvk_config_save">Sohraniti</string>
+    <string name="setup_card_dxvk_config">Konfiguracija DXVK (dxvk.conf, naprědno)</string>
+    <string name="setup_dxvk_config_help">Rediguje dxvk.conf naprosto — tot že fajl, ktory dvižok čita pri startu. Perestrojka ne trěbna, dějstvuje od naslědujučego zapuska. Korisno, ako igra idet medlenno na tvojem uređaju:\n\nd3d9.samplerAnisotropy = 2 (ili 0 za odklučenje) — menje od izhodnyh 16, umenjšaje nagruzku na GPU slabših uređajev.\ndxvk.hud = fps,drawcalls,submissions,pipelines — pokazyva malu nakladku proizvoditelnosti.\ndxvk.logLevel = none — ostavi tako, ako ne prosili inako; podrobnějše rovni zpomaljajut igru.\n\nJedno «key = value» na rědok. Nepravilny rědok DXVK prosto ignoruje, tako čto opečatka ne zlomi igru — v najgoršem slučaju tvoja izměna ne budet iměti effekta.</string>
+    <string name="setup_dxvk_config_no_folder">Najprvo izberi papku igry (vyše)</string>
+    <string name="setup_toast_dxvk_config_no_default">V tom bildu ne najden vgraditelny izhodny dxvk.conf.</string>
+    <string name="setup_toast_dxvk_config_reset">Vrnjeno k izhodnomu dxvk.conf.</string>
+    <string name="setup_toast_dxvk_config_saved">Sohranjeno. Budet dějstvovati pri naslědujučem zapusku igry.</string>
+    <string name="setup_toast_storage_permission_denied">Za prěgled papki igry trěbno dozvolenje k hranilišču. Natisni «Izbrati papku igry» ješče raz.</string>
+
+    <!-- Launcher bottom navigation + short render-backend names -->
+    <string name="nav_tab_home">Glavna</string>
+    <string name="nav_tab_graphics">Grafika</string>
+    <string name="nav_tab_interface">Interfejs</string>
+    <string name="nav_tab_tools">Orudja</string>
+    <string name="nav_tab_help">Pomoč</string>
+    <string name="setup_render_backend_gles_short">GLES</string>
+    <string name="setup_render_backend_gles_angle_short">ANGLE</string>
+    <string name="setup_render_backend_vulkan_short">Vulkan</string>
+</resources>

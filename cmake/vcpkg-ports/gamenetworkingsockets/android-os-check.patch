@@ -1,0 +1,64 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 5b00711..f82b298 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -159,6 +159,10 @@ function(set_target_common_gns_properties TGT)
+ 		target_compile_definitions(${TGT} PUBLIC FREEBSD)
+ 	elseif(CMAKE_SYSTEM_NAME MATCHES OpenBSD)
+ 		target_compile_definitions(${TGT} PUBLIC OPENBSD)
++	elseif(CMAKE_SYSTEM_NAME MATCHES Android)
++		# GeneralsX @build Android port 12/07/2026 bionic is Linux-compatible
++		# for everything GNS's POSIX/Linux code paths use (epoll, eventfd, ...)
++		target_compile_definitions(${TGT} PUBLIC LINUX POSIX ANDROID)
+ 	elseif(CMAKE_SYSTEM_NAME MATCHES Windows)
+ 		target_compile_definitions(${TGT} PUBLIC _WINDOWS)
+ 		if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 0fd0065..d1bdf6e 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -333,6 +333,9 @@ macro(set_clientlib_target_properties GNS_TARGET)
+ 
+ 	elseif(CMAKE_SYSTEM_NAME MATCHES OpenBSD)
+ 
++	elseif(CMAKE_SYSTEM_NAME MATCHES Android)
++		# GeneralsX @build Android port 12/07/2026 same as the Linux branch:
++		# nothing platform-specific to link
+ 	elseif(CMAKE_SYSTEM_NAME MATCHES Windows)
+ 		if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+ 			get_target_property(TARGET_TYPE ${GNS_TARGET} TYPE)
+diff --git a/src/tier0/dbg.cpp b/src/tier0/dbg.cpp
+index f794c1e..89d004a 100644
+--- a/src/tier0/dbg.cpp
++++ b/src/tier0/dbg.cpp
+@@ -90,7 +90,7 @@ bool Plat_IsInDebugSession()
+ 	if (sysctl(mib, 4, &info, &size, NULL, 0) == -1)
+ 	    return false;
+ 	return ((info.p_psflags & PS_TRACED) != 0);
+-#elif IsLinux()
++#elif IsLinux() || IsAndroid()
+ 	static FILE *fp;
+ 	if ( !fp )
+ 	{
+diff --git a/src/tier1/netadr.cpp b/src/tier1/netadr.cpp
+index e4b64d6..1434ad5 100644
+--- a/src/tier1/netadr.cpp
++++ b/src/tier1/netadr.cpp
+@@ -645,7 +645,7 @@ size_t CIPAndPort::ToSockadr(void *addr, size_t addr_size) const
+ 			}
+ 			auto *s = (struct sockaddr_in*)addr;
+ 			s->sin_family = AF_INET;
+-			s->sin_addr.s_addr = BigDWord( INADDR_LOOPBACK );
++			s->sin_addr.s_addr = BigDWord( (uint32)INADDR_LOOPBACK );
+ 			s->sin_port = BigWord( m_usPort );
+ 			struct_size = sizeof(sockaddr_in);
+ 		}
+@@ -660,7 +660,7 @@ size_t CIPAndPort::ToSockadr(void *addr, size_t addr_size) const
+ 			}
+ 			auto *s = (struct sockaddr_in*)addr;
+ 			s->sin_family = AF_INET;
+-			s->sin_addr.s_addr = BigDWord( INADDR_BROADCAST );
++			s->sin_addr.s_addr = BigDWord( (uint32)INADDR_BROADCAST );
+ 			s->sin_port = BigWord( m_usPort );
+ 			struct_size = sizeof(sockaddr_in);
+ 		}

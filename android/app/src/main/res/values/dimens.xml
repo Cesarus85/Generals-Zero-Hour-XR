@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- GeneralsX @feature Android port launcher-ui-2026 08/09/2026 One
+         spacing/shape scale for every launcher screen, so a card, a row and
+         a button all agree about what "the edge" and "a gap" mean. Read
+         from UiKit.java rather than sprinkled as literals. -->
+
+    <!-- Page gutter: distance from the screen edge to any card. -->
+    <dimen name="gzh_gutter">16dp</dimen>
+    <!-- Gap between two cards. -->
+    <dimen name="gzh_card_gap">12dp</dimen>
+    <!-- Padding inside a card. -->
+    <dimen name="gzh_card_padding">20dp</dimen>
+    <!-- Gap between two items inside a card. -->
+    <dimen name="gzh_item_gap">12dp</dimen>
+    <dimen name="gzh_item_gap_tight">8dp</dimen>
+
+    <dimen name="gzh_radius_card">24dp</dimen>
+    <dimen name="gzh_radius_row">16dp</dimen>
+    <dimen name="gzh_radius_field">16dp</dimen>
+
+    <dimen name="gzh_button_height">52dp</dimen>
+    <dimen name="gzh_icon">22dp</dimen>
+    <dimen name="gzh_icon_button">44dp</dimen>
+
+    <dimen name="gzh_text_display">28sp</dimen>
+    <dimen name="gzh_text_title">17sp</dimen>
+    <dimen name="gzh_text_body">14sp</dimen>
+    <dimen name="gzh_text_caption">12sp</dimen>
+    <dimen name="gzh_text_overline">12sp</dimen>
+</resources>

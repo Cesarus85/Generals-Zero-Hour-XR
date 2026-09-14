@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- GeneralsX @feature Codex 14/09/2026 XR identity overrides every locale. -->
+    <string name="app_name">Generals: Zero Hour XR</string>
+    <string name="setup_window_title">Nastojenja Generals: Zero Hour XR</string>
+    <string name="setup_title">Generals: Zero Hour XR</string>
+    <string name="setup_subtitle">Nastojenja Meta Quest</string>
+    <string name="logviewer_share_subject">Log Generals: Zero Hour XR</string>
+    <string name="online_status_battery_opt">Dopusti Generals: Zero Hour XR rabotiti na zadnem planě na sledujućem ekranu, potom vrni sę i znova klikni Prijaviti sę — inako Android može prekinuti prověrku prijavy, dokel ty sut v brauzeru.</string>
+</resources>

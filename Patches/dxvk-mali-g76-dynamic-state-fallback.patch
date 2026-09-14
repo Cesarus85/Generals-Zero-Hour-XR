@@ -1,0 +1,139 @@
+diff --git a/src/dxvk/dxvk_cmdlist.h b/src/dxvk/dxvk_cmdlist.h
+index ac1a562..0e60534 100644
+--- a/src/dxvk/dxvk_cmdlist.h
++++ b/src/dxvk/dxvk_cmdlist.h
+@@ -1309,17 +1309,37 @@ namespace dxvk {
+     void cmdSetRasterizerState(
+             VkCullModeFlags         cullMode,
+             VkFrontFace             frontFace) {
++      // GeneralsX @bugfix Android port 30/07/2026 vkCmdSetCullMode/
++      // vkCmdSetFrontFace are VK_EXT_extended_dynamic_state, null on
++      // Mali-G76 (Vulkan 1.1 only, confirmed genuinely unsupported --
++      // registering the extension didn't change anything, tombstone-
++      // confirmed SIGSEGV inside the driver from
++      // DxvkGraphicsPipeline::createOptimizedPipeline). Unlike the copy/
++      // blit fallbacks, there is no legacy per-draw equivalent -- cull
++      // mode/front face become fixed pipeline state instead
++      // (DxvkGraphicsPipelinePreRasterizationState, dxvk_graphics.cpp),
++      // so this is simply a no-op when the functions aren't available.
++      if (unlikely(m_vkd->vkCmdSetCullMode == nullptr))
++        return;
++
+       VkCommandBuffer cmdBuffer = getCmdBuffer();
+ 
+       m_vkd->vkCmdSetCullMode(cmdBuffer, cullMode);
+       m_vkd->vkCmdSetFrontFace(cmdBuffer, frontFace);
+     }
+ 
+-    
++
+     void cmdSetScissor(
+             uint32_t                scissorCount,
+       const VkRect2D*               scissors) {
+-      m_vkd->vkCmdSetScissorWithCount(getCmdBuffer(), scissorCount, scissors);
++      // GeneralsX @bugfix Android port 30/07/2026 see cmdSetViewport below
++      // for why this falls back to the classic (fixed-count) function.
++      if (likely(m_vkd->vkCmdSetScissorWithCount != nullptr)) {
++        m_vkd->vkCmdSetScissorWithCount(getCmdBuffer(), scissorCount, scissors);
++        return;
++      }
++
++      m_vkd->vkCmdSetScissor(getCmdBuffer(), 0, scissorCount, scissors);
+     }
+ 
+ 
+@@ -1379,7 +1399,20 @@ namespace dxvk {
+     void cmdSetViewport(
+             uint32_t                viewportCount,
+       const VkViewport*             viewports) {
+-      m_vkd->vkCmdSetViewportWithCount(getCmdBuffer(), viewportCount, viewports);
++      // GeneralsX @bugfix Android port 30/07/2026 vkCmdSetViewportWithCount
++      // is VK_EXT_extended_dynamic_state, null on Mali-G76. Unlike cull
++      // mode/front face, a legacy equivalent exists: core 1.0's
++      // vkCmdSetViewport, which only lacks the ability to change the
++      // *count* dynamically -- harmless here since D3D9 (unlike D3D11/12
++      // geometry-shader viewport arrays) only ever uses one viewport, and
++      // DxvkGraphicsPipelinePreRasterizationState (dxvk_graphics.cpp)
++      // bakes viewportCount=1 into the pipeline when this path is taken.
++      if (likely(m_vkd->vkCmdSetViewportWithCount != nullptr)) {
++        m_vkd->vkCmdSetViewportWithCount(getCmdBuffer(), viewportCount, viewports);
++        return;
++      }
++
++      m_vkd->vkCmdSetViewport(getCmdBuffer(), 0, viewportCount, viewports);
+     }
+ 
+ 
+diff --git a/src/dxvk/dxvk_graphics.cpp b/src/dxvk/dxvk_graphics.cpp
+index d589567..d6b754b 100644
+--- a/src/dxvk/dxvk_graphics.cpp
++++ b/src/dxvk/dxvk_graphics.cpp
+@@ -530,6 +530,21 @@ namespace dxvk {
+     rsInfo.depthBiasEnable          = state.rs.depthBiasEnable();
+     rsInfo.lineWidth                = 1.0f;
+ 
++    // GeneralsX @bugfix Android port 30/07/2026 see
++    // DxvkGraphicsPipelineDynamicState above -- on devices without
++    // VK_EXT_extended_dynamic_state, cull mode/front face can no longer
++    // be set dynamically at all (no legacy per-draw equivalent exists),
++    // so they're baked as fixed pipeline state instead, and viewport/
++    // scissor count (still dynamic via classic VK_DYNAMIC_STATE_VIEWPORT/
++    // SCISSOR) must be declared statically here since D3D9 never uses
++    // more than one of either.
++    if (!device->features().extExtendedDynamicState.extendedDynamicState) {
++      rsInfo.cullMode  = VK_CULL_MODE_NONE;
++      rsInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
++      vpInfo.viewportCount = 1;
++      vpInfo.scissorCount  = 1;
++    }
++
+     // Set up rasterized stream depending on geometry shader state.
+     // Rasterizing stream 0 is default behaviour in all situations.
+     int32_t streamIndex = gs ? gs->info().xfbRasterizedStream : 0;
+@@ -746,25 +761,40 @@ namespace dxvk {
+     const DxvkDevice*                     device,
+     const DxvkGraphicsPipelineStateInfo&  state,
+           DxvkGraphicsPipelineFlags       flags) {
+-    dyStates[dyInfo.dynamicStateCount++] = VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT;
+-    dyStates[dyInfo.dynamicStateCount++] = VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT;
++    // GeneralsX @bugfix Android port 30/07/2026 VK_DYNAMIC_STATE_*_WITH_COUNT
++    // and CULL_MODE/FRONT_FACE are all VK_EXT_extended_dynamic_state, which
++    // is genuinely unsupported on Mali-G76 (Vulkan 1.1 only; registering
++    // the extension didn't change anything -- tombstone-confirmed SIGSEGV
++    // inside the driver from vkCreateGraphicsPipelines with these dynamic
++    // states set but the feature not enabled). Falls back to the classic,
++    // always-available VIEWPORT/SCISSOR dynamic states (fixed count,
++    // baked into DxvkGraphicsPipelinePreRasterizationState::vpInfo below)
++    // and simply drops CULL_MODE/FRONT_FACE from the dynamic state list
++    // entirely -- there is no legacy per-draw equivalent for those, so
++    // they become fixed pipeline state instead (same struct, rsInfo).
++    bool hasExtendedDynamicState = device->features().extExtendedDynamicState.extendedDynamicState;
++
++    dyStates[dyInfo.dynamicStateCount++] = hasExtendedDynamicState
++      ? VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT : VK_DYNAMIC_STATE_VIEWPORT;
++    dyStates[dyInfo.dynamicStateCount++] = hasExtendedDynamicState
++      ? VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT : VK_DYNAMIC_STATE_SCISSOR;
+ 
+     if (state.useDynamicVertexStrides())
+       dyStates[dyInfo.dynamicStateCount++] = VK_DYNAMIC_STATE_VERTEX_INPUT_BINDING_STRIDE;
+ 
+     if (state.useDynamicDepthBias())
+       dyStates[dyInfo.dynamicStateCount++] = VK_DYNAMIC_STATE_DEPTH_BIAS;
+-    
++
+     if (state.useDynamicDepthBounds())
+       dyStates[dyInfo.dynamicStateCount++] = VK_DYNAMIC_STATE_DEPTH_BOUNDS;
+-    
++
+     if (state.useDynamicBlendConstants())
+       dyStates[dyInfo.dynamicStateCount++] = VK_DYNAMIC_STATE_BLEND_CONSTANTS;
+-    
++
+     if (state.useDynamicStencilRef())
+       dyStates[dyInfo.dynamicStateCount++] = VK_DYNAMIC_STATE_STENCIL_REFERENCE;
+ 
+-    if (!flags.test(DxvkGraphicsPipelineFlag::HasRasterizerDiscard)) {
++    if (hasExtendedDynamicState && !flags.test(DxvkGraphicsPipelineFlag::HasRasterizerDiscard)) {
+       dyStates[dyInfo.dynamicStateCount++] = VK_DYNAMIC_STATE_CULL_MODE;
+       dyStates[dyInfo.dynamicStateCount++] = VK_DYNAMIC_STATE_FRONT_FACE;
+     }

@@ -1,0 +1,44 @@
+diff --git a/src/dxvk/dxvk_adapter.cpp b/src/dxvk/dxvk_adapter.cpp
+index 3a04fe7..c9b9de1 100644
+--- a/src/dxvk/dxvk_adapter.cpp
++++ b/src/dxvk/dxvk_adapter.cpp
+@@ -1300,6 +1300,13 @@ namespace dxvk {
+       &devExtensions.nvRawAccessChains,
+       &devExtensions.nvxBinaryImport,
+       &devExtensions.nvxImageViewHandle,
++      // GeneralsX @bugfix Android port 30/07/2026 See DxvkDeviceExtensions::
++      // khrCopyCommands2 (dxvk_extensions.h) for why this is needed on
++      // Mali-G76. Appended at the end, away from every other patch's
++      // edits, to avoid the same context-window conflict that broke
++      // dxvk-vulkan11-adaptive.patch's reverse-apply check the first time
++      // this was inserted mid-list instead.
++      &devExtensions.khrCopyCommands2,
+     }};
+   }
+ 
+diff --git a/src/dxvk/dxvk_extensions.h b/src/dxvk/dxvk_extensions.h
+index b7ba732..80d630f 100644
+--- a/src/dxvk/dxvk_extensions.h
++++ b/src/dxvk/dxvk_extensions.h
+@@ -354,6 +354,21 @@ namespace dxvk {
+     DxvkExt nvRawAccessChains                 = { VK_NV_RAW_ACCESS_CHAINS_EXTENSION_NAME,                   DxvkExtMode::Optional };
+     DxvkExt nvxBinaryImport                   = { VK_NVX_BINARY_IMPORT_EXTENSION_NAME,                      DxvkExtMode::Disabled };
+     DxvkExt nvxImageViewHandle                = { VK_NVX_IMAGE_VIEW_HANDLE_EXTENSION_NAME,                  DxvkExtMode::Disabled };
++    // GeneralsX @bugfix Android port 30/07/2026 khrCopyCommands2 has no
++    // associated feature struct to query/enable (it's a pure command-set
++    // extension, VK_KHR_copy_commands2), so unlike most other entries here
++    // it only needs to exist + be in getExtensionList() for its
++    // VULKAN_FN_FALLBACK(vkCmdCopyBufferToImage2, ...KHR) etc. (already
++    // wired in vulkan_loader.h) to actually resolve. Never registered
++    // anywhere in this fork -- same missing-registration bug as the six
++    // extensions dxvk-android-missing-fallback-extensions.patch fixed,
++    // just found one crash later: SIGSEGV (null vkCmdCopyBufferToImage2
++    // call) in DxvkContext::copyImageBufferData on Mali-G76, confirmed via
++    // a real Android tombstone. Placed at the end of the struct, away from
++    // every other patch's edits, to avoid the context-window conflicts
++    // that broke dxvk-vulkan11-adaptive.patch's own reverse-apply check
++    // when this was first inserted mid-block instead.
++    DxvkExt khrCopyCommands2                  = { VK_KHR_COPY_COMMANDS_2_EXTENSION_NAME,                    DxvkExtMode::Optional };
+   };
+   
+   /**

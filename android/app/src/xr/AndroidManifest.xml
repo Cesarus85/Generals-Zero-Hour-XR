@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GeneralsX @spike XR port Phase 0.5 - xr flavor manifest surgery: strip
+     the 2D game activity so this APK carries exactly one launcher entry
+     (XrHelloActivity). One icon per package on Quest, so this is what
+     makes the XR icon exist at all.
+     GeneralsX @feature XR port Phase 1.0 - SetupActivity is KEPT (its
+     LAUNCHER filter lives in the zh flavor manifest only, so no second
+     icon): the XR entry redirects to its folder picker when no game
+     folder is configured, reusing the proven Setup flow instead of a
+     second picker implementation. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- GeneralsX @bugfix Quest tabletop recovery 13/09/2026 Meta's
+         OpenXR runtime does not advertise XR_FB_passthrough unless the
+         immersive APK declares this feature. Keep it XR-flavor-only so
+         the normal Android APK remains installable on non-XR devices. -->
+    <uses-feature
+        android:name="com.oculus.feature.PASSTHROUGH"
+        android:required="true" />
+
+    <!-- GeneralsX @feature Codex 14/09/2026 Optional room-surface placement. -->
+    <uses-permission android:name="com.oculus.permission.USE_SCENE" />
+    <!-- The native spatial-entity extensions additionally require this API capability. -->
+    <uses-permission android:name="com.oculus.permission.USE_ANCHOR_API" />
+
+    <application>
+        <!-- Show the user's room instead of a black system background while
+             the native engine is booting. Horizon OS still respects the
+             user's home-environment preference. -->
+        <meta-data
+            android:name="com.oculus.ossplash.background"
+            android:value="passthrough-contextual" />
+
+        <activity
+            android:name="com.generalsx.zerohour.GeneralsZHActivity"
+            tools:node="remove" />
+    </application>
+</manifest>

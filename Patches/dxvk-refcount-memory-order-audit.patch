@@ -1,0 +1,168 @@
+diff --git a/src/dxvk/dxvk_gpu_event.h b/src/dxvk/dxvk_gpu_event.h
+index 1e53f70..dd92895 100644
+--- a/src/dxvk/dxvk_gpu_event.h
++++ b/src/dxvk/dxvk_gpu_event.h
+@@ -43,7 +43,11 @@ namespace dxvk {
+      * \brief Increments ref count
+      */
+     void incRef() {
+-      m_refs.fetch_add(1u, std::memory_order_acquire);
++      // GeneralsX @bugfix Android port 02/08/2026 same fix as
++      // DxvkResourceAllocation::incRef/decRef (dxvk_memory.h) -- see that
++      // comment for the full ARM-memory-model rationale. Relaxed is enough
++      // here: the caller already holds a valid reference.
++      m_refs.fetch_add(1u, std::memory_order_relaxed);
+     }
+ 
+     /**
+@@ -53,8 +57,10 @@ namespace dxvk {
+      * references exist for this event.
+      */
+     void decRef() {
+-      if (m_refs.fetch_sub(1u, std::memory_order_release) == 1u)
++      if (m_refs.fetch_sub(1u, std::memory_order_release) == 1u) {
++        std::atomic_thread_fence(std::memory_order_acquire);
+         free();
++      }
+     }
+ 
+     /**
+diff --git a/src/dxvk/dxvk_gpu_query.h b/src/dxvk/dxvk_gpu_query.h
+index ec65c32..123ab92 100644
+--- a/src/dxvk/dxvk_gpu_query.h
++++ b/src/dxvk/dxvk_gpu_query.h
+@@ -113,7 +113,10 @@ namespace dxvk {
+      * \brief Increments query reference count
+      */
+     force_inline void incRef() {
+-      m_refCount.fetch_add(1u, std::memory_order_acquire);
++      // GeneralsX @bugfix Android port 02/08/2026 same fix as
++      // DxvkResourceAllocation::incRef/decRef (dxvk_memory.h) -- see that
++      // comment for the full ARM-memory-model rationale.
++      m_refCount.fetch_add(1u, std::memory_order_relaxed);
+     }
+ 
+     /**
+@@ -121,8 +124,10 @@ namespace dxvk {
+      * Returns the query to its allocator if necessary.
+      */
+     force_inline void decRef() {
+-      if (m_refCount.fetch_sub(1u, std::memory_order_release) == 1u)
++      if (m_refCount.fetch_sub(1u, std::memory_order_release) == 1u) {
++        std::atomic_thread_fence(std::memory_order_acquire);
+         free();
++      }
+     }
+ 
+     /**
+@@ -171,15 +176,20 @@ namespace dxvk {
+      * \brief Increments reference count
+      */
+     force_inline void incRef() {
+-      m_refCount.fetch_add(1u, std::memory_order_acquire);
++      // GeneralsX @bugfix Android port 02/08/2026 same fix as
++      // DxvkResourceAllocation::incRef/decRef (dxvk_memory.h) -- see that
++      // comment for the full ARM-memory-model rationale.
++      m_refCount.fetch_add(1u, std::memory_order_relaxed);
+     }
+ 
+     /**
+      * \brief Decrements reference count
+      */
+     force_inline void decRef() {
+-      if (m_refCount.fetch_sub(1u, std::memory_order_release) == 1u)
++      if (m_refCount.fetch_sub(1u, std::memory_order_release) == 1u) {
++        std::atomic_thread_fence(std::memory_order_acquire);
+         delete this;
++      }
+     }
+ 
+     /**
+diff --git a/src/dxvk/dxvk_latency.h b/src/dxvk/dxvk_latency.h
+index c9ac93c..9d16410 100644
+--- a/src/dxvk/dxvk_latency.h
++++ b/src/dxvk/dxvk_latency.h
+@@ -67,7 +67,10 @@ namespace dxvk {
+      * \brief Increments ref count
+      */
+     void incRef() {
+-      m_refCount.fetch_add(1, std::memory_order_acquire);
++      // GeneralsX @bugfix Android port 02/08/2026 same fix as
++      // DxvkResourceAllocation::incRef/decRef (dxvk_memory.h) -- see that
++      // comment for the full ARM-memory-model rationale.
++      m_refCount.fetch_add(1, std::memory_order_relaxed);
+     }
+ 
+     /**
+@@ -76,8 +79,10 @@ namespace dxvk {
+      * Destroys the object when there are no users left.
+      */
+     void decRef() {
+-      if (m_refCount.fetch_sub(1, std::memory_order_release) == 1u)
++      if (m_refCount.fetch_sub(1, std::memory_order_release) == 1u) {
++        std::atomic_thread_fence(std::memory_order_acquire);
+         delete this;
++      }
+     }
+ 
+     /**
+diff --git a/src/dxvk/dxvk_sampler.h b/src/dxvk/dxvk_sampler.h
+index 4bb782d..ee804f9 100644
+--- a/src/dxvk/dxvk_sampler.h
++++ b/src/dxvk/dxvk_sampler.h
+@@ -150,7 +150,14 @@ namespace dxvk {
+      * \brief Increments reference count
+      */
+     force_inline void incRef() {
+-      m_refCount.fetch_add(1u, std::memory_order_acquire);
++      // GeneralsX @bugfix Android port 02/08/2026 same fix as
++      // DxvkResourceAllocation::incRef/decRef (dxvk_memory.h) -- see that
++      // comment for the full ARM-memory-model rationale. This one was
++      // actually the worst of the lot: decRef used memory_order_relaxed
++      // with no release *or* acquire anywhere, strictly weaker than the
++      // acquire-only pattern that was already known to corrupt
++      // DxvkResourceAllocationPool's free list on ARM.
++      m_refCount.fetch_add(1u, std::memory_order_relaxed);
+     }
+ 
+     /**
+@@ -159,8 +166,10 @@ namespace dxvk {
+      * Recycles the sampler once the ref count reaches zero.
+      */
+     force_inline void decRef() {
+-      if (m_refCount.fetch_sub(1u, std::memory_order_relaxed) == 1u)
++      if (m_refCount.fetch_sub(1u, std::memory_order_release) == 1u) {
++        std::atomic_thread_fence(std::memory_order_acquire);
+         release();
++      }
+     }
+ 
+     /**
+diff --git a/src/dxvk/dxvk_sparse.h b/src/dxvk/dxvk_sparse.h
+index 6897ea9..08d99d1 100644
+--- a/src/dxvk/dxvk_sparse.h
++++ b/src/dxvk/dxvk_sparse.h
+@@ -469,7 +469,10 @@ namespace dxvk {
+      * as well as the use count for the given access.
+      */
+     force_inline void acquire(DxvkAccess access) {
+-      m_useCount.fetch_add(getIncrement(access), std::memory_order_acquire);
++      // GeneralsX @bugfix Android port 02/08/2026 same fix as
++      // DxvkResourceAllocation::incRef/decRef (dxvk_memory.h) -- see that
++      // comment for the full ARM-memory-model rationale.
++      m_useCount.fetch_add(getIncrement(access), std::memory_order_relaxed);
+     }
+ 
+     /**
+@@ -482,8 +485,10 @@ namespace dxvk {
+       uint64_t increment = getIncrement(access);
+       uint64_t remaining = m_useCount.fetch_sub(increment, std::memory_order_release);
+ 
+-      if (unlikely(remaining == increment))
++      if (unlikely(remaining == increment)) {
++        std::atomic_thread_fence(std::memory_order_acquire);
+         delete this;
++      }
+     }
+ 
+     /**

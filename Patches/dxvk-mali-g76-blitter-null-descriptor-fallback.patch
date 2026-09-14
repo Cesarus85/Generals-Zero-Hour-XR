@@ -1,0 +1,75 @@
+diff --git a/src/dxvk/dxvk_device.h b/src/dxvk/dxvk_device.h
+--- a/src/dxvk/dxvk_device.h
++++ b/src/dxvk/dxvk_device.h
+@@ -110,6 +110,16 @@
+       return m_vkd->device();
+     }
+ 
++    // GeneralsX @bugfix Android port 30/07/2026 exposes DxvkObjects's
++    // dummy resources to callers outside DxvkContext (which normally
++    // gets this via its own DxvkObjects* m_common friend access) -- see
++    // DxvkSwapchainBlitter::performDraw, which independently writes
++    // descriptor sets and needs the same nullDescriptor fallback as
++    // dxvk_context.cpp's descriptor update loop.
++    DxvkUnboundResources& dummyResources() {
++      return m_objects.dummyResources();
++    }
++
+     /**
+      * \brief Checks whether debug functionality is enabled
+      * \returns \c true if debug utils are enabled
+diff --git a/src/dxvk/dxvk_swapchain_blitter.cpp b/src/dxvk/dxvk_swapchain_blitter.cpp
+--- a/src/dxvk/dxvk_swapchain_blitter.cpp
++++ b/src/dxvk/dxvk_swapchain_blitter.cpp
+@@ -328,12 +328,31 @@
+     imageDescriptor.imageView = srcView->handle();
+     imageDescriptor.imageLayout = srcView->image()->info().layout;
+ 
++    // GeneralsX @bugfix Android port 30/07/2026 gamma/hud/cursor
++    // descriptors below are always written into the descriptor set
++    // (all 4 bindings are statically referenced by the shader via spec
++    // constants), even when the corresponding view doesn't exist this
++    // frame -- which left imageView at VK_NULL_HANDLE, only valid when
++    // VK_EXT_robustness2's nullDescriptor is supported. Genuinely absent
++    // on Mali-G76, same as dxvk_context.cpp's descriptor update loop
++    // (dxvk-mali-g76-null-descriptor-fallback.patch); confirmed via a
++    // real tombstone at the same driver call site as that earlier fix.
++    bool hasNullDescriptor = m_device->features().extRobustness2.nullDescriptor;
++
+     VkDescriptorImageInfo gammaDescriptor = { };
+     gammaDescriptor.sampler = m_samplerGamma->handle();
+ 
+     if (m_gammaView) {
+       gammaDescriptor.imageView = m_gammaView->handle();
+       gammaDescriptor.imageLayout = m_gammaView->image()->info().layout;
++    } else if (!hasNullDescriptor) {
++      // GeneralsX @bugfix Android port 30/07/2026 s_gamma is declared as
++      // a 1D image in the shader (see the real m_gammaView creation
++      // below, viewInfo.viewType = VK_IMAGE_VIEW_TYPE_1D) -- using the
++      // 2D dummy view here mismatched VUID-vkCmdDraw-viewType-07752 and
++      // produced garbage colors on screen even though it didn't crash.
++      gammaDescriptor.imageView = m_device->dummyResources().imageViewHandle(VK_IMAGE_VIEW_TYPE_1D);
++      gammaDescriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+     }
+ 
+     VkDescriptorImageInfo hudDescriptor = { };
+@@ -341,6 +360,9 @@
+     if (m_hudView) {
+       hudDescriptor.imageView = m_hudView->handle();
+       hudDescriptor.imageLayout = m_hudImage->info().layout;
++    } else if (!hasNullDescriptor) {
++      hudDescriptor.imageView = m_device->dummyResources().imageViewHandle(VK_IMAGE_VIEW_TYPE_2D);
++      hudDescriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+     }
+ 
+     VkDescriptorImageInfo cursorDescriptor = { };
+@@ -355,6 +377,9 @@
+ 
+       cursorDescriptor.imageLayout = m_cursorImage->info().layout;
+       cursorDescriptor.imageView = m_cursorView->handle();
++    } else if (!hasNullDescriptor) {
++      cursorDescriptor.imageView = m_device->dummyResources().imageViewHandle(VK_IMAGE_VIEW_TYPE_2D);
++      cursorDescriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+     }
+ 
+     std::array<VkWriteDescriptorSet, 4> descriptorWrites = {{

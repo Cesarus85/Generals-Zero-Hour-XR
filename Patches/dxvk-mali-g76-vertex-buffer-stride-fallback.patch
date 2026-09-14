@@ -1,0 +1,58 @@
+diff --git a/src/dxvk/dxvk_cmdlist.h b/src/dxvk/dxvk_cmdlist.h
+index cc0f1ee..ac1a562 100644
+--- a/src/dxvk/dxvk_cmdlist.h
++++ b/src/dxvk/dxvk_cmdlist.h
+@@ -668,9 +668,26 @@ namespace dxvk {
+       const VkDeviceSize*           pOffsets,
+       const VkDeviceSize*           pSizes,
+       const VkDeviceSize*           pStrides) {
+-      m_vkd->vkCmdBindVertexBuffers2(getCmdBuffer(),
+-        firstBinding, bindingCount, pBuffers, pOffsets,
+-        pSizes, pStrides);
++      // GeneralsX @bugfix Android port 30/07/2026 vkCmdBindVertexBuffers2
++      // is Vulkan 1.3 core / VK_EXT_extended_dynamic_state, null on
++      // Mali-G76 (Vulkan 1.1 only), tombstone-confirmed SIGSEGV in
++      // DxvkContext::updateVertexBufferBindings. See cmdBlitImage above
++      // for why this checks the resolved function pointer directly.
++      // Legacy vkCmdBindVertexBuffers has no per-draw stride/size
++      // parameters -- updateVertexBufferBindings (dxvk_context.cpp) never
++      // selects dynamic strides when this pointer is null, so pStrides is
++      // always null here in that case and the pipeline's own baked-in
++      // stride is used instead, same as sizes rely on the buffer's bound
++      // range.
++      if (likely(m_vkd->vkCmdBindVertexBuffers2 != nullptr)) {
++        m_vkd->vkCmdBindVertexBuffers2(getCmdBuffer(),
++          firstBinding, bindingCount, pBuffers, pOffsets,
++          pSizes, pStrides);
++        return;
++      }
++
++      m_vkd->vkCmdBindVertexBuffers(getCmdBuffer(),
++        firstBinding, bindingCount, pBuffers, pOffsets);
+     }
+     
+     void cmdLaunchCuKernel(VkCuLaunchInfoNVX launchInfo) {
+diff --git a/src/dxvk/dxvk_context.cpp b/src/dxvk/dxvk_context.cpp
+index e5cebb7..d43498b 100644
+--- a/src/dxvk/dxvk_context.cpp
++++ b/src/dxvk/dxvk_context.cpp
+@@ -6675,7 +6675,18 @@ namespace dxvk {
+     std::array<VkDeviceSize, MaxNumVertexBindings> strides;
+     
+     bool oldDynamicStrides = m_flags.test(DxvkContextFlag::GpDynamicVertexStrides);
+-    bool newDynamicStrides = true;
++    // GeneralsX @bugfix Android port 30/07/2026 dynamic per-draw vertex
++    // strides rely on vkCmdBindVertexBuffers2 (Vulkan 1.3 core or
++    // VK_EXT_extended_dynamic_state), which is null on Mali-G76 (Vulkan
++    // 1.1 only, tombstone-confirmed SIGSEGV right here). cmdBindVertexBuffers
++    // (dxvk_cmdlist.h) now falls back to legacy vkCmdBindVertexBuffers when
++    // that happens, but that call has no per-draw stride parameter at all --
++    // it only uses whatever stride is baked into the pipeline's
++    // VkVertexInputBindingDescription, which is deliberately left at 0 while
++    // dynamic-stride mode is active. So dynamic strides must never be
++    // selected in the first place when the "2" function isn't available,
++    // or draws would silently use a stride of 0 instead of crashing.
++    bool newDynamicStrides = m_device->vkd()->vkCmdBindVertexBuffers2 != nullptr;
+ 
+     // Set buffer handles and offsets for active bindings
+     for (uint32_t i = 0; i < m_state.gp.state.il.bindingCount(); i++) {

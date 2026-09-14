@@ -1,0 +1,193 @@
+diff --git a/src/dxvk/dxvk_swapchain_blitter.cpp b/src/dxvk/dxvk_swapchain_blitter.cpp
+index 1bd581d..0276dd0 100644
+--- a/src/dxvk/dxvk_swapchain_blitter.cpp
++++ b/src/dxvk/dxvk_swapchain_blitter.cpp
+@@ -990,8 +990,25 @@ namespace dxvk {
+     VkPipelineInputAssemblyStateCreateInfo iaState = { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
+     iaState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+ 
++    // GeneralsX @bugfix Android port 30/07/2026 VK_DYNAMIC_STATE_VIEWPORT_
++    // WITH_COUNT/SCISSOR_WITH_COUNT need VK_EXT_extended_dynamic_state
++    // (or 1.3), which Mali-G76 genuinely lacks -- using them anyway in
++    // pDynamicStates crashes vkCreateGraphicsPipelines itself (confirmed
++    // via a real tombstone: SIGSEGV inside the Mali driver, one level
++    // past the legacy-render-pass fix above). Falls back to the classic
++    // per-draw-fixed-count dynamic viewport/scissor, matching
++    // DxvkCommandList::cmdSetViewport/cmdSetScissor's own fallback
++    // (dxvk-mali-g76-dynamic-state-fallback.patch) used to record this
++    // pipeline's draws.
++    bool hasExtendedDynamicState = m_device->features().extExtendedDynamicState.extendedDynamicState;
++
+     VkPipelineViewportStateCreateInfo vpState = { VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
+ 
++    if (!hasExtendedDynamicState) {
++      vpState.viewportCount = 1;
++      vpState.scissorCount = 1;
++    }
++
+     VkPipelineRasterizationStateCreateInfo rsState = { VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
+     rsState.cullMode = VK_CULL_MODE_NONE;
+     rsState.polygonMode = VK_POLYGON_MODE_FILL;
+@@ -1013,16 +1030,29 @@ namespace dxvk {
+     cbState.attachmentCount = 1;
+     cbState.pAttachments = &cbAttachment;
+ 
+-    static const std::array<VkDynamicState, 2> dynStates = {
+-      VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT,
+-      VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT,
+-    };
++    const std::array<VkDynamicState, 2> dynStates = hasExtendedDynamicState
++      ? std::array<VkDynamicState, 2>{ VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT, VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT }
++      : std::array<VkDynamicState, 2>{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+ 
+     VkPipelineDynamicStateCreateInfo dynState = { VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
+     dynState.dynamicStateCount = dynStates.size();
+     dynState.pDynamicStates = dynStates.data();
+ 
+-    VkGraphicsPipelineCreateInfo blitInfo = { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, &rtInfo };
++    // GeneralsX @bugfix Android port 30/07/2026 this pipeline is created
++    // independently of DxvkGraphicsPipeline's own legacy-render-pass
++    // handling, so it needs the same fallback: chain a real (compatible)
++    // VkRenderPass instead of VkPipelineRenderingCreateInfo on devices
++    // without VK_KHR_dynamic_rendering. Confirmed via a real tombstone:
++    // SIGSEGV inside the Mali driver's vkCreateGraphicsPipelines, called
++    // from here with renderPass left at VK_NULL_HANDLE (only valid for
++    // dynamic rendering).
++    auto* legacyPool = m_device->legacyRenderPasses();
++    VkRenderPass legacyRenderPass = VK_NULL_HANDLE;
++
++    if (legacyPool)
++      legacyRenderPass = legacyPool->getCompatibleRenderPass(rtInfo, VK_SAMPLE_COUNT_1_BIT);
++
++    VkGraphicsPipelineCreateInfo blitInfo = { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, legacyPool ? nullptr : &rtInfo };
+     blitInfo.stageCount = blitStages.size();
+     blitInfo.pStages = blitStages.data();
+     blitInfo.pVertexInputState = &viState;
+@@ -1033,6 +1063,7 @@ namespace dxvk {
+     blitInfo.pColorBlendState = &cbState;
+     blitInfo.pDynamicState = &dynState;
+     blitInfo.layout = m_pipelineLayout;
++    blitInfo.renderPass = legacyRenderPass;
+     blitInfo.basePipelineIndex = -1;
+ 
+     VkPipeline pipeline = VK_NULL_HANDLE;
+@@ -1092,8 +1123,17 @@ namespace dxvk {
+     VkPipelineInputAssemblyStateCreateInfo iaState = { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
+     iaState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+ 
++    // GeneralsX @bugfix Android port 30/07/2026 see createPipeline above
++    // re: VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT/SCISSOR_WITH_COUNT.
++    bool hasExtendedDynamicState = m_device->features().extExtendedDynamicState.extendedDynamicState;
++
+     VkPipelineViewportStateCreateInfo vpState = { VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
+ 
++    if (!hasExtendedDynamicState) {
++      vpState.viewportCount = 1;
++      vpState.scissorCount = 1;
++    }
++
+     VkPipelineRasterizationStateCreateInfo rsState = { VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
+     rsState.cullMode = VK_CULL_MODE_NONE;
+     rsState.polygonMode = VK_POLYGON_MODE_FILL;
+@@ -1122,16 +1162,22 @@ namespace dxvk {
+     cbState.attachmentCount = 1;
+     cbState.pAttachments = &cbAttachment;
+ 
+-    static const std::array<VkDynamicState, 2> dynStates = {
+-      VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT,
+-      VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT,
+-    };
++    const std::array<VkDynamicState, 2> dynStates = hasExtendedDynamicState
++      ? std::array<VkDynamicState, 2>{ VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT, VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT }
++      : std::array<VkDynamicState, 2>{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+ 
+     VkPipelineDynamicStateCreateInfo dynState = { VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
+     dynState.dynamicStateCount = dynStates.size();
+     dynState.pDynamicStates = dynStates.data();
+ 
+-    VkGraphicsPipelineCreateInfo blitInfo = { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, &rtInfo };
++    // GeneralsX @bugfix Android port 30/07/2026 see createPipeline above.
++    auto* legacyPool = m_device->legacyRenderPasses();
++    VkRenderPass legacyRenderPass = VK_NULL_HANDLE;
++
++    if (legacyPool)
++      legacyRenderPass = legacyPool->getCompatibleRenderPass(rtInfo, VK_SAMPLE_COUNT_1_BIT);
++
++    VkGraphicsPipelineCreateInfo blitInfo = { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, legacyPool ? nullptr : &rtInfo };
+     blitInfo.stageCount = stages.size();
+     blitInfo.pStages = stages.data();
+     blitInfo.pVertexInputState = &viState;
+@@ -1142,6 +1188,7 @@ namespace dxvk {
+     blitInfo.pColorBlendState = &cbState;
+     blitInfo.pDynamicState = &dynState;
+     blitInfo.layout = m_cursorPipelineLayout;
++    blitInfo.renderPass = legacyRenderPass;
+     blitInfo.basePipelineIndex = -1;
+ 
+     VkPipeline pipeline = VK_NULL_HANDLE;
+diff --git a/src/dxvk/hud/dxvk_hud_renderer.cpp b/src/dxvk/hud/dxvk_hud_renderer.cpp
+index 78f3906..f5c3c83 100644
+--- a/src/dxvk/hud/dxvk_hud_renderer.cpp
++++ b/src/dxvk/hud/dxvk_hud_renderer.cpp
+@@ -570,8 +570,21 @@ namespace dxvk::hud {
+     VkPipelineInputAssemblyStateCreateInfo iaState = { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
+     iaState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+ 
++    // GeneralsX @bugfix Android port 30/07/2026 VK_DYNAMIC_STATE_VIEWPORT_
++    // WITH_COUNT/SCISSOR_WITH_COUNT need VK_EXT_extended_dynamic_state
++    // (or 1.3), which Mali-G76 genuinely lacks -- using them anyway in
++    // pDynamicStates crashes vkCreateGraphicsPipelines itself (see
++    // DxvkSwapchainBlitter::createPipeline in dxvk_swapchain_blitter.cpp
++    // for the real tombstone this was confirmed with).
++    bool hasExtendedDynamicState = m_device->features().extExtendedDynamicState.extendedDynamicState;
++
+     VkPipelineViewportStateCreateInfo vpState = { VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
+ 
++    if (!hasExtendedDynamicState) {
++      vpState.viewportCount = 1;
++      vpState.scissorCount = 1;
++    }
++
+     VkPipelineRasterizationStateCreateInfo rsState = { VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
+     rsState.cullMode = VK_CULL_MODE_NONE;
+     rsState.polygonMode = VK_POLYGON_MODE_FILL;
+@@ -600,16 +613,26 @@ namespace dxvk::hud {
+     cbOpaqueState.attachmentCount = 1;
+     cbOpaqueState.pAttachments = &cbAttachment;
+ 
+-    static const std::array<VkDynamicState, 2> dynStates = {
+-      VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT,
+-      VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT,
+-    };
++    const std::array<VkDynamicState, 2> dynStates = hasExtendedDynamicState
++      ? std::array<VkDynamicState, 2>{ VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT, VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT }
++      : std::array<VkDynamicState, 2>{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+ 
+     VkPipelineDynamicStateCreateInfo dynState = { VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
+     dynState.dynamicStateCount = dynStates.size();
+     dynState.pDynamicStates = dynStates.data();
+ 
+-    VkGraphicsPipelineCreateInfo blitInfo = { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, &rtInfo };
++    // GeneralsX @bugfix Android port 30/07/2026 same self-contained
++    // pipeline creation pattern as DxvkSwapchainBlitter::createPipeline
++    // (see dxvk_swapchain_blitter.cpp) -- chain a real (compatible)
++    // VkRenderPass instead of VkPipelineRenderingCreateInfo on devices
++    // without VK_KHR_dynamic_rendering.
++    auto* legacyPool = m_device->legacyRenderPasses();
++    VkRenderPass legacyRenderPass = VK_NULL_HANDLE;
++
++    if (legacyPool)
++      legacyRenderPass = legacyPool->getCompatibleRenderPass(rtInfo, VK_SAMPLE_COUNT_1_BIT);
++
++    VkGraphicsPipelineCreateInfo blitInfo = { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO, legacyPool ? nullptr : &rtInfo };
+     blitInfo.stageCount = stages.size();
+     blitInfo.pStages = stages.data();
+     blitInfo.pVertexInputState = &viState;
+@@ -620,6 +643,7 @@ namespace dxvk::hud {
+     blitInfo.pColorBlendState = &cbOpaqueState;
+     blitInfo.pDynamicState = &dynState;
+     blitInfo.layout = m_textPipelineLayout;
++    blitInfo.renderPass = legacyRenderPass;
+     blitInfo.basePipelineIndex = -1;
+ 
+     VkPipeline pipeline = VK_NULL_HANDLE;

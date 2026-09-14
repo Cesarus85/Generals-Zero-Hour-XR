@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Generals Zero Hour</string>
+    <string name="common_cancel">取消</string>
+
+    <!-- SetupActivity: title / fallback -->
+    <string name="setup_window_title">GeneralsZH 设置</string>
+    <string name="setup_title">Command &amp; Conquer Generals: Zero Hour</string>
+    <string name="setup_subtitle">Android 设置</string>
+    <string name="setup_fallback_warning">正常的设置界面加载失败（%1$s）。已显示简化版界面，方便你仍能访问日志或游戏文件夹。</string>
+
+    <!-- SetupActivity: Game Folder card -->
+    <string name="setup_card_game_folder">游戏文件夹</string>
+    <string name="setup_button_select_game_folder">选择游戏文件夹</string>
+    <string name="setup_button_launch_game">启动游戏</string>
+    <string name="setup_button_view_logs">查看日志</string>
+    <string name="setup_button_clear_game_folder">重置游戏文件夹</string>
+
+    <!-- SetupActivity: status text -->
+    <string name="setup_status_folder_not_set">游戏文件夹：未设置。\n</string>
+    <string name="setup_status_folder_line">游戏文件夹：%1$s\n</string>
+    <string name="setup_status_folder_valid">状态：看起来有效（已找到游戏数据文件）。\n</string>
+    <string name="setup_status_folder_invalid">状态：该文件夹中没有找到 INIZH.big / INI.big — 请确认选择的是正确的文件夹。\n</string>
+    <string name="setup_status_folder_incomplete">状态：找到了游戏归档文件，但文件集不完整：\n%1$s\n</string>
+    <string name="setup_dialog_folder_problem_title">游戏文件夹问题</string>
+    <string name="setup_folder_issue_empty_file">%1$s 为空（0 字节）</string>
+    <string name="setup_folder_issue_bad_header">%1$s 看起来不是有效的游戏存档</string>
+    <string name="setup_folder_issue_missing_data">%1$s 缺少预期的游戏数据——可能是不完整的副本</string>
+    <string name="setup_folder_issue_no_base_game">缺少基础游戏 Generals 的数据：%1$s\n\n也可以直接指定已有这些文件的文件夹——下面的“基础游戏 Generals 文件夹…”按钮（通常是 ZH_Generals 或 Command and Conquer Generals）。</string>
+    <string name="setup_status_logs_note">崩溃日志/引擎日志保存在本应用的私有存储中，只能通过上方的“查看日志”访问 —— Android 出于设计原因将它们对普通文件管理器隐藏（这是 Android 标准的沙盒机制，并非本应用特有）。</string>
+
+    <!-- SetupActivity: Language card -->
+    <string name="setup_card_language">语言</string>
+    <string name="setup_language_help">更改此设置应用、日志查看器和文件夹浏览器的语言。游戏本身的文本是下方的独立设置——从游戏文件夹中实际存在的语言里选择，或者下载一个。“系统默认”跟随手机语言，若不在列表中则回退为英语。</string>
+    <string name="setup_language_status">语言：%1$s</string>
+    <string name="setup_button_change_language">更改语言</string>
+    <string name="setup_language_dialog_title">选择语言</string>
+    <string name="setup_language_system_default">跟随系统</string>
+    <string name="setup_language_game_status_default">游戏文字：不受此设置影响（使用游戏自身在 registry.ini 中的语言，默认为英语）。</string>
+    <string name="setup_language_game_status_override">游戏文字：已同步切换（在游戏文件夹中找到 data/%1$s/generals.csf）。</string>
+    <string name="setup_language_game_status_missing">游戏文字：未切换 —— 游戏文件夹中未找到 data/%1$s/generals.csf，因此游戏保留其原有语言。</string>
+
+    <!-- SetupActivity: Menu Text Size card -->
+    <string name="setup_card_text_size">菜单文字大小</string>
+    <string name="setup_text_size_label">缩放：%1$d%%</string>
+    <string name="setup_button_apply_text_size">应用菜单文字大小</string>
+    <string name="setup_text_size_help">根据屏幕分辨率缩放大部分菜单按钮/标签文字。70 是游戏自身的默认值；数值越大菜单文字越大。将在下次启动游戏时生效，不会立即生效。</string>
+    <string name="setup_toast_text_size_saved">已保存，将在下次启动游戏时生效。</string>
+
+    <!-- SetupActivity: Render Backend card -->
+    <string name="setup_card_render_backend">渲染后端</string>
+    <string name="setup_render_backend_help">游戏使用哪种图形 API。下次启动游戏时生效，不会立即生效。\n\nOpenGL ES（默认）：为本移植版编写的原生渲染器。它是默认项，因为在目前测试过的所有设备上都能工作，包括那些 Vulkan 会画出错乱画面的设备。请从这里开始，只有在有理由时才更改。\n\nOpenGL ES + ANGLE：同一个渲染器，但改为经过 Google 的 ANGLE（由它翻译成 Vulkan），而不是手机自带的 GLES 驱动。ANGLE 已内置在本应用中，因此不需要最低 Android 版本，也不需要任何系统设置。运行起来通常更快，不过控件较多的菜单（遭遇战选项）首次打开时可能会卡顿，那是 ANGLE 在编译所需内容；在你离开并重新打开该菜单之前不会再次卡顿。\n\nVulkan：最初的后端，通过 DXVK 把 Direct3D 8 翻译为 Vulkan。在驱动处理得好的手机上（通常是较新的骁龙）比其他两项更快。但它完全取决于该驱动，在某些 GPU 上会出现品红色色块、几何变形或菜单错乱，这里的任何设置都无法修复 \u2014 已有 PowerVR BXM 与三星 Xclipse 的报告。如果 Vulkan 在你的设备上显示异常，默认项正是为此准备的。\n\n「自定义 Vulkan 驱动」和「DXVK 配置」两节仅在选择 Vulkan 时显示。</string>
+    <string name="setup_render_backend_gpu">你的 GPU：%1$s</string>
+    <string name="setup_render_backend_status">当前：%1$s</string>
+    <string name="setup_button_change_render_backend">更改渲染后端</string>
+    <string name="setup_render_backend_dialog_title">选择渲染后端</string>
+    <string name="setup_render_backend_vulkan">Vulkan</string>
+    <string name="setup_render_backend_gles">OpenGL ES（默认）</string>
+    <string name="setup_render_backend_gles_angle">OpenGL ES + ANGLE</string>
+    <string name="setup_toast_render_backend_saved">已保存，将在下次启动游戏时生效。</string>
+    <string name="setup_toast_render_backend_failed">无法保存渲染后端选择：%1$s</string>
+
+    <!-- SetupActivity: Custom Vulkan Driver card -->
+    <string name="setup_card_vulkan_driver">自定义 Vulkan 驱动（高级选项，仅限 Adreno GPU）</string>
+    <string name="setup_button_import_driver">导入驱动（.zip）</string>
+    <string name="setup_button_reset_driver">重置为推荐驱动</string>
+    <string name="setup_driver_help">加载一个 Vulkan 驱动（Mesa Turnip 构建版本）来代替手机自带的驱动，这与 Winlator 和 AetherSX2 使用的技术相同。DXVK 本身现在只需要 Vulkan 1.1，但一些较旧的高通 Adreno 原厂驱动报告的版本更低（或存在其他问题）——这个 Turnip 构建版本仍可以让这些手机运行游戏。在符合条件的 Adreno 手机上会自动应用此驱动 —— 如果你之后导入了其他驱动，"重置为推荐驱动"可以恢复这个自动选择。\n\n此功能对 Mali、PowerVR 等非 Adreno GPU 无效 —— 但它们也不需要这个：大多数 Mali GPU（Mali-G76、Mali-G57 等）已经原生满足 DXVK 的 Vulkan 1.1 要求，无需更换驱动。此选项仅限 Adreno，是因为 Turnip 只支持 Adreno 硬件，而不是因为其他 GPU 不受支持。\n\n"导入驱动"允许你用自己的 adrenotools 格式驱动 .zip 文件覆盖自动选择（例如来自 GitHub 上的 K11MCH1/AdrenoToolsDrivers 或 The412Banner/Banners-Turnip）。将在下次启动时生效，不会立即生效。</string>
+    <string name="setup_driver_status_none">当前未使用自定义驱动 —— 使用手机自带的 Vulkan 驱动。</string>
+    <string name="setup_driver_status_auto">推荐驱动（已为此设备自动选择）：%1$s</string>
+    <string name="setup_driver_status_manual">自定义驱动（手动导入）：%1$s</string>
+    <string name="setup_driver_unknown">（未知）</string>
+    <string name="setup_toast_no_file_picker">没有可用的文件选择器：%1$s</string>
+    <string name="setup_toast_reset_auto">重置完成，已重新应用适合此设备的推荐驱动。</string>
+    <string name="setup_toast_reset_stock">重置完成，将使用手机自带的 Vulkan 驱动。</string>
+    <string name="setup_toast_driver_import_no_tmp">无法创建用于导入驱动的临时文件夹</string>
+    <string name="setup_toast_driver_import_failed">导入失败：%1$s</string>
+    <string name="setup_toast_driver_import_no_meta">导入失败：在 .zip 中未找到 meta.json（不是有效的 adrenotools 驱动包）</string>
+    <string name="setup_toast_driver_import_bad_meta">导入失败：meta.json 无效（%1$s）</string>
+    <string name="setup_toast_driver_import_no_finalize">导入失败：无法完成驱动文件夹的创建</string>
+    <string name="setup_toast_driver_config_failed">无法保存驱动配置：%1$s</string>
+    <string name="setup_toast_driver_imported">驱动已导入：%1$s。将在下次启动时生效。</string>
+
+    <!-- SetupActivity: Diagnostics card -->
+    <string name="setup_card_diagnostics">诊断</string>
+    <string name="setup_diagnostics_help">这些开关会为错误报告开启额外的日志记录 —— 正常游玩时请全部保持关闭，它们可能拖慢游戏速度或产生非常大的日志。如果问题反馈者要求你打开某一项，就打开它，重现问题，然后使用上方的"查看日志"发送结果。</string>
+    <string name="setup_diagnostics_no_folder">请先在上方选择游戏文件夹，然后才能使用这些开关</string>
+    <string name="setup_switch_gx_trace">详细跟踪日志</string>
+    <string name="setup_switch_gx_trace_desc">非常详细的内部日志（界面、字体、INI 文件），用于追踪特定的卡死或错误。长时间游玩会话中日志可能增长到 50-100+ MB —— 如果只需要 FPS 数值，请改用"性能摘要"。(gx_trace.txt)</string>
+    <string name="setup_switch_touch_debug">触摸输入调试叠加</string>
+    <string name="setup_switch_touch_debug_desc">在游戏画面上绘制触摸层的状态：当前手势、手指位置、引擎认为指针所在的位置，以及镜头滚动锚点。报告操作问题时请开启——地图自行移动、幽灵建筑出现在错误位置、技能瞄准到你没有触摸的地方。(gx_touch_debug.txt)</string>
+    <string name="setup_switch_gx_perf">性能摘要</string>
+    <string name="setup_switch_gx_perf_desc">每秒添加一行简短记录，显示每帧时间花在哪里（雷达、音频、网络、游戏逻辑、渲染）。整个游玩会话保持开启也是安全的 —— 用于 FPS/卡顿报告时打开。(gx_perf.txt)</string>
+    <string name="setup_switch_gx_audio_trace">音频日志</string>
+    <string name="setup_switch_gx_audio_trace_desc">记录声音系统的运行情况：音乐与语音的缓冲区水平、过场动画音频，以及每一个启动或停止的音源。如果你报告了声音缺失、断续或无声后被要求提供音频日志，请打开此项。(gx_audio_trace.txt)</string>
+    <string name="setup_button_download_langpack">下载语言包</string>
+    <string name="setup_langpack_downloading">正在下载语言包…</string>
+    <string name="setup_langpack_done">语言包已安装。游戏将在下次启动时使用它。</string>
+    <string name="setup_langpack_done_n">已安装 %1$d 个语言包：%2$s。请在下方选择。</string>
+    <string name="setup_langpack_failed">无法下载语言包：%1$s</string>
+    <string name="setup_langpack_not_available">此启动器语言没有对应的游戏文本包。</string>
+    <string name="setup_langpack_no_folder">请先选择游戏文件夹。</string>
+    <string name="setup_langpack_err_none_yet">该语言暂时还没有语言包。欢迎参与翻译——请查看项目仓库中的 languages/README.md。</string>
+    <string name="setup_langpack_err_mkdir">无法在游戏文件夹中创建语言文件夹</string>
+    <string name="setup_langpack_err_empty">下载的文件是空的</string>
+    <string name="setup_langpack_err_replace">无法替换已有的文件</string>
+    <string name="setup_button_game_text_language">游戏文本语言</string>
+    <string name="setup_game_text_dialog_title">游戏文本语言</string>
+    <string name="setup_game_text_default">默认（.big 优先）</string>
+    <string name="setup_game_text_status">游戏文本：%1$s</string>
+    <string name="setup_game_text_status_default">游戏文本：英语——除非游戏文件夹中的 .big 将其替换</string>
+    <string name="setup_game_text_none_found">游戏文件夹中还没有语言包。请先下载一个。</string>
+    <string name="setup_langpack_dialog_title">选择哪种语言？</string>
+    <string name="setup_switch_dxvk_hud">屏幕性能叠加层</string>
+    <string name="setup_switch_dxvk_hud_desc">直接在屏幕和日志中显示 FPS、绘制调用数、提交数和管线数。用于 GPU 性能报告时打开。(dxvk_hud.txt)</string>
+    <string name="setup_switch_dxvk_validation">Vulkan 验证层</string>
+    <string name="setup_switch_dxvk_validation_desc">检查每次图形调用的正确性 —— 能发现真实的渲染错误，但会明显拖慢游戏速度。仅在被要求重现特定崩溃或图形故障时打开，不要在日常游玩时使用。(dxvk_validation.txt)</string>
+    <string name="setup_switch_dxvk_verbose_log">详细渲染器日志</string>
+    <string name="setup_switch_dxvk_verbose_log_desc">在启动时添加游戏与你的 GPU 驱动如何通信的额外细节（确切的显示格式和协商设置）。当被要求追查特定于你设备的图形故障时打开。(dxvk_verbose_log.txt)</string>
+
+    <!-- SetupActivity: Online Multiplayer card -->
+    <string name="setup_card_online">在线多人游戏</string>
+    <string name="setup_button_online_account">GeneralsOnline 账号</string>
+    <string name="setup_online_signed_in">已登录为 %1$s。</string>
+    <string name="setup_online_signed_out">未登录 —— 在线对战需要登录。</string>
+
+    <!-- SetupActivity: How this works card -->
+    <string name="setup_card_how_it_works">使用说明</string>
+    <string name="setup_how_it_works_body">1.「选择游戏文件夹」会在手机存储中打开一个文件夹浏览器。找到你复制自己的 Command &amp; Conquer Generals Zero Hour 安装文件的位置（包含 INIZH.big、Data\\、ZH_Generals\\ 等的文件夹），然后点击「使用此文件夹」。\n\n2. 如果浏览时列表为空，说明 Android 首先需要「管理所有文件的访问权限」——请在弹出的界面中授予该权限（这是 Android 的普通权限，无需 Root）。\n\n3.「查看日志」会显示引擎日志，如果游戏发生崩溃，还会显示原生崩溃日志 —— 无需电脑或 adb。点击那里的分享按钮即可把日志发送给自己。\n\n4.「启动游戏」会使用你选择的文件夹启动游戏。</string>
+
+    <!-- SetupActivity: folder selection / misc toasts -->
+    <string name="setup_toast_grant_all_files">请在下一个界面中授予「允许管理所有文件的访问权限」，然后返回并再次点击「选择游戏文件夹」。</string>
+    <string name="setup_toast_folder_saved">游戏文件夹已保存。</string>
+    <string name="setup_toast_folder_saved_invalid">已保存，但未在其中找到 INIZH.big/INI.big —— 请检查该文件夹。</string>
+    <string name="setup_toast_folder_saved_incomplete">已保存，但部分游戏文件看起来不完整或已损坏——启动前请查看主屏幕上的详细信息。</string>
+    <string name="setup_toast_marker_save_failed">无法保存文件夹标记：%1$s</string>
+    <string name="setup_toast_folder_cleared">已重置，游戏将回退使用默认文件夹。</string>
+    <string name="setup_toast_options_dir_failed">无法创建 Options.ini 所在的文件夹</string>
+    <string name="setup_toast_options_save_failed">无法保存 Options.ini：%1$s</string>
+
+    <!-- FolderPickerActivity -->
+    <string name="folderpicker_title">选择游戏文件夹</string>
+    <string name="folderpicker_up_entry">⬆️  ..（上一级）</string>
+    <string name="folderpicker_button_use">使用此文件夹</string>
+    <string name="folderpicker_hint_valid">✓ 此文件夹包含 INIZH.big/INI.big —— 看起来正确。</string>
+    <string name="folderpicker_hint_invalid">请进入你的游戏文件夹，然后点击「使用此文件夹」。</string>
+    <string name="folderpicker_toast_cant_read">无法读取此文件夹。如果到处都显示为空，请先在设置界面中授予「所有文件的访问权限」。</string>
+
+    <!-- LogViewerActivity -->
+    <string name="logviewer_title">日志</string>
+    <string name="logviewer_button_clear">清除日志</string>
+    <string name="logviewer_button_copy">复制</string>
+    <string name="logviewer_button_share">分享</string>
+    <string name="logviewer_toast_copied">已复制到剪贴板。</string>
+    <string name="logviewer_section_crash_log">=== crash.log（原生崩溃处理器，内部存储）===\n</string>
+    <string name="logviewer_crash_log_absent">（不存在 —— 自安装以来未记录到原生崩溃，或该应用从未启动到加载库文件之后的阶段）</string>
+    <string name="logviewer_section_stderr_log">=== generals-stderr.log（引擎日志，外部存储）===\n</string>
+    <string name="logviewer_stderr_log_absent">（不存在 —— 引擎的 main() 尚未启动，或外部存储不可用）</string>
+    <string name="logviewer_section_prev_log">=== generals-stderr-prev.log（上一次会话）===\n</string>
+    <string name="logviewer_prev_log_absent">（不存在）</string>
+    <string name="logviewer_dialog_clear_title">清除日志</string>
+    <string name="logviewer_dialog_clear_message">删除崩溃日志和引擎日志文件？此操作无法撤销。</string>
+    <string name="logviewer_dialog_clear_confirm">清除</string>
+    <string name="logviewer_dialog_clear_cancel">取消</string>
+    <string name="logviewer_toast_cleared">日志已清除。</string>
+    <string name="logviewer_share_subject">GeneralsZH Android 日志</string>
+    <string name="logviewer_share_chooser_title">分享日志</string>
+    <string name="logviewer_toast_share_failed">无法准备要分享的日志文件：%1$s</string>
+    <string name="logviewer_read_failed">（无法读取 %1$s：%2$s）</string>
+
+    <!-- GeneralsOnlineActivity -->
+    <string name="online_window_title">GeneralsOnline 账号</string>
+    <string name="online_subtitle">登录以使用在线多人游戏（playgenerals.online）</string>
+    <string name="online_button_sign_out">退出登录</string>
+    <string name="online_card_sign_in">登录</string>
+    <string name="online_signin_help">点击"登录"。第一次点击时可能会要求将此应用从电池优化中排除——请允许该请求，然后返回并再次点击"登录"。之后会打开一个浏览器，跳转到 playgenerals.online，并已附带此设备的一次性代码。在网页上选择 Steam、Discord 或 GameReplays，然后返回本应用即可；登录过程会自动完成。</string>
+    <string name="online_button_sign_in">登录</string>
+    <string name="online_status_signing_in">正在登录……</string>
+    <string name="online_status_battery_opt">请在下一个界面中允许 GeneralsZH 在后台运行，然后返回并再次点击"登录"——否则 Android 可能会在你使用浏览器期间中止登录检查。</string>
+    <string name="online_toast_no_browser">没有可用的浏览器：%1$s</string>
+    <string name="online_status_continue_browser">请在浏览器中继续操作——登录完成后返回此处。</string>
+    <string name="online_status_network_error">网络错误——请检查连接后重试。</string>
+    <string name="online_toast_signed_in_as">已登录为 %1$s</string>
+    <string name="online_status_signin_failed">登录失败或已取消——点击"登录"重试。</string>
+    <string name="online_status_timed_out">等待超时——点击"登录"重试。</string>
+    <string name="online_status_unexpected">收到意外响应——点击"登录"重试。</string>
+    <string name="online_toast_signed_out">已退出登录。</string>
+    <string name="online_status_signed_in_as">已登录为 %1$s。</string>
+    <string name="online_status_not_signed_in">未登录。</string>
+    <string name="setup_button_select_base_generals">基础游戏 Generals 文件夹…</string>
+    <string name="setup_button_clear_base_generals">清除基础游戏文件夹</string>
+    <string name="setup_toast_base_generals_saved">基础游戏 Generals 文件夹：%1$s</string>
+    <string name="setup_toast_base_generals_cleared">已清除基础游戏文件夹</string>
+    <string name="setup_base_generals_not_here">%1$s 中没有基础游戏 Generals 的归档文件——请选择包含 Terrain.big、Textures.big 和 W3D.big 的文件夹。</string>
+    <string name="setup_status_base_generals_line">基础 Generals：%1$s\n</string>
+    <string name="logviewer_crash_prev_log_absent">（不存在）</string>
+    <string name="logviewer_elided_notice">\n...(此处省略 %1$d 个字符；上方的会话开头与下方的最新输出已保留)...\n\n</string>
+    <string name="logviewer_section_crash_prev_log">=== crash-prev.log（原生崩溃处理器，上一次会话）===\n</string>
+    <string name="logviewer_toast_share_none">暂时没有可分享的日志文件。</string>
+    <string name="setup_button_dxvk_config_reset">恢复默认</string>
+    <string name="setup_button_dxvk_config_save">保存</string>
+    <string name="setup_card_dxvk_config">DXVK 配置（dxvk.conf，高级）</string>
+    <string name="setup_dxvk_config_help">直接编辑 dxvk.conf，也就是引擎启动时读取的那个文件——无需重新构建，下次启动即生效。如果游戏在你的设备上偏慢，这些设置会有帮助：\n\nd3d9.samplerAnisotropy = 2（设为 0 则关闭）——低于默认的 16，可减轻较弱硬件上的 GPU 负担。\ndxvk.hud = fps,drawcalls,submissions,pipelines——在屏幕上显示一个小的性能叠加层。\ndxvk.logLevel = none——除非有人要求，否则保持不变；更详细的级别会拖慢游戏。\n\n每行一条「key = value」。无效的行会被 DXVK 直接忽略，所以打错字不会弄坏游戏——最坏的情况只是你的改动不起作用。</string>
+    <string name="setup_dxvk_config_no_folder">请先选择游戏文件夹（上方）</string>
+    <string name="setup_toast_dxvk_config_no_default">此版本中未找到随附的默认 dxvk.conf。</string>
+    <string name="setup_toast_dxvk_config_reset">已恢复为默认的 dxvk.conf。</string>
+    <string name="setup_toast_dxvk_config_saved">已保存。下次启动游戏时生效。</string>
+    <string name="setup_toast_storage_permission_denied">浏览游戏文件夹需要存储权限。请再次点按「选择游戏文件夹」。</string>
+
+    <!-- Launcher bottom navigation + short render-backend names -->
+    <string name="nav_tab_home">主页</string>
+    <string name="nav_tab_graphics">图形</string>
+    <string name="nav_tab_interface">界面</string>
+    <string name="nav_tab_tools">工具</string>
+    <string name="nav_tab_help">帮助</string>
+    <string name="setup_render_backend_gles_short">GLES</string>
+    <string name="setup_render_backend_gles_angle_short">ANGLE</string>
+    <string name="setup_render_backend_vulkan_short">Vulkan</string>
+</resources>

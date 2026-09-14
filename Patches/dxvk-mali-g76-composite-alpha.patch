@@ -1,0 +1,72 @@
+diff --git a/src/dxvk/dxvk_presenter.cpp b/src/dxvk/dxvk_presenter.cpp
+index 38b8a2d..e2865b8 100644
+--- a/src/dxvk/dxvk_presenter.cpp
++++ b/src/dxvk/dxvk_presenter.cpp
+@@ -1,4 +1,5 @@
+ #include <algorithm>
++#include <array>
+ 
+ #include "dxvk_device.h"
+ #include "dxvk_presenter.h"
+@@ -695,7 +696,7 @@ namespace dxvk {
+                                     | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+     swapInfo.imageSharingMode       = VK_SHARING_MODE_EXCLUSIVE;
+     swapInfo.preTransform           = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+-    swapInfo.compositeAlpha         = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
++    swapInfo.compositeAlpha         = pickCompositeAlpha(caps.surfaceCapabilities.supportedCompositeAlpha);
+     swapInfo.presentMode            = m_presentMode;
+     swapInfo.clipped                = VK_TRUE;
+ 
+@@ -1120,6 +1121,36 @@ namespace dxvk {
+   }
+ 
+ 
++  // GeneralsX @bugfix Android port 30/07/2026 swap chain creation
++  // hardcoded VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR unconditionally. Real-
++  // device testing (Redmi Note 8 Pro / Mali-G76 MC4) found a surface
++  // that only reports VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR as supported
++  // (validation: VUID-VkSwapchainCreateInfoKHR-compositeAlpha-01280),
++  // so vkCreateSwapchainKHR failed and left the swapchain null, crashing
++  // the very next time the render loop tried to use it. Picks OPAQUE
++  // when supported (the common desktop case) and otherwise the first
++  // bit the surface actually reports, same "ask the driver, don't
++  // assume" approach as pickSurfaceFormat/pickPresentMode above.
++  VkCompositeAlphaFlagBitsKHR Presenter::pickCompositeAlpha(
++          VkCompositeAlphaFlagsKHR  supported) {
++    if (supported & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
++      return VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
++
++    static const std::array<VkCompositeAlphaFlagBitsKHR, 3> fallbacks = {
++      VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
++      VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
++      VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
++    };
++
++    for (auto flag : fallbacks) {
++      if (supported & flag)
++        return flag;
++    }
++
++    return VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
++  }
++
++
+   VkResult Presenter::createSurface() {
+     VkResult vr = m_surfaceProc(&m_surface);
+ 
+diff --git a/src/dxvk/dxvk_presenter.h b/src/dxvk/dxvk_presenter.h
+index 8e403b2..7caf682 100644
+--- a/src/dxvk/dxvk_presenter.h
++++ b/src/dxvk/dxvk_presenter.h
+@@ -366,6 +366,11 @@ namespace dxvk {
+             uint32_t                  minImageCount,
+             uint32_t                  maxImageCount);
+ 
++    // GeneralsX @bugfix Android port 30/07/2026 see pickCompositeAlpha
++    // (dxvk_presenter.cpp) for why this exists.
++    VkCompositeAlphaFlagBitsKHR pickCompositeAlpha(
++            VkCompositeAlphaFlagsKHR  supported);
++
+     VkResult createSurface();
+ 
+     VkResult createLatencySemaphore();

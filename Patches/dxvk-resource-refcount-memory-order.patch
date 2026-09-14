@@ -1,0 +1,47 @@
+diff --git a/src/dxvk/dxvk_memory.h b/src/dxvk/dxvk_memory.h
+index 2c1ebc2..8b7b032 100644
+--- a/src/dxvk/dxvk_memory.h
++++ b/src/dxvk/dxvk_memory.h
+@@ -511,7 +511,11 @@ namespace dxvk {
+      * \brief Increments reference count
+      */
+     force_inline void incRef() {
+-      m_useCount.fetch_add(1u, std::memory_order_acquire);
++      // Relaxed is enough: the caller already holds a valid reference (or
++      // this is the first one, made under external synchronization), so
++      // there is nothing from another thread that this increment itself
++      // needs to acquire.
++      m_useCount.fetch_add(1u, std::memory_order_relaxed);
+     }
+ 
+     /**
+@@ -519,8 +523,28 @@ namespace dxvk {
+      * Frees allocation if necessary
+      */
+     force_inline void decRef() {
+-      if (unlikely(m_useCount.fetch_sub(1u, std::memory_order_acquire) == 1u))
++      // GeneralsX @bugfix Android port 30/07/2026 This previously used
++      // memory_order_acquire on both incRef and decRef, with no release
++      // anywhere -- so the acquire had nothing to synchronize with. On x86
++      // (DXVK's primary dev/test target) every RMW is already a full fence,
++      // so this was invisible there; on ARM/Android's weaker memory model
++      // it permits a thread to observe the refcount hit zero and recycle
++      // the allocation (DxvkResourceAllocationPool::alloc/recycle) while
++      // another thread's writes made just before its own decRef are not
++      // yet visible -- i.e. a live object gets reused while still
++      // logically referenced. That's exactly the corruption signature real
++      // devices reported: a popped free-list node holding what looks like
++      // a live allocation's counter bytes instead of a valid `next`
++      // pointer (see DxvkResourceAllocationPool::alloc's guard below).
++      // Standard fix (Boost.SmartPtr, libstdc++ shared_ptr): release on
++      // every decrement so this thread's prior writes are published, plus
++      // an acquire fence -- taken only by whichever thread actually
++      // reaches zero -- so it synchronizes with every other thread's
++      // release before the memory is reused.
++      if (unlikely(m_useCount.fetch_sub(1u, std::memory_order_release) == 1u)) {
++        std::atomic_thread_fence(std::memory_order_acquire);
+         free();
++      }
+     }
+ 
+     /**

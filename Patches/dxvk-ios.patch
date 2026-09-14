@@ -1,0 +1,56 @@
+# DXVK iOS patch
+#
+# Local modifications to references/fbraz3-dxvk (at 46a3bc01) used to
+# build the libdxvk_d3d8/d3d9 dylibs that package-ios-zh.sh embeds: dlopen MoltenVK from
+# the app bundle's Frameworks directory, and SDL3 WSI fixes for the iOS drawable.
+# Apply with: git -C references/fbraz3-dxvk apply ../../Patches/dxvk-ios.patch
+# Then build with: meson setup --cross-file cmake/meson-arm64-ios-cross.ini ...
+diff --git a/src/vulkan/vulkan_loader.cpp b/src/vulkan/vulkan_loader.cpp
+index 518efcb1..a70ea8fb 100644
+--- a/src/vulkan/vulkan_loader.cpp
++++ b/src/vulkan/vulkan_loader.cpp
+@@ -18,7 +18,12 @@ namespace dxvk::vk {
+ #elif defined(__APPLE__)
+     // macOS: try the Vulkan loader (from Vulkan SDK) and MoltenVK directly.
+     // LoadLibraryA() maps to dlopen() on non-Windows DXVK native builds.
+-    static const std::array<const char*, 3> dllNames = {{
++    // The @executable_path entries cover iOS, where bare-name dlopen cannot see
++    // the app bundle's embedded Frameworks directory; they fail harmlessly on
++    // macOS setups that ship the loader beside the binary instead.
++    static const std::array<const char*, 5> dllNames = {{
++      "@executable_path/Frameworks/MoltenVK.framework/MoltenVK",
++      "@executable_path/Frameworks/libMoltenVK.dylib",
+       "libvulkan.dylib",
+       "libvulkan.1.dylib",
+       "libMoltenVK.dylib",
+diff --git a/src/wsi/sdl3/wsi_platform_sdl3_funcs.h b/src/wsi/sdl3/wsi_platform_sdl3_funcs.h
+index 624c2193..feb5f61a 100644
+--- a/src/wsi/sdl3/wsi_platform_sdl3_funcs.h
++++ b/src/wsi/sdl3/wsi_platform_sdl3_funcs.h
+@@ -9,6 +9,7 @@ SDL_PROC(bool, SDL_GetClosestFullscreenDisplayMode, (SDL_DisplayID, int, int, fl
+ SDL_PROC(SDL_DisplayID, SDL_GetDisplayForWindow, (SDL_Window*))
+ SDL_PROC(SDL_WindowFlags, SDL_GetWindowFlags, (SDL_Window *))
+ SDL_PROC(bool, SDL_GetWindowSize, (SDL_Window*, int*, int*))
++SDL_PROC(bool, SDL_GetWindowSizeInPixels, (SDL_Window*, int*, int*))
+ SDL_PROC(bool, SDL_SetWindowSize, (SDL_Window*, int, int))
+ SDL_PROC(bool, SDL_SetWindowPosition, (SDL_Window*, int, int))
+ SDL_PROC(bool, SDL_SetWindowFullscreen, (SDL_Window*, bool))
+diff --git a/src/wsi/sdl3/wsi_window_sdl3.cpp b/src/wsi/sdl3/wsi_window_sdl3.cpp
+index 10fca478..be0828f5 100644
+--- a/src/wsi/sdl3/wsi_window_sdl3.cpp
++++ b/src/wsi/sdl3/wsi_window_sdl3.cpp
+@@ -22,8 +22,12 @@ namespace dxvk::wsi {
+     int w = 0;
+     int h = 0;
+ 
+-    if (!SDL_GetWindowSize(window, &w, &h))
+-      Logger::err(str::format("SDL3 WSI: SDL_GetWindowSize: ", SDL_GetError()));
++    // Pixels, not points: on high-DPI displays (iOS high-pixel-density windows)
++    // the Metal layer's drawable is scale-factor larger than the logical window.
++    // Sizing the swapchain in points leaves it rendering into a corner of the
++    // surface. Identical to points wherever no scale factor applies.
++    if (!SDL_GetWindowSizeInPixels(window, &w, &h))
++      Logger::err(str::format("SDL3 WSI: SDL_GetWindowSizeInPixels: ", SDL_GetError()));
+ 
+     if (pWidth)
+       *pWidth = uint32_t(w);

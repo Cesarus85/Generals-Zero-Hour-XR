@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Generals Zero Hour</string>
+    <string name="common_cancel">Скасувати</string>
+
+    <!-- SetupActivity: title / fallback -->
+    <string name="setup_window_title">Налаштування GeneralsZH</string>
+    <string name="setup_title">Command &amp; Conquer Generals: Zero Hour</string>
+    <string name="setup_subtitle">Налаштування Android</string>
+    <string name="setup_fallback_warning">Звичайний інтерфейс налаштувань не завантажився (%1$s). Показано спрощений варіант, щоб ви все одно могли відкрити логи чи папку з грою.</string>
+
+    <!-- SetupActivity: Game Folder card -->
+    <string name="setup_card_game_folder">Папка з грою</string>
+    <string name="setup_button_select_game_folder">Обрати папку з грою</string>
+    <string name="setup_button_launch_game">Запустити гру</string>
+    <string name="setup_button_view_logs">Переглянути логи</string>
+    <string name="setup_button_clear_game_folder">Скинути папку з грою</string>
+
+    <!-- SetupActivity: status text -->
+    <string name="setup_status_folder_not_set">Папка з грою: не задана.\n</string>
+    <string name="setup_status_folder_line">Папка з грою: %1$s\n</string>
+    <string name="setup_status_folder_valid">Статус: схоже на правильну папку (знайдено файли архівів гри).\n</string>
+    <string name="setup_status_folder_invalid">Статус: у цій папці НЕМАЄ очікуваних INIZH.big / INI.big — перевірте, чи ту папку ви обрали.\n</string>
+    <string name="setup_status_folder_incomplete">Статус: архіви гри знайдено, але набір неповний:\n%1$s\n</string>
+    <string name="setup_dialog_folder_problem_title">Проблема з папкою гри</string>
+    <string name="setup_folder_issue_empty_file">%1$s порожній (0 байт)</string>
+    <string name="setup_folder_issue_bad_header">%1$s не схожий на коректний архів гри</string>
+    <string name="setup_folder_issue_missing_data">У %1$s бракує очікуваних даних гри — ймовірно, неповна копія</string>
+    <string name="setup_folder_issue_no_base_game">Відсутні дані базової гри Generals:%1$s\n\nАбо вкажіть папку, де вони вже є — кнопка «Папка базової Generals…» нижче (зазвичай ZH_Generals або Command and Conquer Generals).</string>
+    <string name="setup_status_logs_note">Логи краху/рушія зберігаються у приватному сховищі застосунку і доступні лише через кнопку «Переглянути логи» вище — Android навмисно приховує їх від звичайних файлових менеджерів (це стандартна пісочниця Android, а не особливість цього застосунку).</string>
+
+    <!-- SetupActivity: Language card -->
+    <string name="setup_card_language">Мова</string>
+    <string name="setup_language_help">Змінює мову цього застосунку налаштувань, перегляду журналів і вибору теки. Текст самої гри — окреме налаштування нижче: обирається з мов, які справді є в теці гри, або завантажується. «Як у системі» слідує мові телефона, а якщо її немає в списку — використовується англійська.</string>
+    <string name="setup_language_status">Мова: %1$s</string>
+    <string name="setup_button_change_language">Змінити мову</string>
+    <string name="setup_language_dialog_title">Оберіть мову</string>
+    <string name="setup_language_system_default">Як у системі</string>
+    <string name="setup_language_game_status_default">Текст гри: не зачеплений цим налаштуванням (використовується власна мова гри з registry.ini, або англійська за замовчуванням).</string>
+    <string name="setup_language_game_status_override">Текст гри: теж перемкнено (знайдено data/%1$s/generals.csf у папці гри).</string>
+    <string name="setup_language_game_status_missing">Текст гри: НЕ перемкнено — у папці гри немає data/%1$s/generals.csf, тому гра зберігає свою мову.</string>
+
+    <!-- SetupActivity: Menu Text Size card -->
+    <string name="setup_card_text_size">Розмір тексту меню</string>
+    <string name="setup_text_size_label">Масштаб: %1$d%%</string>
+    <string name="setup_button_apply_text_size">Застосувати розмір тексту</string>
+    <string name="setup_text_size_help">Масштабує текст більшості кнопок і підписів меню під роздільність екрана. 70 — значення за замовчуванням у грі; більші значення збільшують текст меню. Застосовується при наступному запуску гри, не одразу.</string>
+    <string name="setup_toast_text_size_saved">Збережено. Застосується при наступному запуску гри.</string>
+
+    <!-- SetupActivity: Render Backend card -->
+    <string name="setup_card_render_backend">Графічний бекенд</string>
+    <string name="setup_render_backend_help">Який графічний API використовує гра. Діє з наступного запуску гри, не одразу.\n\nOpenGL ES (типовий): нативний рендерер, написаний для цього порту. Обраний типовим, бо працює на всіх перевірених пристроях, зокрема тих, де Vulkan малює зіпсовану картинку. Починайте звідси й змінюйте лише за наявності причини.\n\nOpenGL ES + ANGLE: той самий рендерер, але через ANGLE від Google, який перекладає його у Vulkan, замість власного GLES-драйвера телефона. ANGLE вбудований у застосунок, тож не потребує ні мінімальної версії Android, ні системного налаштування. Часто швидший у роботі, але меню з великою кількістю елементів (налаштування сутички) може підгальмувати під час першого відкриття, поки ANGLE компілює потрібне; повторно це не станеться, доки ви не вийдете й не відкриєте це меню знову.\n\nVulkan: початковий бекенд, через трансляцію Direct3D 8 у Vulkan засобами DXVK. Швидший за інші на телефонах, чий драйвер із ним впорається, — зазвичай свіжі Snapdragon. Але все залежить саме від драйвера, і на деяких GPU з’являються пурпурові плями, спотворена геометрія чи зіпсовані меню, чого жодним налаштуванням звідси не виправити \u2014 повідомляли про PowerVR BXM і Samsung Xclipse. Якщо Vulkan виглядає неправильно на вашому пристрої, типовий варіант існує саме для цього.\n\nРозділи «Власний драйвер Vulkan» і «Конфігурація DXVK» показуються лише за обраного Vulkan.</string>
+    <string name="setup_render_backend_gpu">Ваш GPU: %1$s</string>
+    <string name="setup_render_backend_status">Зараз: %1$s</string>
+    <string name="setup_button_change_render_backend">Змінити графічний бекенд</string>
+    <string name="setup_render_backend_dialog_title">Виберіть графічний бекенд</string>
+    <string name="setup_render_backend_vulkan">Vulkan</string>
+    <string name="setup_render_backend_gles">OpenGL ES (типовий)</string>
+    <string name="setup_render_backend_gles_angle">OpenGL ES + ANGLE</string>
+    <string name="setup_toast_render_backend_saved">Збережено. Застосується при наступному запуску гри.</string>
+    <string name="setup_toast_render_backend_failed">Не вдалося зберегти вибір графічного бекенда: %1$s</string>
+
+    <!-- SetupActivity: Custom Vulkan Driver card -->
+    <string name="setup_card_vulkan_driver">Власний Vulkan-драйвер (для досвідчених, лише Adreno)</string>
+    <string name="setup_button_import_driver">Імпортувати драйвер (.zip)</string>
+    <string name="setup_button_reset_driver">Скинути на рекомендований</string>
+    <string name="setup_driver_help">Завантажує Vulkan-драйвер (збірку Mesa Turnip) замість вбудованого в телефон — той самий прийом, що використовують Winlator і AetherSX2. Самому DXVK тепер потрібен лише Vulkan 1.1, але деякі старі штатні драйвери Qualcomm Adreno повідомляють ще менше (або мають інші баги) — ця збірка Turnip все одно може дозволити таким телефонам запустити гру. На відповідному телефоні Adreno це застосовується автоматично — «Скинути на рекомендований» повертає цей автоматичний вибір після того, як ви імпортували щось своє.\n\nЦЕ НЕ допоможе Mali, PowerVR та іншим не-Adreno GPU — але їм це і не потрібно: більшість GPU Mali (Mali-G76, Mali-G57 і подібні) вже нативно відповідають вимозі DXVK щодо Vulkan 1.1, заміна драйвера не потрібна. Ця опція обмежена Adreno, бо Turnip працює лише з апаратним забезпеченням Adreno, а не тому, що інші GPU не підтримуються.\n\n«Імпортувати драйвер» дозволяє замінити автоматичний вибір своїм .zip у форматі adrenotools (наприклад, з K11MCH1/AdrenoToolsDrivers або The412Banner/Banners-Turnip на GitHub). Застосовується при наступному запуску, не одразу.</string>
+    <string name="setup_driver_status_none">Власний драйвер не використовується — працює вбудований Vulkan-драйвер телефону.</string>
+    <string name="setup_driver_status_auto">Рекомендований драйвер (обрано автоматично для цього пристрою): %1$s</string>
+    <string name="setup_driver_status_manual">Власний драйвер (імпортовано вручну): %1$s</string>
+    <string name="setup_driver_unknown">(невідомо)</string>
+    <string name="setup_toast_no_file_picker">Немає доступного файлового менеджера: %1$s</string>
+    <string name="setup_toast_reset_auto">Скидання виконано. Рекомендований для цього пристрою драйвер застосовано знову.</string>
+    <string name="setup_toast_reset_stock">Скидання виконано. Буде використовуватися вбудований Vulkan-драйвер телефону.</string>
+    <string name="setup_toast_driver_import_no_tmp">Не вдалося створити тимчасову папку для імпорту драйвера</string>
+    <string name="setup_toast_driver_import_failed">Помилка імпорту: %1$s</string>
+    <string name="setup_toast_driver_import_no_meta">Помилка імпорту: meta.json не знайдено в .zip (це не пакет драйвера у форматі adrenotools)</string>
+    <string name="setup_toast_driver_import_bad_meta">Помилка імпорту: некоректний meta.json (%1$s)</string>
+    <string name="setup_toast_driver_import_no_finalize">Помилка імпорту: не вдалося завершити створення папки драйвера</string>
+    <string name="setup_toast_driver_config_failed">Не вдалося зберегти конфігурацію драйвера: %1$s</string>
+    <string name="setup_toast_driver_imported">Драйвер імпортовано: %1$s. Застосується при наступному запуску.</string>
+
+    <!-- SetupActivity: Diagnostics card -->
+    <string name="setup_card_diagnostics">Діагностика</string>
+    <string name="setup_diagnostics_help">Ці перемикачі вмикають додаткове логування для звітів про помилки — під час звичайної гри тримайте їх усі вимкненими, вони можуть сповільнити гру або створити дуже великий лог. Якщо той, хто повідомляє про проблему, просить увімкнути якийсь пункт, увімкніть його, відтворіть проблему, а потім скористайтеся «Переглянути логи» вище, щоб надіслати результат.</string>
+    <string name="setup_diagnostics_no_folder">Спочатку виберіть папку з грою (вище), щоб використовувати ці перемикачі</string>
+    <string name="setup_switch_gx_trace">Детальний лог трасування</string>
+    <string name="setup_switch_gx_trace_desc">Дуже детальне внутрішнє логування (інтерфейс, шрифти, INI-файли) для пошуку конкретного зависання чи бага. За довгу сесію лог може вирости до 50–100+ МБ — якщо потрібні лише цифри FPS, скористайтеся замість цього «Зведенням продуктивності». (gx_trace.txt)</string>
+    <string name="setup_switch_touch_debug">Налагодження сенсорного керування</string>
+    <string name="setup_switch_touch_debug_desc">Малює поверх гри стан сенсорного шару: поточний жест, де палець, де рушій вважає вказівник, і якір прокручування камери. Вмикайте, коли повідомляєте про проблеми керування — карта їде сама, привид будівлі не на тому місці, здібність цілиться туди, куди ви не натискали. (gx_touch_debug.txt)</string>
+    <string name="setup_switch_gx_perf">Зведення продуктивності</string>
+    <string name="setup_switch_gx_perf_desc">Додає один короткий рядок на секунду про те, куди йде час кадру (радар, звук, мережа, логіка гри, рендеринг). Можна безпечно залишити увімкненим на всю сесію — вмикайте для звітів про FPS/просідання. (gx_perf.txt)</string>
+    <string name="setup_switch_gx_audio_trace">Журнал звуку</string>
+    <string name="setup_switch_gx_audio_trace_desc">Записує, що робить звукова система: заповнення буферів музики й мовлення, звук роликів і кожен запуск та зупинку джерела. Увімкніть, якщо після скарги на зниклий, переривчастий або тихий звук у вас попросять журнал звуку. (gx_audio_trace.txt)</string>
+    <string name="setup_button_download_langpack">Завантажити мовний пакет</string>
+    <string name="setup_langpack_downloading">Завантажую мовний пакет…</string>
+    <string name="setup_langpack_done">Мовний пакет встановлено. Гра підхопить його під час наступного запуску.</string>
+    <string name="setup_langpack_done_n">Установлено мовних пакетів: %1$d (%2$s). Виберіть нижче.</string>
+    <string name="setup_langpack_failed">Не вдалося завантажити мовний пакет: %1$s</string>
+    <string name="setup_langpack_not_available">Для цієї мови лаунчера немає пакета ігрового тексту.</string>
+    <string name="setup_langpack_no_folder">Спочатку виберіть теку з грою.</string>
+    <string name="setup_langpack_err_none_yet">Пакета для цієї мови ще немає. Переклади вітаються — див. languages/README.md у репозиторії проєкту.</string>
+    <string name="setup_langpack_err_mkdir">не вдалося створити мовну теку в теці гри</string>
+    <string name="setup_langpack_err_empty">завантажений файл виявився порожнім</string>
+    <string name="setup_langpack_err_replace">не вдалося замінити наявний файл</string>
+    <string name="setup_button_game_text_language">Мова тексту гри</string>
+    <string name="setup_game_text_dialog_title">Мова тексту гри</string>
+    <string name="setup_game_text_default">За замовчуванням (.big у пріоритеті)</string>
+    <string name="setup_game_text_status">Текст гри: %1$s</string>
+    <string name="setup_game_text_status_default">Текст гри: англійська — якщо тільки її не замінює .big у теці гри</string>
+    <string name="setup_game_text_none_found">У теці гри поки немає мовних пакетів. Спершу завантажте.</string>
+    <string name="setup_langpack_dialog_title">Яка мова?</string>
+    <string name="setup_switch_dxvk_hud">Екранний оверлей продуктивності</string>
+    <string name="setup_switch_dxvk_hud_desc">Показує FPS, кількість draw call, надсилань і пайплайнів прямо на екрані та в логу. Вмикайте для звітів про продуктивність GPU. (dxvk_hud.txt)</string>
+    <string name="setup_switch_dxvk_validation">Шар валідації Vulkan</string>
+    <string name="setup_switch_dxvk_validation_desc">Перевіряє коректність кожного графічного виклику — знаходить реальні баги рендерингу, але помітно сповільнює гру. Вмикайте лише коли просять відтворити конкретний краш чи графічний глюк, не для звичайної гри. (dxvk_validation.txt)</string>
+    <string name="setup_switch_dxvk_verbose_log">Детальний лог рендерера</string>
+    <string name="setup_switch_dxvk_verbose_log_desc">Додає в лог додаткові деталі про те, як гра спілкується з драйвером вашого GPU (точний формат екрана та узгоджені налаштування). Вмикайте, коли просять розібратися в графічному глюку саме на вашому пристрої. (dxvk_verbose_log.txt)</string>
+
+    <!-- SetupActivity: Online Multiplayer card -->
+    <string name="setup_card_online">Онлайн-мультиплеєр</string>
+    <string name="setup_button_online_account">Обліковий запис GeneralsOnline</string>
+    <string name="setup_online_signed_in">Ви увійшли як %1$s.</string>
+    <string name="setup_online_signed_out">Вхід не виконано — потрібен для онлайн-матчів.</string>
+
+    <!-- SetupActivity: How this works card -->
+    <string name="setup_card_how_it_works">Як це працює</string>
+    <string name="setup_how_it_works_body">1. «Обрати папку з грою» відкриває браузер папок у пам\'яті телефону. Перейдіть туди, куди ви скопіювали свою інсталяцію Command &amp; Conquer Generals Zero Hour (папку з INIZH.big, Data\\, ZH_Generals\\ тощо) і натисніть «Використати цю папку».\n\n2. Якщо список папок виглядає порожнім, це означає, що Android спершу запитує дозвіл «Доступ до всіх файлів» — надайте його на екрані, що відкриється (це звичайний дозвіл Android, root не потрібен).\n\n3. «Переглянути логи» показує лог рушія і, якщо гра завершилася аварійно, лог краху — без комп\'ютера чи adb. Кнопка «Поділитися» там же надішле лог вам самим.\n\n4. «Запустити гру» запускає гру з обраною папкою.</string>
+
+    <!-- SetupActivity: folder selection / misc toasts -->
+    <string name="setup_toast_grant_all_files">Надайте дозвіл «Доступ до всіх файлів» на наступному екрані, потім поверніться і знову натисніть «Обрати папку з грою».</string>
+    <string name="setup_toast_folder_saved">Папку з грою збережено.</string>
+    <string name="setup_toast_folder_saved_invalid">Збережено, але INIZH.big/INI.big там не знайдено — перевірте папку.</string>
+    <string name="setup_toast_folder_saved_incomplete">Збережено, але деякі файли гри виглядають неповними або пошкодженими — перегляньте деталі на головному екрані перед запуском.</string>
+    <string name="setup_toast_marker_save_failed">Не вдалося зберегти мітку папки: %1$s</string>
+    <string name="setup_toast_folder_cleared">Скинуто. Гра використовуватиме папку за замовчуванням.</string>
+    <string name="setup_toast_options_dir_failed">Не вдалося створити папку для Options.ini</string>
+    <string name="setup_toast_options_save_failed">Не вдалося зберегти Options.ini: %1$s</string>
+
+    <!-- FolderPickerActivity -->
+    <string name="folderpicker_title">Вибір папки з грою</string>
+    <string name="folderpicker_up_entry">⬆️  .. (вгору)</string>
+    <string name="folderpicker_button_use">Використати цю папку</string>
+    <string name="folderpicker_hint_valid">✓ У цій папці є INIZH.big/INI.big — схоже на правильну.</string>
+    <string name="folderpicker_hint_invalid">Перейдіть у папку з грою і натисніть «Використати цю папку».</string>
+    <string name="folderpicker_toast_cant_read">Не вдається прочитати цю папку. Якщо списки скрізь порожні, спершу надайте «Доступ до всіх файлів» на екрані налаштувань.</string>
+
+    <!-- LogViewerActivity -->
+    <string name="logviewer_title">Логи</string>
+    <string name="logviewer_button_clear">Очистити логи</string>
+    <string name="logviewer_button_copy">Копіювати</string>
+    <string name="logviewer_button_share">Поділитися</string>
+    <string name="logviewer_toast_copied">Скопійовано в буфер обміну.</string>
+    <string name="logviewer_section_crash_log">=== crash.log (обробник краху, внутрішнє сховище) ===\n</string>
+    <string name="logviewer_crash_log_absent">(відсутній — крахів рушія з моменту встановлення не було, або застосунок жодного разу не запускався далі завантаження бібліотеки)</string>
+    <string name="logviewer_section_stderr_log">=== generals-stderr.log (лог рушія, зовнішнє сховище) ===\n</string>
+    <string name="logviewer_stderr_log_absent">(відсутній — main() рушія ще не запускався, або зовнішнє сховище недоступне)</string>
+    <string name="logviewer_section_prev_log">=== generals-stderr-prev.log (попередня сесія) ===\n</string>
+    <string name="logviewer_prev_log_absent">(відсутній)</string>
+    <string name="logviewer_dialog_clear_title">Очистити логи</string>
+    <string name="logviewer_dialog_clear_message">Видалити файли логу краху та логу рушія? Це незворотно.</string>
+    <string name="logviewer_dialog_clear_confirm">Очистити</string>
+    <string name="logviewer_dialog_clear_cancel">Скасувати</string>
+    <string name="logviewer_toast_cleared">Логи очищено.</string>
+    <string name="logviewer_share_subject">Лог GeneralsZH Android</string>
+    <string name="logviewer_share_chooser_title">Поділитися логом</string>
+    <string name="logviewer_toast_share_failed">Не вдалося підготувати файл логу для надсилання: %1$s</string>
+    <string name="logviewer_read_failed">(не вдалося прочитати %1$s: %2$s)</string>
+
+    <!-- GeneralsOnlineActivity -->
+    <string name="online_window_title">Обліковий запис GeneralsOnline</string>
+    <string name="online_subtitle">Увійдіть для онлайн-мультиплеєра (playgenerals.online)</string>
+    <string name="online_button_sign_out">Вийти</string>
+    <string name="online_card_sign_in">Вхід</string>
+    <string name="online_signin_help">Натисніть «Увійти». Під час першого натискання може з’явитися запит виключити застосунок з оптимізації батареї — дозвольте це, потім поверніться і знову натисніть «Увійти». Після цього відкриється браузер на playgenerals.online, який вже міститиме одноразовий код для цього пристрою. Оберіть там Steam, Discord або GameReplays, а потім просто поверніться до застосунку — вхід завершиться сам.</string>
+    <string name="online_button_sign_in">Увійти</string>
+    <string name="online_status_signing_in">Виконується вхід...</string>
+    <string name="online_status_battery_opt">Дозвольте GeneralsZH працювати у фоновому режимі на наступному екрані, потім поверніться і знову натисніть «Увійти» — інакше Android може перервати перевірку входу, поки ви перебуваєте в браузері.</string>
+    <string name="online_toast_no_browser">Немає доступного браузера: %1$s</string>
+    <string name="online_status_continue_browser">Продовжте в браузері — поверніться сюди після входу.</string>
+    <string name="online_status_network_error">Помилка мережі — перевірте з’єднання і спробуйте ще раз.</string>
+    <string name="online_toast_signed_in_as">Вхід виконано як %1$s</string>
+    <string name="online_status_signin_failed">Вхід не вдався або був скасований — натисніть «Увійти», щоб спробувати знову.</string>
+    <string name="online_status_timed_out">Час очікування вичерпано — натисніть «Увійти», щоб спробувати знову.</string>
+    <string name="online_status_unexpected">Неочікувана відповідь — натисніть «Увійти», щоб спробувати знову.</string>
+    <string name="online_toast_signed_out">Вихід виконано.</string>
+    <string name="online_status_signed_in_as">Вхід виконано як %1$s.</string>
+    <string name="online_status_not_signed_in">Вхід не виконано.</string>
+    <string name="setup_button_select_base_generals">Папка базової Generals…</string>
+    <string name="setup_button_clear_base_generals">Скинути папку базової Generals</string>
+    <string name="setup_toast_base_generals_saved">Папка базової Generals: %1$s</string>
+    <string name="setup_toast_base_generals_cleared">Папку базової Generals скинуто</string>
+    <string name="setup_base_generals_not_here">У %1$s немає архівів базової Generals — оберіть папку, де лежать Terrain.big, Textures.big і W3D.big.</string>
+    <string name="setup_status_base_generals_line">Базова Generals: %1$s\n</string>
+    <string name="logviewer_crash_prev_log_absent">(відсутній)</string>
+    <string name="logviewer_elided_notice">\n...(тут пропущено символів: %1$d; початок сесії вище та найсвіжіший вивід нижче збережено)...\n\n</string>
+    <string name="logviewer_section_crash_prev_log">=== crash-prev.log (нативний обробник збоїв, попередня сесія) ===\n</string>
+    <string name="logviewer_toast_share_none">Файлів журналу для надсилання ще немає.</string>
+    <string name="setup_button_dxvk_config_reset">Скинути до типових</string>
+    <string name="setup_button_dxvk_config_save">Зберегти</string>
+    <string name="setup_card_dxvk_config">Конфігурація DXVK (dxvk.conf, для досвідчених)</string>
+    <string name="setup_dxvk_config_help">Редагує dxvk.conf напряму — той самий файл, який рушій читає під час запуску. Перезбирати нічого не треба, діє з наступного запуску. Корисні налаштування, якщо гра гальмує на вашому пристрої:\n\nd3d9.samplerAnisotropy = 2 (або 0, щоб вимкнути) — менше за типові 16, зменшує навантаження на GPU слабших пристроїв.\ndxvk.hud = fps,drawcalls,submissions,pipelines — показує невеликий екранний лічильник продуктивності.\ndxvk.logLevel = none — лишайте так, якщо не просили інакше; докладніші рівні сповільнюють гру.\n\nОдне «key = value» на рядок. Некоректний рядок DXVK просто ігнорує, тож друкарська помилка гру не зламає — у найгіршому разі зміна не подіє.</string>
+    <string name="setup_dxvk_config_no_folder">Спершу виберіть теку гри (вище)</string>
+    <string name="setup_toast_dxvk_config_no_default">У цій збірці не знайдено вбудованого типового dxvk.conf.</string>
+    <string name="setup_toast_dxvk_config_reset">Скинуто до типового dxvk.conf.</string>
+    <string name="setup_toast_dxvk_config_saved">Збережено. Подіє з наступного запуску гри.</string>
+    <string name="setup_toast_storage_permission_denied">Щоб переглянути теку гри, потрібен дозвіл на доступ до сховища. Натисніть «Вибрати теку гри» ще раз.</string>
+
+    <!-- Launcher bottom navigation + short render-backend names -->
+    <string name="nav_tab_home">Головна</string>
+    <string name="nav_tab_graphics">Графіка</string>
+    <string name="nav_tab_interface">Інтерфейс</string>
+    <string name="nav_tab_tools">Інструменти</string>
+    <string name="nav_tab_help">Довідка</string>
+    <string name="setup_render_backend_gles_short">GLES</string>
+    <string name="setup_render_backend_gles_angle_short">ANGLE</string>
+    <string name="setup_render_backend_vulkan_short">Vulkan</string>
+</resources>

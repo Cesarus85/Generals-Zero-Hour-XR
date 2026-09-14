@@ -1,0 +1,231 @@
+diff --git a/src/d3d9/d3d9_device.cpp b/src/d3d9/d3d9_device.cpp
+index c98275f..3f45ef8 100644
+--- a/src/d3d9/d3d9_device.cpp
++++ b/src/d3d9/d3d9_device.cpp
+@@ -4526,7 +4526,15 @@ namespace dxvk {
+ 
+     enabled.vk12.samplerMirrorClampToEdge = VK_TRUE;
+ 
+-    enabled.vk13.shaderDemoteToHelperInvocation = VK_TRUE;
++    // GeneralsX @bugfix Android port 30/07/2026 same class of bug as
++    // shaderClipDistance/shaderCullDistance below: unconditional VK_TRUE
++    // regardless of what the device actually reports. supported.vk13.xxx
++    // is only meaningful on true Vulkan 1.3 adapters -- see
++    // extShaderDemoteToHelperInvocation (dxvk_adapter.cpp/dxvk_extensions.h)
++    // for the sub-1.3 EXT fallback query this also checks.
++    enabled.vk13.shaderDemoteToHelperInvocation =
++      supported.vk13.shaderDemoteToHelperInvocation
++      || supported.extShaderDemoteToHelperInvocation.shaderDemoteToHelperInvocation;
+ 
+     enabled.extMemoryPriority.memoryPriority = supported.extMemoryPriority.memoryPriority;
+ 
+diff --git a/src/d3d9/d3d9_fixed_function.cpp b/src/d3d9/d3d9_fixed_function.cpp
+index 436843a..b1427bf 100644
+--- a/src/d3d9/d3d9_fixed_function.cpp
++++ b/src/d3d9/d3d9_fixed_function.cpp
+@@ -807,6 +807,12 @@ namespace dxvk {
+     D3D9FixedFunctionOptions m_options;
+ 
+     D3D9ShaderSpecConstantManager m_spec;
++
++    // GeneralsX @bugfix Android port 30/07/2026 see setupVS() for why
++    // this is needed -- mirrors DxsoOptions::supportsClipDistance
++    // (dxso_options.h) for the fixed-function shader path, which wasn't
++    // covered by that fix.
++    bool                   m_supportsClipDistance = false;
+   };
+ 
+   D3D9FFShaderCompiler::D3D9FFShaderCompiler(
+@@ -818,7 +824,8 @@ namespace dxvk {
+   , m_module      ( spvVersion(1, 3) )
+   , m_programType ( DxsoProgramTypes::VertexShader )
+   , m_vsKey       ( Key )
+-  , m_options     ( Options ) { }
++  , m_options     ( Options )
++  , m_supportsClipDistance ( Device->features().core.features.shaderClipDistance ) { }
+ 
+ 
+   D3D9FFShaderCompiler::D3D9FFShaderCompiler(
+@@ -830,7 +837,8 @@ namespace dxvk {
+   , m_module      ( spvVersion(1, 3) )
+   , m_programType ( DxsoProgramTypes::PixelShader )
+   , m_fsKey       ( Key )
+-  , m_options     ( Options ) { }
++  , m_options     ( Options )
++  , m_supportsClipDistance ( Device->features().core.features.shaderClipDistance ) { }
+ 
+ 
+   Rc<DxvkShader> D3D9FFShaderCompiler::compile() {
+@@ -1402,7 +1410,8 @@ namespace dxvk {
+     uint32_t pointSize = m_module.opFClamp(m_floatType, pointInfo.defaultValue, pointInfo.min, pointInfo.max);
+     m_module.opStore(m_vs.out.POINTSIZE, pointSize);
+ 
+-    if (m_vsKey.Data.Contents.VertexClipping)
++    // GeneralsX @bugfix Android port 30/07/2026 see setupVS() below.
++    if (m_vsKey.Data.Contents.VertexClipping && m_supportsClipDistance)
+       emitVsClipping(vtx);
+   }
+ 
+@@ -1650,7 +1659,15 @@ namespace dxvk {
+     m_specUbo = SetupSpecUBO(m_module, m_bindings);
+ 
+     // VS Caps
+-    m_module.enableCapability(spv::CapabilityClipDistance);
++    // GeneralsX @bugfix Android port 30/07/2026 unconditional regardless
++    // of whether the device actually supports shaderClipDistance -- same
++    // bug as DxsoCompiler::emitVsInit (dxso_compiler.cpp, already gated
++    // on DxsoOptions::supportsClipDistance), just missed here since this
++    // is a separate compiler for D3D9's fixed-function pipeline. VUID-
++    // VkShaderModuleCreateInfo-pCode-08740 on every FF vertex shader on
++    // Mali-G76, confirmed via a real Android tombstone-adjacent log.
++    if (m_supportsClipDistance)
++      m_module.enableCapability(spv::CapabilityClipDistance);
+ 
+     emitLightTypeDecl();
+     emitBaseBufferDecl();
+diff --git a/src/dxvk/dxvk_adapter.cpp b/src/dxvk/dxvk_adapter.cpp
+index c9b9de1..04e5ba4 100644
+--- a/src/dxvk/dxvk_adapter.cpp
++++ b/src/dxvk/dxvk_adapter.cpp
+@@ -468,6 +468,25 @@ namespace dxvk {
+     enabledFeatures.extExtendedDynamicState3.extendedDynamicState3LineRasterizationMode =
+       m_deviceFeatures.extExtendedDynamicState3.extendedDynamicState3LineRasterizationMode;
+ 
++    // GeneralsX @bugfix Android port 30/07/2026 mirrors the
++    // extExtendedDynamicState3 block above (VK_EXT_extended_dynamic_state
++    // has no vk13 bool to go through -- see queryDeviceFeatures() --
++    // so this is the only place it's enabled from). Populates
++    // enabledFeatures.vk13.shaderDemoteToHelperInvocation for
++    // DxvkAdapter::initFeatureChain() to read further down (it has no
++    // m_deviceFeatures access); on true Vulkan 1.3 adapters the core
++    // vk13 struct already has the real value from
++    // vkGetPhysicalDeviceFeatures2, on sub-1.3 adapters (e.g. Mali-G76)
++    // it's queried into the separate EXT struct instead, never
++    // backfilled into vk13 to avoid touching
++    // dxvk-vulkan11-adaptive.patch's own synchronization2/dynamicRendering
++    // enable lines above -- so this reads whichever one is populated.
++    enabledFeatures.extExtendedDynamicState.extendedDynamicState =
++      m_deviceFeatures.extExtendedDynamicState.extendedDynamicState;
++    enabledFeatures.vk13.shaderDemoteToHelperInvocation =
++      m_deviceFeatures.vk13.shaderDemoteToHelperInvocation
++      || m_deviceFeatures.extShaderDemoteToHelperInvocation.shaderDemoteToHelperInvocation;
++
+     // Used for both pNext shader module info, and fast-linking pipelines provided
+     // that graphicsPipelineLibraryIndependentInterpolationDecoration is supported
+     enabledFeatures.extGraphicsPipelineLibrary.graphicsPipelineLibrary =
+@@ -1084,6 +1103,27 @@ namespace dxvk {
+       m_deviceFeatures.extExtendedDynamicState3.pNext = std::exchange(m_deviceFeatures.core.pNext, &m_deviceFeatures.extExtendedDynamicState3);
+     }
+ 
++    // GeneralsX @bugfix Android port 30/07/2026 unlike most other
++    // Vulkan-1.3-era extensions handled in this fork, VK_EXT_extended_
++    // dynamic_state's functionality was NOT folded into a
++    // VkPhysicalDeviceVulkan13Features bool -- it remains its own
++    // standalone feature struct regardless of apiVersion (confirmed
++    // against the vendored Vulkan headers), so this is queried
++    // unconditionally, same as extExtendedDynamicState3 above.
++    if (m_deviceExtensions.supports(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME)) {
++      m_deviceFeatures.extExtendedDynamicState.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
++      m_deviceFeatures.extExtendedDynamicState.pNext = std::exchange(m_deviceFeatures.core.pNext, &m_deviceFeatures.extExtendedDynamicState);
++    }
++
++    // VK_EXT_shader_demote_to_helper_invocation, unlike the above, IS
++    // promoted into Vulkan 1.3 core (VkPhysicalDeviceVulkan13Features::
++    // shaderDemoteToHelperInvocation), so like khrDynamicRendering et al.
++    // it only needs a separate query on sub-1.3 adapters.
++    if (!hasVk13 && m_deviceExtensions.supports(VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME)) {
++      m_deviceFeatures.extShaderDemoteToHelperInvocation.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT;
++      m_deviceFeatures.extShaderDemoteToHelperInvocation.pNext = std::exchange(m_deviceFeatures.core.pNext, &m_deviceFeatures.extShaderDemoteToHelperInvocation);
++    }
++
+     if (m_deviceExtensions.supports(VK_EXT_FRAGMENT_SHADER_INTERLOCK_EXTENSION_NAME)) {
+       m_deviceFeatures.extFragmentShaderInterlock.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT;
+       m_deviceFeatures.extFragmentShaderInterlock.pNext = std::exchange(m_deviceFeatures.core.pNext, &m_deviceFeatures.extFragmentShaderInterlock);
+@@ -1251,6 +1291,11 @@ namespace dxvk {
+       &devExtensions.extDepthClipEnable,
+       &devExtensions.extDepthBiasControl,
+       &devExtensions.extExtendedDynamicState3,
++      // GeneralsX @bugfix Android port 30/07/2026 See DxvkDeviceExtensions::
++      // extExtendedDynamicState/extShaderDemoteToHelperInvocation
++      // (dxvk_extensions.h) for why this is needed on Mali-G76.
++      &devExtensions.extExtendedDynamicState,
++      &devExtensions.extShaderDemoteToHelperInvocation,
+       &devExtensions.extFragmentShaderInterlock,
+       &devExtensions.extFullScreenExclusive,
+       &devExtensions.extGraphicsPipelineLibrary,
+@@ -1408,6 +1453,30 @@ namespace dxvk {
+       enabledFeatures.extExtendedDynamicState3.pNext = std::exchange(enabledFeatures.core.pNext, &enabledFeatures.extExtendedDynamicState3);
+     }
+ 
++    // GeneralsX @bugfix Android port 30/07/2026 see extExtendedDynamicState/
++    // extShaderDemoteToHelperInvocation query in queryDeviceFeatures() --
++    // same enable-chain pattern as extExtendedDynamicState3 above, placed
++    // here to avoid the reverse-apply conflicts that came from touching
++    // dxvk-vulkan11-adaptive.patch's own blocks. The extendedDynamicState
++    // bool itself was already set by DxvkAdapter::createDevice() (this is
++    // DxvkAdapter::initFeatureChain(), a static-ish helper with no
++    // m_deviceFeatures access), so only chains the struct in here,
++    // unconditionally like extExtendedDynamicState3 (see
++    // queryDeviceFeatures() for why this one has no hasVk13 gate).
++    if (devExtensions.extExtendedDynamicState) {
++      enabledFeatures.extExtendedDynamicState.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
++      enabledFeatures.extExtendedDynamicState.pNext = std::exchange(enabledFeatures.core.pNext, &enabledFeatures.extExtendedDynamicState);
++    }
++
++    // shaderDemoteToHelperInvocation IS a vk13 bool (unlike
++    // extendedDynamicState above), so reads enabledFeatures.vk13.
++    // shaderDemoteToHelperInvocation, which createDevice() populates.
++    if (!hasVk13 && devExtensions.extShaderDemoteToHelperInvocation) {
++      enabledFeatures.extShaderDemoteToHelperInvocation.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT;
++      enabledFeatures.extShaderDemoteToHelperInvocation.shaderDemoteToHelperInvocation = enabledFeatures.vk13.shaderDemoteToHelperInvocation;
++      enabledFeatures.extShaderDemoteToHelperInvocation.pNext = std::exchange(enabledFeatures.core.pNext, &enabledFeatures.extShaderDemoteToHelperInvocation);
++    }
++
+     if (devExtensions.extFragmentShaderInterlock) {
+       enabledFeatures.extFragmentShaderInterlock.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT;
+       enabledFeatures.extFragmentShaderInterlock.pNext = std::exchange(enabledFeatures.core.pNext, &enabledFeatures.extFragmentShaderInterlock);
+diff --git a/src/dxvk/dxvk_device_info.h b/src/dxvk/dxvk_device_info.h
+index e9741b3..4e61fdd 100644
+--- a/src/dxvk/dxvk_device_info.h
++++ b/src/dxvk/dxvk_device_info.h
+@@ -89,6 +89,20 @@ namespace dxvk {
+     VkBool32                                                  nvxBinaryImport;
+     VkBool32                                                  nvxImageViewHandle;
+     VkBool32                                                  khrWin32KeyedMutex;
++    // GeneralsX @bugfix Android port 30/07/2026 Vulkan 1.3-promoted
++    // fallbacks, used when apiVersion < 1.3 (see DxvkAdapter::
++    // queryDeviceFeatures). VK_EXT_extended_dynamic_state and
++    // VK_EXT_shader_demote_to_helper_invocation are among the 1.3
++    // promotions, same as khrDynamicRendering/khrSynchronization2/
++    // khrMaintenance4 above, but were missing here -- meaning
++    // vk13.extendedDynamicState/shaderDemoteToHelperInvocation never
++    // got enabled on sub-1.3 devices even when the underlying EXT was
++    // genuinely supported, unconditionally breaking every graphics
++    // pipeline (VK_DYNAMIC_STATE_CULL_MODE etc. requires
++    // extendedDynamicState) and most fixed-function/alpha-test shaders
++    // (SPV_EXT_demote_to_helper_invocation) on Mali-G76 (Vulkan 1.1).
++    VkPhysicalDeviceExtendedDynamicStateFeaturesEXT           extExtendedDynamicState;
++    VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT extShaderDemoteToHelperInvocation;
+   };
+ 
+ }
+diff --git a/src/dxvk/dxvk_extensions.h b/src/dxvk/dxvk_extensions.h
+index 80d630f..7fb3d8c 100644
+--- a/src/dxvk/dxvk_extensions.h
++++ b/src/dxvk/dxvk_extensions.h
+@@ -302,6 +302,15 @@ namespace dxvk {
+     DxvkExt extDepthClipEnable                = { VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME,                  DxvkExtMode::Optional };
+     DxvkExt extDepthBiasControl               = { VK_EXT_DEPTH_BIAS_CONTROL_EXTENSION_NAME,                 DxvkExtMode::Optional };
+     DxvkExt extExtendedDynamicState3          = { VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME,           DxvkExtMode::Optional };
++    // GeneralsX @bugfix Android port 30/07/2026 both promoted into Vulkan
++    // 1.3 core (see dxvk_device_info.h), never registered on this fork --
++    // same missing-registration bug as khrCopyCommands2 below, just found
++    // via vkCreateGraphicsPipelines/vkCreateShaderModule VUIDs on
++    // Mali-G76 instead of a crash: VK_DYNAMIC_STATE_CULL_MODE etc.
++    // requires extendedDynamicState, and SPV_EXT_demote_to_helper_invocation
++    // (used by D3D9 alpha-test emulation) requires the other.
++    DxvkExt extExtendedDynamicState           = { VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME,             DxvkExtMode::Optional };
++    DxvkExt extShaderDemoteToHelperInvocation = { VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, DxvkExtMode::Optional };
+     DxvkExt extFullScreenExclusive            = { VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME,              DxvkExtMode::Optional };
+     DxvkExt extFragmentShaderInterlock        = { VK_EXT_FRAGMENT_SHADER_INTERLOCK_EXTENSION_NAME,          DxvkExtMode::Optional };
+     DxvkExt extGraphicsPipelineLibrary        = { VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME,          DxvkExtMode::Optional };

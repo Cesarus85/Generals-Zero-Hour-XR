@@ -1,0 +1,33 @@
+diff --git a/src/dxvk/dxvk_gpu_event.h b/src/dxvk/dxvk_gpu_event.h
+index 1e53f70..7a2e008 100644
+--- a/src/dxvk/dxvk_gpu_event.h
++++ b/src/dxvk/dxvk_gpu_event.h
+@@ -101,7 +101,15 @@ namespace dxvk {
+      * \brief Increments reference count
+      */
+     force_inline void incRef() {
+-      m_refCount.fetch_add(1u, std::memory_order_acquire);
++      // GeneralsX @bugfix Android port 06/08/2026 same fix as
++      // DxvkGpuEvent::incRef/decRef above in this same file (and
++      // DxvkResourceAllocation::incRef/decRef in dxvk_memory.h) -- see that
++      // comment for the full ARM-memory-model rationale. This second class
++      // (DxvkEvent, used for D3D9/D3D11 QUERY_EVENT) had the identical
++      // acquire-only inc / release-only dec pattern with no acquire fence
++      // before delete, missed by the original audit because it only looked
++      // at the first incRef/decRef pair in each file.
++      m_refCount.fetch_add(1u, std::memory_order_relaxed);
+     }
+
+     /**
+@@ -109,8 +117,10 @@ namespace dxvk {
+      * Frees the event as necessary.
+      */
+     force_inline void decRef() {
+-      if (m_refCount.fetch_sub(1u, std::memory_order_release) == 1u)
++      if (m_refCount.fetch_sub(1u, std::memory_order_release) == 1u) {
++        std::atomic_thread_fence(std::memory_order_acquire);
+         delete this;
++      }
+     }
+
+     /**
