@@ -6,6 +6,12 @@ Lizenzgründen keine Originalkarten, Texturen, Videos oder `.big`-Archive.
 Benötigt wird eine eigene, rechtmäßig erworbene Installation von *Command &
 Conquer: Generals – Zero Hour* inklusive der Basisdaten von *Generals*.
 
+Technische Grundlage ist der veröffentlichte Android-Port
+[`Cesarus85/GeneralsZH-Android`](https://github.com/Cesarus85/GeneralsZH-Android)
+mit SDL3, Android-Packaging, DXVK/GLES sowie dem Datenordner-Setup. Der XR-
+Flavor dieses Repositories ergänzt diese Android-Basis um OpenXR-Stereo,
+Tabletop-Fenster, Raumplatzierung und Quest-Controller.
+
 ## Voraussetzungen
 
 - Meta Quest 3 mit aktuellem Horizon OS und zwei Touch-Controllern
