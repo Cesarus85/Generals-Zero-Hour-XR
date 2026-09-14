@@ -3979,6 +3979,12 @@ SHA-256 matches the exported product APK and cold activity launch returns OK.
 No new worn-headset gameplay/launcher acceptance is inferred from these checks.
 Detailed evidence: build/quest-branding/validation.md. No GitHub upload yet.
 
+The private source snapshot is now published at
+`github.com/Cesarus85/Generals-Zero-Hour-XR` on `main` (commit
+`0e7cc9e1cd986779b161c8839feb845a3b028ba0`). The Quest preview release
+`xr-preview-2026-09-14` carries `Generals-Zero-Hour-XR.apk` and its SHA-256
+sidecar; both remain private until an explicit visibility change is requested.
+
 ## 48. Next XR implementation queue - safe fresh placement and desktop input
 
 The user requests these items for the next implementation cycles after the
