@@ -30,7 +30,9 @@ and replay XR remain a dedicated future milestone, not validated by Skirmish.
   placement and controller interaction are added here.
 - Build output: `build/apk/Generals-Zero-Hour-XR.apk`.
 - Own legally obtained retail game data is required and is not included.
-- Current scope, progress and acceptance:
+- Current handoff status and next work:
+  [XR current status](docs/WORKDIR/planning/XR_CURRENT_STATUS.md).
+- Detailed architecture, progress and acceptance history:
   [Quest roadmap](docs/WORKDIR/planning/PLAN-023_QUEST_TABLETOP_RECOVERY.md).
 
 ## Meta Quest 3 — Installation and controls

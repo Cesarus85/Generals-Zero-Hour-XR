@@ -3985,7 +3985,7 @@ The private source snapshot is now published at
 `xr-preview-2026-09-14` carries `Generals-Zero-Hour-XR.apk` and its SHA-256
 sidecar; both remain private until an explicit visibility change is requested.
 
-## 48. Next XR implementation queue - safe fresh placement and desktop input
+## 48. Next XR implementation queue - placement, window presentation and desktop input
 
 The user requests these items for the next implementation cycles after the
 GitHub source snapshot. They are intentionally separate from the accepted P19.1
@@ -4007,7 +4007,63 @@ relaunch in the same room to verify that an explicitly confirmed layout still
 restores. A denied scene permission and a tracking-loss path must fall back to
 the same safe front-of-player placement without crashing or issuing orders.
 
-### P21 - keyboard and mouse support investigation (secondary)
+### P20.1 - reduce the tabletop underbody thickness
+
+Reduce the visible grey/dark lower plinth to no more than half its current
+thickness as a near-term tabletop appearance correction. P18 currently keeps
+the terrain/soil transition at -0.018 board widths and the underside at -0.036,
+so the lower trim itself is 0.018 board widths thick. Keep the transition and
+terrain registration unchanged, but target a lower-trim thickness of at most
+0.009 board widths. The new underside must be a single shared constant/contract
+for mesh geometry, real-surface clearance, editing outline and tests.
+
+Acceptance: compare the same board pose and scale before/after in the headset;
+the underbody must read as a thin tabletop edge rather than a deep block. It
+must remain closed from below with no cracks, z-fighting or black flutter. Board
+placement on detected/manual planes, selection/picking, terrain relief, window
+poses and saved layouts must not move. Update the board, height and scene tests
+for the new underside. This task is separate from P21's window redesign.
+
+### P21 - UI and Commands window presentation pass
+
+Rework the spatial `UI` and `Commands` windows as a coherent, polished pair of
+companion surfaces for the tabletop. This is an interaction and information-
+architecture pass as well as a visual one: both windows must be faster to scan,
+more comfortable to reach and clearly part of the same Generals-inspired XR
+interface. Use a restrained dark command-surface treatment, consistent panel
+depth, typography, spacing and accent colours rather than a generic flat list
+of equally weighted buttons.
+
+The `UI` window groups its controls by player intent: view and tabletop,
+windows, play-surface placement, graphics/performance, language and help.
+Frequently used adjustments remain directly reachable and the currently
+selected manipulation target is unmistakable in both the button and the
+corresponding spatial object. The `Commands` window leads with selection
+context and immediately valid unit orders, separates control groups from
+tactical orders, and presents short contextual guidance without crowding the
+primary actions. Command availability, armed/targeting state and disabled
+actions must be visually distinct.
+
+Panel dimensions and layout adapt to the visible content. Expanded pages,
+abilities, help and localized labels must neither be clipped nor leave large
+unused grey areas. Preserve comfortable viewing angles, grab/tilt behaviour,
+left-handed use, controller hit targets and the established default arrangement
+around the board. English and German receive equal layout validation, including
+longer German labels. Do not alter original command semantics, simulation state
+or multiplayer-facing messages as part of this presentation work.
+
+Acceptance: in-headset comparisons show both windows in the default tabletop
+arrangement without overlap with the board or build window; headings, groups,
+states and help text are readable at the normal seated distance; all buttons,
+hover states, selected targets, disabled states and command-arming transitions
+remain unambiguous and free of click-through. Exercise every page in English
+and German, both handedness modes, manual window movement/tilt and a representative
+multi-unit command flow. The pass must not introduce a measurable sustained
+frame-rate regression in the existing balanced/light-shadow/multiview default.
+The detailed delegation contract is
+`docs/WORKDIR/planning/PLAN-024_QUEST_UI_COMMAND_WINDOWS.md`.
+
+### P22 - keyboard and mouse support investigation (secondary)
 
 Audit Quest 3 Bluetooth/USB keyboard and mouse discovery through Android,
 SDL3 and OpenXR without making desktop input a prerequisite for tabletop play.

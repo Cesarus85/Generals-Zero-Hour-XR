@@ -18,6 +18,8 @@ Before starting work, read:
 - `.github/instructions/docs.instructions.md` – documentation workflow
 - `docs/port/ANDROID_PORT.md` – Android port + GeneralsOnline multiplayer: architecture, device matrix, bring-up log
 - `docs/DEV_BLOG/YYYY-MM-DIARY.md` – current development notes
+- For Quest/XR work: `docs/WORKDIR/planning/XR_CURRENT_STATUS.md`, then the
+  active linked plan (P21 uses `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md`)
 
 ## Key Entry Points
 - `GeneralsMD/Code/Main/SDL3Main.cpp` – Android/Linux/macOS/iOS entry point
