@@ -40,7 +40,7 @@ with both Touch controllers. The XR package keeps the update-compatible Android
 ID `com.generalsx.zerohour.xr`; do not uninstall an older build when you want to
 keep its saved window layout, game-folder choice and settings.
 
-The printable German walkthrough is
+The complete Quest installation and controls guide is
 [`docs/HOWTO/INSTALLATION_XR.md`](docs/HOWTO/INSTALLATION_XR.md).
 
 ### Install the current APK
@@ -72,8 +72,9 @@ The printable German walkthrough is
 
 ### First tabletop setup
 
-The battlefield starts in the tabletop presentation. Open `UI → Spielplatz
-einrichten` / `UI → Set up play space` when you want to change it. Choose one of
+The battlefield starts in the tabletop presentation. Open `UI → Set up play
+space` (`Spielplatz einrichten` in the German UI) when you want to change it.
+Choose one of
 these paths in order:
 
 - **Free board**: place the board in front of you with the laser and confirm.
@@ -88,8 +89,8 @@ surface is selected, the current build restores the saved arrangement; the next
 XR milestone changes that fallback so a fresh board and build window appear in
 front of the player instead of inheriting an inconvenient travelling setup.
 
-`UI → Fenster / Windows` selects the object to edit. The selected table or build
-window receives an orange outline and check mark. One Grip moves and tilts it;
+`UI → Windows` (`Fenster` in the German UI) selects the object to edit. The
+selected table or build window receives an orange outline and check mark. One Grip moves and tilts it;
 both Grips scale it uniformly. With no Grip, the pointing-hand stick changes
 size and the other-hand stick changes distance. Press the pointing-hand stick to
 switch between table and build window. The reset button returns the selected
@@ -138,7 +139,7 @@ German when German game data is present; all XR product labels remain
   persistent room anchors remain roadmap work. Offline AI Skirmish is the
   supported XR test path and does not validate network synchronization.
 
-If the game starts without a board, use `UI → Spielplatz einrichten` and choose
+If the game starts without a board, use `UI → Set up play space` and choose
 Free board or Manual height. If a release update appears to have reset
 everything, verify that the old package was updated rather than uninstalled;
 the application ID is intentionally unchanged. For a bug report, enable only

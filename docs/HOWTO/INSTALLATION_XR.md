@@ -1,143 +1,146 @@
-# Generals: Zero Hour XR – Quest-3-Anleitung
+# Generals: Zero Hour XR - Quest 3 installation guide
 
-Diese Anleitung gilt für den XR-Build **Generals: Zero Hour XR** auf Meta Quest
-3. Das Repository enthält den portierten Quelltext und den Startcode, aber aus
-Lizenzgründen keine Originalkarten, Texturen, Videos oder `.big`-Archive.
-Benötigt wird eine eigene, rechtmäßig erworbene Installation von *Command &
-Conquer: Generals – Zero Hour* inklusive der Basisdaten von *Generals*.
+This guide covers the **Generals: Zero Hour XR** build for Meta Quest 3. The
+repository contains the ported source code and launcher, but no original maps,
+textures, videos, or `.big` archives are included for licensing reasons. You
+need your own legally obtained installation of *Command & Conquer: Generals -
+Zero Hour*, including the base *Generals* data.
 
-Technische Grundlage ist der ursprüngliche veröffentlichte Android-Port
+The Android foundation is the published
 [`tarek369/GeneralsZH-Android`](https://github.com/tarek369/GeneralsZH-Android)
-mit SDL3, Android-Packaging, DXVK/GLES sowie dem Datenordner-Setup. Er wurde
-als [`Cesarus85/GeneralsZH-Android`](https://github.com/Cesarus85/GeneralsZH-Android)
-auf deinen GitHub-Account geforkt. Der XR-Flavor dieses Repositories ergänzt
-diese Android-Basis um OpenXR-Stereo, Tabletop-Fenster, Raumplatzierung und
-Quest-Controller.
+project, which supplies SDL3, Android packaging, DXVK/GLES support, and the
+game-data folder setup. It was forked as
+[`Cesarus85/GeneralsZH-Android`](https://github.com/Cesarus85/GeneralsZH-Android)
+on the developer's GitHub account. This repository's XR flavor extends that
+Android base with OpenXR stereo, tabletop windows, room placement, and Quest
+controller interaction.
 
-## Voraussetzungen
+## Requirements
 
-- Meta Quest 3 mit aktuellem Horizon OS und zwei Touch-Controllern
-- aktivierter Entwicklermodus und ein USB-C-Datenkabel für ADB/SideQuest
-- eigene Zero-Hour-Dateien mit mindestens `INIZH.big` sowie den Basisarchiven
-  `Terrain.big`, `Textures.big` und `W3D.big`
-- ungefähr 250 MB freier Speicher für das Preview-APK plus den eigenen
-  Spieldaten
+- Meta Quest 3 with a current Horizon OS release and both Touch controllers
+- Developer Mode enabled and a USB-C data cable for ADB or SideQuest
+- Your own Zero Hour files, including `INIZH.big` and the base archives
+  `Terrain.big`, `Textures.big`, and `W3D.big`
+- Approximately 250 MB of free storage for the preview APK, plus space for your
+  game data
 
-Die Originaldateien können von einem Windows-/Steam-PC auf die Quest kopiert
-werden. Eine konkrete Dateibeschaffung ist nicht Teil dieses Projekts; siehe
+You can copy the original files from a Windows or Steam PC to the Quest, or to
+storage that the Quest Android folder picker can access. Obtaining game files is
+outside the scope of this project; see
 [`GETTING_THE_GAME_FILES.md`](GETTING_THE_GAME_FILES.md).
 
-## APK installieren
+## Install the APK
 
-1. Lade die aktuelle Datei
+1. Download the latest
    [`Generals-Zero-Hour-XR.apk`](../../releases/latest/download/Generals-Zero-Hour-XR.apk)
-   von GitHub Releases.
-2. Aktiviere in der Meta-Quest-App den Entwicklermodus, verbinde das Headset
-   und bestätige den USB-Debugging-Dialog im Headset.
-3. Prüfe am Rechner die Verbindung und installiere die APK:
+   from GitHub Releases.
+2. Enable Developer Mode in the Meta Quest mobile app, connect the headset over
+   USB, and accept the USB debugging prompt inside the headset.
+3. Check the connection and install the APK from a computer with Android
+   platform-tools:
 
    ```sh
    adb devices
    adb -s <quest-serial> install -r Generals-Zero-Hour-XR.apk
    ```
 
-   `-r` ist wichtig: Die XR-Paket-ID bleibt bewusst
-   `com.generalsx.zerohour.xr`, damit ein Update die bisherigen Einstellungen
-   und Fensterpositionen behalten kann. Für ein Update die alte App nicht
-   deinstallieren. SideQuest kann dieselbe APK ebenfalls installieren.
-4. Starte **Generals: Zero Hour XR** aus der Quest-App-Bibliothek. Beim ersten
-   Start öffnet sich automatisch der Setup-Fenster. Wähle dort den Ordner, in
-   dem die Spieldaten liegen, und erteile die abgefragten Datei-/Raumrechte.
+   The `-r` flag matters: the XR application ID deliberately remains
+   `com.generalsx.zerohour.xr`, so an update can keep existing settings and
+   window positions. Do not uninstall the previous build when updating.
+   SideQuest can install the same APK.
+4. Launch **Generals: Zero Hour XR** from the Quest app library. On first
+   launch, the setup window opens automatically. Select the game-data folder and
+   grant the requested file and scene permissions.
 
-## Spieldaten auswählen
+## Select game data
 
-Der Setup-Fenster öffnet den Android-Dateibrowser. Wähle den Ordner, der direkt
-`INIZH.big` und die Datenordner enthält; nicht den übergeordneten Download-
-oder PC-Ordner. Die Prüfung meldet fehlende Basisarchive, bevor der native
-Spielstart versucht wird. Bei einer fehlerhaften Auswahl erneut `Select Game
-Folder` wählen. Die Raumfreigabe ist optional: Bei Ablehnung bleibt die freie
-oder manuelle Brettplatzierung verfügbar.
+The setup window opens the Android file browser. Select the folder that directly
+contains `INIZH.big` and the data archives; do not select a parent Downloads or
+PC folder. The checker reports missing base archives before the native game
+starts. If the wrong folder was selected, choose **Select Game Folder** again.
+Room permission is optional: if it is denied, free-board and manual placement
+remain available.
 
-## Spielbrett einrichten
+## Set up the tabletop board
 
-Das Spiel startet im Tabletop-Modus. `UI → Spielplatz einrichten` öffnet den
-Wizard auch im Hauptmenü und während eines geeigneten Skirmish-Spiels.
+The game starts in tabletop mode. Open `UI -> Set up play space` in the main
+menu or during a supported Skirmish when you want to place it again. Follow one
+of these paths:
 
-1. **Freies Brett** legt ein Brett mit dem Laser frei im Raum ab.
-2. **Reale Fläche** lädt nach ausdrücklicher Bestätigung Raumdaten. Cyan
-   markiert erkannte Flächen, Orange einen passenden Brett-Footprint und Rot
-   eine zu kleine Fläche.
-3. **Manuelle Höhe** merkt die Controllerhöhe mit Trigger vor, danach wird die
-   gewünschte Position angezielt und erneut bestätigt.
+1. **Free board** places a board freely in the room using the laser pointer.
+2. **Real surface** loads room data after explicit confirmation. Cyan outlines
+   show detected surfaces, orange shows a board footprint that fits, and red
+   means the surface is too small.
+3. **Manual height** records the controller height with the trigger; aim at the
+   desired position and confirm a second time.
 
-Das ist eine optionale, sitzungsbezogene Platzierung und kein dauerhaftes
-Möbel-Tracking. Das aktuelle Preview kann eine bestätigte letzte Anordnung
-wiederherstellen. Für einen neuen Raum ist als nächster XR-Schritt ein sicherer
-Fallback direkt vor dem Spieler vorgesehen; bis dahin `Spielplatz einrichten`
-verwenden, wenn die alte Anordnung unpraktisch ist.
+Surface detection is optional, session-based placement, not a permanent
+furniture anchor. The current preview can restore the last confirmed layout. A
+future XR milestone will use a safe fallback directly in front of the player
+when a new room has no saved surface; until then, use **Set up play space** if
+the restored layout is inconvenient.
 
-Unter `UI → Fenster` wird **Tisch** oder **Baufenster** als Bearbeitungsziel
-gewählt. Ein orangefarbener Rahmen und ein Häkchen zeigen das Ziel. Ein Grip
-bewegt/neigt das Ziel, beide Grips skalieren gleichmäßig. Ohne Grip verändert
-der Zeigehand-Stick die Größe und der andere Stick den Abstand. Mit dem
-Zeigehand-Stick zwischen den beiden Fenstern wechseln; `Reset` setzt das
-ausgewählte Fenster wieder vor den Spieler. `Fertig`, Befehle oder Back
-beenden die Bearbeitung.
+Open `UI -> Windows` to choose **Table** or **Build window** as the editing
+target. An orange outline and check mark identify the selected object. One Grip
+moves and tilts it; both Grips scale it uniformly. With no Grip held, the
+pointing-hand stick changes size and the other-hand stick changes distance.
+Press the pointing-hand stick to switch between the two windows. **Reset**
+returns the selected window in front of the player. **Finish**, **Commands**, or
+Back exits editing.
 
-## Controller-Bedienung
+## Controller controls
 
-Die Standardbelegung ist rechtshändig. Unter `UI → Ansicht` kann jederzeit auf
-linkshändig gewechselt werden; Zeigehand, Nebenhand und A/B/X/Y werden dann
-logisch getauscht.
+The default layout is right-handed. Open `UI -> View` to switch to left-handed
+controls; the pointing hand, off hand, and A/B/X/Y roles are swapped logically.
 
-| Eingabe | Funktion |
+| Input | Function |
 |---|---|
-| Rechter Trigger kurz | Einheit wählen oder Kontextbefehl am Laserziel |
-| Rechter Trigger halten + Laser ziehen | Auswahlrahmen, beim Loslassen übernehmen |
-| Linker Grip beim Drücken | Auswahl ergänzen bzw. einzelne Einheit abwählen |
-| Linker Stick | Karte verschieben |
-| Rechter Stick links/rechts | Karte/Kamera drehen |
-| Rechter Stick hoch/runter | hinein-/herauszoomen |
-| Rechter Grip | Zielmodus abbrechen, sonst Auswahl aufheben |
-| A | Befehle-Fenster ein/aus |
-| B oder System-Menü | Spielmenü öffnen/schließen |
-| Linker Grip + rechter Stick beim Bau | Gebäudevorschau drehen, vor Trigger-Klick loslassen |
+| Right Trigger, short press | Select a unit or use the context order at the laser target |
+| Right Trigger, hold and drag | Draw a selection rectangle; release to select |
+| Left Grip while pressing | Add to the selection or remove one unit |
+| Left Thumbstick | Pan the map |
+| Right Thumbstick left/right | Rotate the map or camera |
+| Right Thumbstick up/down | Zoom in or out |
+| Right Grip | Cancel a targeted order; otherwise clear the selection |
+| A | Toggle the Commands window |
+| B or the system menu | Open or close the game menu |
+| Left Grip + Right Stick while placing | Rotate a building preview before placement |
 
-Einheiten werden zuerst markiert. Danach im Befehle-Fenster `Bewegen`,
-`Angriffsmarsch` oder `Bewachen` wählen und auf das Ziel zeigen. `STOPP` und
-`Auseinanderlaufen` wirken direkt. Gruppe speichern: Auswahl → `Speichern` →
-Zahl. Die Zahl allein ruft die Gruppe auf. Gruppe erweitern: weitere Einheiten
-→ `Hinzufügen` → Zahl → erneut `Speichern`. `Befehle → Hilfe` zeigt die
-vierseitige Erklärung im Spiel.
+Select units first. Then choose **Move**, **Attack move**, or **Guard** in the
+Commands window and point at a target on the table. **STOP** and **Scatter** act
+immediately. To create a group, select units, choose **Save selection**, and
+press a number. Press that number later to recall the group. To extend a group,
+select more units, choose **Add to selection**, press the number, and choose
+**Save selection** again. **Commands -> Help** opens the same four-page guide in
+the app.
 
-## Sprache und Grafik
+## Language and graphics
 
-Beim ersten Start folgt die XR-Oberfläche der Quest-Systemsprache: Deutsch bei
-deutschem System, sonst Englisch. Die Sprache der Spieldaten ist davon getrennt
-und wird nur auf Deutsch gesetzt, wenn ein deutscher Sprachdatensatz vorhanden
-ist. Die öffentliche Produktbezeichnung bleibt in jeder Sprache
-**Generals: Zero Hour XR**.
+On first launch, the XR interface follows the Quest system language: German for
+a German system, English otherwise. The language of the game data is separate
+and switches to German only when a German language data set is available. The
+public product name remains **Generals: Zero Hour XR** in every language.
 
-Für Quest 3 sind standardmäßig **Balanced-Auflösung**, **leichte Schatten** und
-**Multiview** aktiv; die Messanzeige bleibt für normales Spielen aus. Campaign
-und Offline-AI-Skirmish sind die unterstützten XR-Spielpfade. Menschliches
-LAN/Internet-Multiplayer, Replay-XR sowie Tastatur-/Mausunterstützung bleiben
-separate Roadmap-Themen.
+Quest 3 defaults are **Balanced** resolution, **Light** shadows, and **Multiview**
+stereo. The performance measurement overlay is off during normal play. Campaign
+and offline AI Skirmish are the supported XR play paths. Human LAN or Internet
+multiplayer, replay XR access, and keyboard/mouse support remain separate
+roadmap items.
 
-## Fehlerbehebung
+## Troubleshooting
 
-- **Schwarzer/fehlender Start:** Setup erneut öffnen und den Ordner mit
-  `INIZH.big` auswählen; danach die Basisarchive prüfen.
-- **Brett außerhalb des Sichtfelds:** `UI → Spielplatz einrichten → Freies
-  Brett` wählen oder `UI → Fenster → Reset` verwenden.
-- **Keine Raumflächen:** Raumfreigabe in Horizon erlauben und `Load room data`
-  erneut ausführen. Alternativ freies Brett oder manuelle Höhe verwenden.
-- **Update setzt nichts zurück:** Prüfen, dass mit `install -r` aktualisiert und
-  nicht deinstalliert wurde. Die Paket-ID ist unverändert.
-- **Diagnose:** In Setup nur die angeforderte Diagnose aktivieren, Problem
-  reproduzieren und unter `View Logs → Share` das Protokoll teilen.
+- **Black or missing start screen:** open Setup again and select the folder
+  containing `INIZH.big`; then check the base archives.
+- **Board is outside the view:** choose `UI -> Set up play space -> Free board`
+  or use `UI -> Windows -> Reset`.
+- **No room surfaces:** grant scene permission in Horizon OS and run **Load room
+  data** again. Free board and manual height are alternatives.
+- **An update appears to reset settings:** verify that you used `install -r`
+  and did not uninstall the previous package. The application ID is unchanged.
+- **Diagnostics:** enable only the requested diagnostic marker in Setup,
+  reproduce the issue, and share the log from **View Logs -> Share**.
 
-## Aus Source bauen
+## Build from source
 
 ```sh
 git clone https://github.com/Cesarus85/Generals-Zero-Hour-XR.git
@@ -147,7 +150,8 @@ git submodule update --init --recursive
 ./scripts/build/android/package-android-zh.sh
 ```
 
-Die XR-Datei liegt danach unter
-`build/apk/Generals-Zero-Hour-XR.apk`. Voraussetzungen, reproduzierbare Builds
-und Android-Architektur stehen in [`docs/port/ANDROID_PORT.md`](../port/ANDROID_PORT.md).
-Die Buildskripte verteilen keine Spieldaten.
+The XR APK is written to
+`build/apk/Generals-Zero-Hour-XR.apk`. Requirements, reproducible build notes,
+and Android architecture are documented in
+[`docs/port/ANDROID_PORT.md`](../port/ANDROID_PORT.md). The build scripts never
+fetch or redistribute the original game archives.
