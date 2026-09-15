@@ -1,5 +1,7 @@
 // GeneralsX @test Codex 14/09/2026 Production dialog detection and UI geometry.
 #include "XrLayout.h"
+#include "XrWorkspacePlacement.h"
+#include "XrTracking.h"
 #include "XrWorld.h"
 #include "XrLayers.h"
 #include "XrTactics.h"
@@ -53,6 +55,42 @@ static void check(bool v){++checks;if(!v){fprintf(stderr,"workspace check %d fai
 static void near(float a,float b){check(std::isfinite(a+b) && fabsf(a-b)<.0001f);}
 int main(int argc,char **argv) {
 	check(argc==2);
+	// Estimated positions must neither anchor a workspace nor enable grabbing.
+	for(unsigned flags=0;flags<16;++flags) {
+		check(xrTrackedViews(flags)==(flags==15));
+		check(xrTrackedSpace(flags)==(flags==15));
+	}
+	// Start after a turned/seated movie, then remain stationary during play.
+	for(float yaw:{-2.4f,0.0f,1.7f})for(float height:{.7f,1.65f}) {
+		XrLayout prefs;XrSurface surfaces[3],menu;XrPosef anchor={{0,0,0,1},{0,0,0}};
+		XrView eyes[2]={};for(auto &eye:eyes)eye.pose={xrAxisAngle({0,1,0},yaw),{2,height,-3}};
+		bool known=false;
+		check(xrInitializeWorkspace(known,prefs,surfaces,anchor,eyes));check(known);
+		const auto before=surfaces[1];
+		near(before.pose.position.y,height-.54f);
+		const auto relative=xrPoseMul(xrPoseInverse(anchor),surfaces[2].pose);
+		near(relative.position.z,-1.18f);near(relative.position.y,-.38f);
+		for(auto &eye:eyes)eye.pose.position.y+=.5f;
+		for(auto &eye:eyes)eye.pose.orientation=xrAxisAngle({0,1,0},yaw+1.0f);
+		check(!xrInitializeWorkspace(known,prefs,surfaces,anchor,eyes));
+		near(surfaces[1].pose.position.y,before.pose.position.y);
+		// Manual depth survives later shell/match/camera readiness calls too.
+		surfaces[1].pose.position.y-=.2f;
+		for(int transition=0;transition<3;++transition) {
+			check(!xrInitializeWorkspace(known,prefs,surfaces,anchor,eyes));
+			near(surfaces[1].pose.position.y,before.pose.position.y-.2f);
+			near(surfaces[1].pose.position.x,before.pose.position.x);
+		}
+		// Recenter is rigid: board/build separation, tilt and scale survive.
+		const auto local=xrPoseMul(xrPoseInverse(surfaces[1].pose),surfaces[2].pose);
+		xrRecenterWorkspace(surfaces,anchor,menu,eyes);
+		const auto after=xrPoseMul(xrPoseInverse(surfaces[1].pose),surfaces[2].pose);
+		near(xrLength(xrSub(local.position,after.position)),0);
+		near(local.orientation.x,after.orientation.x);near(surfaces[2].width,1.8f);
+		// A fresh process discards manual spatial offsets and uses current head.
+		known=false;check(xrInitializeWorkspace(known,prefs,surfaces,anchor,eyes));
+		near(surfaces[1].pose.position.y,height+.5f-.54f);
+	}
 	for(auto chosen:{XrLanguage::German,XrLanguage::English})for(int system:{0,1}) {
 		XrLayout saved;saved.language=chosen;saved.initializeLanguage(true,system);check(saved.language==chosen);
 		saved.initializeLanguage(false,system);check(saved.language==(system==0 ? XrLanguage::German:XrLanguage::English));
@@ -122,6 +160,20 @@ int main(int argc,char **argv) {
 	check(layout.save(argv[1]));XrLayout restored;check(restored.load(argv[1]));check(!restored.upgradeDefaults());
 	near(restored.relative[2].width,1.9f);check(!restored.highQuality && !restored.startStereo && restored.leftHanded);
 	check(restored.language==XrLanguage::English);
+	// P20 startup retains preferences but never trusts room-relative geometry
+	// without a persistent room anchor. All three surfaces must be reachable.
+	XrLayout sessionStart=restored;
+	sessionStart.relative[0].pose.position={3,2,-4};sessionStart.relative[0].width=2.4f;
+	sessionStart.relative[1].pose.position={-3,1,2};sessionStart.relative[1].width=4.0f;
+	sessionStart.relative[2].pose.position={2,-2,3};sessionStart.relative[2].width=2.5f;
+	sessionStart.worldZoom=.61f;sessionStart.highQuality=true;sessionStart.leftHanded=true;
+	sessionStart.language=XrLanguage::English;sessionStart.commandsVisible=false;sessionStart.startStereo=false;
+	sessionStart.applyFreeStandingStart();
+	near(sessionStart.relative[0].width,1.35f);near(sessionStart.relative[0].pose.position.z,-1.1f);
+	near(sessionStart.relative[1].width,1.65f);near(sessionStart.relative[1].pose.position.y,-.54f);
+	near(sessionStart.relative[2].width,1.8f);near(sessionStart.relative[2].pose.position.z,-1.18f);
+	check(sessionStart.startStereo && sessionStart.commandsVisible && sessionStart.highQuality && sessionStart.leftHanded);
+	check(sessionStart.language==XrLanguage::English);near(sessionStart.worldZoom,.61f);
 	// v7/v8 retain P15 quality migration and receive only the additional UI setback.
 	layout.formatVersion=7;check(layout.upgradeDefaults());near(layout.relative[2].width,1.9f);check(layout.startStereo);
 	// P16.1 preserves the complete current arrangement except the requested UI depth.

@@ -1,7 +1,7 @@
 # PLAN-024: Quest UI and Commands Window Presentation
 
 **Milestone:** P21  
-**Status:** Ready for delegated implementation  
+**Status:** Implemented and accepted in-headset on `claude/p21-ui-command-windows` (2026-09-15); replacement Android CI and merge in progress
 **Target:** Meta Quest 3  
 **Runtime:** Native OpenXR plus Android Canvas panel textures  
 **Primary languages:** English and German
@@ -270,3 +270,42 @@ P21 is complete only when:
 
 Build success, screenshots or a flat Canvas fixture alone do not constitute
 worn-headset acceptance.
+
+## 15. Implementation record (2026-09-15)
+
+Branch `claude/p21-ui-command-windows`, starting from `f27d450`.
+
+- New `GeneralsMD/Code/Main/XrPanelLayout.h` is the single layout source:
+  control tables for the Commands console (compact/tactics-foldout/help),
+  the workspace window (pages 0-3 plus shared help geometry) and the
+  controller guide; roles/states, one shared UV hit test and the 8-int JNI
+  packing consumed by Java `paint2`. Java owns no geometry anymore.
+- `XrCommands.h` / `XrMenu.h` hit testing reads the shared table; action IDs
+  and `applyMenuAction` / `applyCommandAction` semantics are unchanged.
+- `XrMenuPainting.h` builds per-control labels and states (armed order via
+  read-only `XrGameBoot_TacticalState`, waypoint/group pending, toggles,
+  disabled tactics, edit-target selection, hover) and repaints only when the
+  content/state key changes. Milestone tags (`P11.1`, `P19.1`) were removed
+  from visible panel text.
+- `XrPanelPainter.java` keeps legacy `paint` for kinds 0/2/6/7 and renders
+  kinds 1/3/4/5 from the shared table with section headers, context cards,
+  chevron/armed markers, value chips, count badges and shrink-to-fit labels
+  instead of silent ellipsis.
+- Tests moved to the new contract in the same change: table-driven geometry
+  (`xr-menu-test.cpp`), new hit coordinates (`xr-menu-routing-test.cpp`),
+  structured `paint2` capture validation in both languages
+  (`xr-panel-text-test.cpp`), wizard fixture title (`xr-scene-test.cpp`).
+- Host results: panel-text 18625, menu 2831, menu-routing 317,
+  console-bridge 1404, scene 1280, workspace 565, build-controls 4292,
+  input 27, tactics 2030, board 64, height 272818, math 111, camera 43,
+  comfort 260, interaction 109 — all PASS. `git diff --check` clean.
+- Both APK flavors, signature, dependency closure and branding checks pass on
+  the integrated candidate. Version 1.2.7-base-navigation (10207), SHA-256
+  `cb05a9fc3d49c089484cfc8a06ffa2e8c00198d935bfe2bfce0b547ddfe47844`,
+  was installed with preserved data on Quest 3.
+- The user accepted the visual redesign, compact default arrangement, explicit
+  whole-workspace alignment, session-stable Skirmish/campaign transitions and
+  home-base navigation in the headset. Exhaustive combinations in §13 remain a
+  regression matrix, not a blocker for the accepted P21 presentation merge.
+- Open for publication: replacement GitHub Android CI, PR merge and a release
+  APK built from the resulting `main` commit.

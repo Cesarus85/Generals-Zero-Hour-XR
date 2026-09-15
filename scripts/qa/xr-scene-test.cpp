@@ -218,7 +218,7 @@ int main(int argc,char **argv) {
      xrSceneMenuText(x,menu,state,sizeof(state));
      check(std::count(menu.begin(),menu.end(),'\n')==17);
      menu=xrLines(menu);
-     for(const auto &field:{std::string("7"),std::string(xrTr("Spielplatz einrichten · P19.1")),std::string(state),menu}) {
+     for(const auto &field:{std::string("7"),std::string(xrTr("Spielplatz einrichten")),std::string(state),menu}) {
       fwrite(field.data(),1,field.size(),out);fputc(0,out);
      }
     }

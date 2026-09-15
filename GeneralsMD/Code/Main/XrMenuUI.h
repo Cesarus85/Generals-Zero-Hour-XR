@@ -2,6 +2,7 @@
 // and ray hit testing share geometry; modal capture never leaks game clicks.
 #pragma once
 #include "XrViewMode.h"
+#include "XrWorkspacePlacement.h"
 static XrSurface uiButtonSurface(const XrHello &x) {
 	const int slot=x.splitVisible ? 2:0;
 	auto s=x.surfaces[slot];
@@ -15,6 +16,13 @@ static XrSurface hoverCardSurface(const XrHello &x) {
 }
 #include "XrArrangement.h"
 static void applyMenuAction(XrHello &x,int action,const XrView *views) {
+	if(x.menu.page==6) {
+		if(action==18)requestWorkspaceRecenter(x,views,true);
+		else if(action==19)x.menu.page=0;
+		else if(action==17)finishArrangement(x);
+		return;
+	}
+	if(x.menu.page==0 && action==18){requestWorkspaceRecenter(x,views);return;}
 	// GeneralsX @feature Codex 14/09/2026 Guide is reachable from every tab,
 	// including the shell. Help navigation never dispatches gameplay actions.
 	if(xrSceneMenuAction(x,action))return;
@@ -74,6 +82,7 @@ static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 		if(action==8) {x.layout.leftHanded=!x.layout.leftHanded;x.menu.open=false;x.controlsArmed=false;x.grab.cancel();x.menu.click.cancel();x.commands.input.click.cancel();}
 		// GeneralsX @feature Codex 14/09/2026 Recover the whole photo arrangement.
 		if(action==9) {
+			x.layoutAnchor=xrWorkspaceHeading(views);
 			x.layout.applyTabletopPreset();
 			for(int i=1;i<3;++i) {x.surfaces[i]=x.layout.relative[i];x.surfaces[i].pose=xrPoseMul(x.layoutAnchor,x.surfaces[i].pose);}
 			if(XrGameBoot_CanStereoWorld())xrRequestWorldView(x,true);
@@ -124,7 +133,7 @@ static bool updateXrMenu(XrHello &x,const XrControllerState &c,const XrView *vie
 		const auto point=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{(u-.5f)*s.width,(v-.5f)*s.width*aspect,0}));
 		const float distance=xrLength(xrSub(point,c.aim.position));
 		if(distance<nearest) {nearest=distance;endpoint=point;hit=piece==0 ? 100:
-			(x.menu.page==4 ? xrCommandHit(u,v,true):x.menu.page==5 ? xrSceneMenuHit(u,v):xrMenuHit(u,v));}
+			(x.menu.page==4 ? xrCommandHit(u,v,true):x.menu.page==5 ? xrSceneMenuHit(u,v):xrMenuHit(u,v,x.menu.page));}
 	}
 	const bool captured=x.menu.open || hit==100;
 	const bool fire=x.menu.update(c.select,hit,tracked);x.menu.hover=hit;
@@ -137,6 +146,7 @@ static bool updateXrMenu(XrHello &x,const XrControllerState &c,const XrView *vie
 		if(x.arranging) {finishArrangement(x);return true;}
 		x.menu.open=!x.menu.open;x.controlsArmed=false;
 		if(x.menu.open) {
+			x.menu.page=0; // Always expose the direct workspace recovery action.
 			x.menu.target=x.splitVisible ? 1:0;
 			float fx=0,fz=-1;yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
 			x.menu.surface.pose.orientation=xrAxisAngle({0,1,0},atan2f(-fx,-fz));

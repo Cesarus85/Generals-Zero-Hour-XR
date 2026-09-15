@@ -3,6 +3,7 @@
 #pragma once
 #include "XrCameraProfile.h"
 #include "XrViewMode.h"
+#include "XrWorkspacePlacement.h"
 
 static void saveLayout(XrHello &x)
 {
@@ -48,7 +49,7 @@ static void updateInteraction(XrHello &x, const XrControllerState &c, const XrVi
 	// loss cannot become a click, camera motion or a new grab on reacquisition.
 	if (!x.controlsArmed && !x.menu.open) {
 		if (!c.buttonsHeld && !c.select && !c.grip[0] && !c.grip[1] && !c.back && !c.tilt &&
-		    !c.arrange && !c.preset && !c.upright && !c.recenter &&
+		    !c.arrange && !c.preset && !c.homeBase && !c.upright && !c.recenter &&
 		    xrStick(c.pan.x)==0 && xrStick(c.pan.y)==0 && xrStick(c.zoom.x)==0 && xrStick(c.zoom.y)==0)
 			x.controlsArmed=true;
 		updateControls(x,XrControllerState{},time); return;
@@ -69,6 +70,14 @@ static void updateInteraction(XrHello &x, const XrControllerState &c, const XrVi
 	const float buildDelta=x.buildRotation.update(buildPending,c.grip[0],c.zoom,
 		c.select || c.secondary || c.back || c.tilt,dt);
 	const bool buildControl=x.buildRotation.captured;
+	// GeneralsX @feature Codex 15/09/2026 Home consumes this frame before pan,
+	// zoom or ray orders. It remains available over the nonmodal Commands panel.
+	if(c.homeBase && !x.arranging) {
+		if(!buildPending && !buildControl && !x.diorama && x.interactiveGame && x.splitVisible &&
+			!c.select && !c.secondary && !c.grip[0] && !c.grip[1] && !c.tilt && !c.back &&
+			!c.recenter && !c.upright && !c.preset && XrGameBoot_ViewBase())x.cameraCustom=true;
+		placePanel(x,views);updateControls(x,XrControllerState{},time);return;
+	}
 	// GeneralsX @bugfix Codex 14/09/2026 The console captures the pointer,
 	// not the supporting stick. Modal workspace/focus/arrangement still block pan.
 	if(!buildControl && !x.arranging && !x.diorama && x.stereoWorld && x.splitVisible && c.aimValid &&
@@ -107,6 +116,10 @@ static void updateInteraction(XrHello &x, const XrControllerState &c, const XrVi
 		x.cameraPreset=XrGameBoot_DefaultCameraPreset(); x.cameraPending=true;
 		x.cameraCustom=false; x.cameraSaveFailed=false;
 	} else if (c.recenter) {
+		if(!x.arranging && x.interactiveGame) {
+			requestWorkspaceRecenter(x,views);
+			placePanel(x,views);updateControls(x,XrControllerState{},time);return;
+		} else {
 		// X restores a reachable pose; arrangement additionally restores size.
 		float fx=0,fz=-1; yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
 		const XrPosef head={xrAxisAngle({0,1,0},atan2f(-fx,-fz)),
@@ -114,6 +127,7 @@ static void updateInteraction(XrHello &x, const XrControllerState &c, const XrVi
 		const XrLayout defaults;
 		x.surfaces[slot].pose=xrPoseMul(head,defaults.relative[slot].pose);
 		if(x.arranging) x.surfaces[slot].width=defaults.relative[slot].width;
+		}
 		x.grab.cancel(); x.layoutDirty=true; saveLayout(x);
 	}
 	if (x.arranging) {

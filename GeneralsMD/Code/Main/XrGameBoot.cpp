@@ -525,6 +525,14 @@ const char *XrGameBoot_PerformanceScene() {
 bool XrGameBoot_CanAdjustWorld() {
 	return XrGameBoot_CanStereoWorld() && GX_XR_SplitUIAllowed() && XrGameBoot_CanControlCamera();
 }
+// GeneralsX @feature Codex 15/09/2026 Reuse the original local camera command:
+// command center, otherwise most expensive owned structure; no unit orders.
+bool XrGameBoot_ViewBase() {
+	if(!XrGameBoot_CanAdjustWorld() || XrGameBoot_ExpandedUI() || !TheMessageStream || !TheInGameUI)return false;
+	if(TheInGameUI->getPendingPlaceType())return false; // Includes non-rotatable line construction.
+	TheMessageStream->appendMessage(GameMessage::MSG_META_VIEW_COMMAND_CENTER);
+	return true;
+}
 static float s_worldMapping[16]={};
 static float s_worldAspect=0;
 static float s_worldMaxHeight=0;
@@ -1018,6 +1026,9 @@ std::string XrGameBoot_TacticalStatus() {
 std::string XrGameBoot_TacticalHint() {
 	if(*s_groupNotice)return xrTr(s_groupNotice);
 	return xrTr(xrOrderHint(s_tactics.mode,TheInGameUI ? TheInGameUI->getSelectCount():0));
+}
+void XrGameBoot_TacticalState(int &mode,int &group,bool &queue) {
+	mode=int(s_tactics.mode);group=s_tactics.group;queue=s_tactics.queue;
 }
 
 static std::string xrText(const UnicodeString &s) {

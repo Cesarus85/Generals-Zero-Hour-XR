@@ -27,6 +27,39 @@ static bool paintPanel(XrHello &x,GLuint &texture,const std::string &title,const
 	xr_glPixelStorei(GL_UNPACK_ROW_LENGTH,0);xr_glPixelStorei(GL_UNPACK_SKIP_ROWS,0);xr_glPixelStorei(GL_UNPACK_SKIP_PIXELS,0);
 	xr_glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,rgba.data());return true;
 }
+// GeneralsX @feature Ultron 15/09/2026 P21 structured panel painting: the
+// native control table (XrPanelLayout.h) is packed 8 ints per control and
+// rendered as primitives by Java. One layout source for pixels and rays.
+static bool paintPanel2(XrHello &x,GLuint &texture,const std::string &title,const std::string &detail,
+	const std::string &labels,const std::vector<int> &packed,int kind) {
+	if(!x.panelEnv || !x.panelPainter) return false;
+	auto *env=x.panelEnv;
+	const auto method=env->GetStaticMethodID(x.panelPainter,"paint2","(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[II)[I");
+	if(!method || env->ExceptionCheck()) {env->ExceptionClear();return false;}
+	jstring a=env->NewStringUTF(title.c_str()),b=env->NewStringUTF(detail.c_str()),c=env->NewStringUTF(labels.c_str());
+	jintArray ctrl=env->NewIntArray(jsize(packed.size()));
+	if(ctrl) env->SetIntArrayRegion(ctrl,0,jsize(packed.size()),packed.data());
+	auto pixels=(jintArray)env->CallStaticObjectMethod(x.panelPainter,method,a,b,c,ctrl,kind);
+	env->DeleteLocalRef(a);env->DeleteLocalRef(b);env->DeleteLocalRef(c);
+	if(ctrl) env->DeleteLocalRef(ctrl);
+	if(env->ExceptionCheck()) {env->ExceptionDescribe();env->ExceptionClear();return false;}
+	if(!pixels) return false;
+	const int w=kXrPanelWidth,h=kind==5 ? kXrPanelHeightTall:kXrPanelHeight;
+	if(env->GetArrayLength(pixels)!=w*h) {env->DeleteLocalRef(pixels);return false;}
+	std::vector<jint> argb(w*h);env->GetIntArrayRegion(pixels,0,w*h,argb.data());env->DeleteLocalRef(pixels);
+	std::vector<unsigned char> rgba(w*h*4);
+	for(int y=0;y<h;++y) for(int px=0;px<w;++px) {
+		const unsigned color=argb[y*w+px];const int i=((h-y-1)*w+px)*4;
+		rgba[i]=color>>16;rgba[i+1]=color>>8;rgba[i+2]=color;rgba[i+3]=color>>24;
+	}
+	if(!texture) xr_glGenTextures(1,&texture);
+	xr_glActiveTexture(GL_TEXTURE2);xr_glBindTexture(GL_TEXTURE_2D,texture);
+	xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+	xr_glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);xr_glPixelStorei(GL_UNPACK_ALIGNMENT,4);
+	xr_glPixelStorei(GL_UNPACK_ROW_LENGTH,0);xr_glPixelStorei(GL_UNPACK_SKIP_ROWS,0);xr_glPixelStorei(GL_UNPACK_SKIP_PIXELS,0);
+	xr_glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,rgba.data());return true;
+}
 static std::string commandExplanation(const XrHello &x) {
 	const int hit=x.commands.input.hover;
 	if(x.commands.help)return {};
@@ -59,74 +92,197 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 	if(!x.commandButtonTexture || buttonLanguage!=g_xrLanguage)
 		if(paintPanel(x,x.commandButtonTexture,xrTr("BEFEHLE"),"","",-1,0))buttonLanguage=g_xrLanguage;
 	if(commandsAvailable(x) && x.layout.commandsVisible) {
-		const char *operations[]={"Gruppe auswählen; zum Anlegen: Speichern → Zahl","Speichern: Zahl wählen (ersetzt die Gruppe)","Zur Auswahl: Zahl wählen (Gruppe bleibt gleich)","Zentrieren: Zahl wählen"};
-		const auto hint=x.commands.bookmarkSave ? std::string(xrTr("Ansicht merken: jetzt A–D wählen")):XrGameBoot_TacticalHint();
-		const std::string status=XrGameBoot_TacticalStatus()+"\n"+
-			(x.commands.groupOperation || hint.empty() ? xrTr(operations[x.commands.groupOperation]):hint);
-		std::string labels=std::string("Auswahl / Befehle\nBewegen\nAngriffsmarsch\nZwangsangriff\nPosition bewachen\nSTOPP\nAuseinanderlaufen\nFreier Bauarbeiter\nWegpunkte an / aus\nGleicher Typ: Karte\nAlle Einheiten\nHeld auswählen\nAlle Flugzeuge\nNächste Einheit\nNächster Bauarbeiter\nAbbrechen / Abwahl\n")+
-			(x.layout.leftHanded ? "Links: Trigger / Rahmen · Rechts: Stick = Karte\nRechter Grip: Auswahl +/- · X: Befehle ein/aus":"Rechts: Trigger / Rahmen · Links: Stick = Karte\nLinker Grip: Auswahl +/- · A: Befehle ein/aus");
-		labels=xrLines(labels)+"\n"+xrTr("GRUPPEN · Zahl = auswählen");
-		const char *ops[]={"Speichern","Zur Auswahl","Zentrieren"};
-		for(int i=0;i<3;++i)labels+="\n"+std::string(x.commands.groupOperation==i+1 ? "> ":"")+xrTr(ops[i]);
-		for(int i=0;i<10;++i)labels+="\n"+std::to_string(i+1)+" · "+std::to_string(XrGameBoot_GroupSize(i));
-		labels+="\n"+std::string(xrTr("Communicator"))+"\n"+xrTr("Hilfe");
-		labels+="\n"+std::string(xrTr(x.commands.tactics ? "Taktik −":"Taktik +"));
-		const char *tactics[]={XrGameBoot_FormationActive() ? "Formation lösen":"Formation bilden","Zwangsbewegung","Ohne Verfolgung"};
-		for(int i=0;i<3;++i)labels+="\n"+std::string(XrGameBoot_TacticalReason(40+i).empty() ? "":"! ")+xrTr(tactics[i]);
-		labels+="\n"+std::string(x.commands.bookmarkSave ? "> ":"")+xrTr("Ansicht merken");
-		for(int i=0;i<4;++i)labels+="\n"+std::string(1,char('A'+i))+(XrGameBoot_BookmarkKnown(i) ? " ●":" ○");
-		labels+="\n"+std::string(xrTr("KARTENPLÄTZE · merken → A–D"));
-		std::string detail=status;int kind=3;
-		if(x.commands.tactics)kind=5;
-		if(x.commands.help){kind=4;detail=xrCommandHelp(x.commands.helpPage);labels=xrLines("Zurück zu Befehlen\nWeiter");}
-		const auto title=std::string(xrTr("Befehle · P11.1"))+(x.commands.help ? " · "+std::to_string(x.commands.helpPage+1)+"/4":"");
-		const auto key=title+detail+labels+std::to_string(x.commands.input.hover);
-		if(key!=x.commandsKey && paintPanel(x,x.commandsTexture,title,detail,labels,x.commands.input.hover,kind))x.commandsKey=key;
+		// GeneralsX @refactor Ultron 15/09/2026 P21 content for the shared
+		// control table: labels and states per control id; geometry lives in
+		// XrPanelLayout.h as the single source shared with xrCommandHit.
+		const bool help=x.commands.help,tactics=x.commands.tactics && !help;
+		XrPanelControl table[64];
+		const int count=xrCommandLayout(help,x.commands.tactics,table,64);
+		std::vector<std::string> labels;
+		auto label=[&](int id,const std::string &text) {
+			if(auto *c=xrFindControl(table,count,id)) {c->label=int(labels.size());labels.push_back(text);}
+		};
+		auto mark=[&](int id,int bits) {
+			if(auto *c=xrFindControl(table,count,id)) c->state|=bits;
+		};
+		int mode=0,group=0;bool queue=false;
+		XrGameBoot_TacticalState(mode,group,queue);
+		std::string title,detail;
+		label(33,"✕");
+		if(help) {
+			title=std::string(xrTr("Befehle"))+" · "+std::to_string(x.commands.helpPage+1)+"/4";
+			detail=xrCommandHelp(x.commands.helpPage);
+			label(34,xrTr("Zurück zu Befehlen"));label(36,xrTr("Weiter"));
+		} else {
+			title=xrTr("Befehle");
+			const char *operations[]={"Gruppe auswählen; zum Anlegen: Speichern → Zahl","Speichern: Zahl wählen (ersetzt die Gruppe)","Zur Auswahl: Zahl wählen (Gruppe bleibt gleich)","Zentrieren: Zahl wählen"};
+			const auto hint=x.commands.bookmarkSave ? std::string(xrTr("Ansicht merken: jetzt A–D wählen")):XrGameBoot_TacticalHint();
+			detail=XrGameBoot_TacticalStatus()+"\n"+
+				(x.commands.groupOperation || hint.empty() ? xrTr(operations[x.commands.groupOperation]):hint);
+			label(-10,xrTr("Auftrag · danach Ziel wählen"));
+			label(1,xrTr("Bewegen"));label(2,xrTr("Angriffsmarsch"));label(3,xrTr("Zwangsangriff"));label(4,xrTr("Position bewachen"));
+			label(8,std::string(xrTr("Wegpunkte"))+"|"+xrTr(queue ? "AN":"AUS"));
+			label(0,xrTr("Auswahl / Befehle"));
+			label(-11,xrTr("Sofort & Auswahl"));
+			label(5,xrTr("STOPP"));label(6,xrTr("Auseinanderlaufen"));label(15,xrTr("Abbrechen / Abwahl"));
+			label(7,xrTr("Freier Bauarbeiter"));label(13,xrTr("Nächste Einheit"));label(14,xrTr("Nächster Bauarbeiter"));
+			label(11,xrTr("Held auswählen"));label(12,xrTr("Alle Flugzeuge"));label(9,xrTr("Gleicher Typ: Karte"));
+			label(10,xrTr("Alle Einheiten"));label(35,xrTr("Communicator"));
+			label(-12,xrTr("Gruppen · Zahl wählt · Speichern → Zahl legt an"));
+			for(int i=0;i<10;++i)label(20+i,std::to_string(i+1)+"|"+std::to_string(XrGameBoot_GroupSize(i)));
+			label(30,xrTr("Speichern"));label(31,xrTr("Zur Auswahl"));label(32,xrTr("Zentrieren"));
+			label(37,xrTr(x.commands.tactics ? "Taktik −":"Taktik +"));label(34,xrTr("Hilfe"));
+			if(x.commands.tactics) {
+				label(-13,xrTr("Taktik · erweitert"));
+				label(40,xrTr(XrGameBoot_FormationActive() ? "Formation lösen":"Formation bilden"));
+				label(41,xrTr("Zwangsbewegung"));label(42,xrTr("Ohne Verfolgung"));
+				label(43,std::string(xrTr("Ansicht merken"))+"|"+xrTr(x.commands.bookmarkSave ? "AN":"AUS"));
+				label(-14,xrTr("KARTENPLÄTZE · merken → A–D"));
+				for(int i=0;i<4;++i)label(44+i,std::string(1,char('A'+i))+"|"+(XrGameBoot_BookmarkKnown(i) ? "●":"○"));
+			}
+			// Persistent states: armed order, toggles, pending operations,
+			// disabled tactics; the disabled reason stays in the hover card.
+			for(int id=1;id<=4;++id)if(xrCommandAction(id)==mode)mark(id,kXrStateArmed);
+			if(mode==9)mark(41,kXrStateArmed);
+			if(mode==10)mark(42,kXrStateArmed);
+			if(queue)mark(8,kXrStateOn);
+			for(int id=40;id<=42;++id)if(!XrGameBoot_TacticalReason(id).empty())mark(id,kXrStateDisabled);
+			if(XrGameBoot_FormationActive())mark(40,kXrStateOn);
+			if(x.commands.bookmarkSave)mark(43,kXrStateOn);
+			for(int i=0;i<10;++i)if(group==i)mark(20+i,kXrStateOn);
+			if(x.commands.groupOperation)mark(29+x.commands.groupOperation,kXrStatePending);
+		}
+		if(x.commands.input.hover>=0)mark(x.commands.input.hover,kXrStateHover);
+		std::vector<int> packed;xrPackControls(packed,table,count);
+		std::string key=title+detail+xrControlsKey(table,count);
+		for(const auto &s:labels)key+="\x1f"+s;
+		std::string joined;
+		for(size_t i=0;i<labels.size();++i){if(i)joined+='\n';joined+=labels[i];}
+		if(key!=x.commandsKey && paintPanel2(x,x.commandsTexture,title,detail,joined,packed,help ? 4:(tactics ? 5:3)))x.commandsKey=key;
 	}
 	if(x.menu.open) {
-		char state[512];const int slot=x.menu.target;
-		snprintf(state,sizeof(state),xrTr("Bearbeitung: %s · %.2f m · Karte %.1fx · P19.1"),xrTr(slot==1 ? "Tisch":slot==2 ? "Baufenster":"Bildschirm"),x.surfaces[slot].width,x.worldZoom);
-		std::string labels=std::string(x.splitVisible ? "Tisch wählen":"Bildschirm wählen")+"\nBaufenster wählen\nKleiner\nGrößer\nNäher\nWeiter weg\nHöher\nTiefer\nFlacher\nSteiler\nLinks drehen\nRechts drehen\nMehr Karte\nWeniger Karte\nGreifen / Anordnen\nPosition zurücksetzen\nSpielplatz einrichten\nSchließen";
-		if(x.menu.page==1) labels="Kontextbefehl\nEinheit wählen\nAuswahl +/-\nBereich: zwei Ecken\nBereich hinzufügen\nBewegen\nAngriffsmarsch\nZwangsangriff\nPosition bewachen\nWegpunkte an / aus\nSTOPP\nAuseinanderlaufen\nFreier Bauarbeiter\nAbbrechen / Abwahl\nGruppen verwalten\nZurück zum Spiel\nAlle Einheiten\nSchließen";
-		if(x.menu.page==2) labels="Gruppe vorher\nGruppe weiter\nAuswahl speichern\nGruppe auswählen\nGruppe zur Auswahl\nZur Gruppe schauen\nNächste Einheit\nNächster Bauarbeiter\nHeld auswählen\nAlle Flugzeuge\nGleicher Typ: Karte\nAlle Einheiten\nFreier Bauarbeiter\nSTOPP\nEinheitenbefehle\nFenster einstellen\nAbbrechen / Abwahl\nSchließen";
-		if(x.menu.page==1 || x.menu.page==2) snprintf(state,sizeof(state),"%s",XrGameBoot_TacticalStatus().c_str());
-		if(x.menu.page==3) {
-			labels=std::string("Spiel: immer Tabletop\nVideos: Bildschirm\n\n\nLebenspunkte an/aus\nEinheitenringe an/aus\nBrettkörper an/aus\nSchließen\n")+
-				(x.layout.leftHanded ? "Linkshändig: AN":"Linkshändig: AUS")+"\nFoto-Anordnung\n"+
-				(x.layout.highQuality ? "Auflösung: Hoch":"Auflösung: Ausgewogen")+std::string("\n")+
-				(x.layout.language==XrLanguage::German ? "Sprache: Deutsch":"Sprache: English")+std::string("\n")+
-				(x.performance.volumeShadows ? "Schatten A: Original":"Schatten B: Leicht")+"\n"+
-				(x.performance.enabled ? "Messung: AN":"Messung: AUS")+std::string("\n")+
-				(x.performance.multiviewStereo ? "Stereo: Multiview":x.performance.atlasStereo ? "Stereo: Kompakt":"Stereo: Referenz")+std::string("\n")+
-				(x.performance.elideWorldCopy ? "Zusatzwelt: Auto":"Zusatzwelt: Immer");
-			snprintf(state,sizeof(state),"%s\n%s",XrGameBoot_PresentationStatus(x.stereoVisible,x.stereoWorld).c_str(),
-				x.menu.hover==11 ? XrGameBoot_LanguageStatus().c_str():x.performance.status().c_str());
-		}
-		if(x.menu.page==5)xrSceneMenuText(x,labels,state,sizeof(state));
-		// Pad the fixed 18 action slots before the four localized tab labels.
-		while(std::count(labels.begin(),labels.end(),'\n')<17)labels+='\n';
-		labels=xrLines(labels+"\nFenster\nEinheiten\nGruppen\nAnsicht");
-		// GeneralsX @feature Codex 14/09/2026 Persistent target check mark,
-		// independent of ray hover. Canvas recognizes it for an orange outline.
-		if(x.menu.page==0) {
-			const auto selected=xrEditTarget(x)==2 ? labels.find('\n')+1:0;
-			labels.insert(selected,"✓ ");
-		}
-		if(x.menu.page==4) {
-			const auto title=std::string(xrTr("Controller-Anleitung"))+" · "+std::to_string(x.menu.helpPage+1)+"/4";
-			const auto detail=xrControllerHelp(x.menu.helpPage,x.layout.leftHanded);
-			labels=xrLines("Zurück zu Fenstern\nWeiter");
-			const auto key=title+detail+labels+std::to_string(x.menu.hover);
-			if(key!=x.settingsKey && paintPanel(x,x.settingsTexture,title,detail,labels,x.menu.hover,4))x.settingsKey=key;
+		// GeneralsX @refactor Ultron 15/09/2026 P21 the workspace window uses
+		// the same shared-table contract as the commands console; the
+		// play-space wizard (page 5) keeps its sequential kind-7 layout.
+		if(x.menu.page==5) {
+			std::string labels;char state[512];
+			xrSceneMenuText(x,labels,state,sizeof(state));
+			while(std::count(labels.begin(),labels.end(),'\n')<17)labels+='\n';
+			labels=xrLines(labels);
+			const std::string key=std::string(state)+std::to_string(x.menu.hover)+labels;
+			if(key!=x.settingsKey && paintPanel(x,x.settingsTexture,xrTr("Spielplatz einrichten"),state,labels,x.menu.hover,7)) x.settingsKey=key;
 		} else {
-		const std::string key=std::string(state)+std::to_string(x.menu.hover)+labels;
-		if(key!=x.settingsKey && paintPanel(x,x.settingsTexture,x.menu.page==5 ? xrTr("Spielplatz einrichten · P19.1"):"Generals: Zero Hour XR",state,labels,x.menu.hover,x.menu.page==5 ? 7:1)) x.settingsKey=key;
+		XrPanelControl table[80];
+		const int count=xrMenuLayout(x.menu.page,table,80);
+		std::vector<std::string> labels;
+		auto label=[&](int id,const std::string &text) {
+			if(auto *c=xrFindControl(table,count,id)) {c->label=int(labels.size());labels.push_back(text);}
+		};
+		auto mark=[&](int id,int bits) {
+			if(auto *c=xrFindControl(table,count,id)) c->state|=bits;
+		};
+		const char *tabs[]={"Fenster","Einheiten","Gruppen","Ansicht"};
+		for(int i=0;i<4;++i)label(20+i,xrTr(tabs[i]));
+		mark(20+x.menu.page,kXrStateActive);
+		label(24,"?");
+		std::string title,detail;
+		if(x.menu.page==6) {
+			title=xrTr("Spielfläche verlassen?");
+			detail=std::string(xrTr("Die Tisch-/Bodenplatzierung wird verlassen."))+"\n"+
+				xrTr("Brett und Fenster kommen gemeinsam vor dich.");
+			label(18,xrTr("Verlassen & vor mir ausrichten"));label(19,xrTr("Abbrechen"));
+		} else if(x.menu.page==4) {
+			title=std::string(xrTr("Controller-Anleitung"))+" · "+std::to_string(x.menu.helpPage+1)+"/4";
+			detail=xrControllerHelp(x.menu.helpPage,x.layout.leftHanded);
+			label(33,"✕");label(34,xrTr("Zurück zu Fenstern"));label(36,xrTr("Weiter"));
+		} else {
+			title=xrTr(tabs[x.menu.page<0 || x.menu.page>3 ? 0:x.menu.page]);
+			if(x.menu.page==0) {
+				char line[256];const int slot=x.menu.target;
+				snprintf(line,sizeof(line),xrTr("Bearbeitung: %s · %.2f m · Karte %.1fx"),xrTr(slot==1 ? "Tisch":slot==2 ? "Baufenster":"Bildschirm"),x.surfaces[slot].width,x.worldZoom);
+				detail=line;
+				char chip[32];
+				const int boardSlot=x.splitVisible ? 1:0;
+				snprintf(chip,sizeof(chip),"%.2f m",x.surfaces[boardSlot].width);
+				label(0,std::string(xrTr(x.splitVisible ? "Tisch":"Bildschirm"))+"|"+chip);
+				snprintf(chip,sizeof(chip),"%.2f m",x.surfaces[2].width);
+				label(1,std::string(xrTr("Baufenster"))+"|"+chip);
+				mark(xrEditTarget(x)==2 ? 1:0,kXrStateSelected);
+				label(-10,xrTr("Ziel"));
+				label(-11,xrTr("Größe & Abstand"));
+				label(2,xrTr("Kleiner"));label(3,xrTr("Größer"));label(4,xrTr("Näher"));label(5,xrTr("Weiter weg"));
+				label(-12,xrTr("Lage"));
+				label(6,xrTr("Höher"));label(7,xrTr("Tiefer"));label(8,xrTr("Flacher"));label(9,xrTr("Steiler"));
+				label(10,xrTr("Links drehen"));label(11,xrTr("Rechts drehen"));
+				label(-13,xrTr("Karte"));
+				snprintf(chip,sizeof(chip),"%.1f×",x.worldZoom);
+				label(12,std::string(xrTr("Mehr Karte"))+"|"+chip);label(13,xrTr("Weniger Karte"));
+				label(-14,xrTr("Aktionen"));
+				label(14,xrTr("Greifen / Anordnen"));label(15,xrTr("Position zurücksetzen"));
+				label(16,xrTr("Spielplatz einrichten"));label(17,xrTr("Schließen"));
+				label(18,xrTr("Alles vor mir ausrichten"));
+			} else if(x.menu.page==1) {
+				detail=XrGameBoot_TacticalStatus();
+				label(-10,xrTr("Auftrag · danach Ziel wählen"));
+				label(5,xrTr("Bewegen"));label(6,xrTr("Angriffsmarsch"));label(7,xrTr("Zwangsangriff"));label(8,xrTr("Position bewachen"));
+				label(9,xrTr("Wegpunkte an / aus"));label(0,xrTr("Kontextbefehl"));
+				label(-11,xrTr("Auswahl"));
+				label(1,xrTr("Einheit wählen"));label(2,xrTr("Auswahl +/-"));label(3,xrTr("Bereich: zwei Ecken"));
+				label(4,xrTr("Bereich hinzufügen"));label(16,xrTr("Alle Einheiten"));label(12,xrTr("Freier Bauarbeiter"));
+				label(-12,xrTr("Sofort"));
+				label(10,xrTr("STOPP"));label(11,xrTr("Auseinanderlaufen"));label(13,xrTr("Abbrechen / Abwahl"));
+				char hint[128];snprintf(hint,sizeof(hint),xrTr("Direkter im Spiel: Befehle-Konsole (%s)"),x.layout.leftHanded ? "X":"A");
+				label(-20,hint);
+				label(-13,xrTr("Navigation"));
+				label(14,xrTr("Gruppen verwalten"));label(15,xrTr("Zurück zum Spiel"));label(17,xrTr("Schließen"));
+			} else if(x.menu.page==2) {
+				detail=XrGameBoot_TacticalStatus();
+				label(-10,xrTr("Gruppen"));
+				label(0,xrTr("Gruppe vorher"));label(1,xrTr("Gruppe weiter"));label(2,xrTr("Auswahl speichern"));
+				label(3,xrTr("Gruppe auswählen"));label(4,xrTr("Gruppe zur Auswahl"));label(5,xrTr("Zur Gruppe schauen"));
+				label(-11,xrTr("Auswahl"));
+				label(6,xrTr("Nächste Einheit"));label(7,xrTr("Nächster Bauarbeiter"));label(8,xrTr("Held auswählen"));
+				label(9,xrTr("Alle Flugzeuge"));label(10,xrTr("Gleicher Typ: Karte"));label(11,xrTr("Alle Einheiten"));
+				label(12,xrTr("Freier Bauarbeiter"));label(13,xrTr("STOPP"));label(16,xrTr("Abbrechen / Abwahl"));
+				label(-13,xrTr("Navigation"));
+				label(14,xrTr("Einheitenbefehle"));label(15,xrTr("Fenster einstellen"));label(17,xrTr("Schließen"));
+			} else {
+				detail=XrGameBoot_PresentationStatus(x.stereoVisible,x.stereoWorld)+"\n"+
+					(x.menu.hover==11 ? XrGameBoot_LanguageStatus():x.performance.status());
+				label(-10,xrTr("Darstellung"));
+				label(-20,xrTr("Spiel: immer Tabletop"));label(-21,xrTr("Videos: Bildschirm"));
+				auto toggle=[&](int id,const char *name,bool on) {
+					label(id,std::string(xrTr(name))+"|"+xrTr(on ? "AN":"AUS"));if(on)mark(id,kXrStateOn);};
+				toggle(4,"Lebenspunkte",x.layout.healthBars);
+				toggle(5,"Einheitenringe",x.layout.unitRings);
+				toggle(6,"Brettkörper",x.layout.boardFrame);
+				label(-11,xrTr("Grafik"));
+				label(10,std::string(xrTr("Auflösung"))+"|"+xrTr(x.layout.highQuality ? "Hoch":"Ausgewogen"));
+				if(x.layout.highQuality)mark(10,kXrStateOn);
+				label(12,std::string(xrTr("Schatten"))+"|"+xrTr(x.performance.volumeShadows ? "Original":"Leicht"));
+				if(x.performance.volumeShadows)mark(12,kXrStateOn);
+				label(14,std::string(xrTr("Stereo"))+"|"+xrTr(x.performance.multiviewStereo ? "Multiview":x.performance.atlasStereo ? "Kompakt":"Referenz"));
+				label(15,std::string(xrTr("Zusatzwelt"))+"|"+xrTr(x.performance.elideWorldCopy ? "Auto":"Immer"));
+				toggle(13,"Messung",x.performance.enabled);
+				label(-12,xrTr("Steuerung & Sprache"));
+				toggle(8,"Linkshändig",x.layout.leftHanded);
+				label(11,std::string(xrTr("Sprache"))+"|"+xrTr(x.layout.language==XrLanguage::German ? "Deutsch":"English"));
+				label(9,xrTr("Foto-Anordnung"));label(7,xrTr("Schließen"));
+			}
+		}
+		if(x.menu.hover>=0)mark(x.menu.hover,kXrStateHover);
+		std::vector<int> packed;xrPackControls(packed,table,count);
+		std::string key=title+detail+xrControlsKey(table,count);
+		for(const auto &s:labels)key+="\x1f"+s;
+		std::string joined;
+		for(size_t i=0;i<labels.size();++i){if(i)joined+='\n';joined+=labels[i];}
+		if(key!=x.settingsKey && paintPanel2(x,x.settingsTexture,title,detail,joined,packed,x.menu.page==4 ? 4:1))x.settingsKey=key;
 		}
 	}
 	std::string info;
 	if(commandsAvailable(x) && x.layout.commandsVisible) {
 		const auto explanation=commandExplanation(x);
-		if(!explanation.empty())info=std::string(xrTr("Befehle · P11.1"))+"\n"+explanation;
+		if(!explanation.empty())info=std::string(xrTr("Befehle"))+"\n"+explanation;
 	}
 	if(!x.menu.open && !x.arranging && x.pointerVisible && !x.pointerPressed && x.pointerPiece==1)
 		info=XrGameBoot_WorldHoverInfo();

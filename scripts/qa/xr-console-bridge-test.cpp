@@ -14,15 +14,17 @@ struct Squad {std::vector<Object*> objects;const std::vector<Object*> &getLiveOb
 struct Player {Squad squads[10];Squad *getHotkeySquad(int g){check(g>=0 && g<10);return &squads[g];}} player;
 struct Players {Player *getLocalPlayer(){return &player;}} players;
 static Players *ThePlayerList=&players;
-struct UI {int selected=0;int getSelectCount(){return selected;}} ui;
+struct UI {int selected=0;bool placing=false;int getSelectCount(){return selected;}const void *getPendingPlaceType(){return placing ? this:nullptr;}} ui;
 static UI *TheInGameUI=&ui;
 struct View {int calls=0;void userLookAt(const XrVector3f *){++calls;}} view;
 static View *TheTacticalView=&view;
-struct GameMessage {enum Type {MSG_META_SELECT_TEAM0=100,MSG_META_CREATE_TEAM0=200,MSG_META_ADD_TEAM0=300};};
+struct GameMessage {enum Type {MSG_META_VIEW_COMMAND_CENTER=50,MSG_META_SELECT_TEAM0=100,MSG_META_CREATE_TEAM0=200,MSG_META_ADD_TEAM0=300};};
 struct Stream {std::vector<int> messages;void appendMessage(GameMessage::Type type){messages.push_back(type);}} stream;
 static Stream *TheMessageStream=&stream;
 static bool allowed=true;
 static bool XrGameBoot_CanAdjustWorld(){return allowed;}
+static bool expanded=false;
+static bool XrGameBoot_ExpandedUI(){return expanded;}
 namespace TouchInput {static int cancels=0;static void backOutOfArmedState(){++cancels;}}
 static int diplomacyCalls=0;
 static void ToggleDiplomacy(bool){++diplomacyCalls;}
@@ -35,6 +37,17 @@ int XrGameBoot_GroupSize(int);
 #include "xr-console-bridge.inc"
 int main(int argc,char **argv) {
  check(argc==2);s_textLanguagePath=argv[1];Object object;
+ // The bridge emits only the original local view message, without selection
+ // writes or canceling a pending order. Blocked contexts emit nothing.
+ ui.selected=3;check(XrGameBoot_ViewBase());
+ check(stream.messages.size()==1 && stream.messages.back()==GameMessage::MSG_META_VIEW_COMMAND_CENTER);
+ check(ui.selected==3 && TouchInput::cancels==0);
+ allowed=false;check(!XrGameBoot_ViewBase());allowed=true;
+ expanded=true;check(!XrGameBoot_ViewBase());expanded=false;
+ ui.placing=true;check(!XrGameBoot_ViewBase());ui.placing=false;
+ TheMessageStream=nullptr;check(!XrGameBoot_ViewBase());TheMessageStream=&stream;
+ TheInGameUI=nullptr;check(!XrGameBoot_ViewBase());TheInGameUI=&ui;
+ check(stream.messages.size()==1);stream.messages.clear();
  for(int group=0;group<10;++group) {
   player.squads[group].objects={};ui.selected=3;const auto before=stream.messages.size();
   for(int op:{0,2,3}){XrGameBoot_TacticalGroup(group,op);check(stream.messages.size()==before);check(std::strstr(s_groupNotice,"leer"));}

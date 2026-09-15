@@ -102,10 +102,25 @@ of these paths:
    desired position and confirm a second time.
 
 Surface detection is optional, session-based placement, not a permanent
-furniture anchor. The current preview can restore the last confirmed layout. A
-future XR milestone will use a safe fallback directly in front of the player
-when a new room has no saved surface; until then, use **Set up play space** if
-the restored layout is inconvenient.
+furniture anchor. Each XR app session therefore starts with a compact free-standing
+tabletop arrangement in front of the current viewing direction: the board is
+horizontal, the build window is tilted behind it, and the Commands window is
+upright on the left. Language, graphics, handedness and map-coverage preferences
+remain saved, but spatial sizes and poses from another room are not applied
+automatically. A surface or manual arrangement confirmed during the current
+session remains in use until the app is closed.
+
+Placement happens once at app startup, not again when a match loads or a campaign
+video ends. The workspace stays put when you look, lean or walk around; manual
+adjustments survive game-mode changes until you close the app.
+
+Open **UI → Windows → Align everything in front of me** to bring the board and
+all companion windows in front of your current horizontal viewing direction.
+Their sizes, tilts and relative arrangement are preserved. During gameplay,
+**X** performs the same action (outside window editing). For a confirmed real
+surface or manual-height placement, choose **Leave surface & align in front**
+to proceed, or **Cancel** to keep it. Tracking loss suspends pointing/grabbing;
+release the controls before continuing after tracking returns.
 
 Open `UI -> Windows` to choose **Table** or **Build window** as the editing
 target. An orange outline and check mark identify the selected object. One Grip
@@ -120,12 +135,23 @@ Back exits editing.
 The default layout is right-handed. Open `UI -> View` to switch to left-handed
 controls; the pointing hand, off hand, and A/B/X/Y roles are swapped logically.
 
+The base shortcut uses the supporting stick: left by default, right in left-handed
+mode. It changes only the map view, never the physical board or selected units.
+It is unavailable during dialogs, scripted camera sequences, window editing or
+building placement. With no owned building, the original command has no target.
+
+Radar controls retain the original mouse behavior. With standard mouse controls,
+point at the radar and press the pointing-hand **Grip** to look there. **Trigger**
+orders selected units there (or moves the camera when nothing is selected).
+The native alternate-mouse option swaps these radar actions.
+
 | Input | Function |
 |---|---|
 | Right Trigger, short press | Select a unit or use the context order at the laser target |
 | Right Trigger, hold and drag | Draw a selection rectangle; release to select |
 | Left Grip while pressing | Add to the selection or remove one unit |
 | Left Thumbstick | Pan the map |
+| Left Thumbstick click | Return the camera to your command center, otherwise your most expensive building |
 | Right Thumbstick left/right | Rotate the map or camera |
 | Right Thumbstick up/down | Zoom in or out |
 | Right Grip | Cancel a targeted order; otherwise clear the selection |

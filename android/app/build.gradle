@@ -74,8 +74,10 @@ android {
         // already on your device.
         // Scheme: versionCode = major*10000 + minor*100 + patch, so the
         // number always sorts the same way as versionName (1.2.0 -> 10200).
-        versionCode (project.hasProperty('androidVersionCode') ? (project.androidVersionCode as Integer) : 10202)
-        versionName (project.hasProperty('androidVersionName') ? project.androidVersionName : '1.2.2')
+        // GeneralsX @build Quest XR 15/09/2026 P20/P21 is the first merged
+        // tabletop presentation checkpoint after the 1.2.7 device candidate.
+        versionCode (project.hasProperty('androidVersionCode') ? (project.androidVersionCode as Integer) : 10208)
+        versionName (project.hasProperty('androidVersionName') ? project.androidVersionName : '1.2.8-xr-preview')
         ndk {
             abiFilters 'arm64-v8a'
         }

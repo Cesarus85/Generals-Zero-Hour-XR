@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-14  
+**Updated:** 2026-09-15
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`
@@ -49,18 +49,28 @@ the detailed narrative and command transcripts out of this dashboard.
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
 | View model | Gameplay is tabletop-only; videos and full native dialogs use an upright presentation | Implemented and exercised, not every campaign transition exhaustively tested |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
-| Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help | Functional; visual and information-design redesign is P21 |
-| Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup | Functional; visual and information-design redesign is P21 |
+| Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
+| Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |
 | Build window | Original production/build UI detached above the tabletop and independently movable, scalable and tiltable | User accepted current arrangement and interaction |
-| Localization | XR interface and help support German and English; initial choice follows German OS, otherwise English | Resource/host checks plus device use; long-label layout remains part of P21 |
-| Play-space setup | Optional free board, detected table/floor and manual-height workflows; no required room binding | P19.1 user accepted as working; recognition depends on Meta room data |
+| Localization | XR interface and help support German and English; initial choice follows German OS, otherwise English | Resource/host checks pass in both languages, including long German labels with shrink-to-fit rendering; device use remains a physical gate |
+| Play-space setup | Optional free board, detected table/floor and manual-height workflows; no required room binding; unanchored launches use safe HMD-relative geometry | P19.1 and P20/P20.3 startup, transition and explicit-alignment behavior accepted in the headset |
 | Game-data setup | Guided Steam or installed/extracted CD/ISO folder import with validation; raw images/installers are not extracted | Host and Quest instrumentation pass; real Steam-based use confirmed |
 | Returning launch | Saved valid data is checked inside the XR Activity; setup opens only when data is missing or invalid | Device launch verified; final visual no-flash confirmation remains a physical gate |
 | Performance defaults | Balanced resolution, light shadows, Multiview preferred, redundant extra world copy omitted automatically | Reported as relatively smooth and playable; no universal FPS guarantee |
 
 ## Current visual and interaction defaults
 
-- A fresh compatible layout starts in tabletop mode.
+- Every XR process starts in a safe, free-standing tabletop arrangement relative
+  to the first fully tracked HMD pose, once per process. Match entry, campaign
+  loading and camera unlock never re-align an existing workspace (P20.3).
+  Spatial geometry from a previous room is ignored; preferences remain saved.
+- During gameplay, plain X recenters the board and companion windows together,
+  preserving their relative arrangement and sizes. In arrangement mode, X still
+  resets only the selected surface. The default UI/Windows page also provides
+  **Align everything in front of me**; confirmed table/floor/manual-height
+  placement requires an explicit leave/cancel choice for this action or X.
+  Estimated/untracked poses cannot place/grab
+  surfaces; tracking recovery does not reset the workspace.
 - Board width: 1.65 m in the photo-inspired default layout.
 - Detached build window: 1.8 m wide, above and behind the far board edge, with
   free tilt retained after release.
@@ -68,6 +78,12 @@ the detailed narrative and command transcripts out of this dashboard.
   inward toward the player.
 - Pointing-hand trigger selects, orders and draws a selection rectangle.
 - Support-hand stick pans the map; pointing-hand stick rotates and zooms.
+- Support-hand stick click returns the map view to the native command-center
+  target (fallback: most expensive owned building), without changing selection
+  or physical workspace. Default left stick click, right in left-handed mode.
+  Modal UI, editing, building preview, camera locks and tracking/focus loss block
+  it. Radar remains native: pointing Grip looks there, Trigger orders selected
+  units with standard mouse controls. The controller guide explains both.
 - Handedness swaps these roles. The in-game controller guide is authoritative
   for the complete mapping.
 - The UI menu identifies the selected manipulation target in orange; cyan is
@@ -75,28 +91,69 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Last reproducible device artifact
 
-The newest local Quest artifact containing the silent returning-launch fix is:
+The newest installed local Quest candidate combines P21, P20 and PR #2's
+reproducible DXVK gitlink/CI foundation:
 
 ```text
-build/quest-direct-start/Generals-Zero-Hour-XR.apk
-SHA-256 1c6ed6f5e53b57613c7457d705900a5c4f9f32942fbe5f7639ac21e3351afaf9
+version 1.2.7-base-navigation (10207)
+source follow-up 5b089cb (base shortcut 6f146a5); integration commit be2fbaf
+build/apk/Generals-Zero-Hour-XR.apk
+SHA-256 cb05a9fc3d49c089484cfc8a06ffa2e8c00198d935bfe2bfce0b547ddfe47844
 ```
 
-Both XR and ordinary Android debug packages built and verified. Twenty-one host
-game-data checks and twenty-one Quest instrumentation checks passed. Installation
-used `adb install -r` without clearing user data. The native game library is
-unchanged from the accepted gameplay/graphics baseline. See
-`build/quest-direct-start/validation.md` in the development checkout; generated
-build evidence is not part of the source repository.
+Native build and both `zh`/`xr` APKs pass; the XR v2 signature, packaged native
+dependency closure, staged-versus-packaged libmain match and 89 branding checks
+pass. Installation on Quest 3 `2G0YC5ZG9609PY` used `adb install -r` without
+clearing user data; package inspection confirms 10207. A launch was requested;
+the user subsequently accepted the final presentation, workspace stability and
+base-navigation result in the headset. This contains P20.3 plus the base shortcut
+and supersedes 10206. The integration commit is local-only and must not replace the PR branches
+as source authority. PR #2 CI run `35007254486` failed from runner disk exhaustion
+during native compilation; a replacement CI run and both PR merges are in progress.
 
 ## Immediate implementation queue
 
+### Navigation follow-up - base shortcut
+
+Accepted after P20.3: support-hand stick edge dispatches the original local
+`MSG_META_VIEW_COMMAND_CENTER`. No simulated keyboard events, new unit orders,
+simulation/network changes or multiplayer eligibility expansion. Host tests:
+interaction 135, handedness 264, console bridge 1433, bilingual panel payloads
+19593, workspace 732 and build-controls 4292 pass. The 10207 APK is built and
+installed as above. The user confirmed the shortcut returns to the base and the
+overall result feels correct. Both handedness modes and the original radar
+Grip-to-look/Trigger-to-order distinction remain useful regression checks rather
+than blockers for this merge.
+
 ### P20 - safe fresh placement
 
-If no play surface is confirmed for the current session, start with the board
-and build window comfortably in front of the player instead of blindly applying
-a world-relative pose saved in another room. Preserve the saved arrangement as
-a recoverable preference; this is a safe session fallback, not a data reset.
+Implemented on the P21 follow-up branch after headset review. Each new XR
+process discards unanchored spatial poses and starts with the complete compact
+photo arrangement in front of the first valid HMD pose: 1.65 m board, angled
+build window behind it and gravity-upright Commands window on the left. Language,
+graphics, handedness and map-coverage preferences still load from disk. Explicit
+surface/manual placement and free adjustment remain valid for the current app
+session. The user accepted initial placement but reported later separation and
+campaign misplacement. P20.2 fixes match-entry alignment, whole-workspace X reset,
+fully-tracked pose gating and reference-space changes during nested campaign
+video playback. Incident logs were unavailable: these are verified faulty code
+paths, not proof that every observed motion had the same cause. Host validation:
+workspace 684, interaction 115, scene 1280, movie presenter 147, panel text 18625
+and menu routing 317 checks pass; build-controls 4292 also pass. The historical
+10205 APK was built and installed. Worn-headset Skirmish/campaign transition, dim-room
+tracking recovery and seated/standing recenter checks remain open.
+
+P20.3 follow-up: the user verified that manual placement survives Skirmish to
+campaign and resets only after process restart, but observed a late glance-based
+relocation. Remove deferred match-entry placement altogether. Initialize geometry
+once, expose explicit whole-workspace alignment on the default UI page, and use
+the same real-surface confirmation for the button and gameplay X. Host checks:
+workspace 732, interaction 120, menu routing 327, menu geometry 2869, scene 1280,
+loading presenter 147, bilingual panel payloads 19593 and build-controls 4292
+pass. The later 10207 candidate is built and installed as above. Headset testing
+confirmed stable Skirmish/campaign placement across a session, reset on a new
+process, explicit whole-workspace X alignment and the final presentation. PRs
+remain unmerged only until the replacement Android CI gates complete.
 
 ### P20.1 - thinner tabletop underbody
 
@@ -113,6 +170,13 @@ same new underside. This is a near-term visual geometry task, separate from P21.
 Rework both spatial windows into a coherent, attractive and quickly readable
 Generals-inspired interface without changing command semantics. The complete
 delegation contract is `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md`.
+
+Implementation (2026-09-15, `claude/p21-ui-command-windows`) is complete,
+host-verified and accepted in the headset. P20 and its alignment/navigation
+follow-ups were added on the same branch and accepted as the stable presentation
+baseline. Replacement Android CI and the PR merges are the remaining publication
+gates. P20.1 is the recommended next implementation; no P20.1 or P22 changes are
+included here.
 
 ### P22 - keyboard and mouse investigation
 
@@ -132,12 +196,14 @@ slice. P20-P22 must not change simulation commands or wire formats casually.
 
 | File | Responsibility |
 |---|---|
-| `android/app/src/main/java/com/generalsx/zerohour/XrPanelPainter.java` | Android Canvas artwork, typography, buttons and panel pixels |
-| `GeneralsMD/Code/Main/XrMenuPainting.h` | Dynamic UI/Commands text, status, labels and texture invalidation keys |
+| `android/app/src/main/java/com/generalsx/zerohour/XrPanelPainter.java` | Android Canvas artwork, typography, buttons and panel pixels; `paint2` renders primitives from the shared native control table and owns no geometry |
+| `GeneralsMD/Code/Main/XrPanelLayout.h` | Single layout source: control tables, roles/states, shared hit test, JNI packing (new in P21) |
+| `GeneralsMD/Code/Main/XrMenuPainting.h` | Dynamic UI/Commands text, status, labels, per-control states and texture invalidation keys |
 | `GeneralsMD/Code/Main/XrMenu.h` | Workspace panel dimensions and hit geometry |
 | `GeneralsMD/Code/Main/XrMenuUI.h` | Workspace-menu routing, placement and actions |
 | `GeneralsMD/Code/Main/XrCommands.h` | Commands panel dimensions, hit geometry and action mapping |
 | `GeneralsMD/Code/Main/XrCommandUI.h` | Commands placement, visibility and input dispatch |
+| `GeneralsMD/Code/Main/XrGameBoot.h` / `XrGameBoot.cpp` | Unchanged command semantics plus read-only `XrGameBoot_TacticalState` for persistent panel states |
 | `GeneralsMD/Code/Main/XrStrings.h` | German/English XR strings |
 | `GeneralsMD/Code/Main/XrControllerHelp.h` | Controller and command guidance |
 | `GeneralsMD/Code/Main/XrHello.cpp` | Panel texture upload and rendering integration |
@@ -166,7 +232,10 @@ slice. P20-P22 must not change simulation commands or wire formats casually.
   Do not change the accepted Balanced/light-shadow defaults without same-scene
   device evidence.
 - Canvas pixels, panel render geometry and ray hit geometry are separate pieces
-  of code. P21 is incomplete unless all three stay aligned.
+  of code. P21 is incomplete unless all three stay aligned. Since the P21
+  implementation, one shared native control table (`XrPanelLayout.h`) drives
+  Canvas pixels (via `paint2`), UV hit regions and state rendering, so the
+  three can no longer drift apart silently.
 - The user's room photographs are useful visual references but contain private
   surroundings. Do not add them to GitHub. Use cropped/redacted panel captures
   or synthetic Canvas fixtures for a pull request.

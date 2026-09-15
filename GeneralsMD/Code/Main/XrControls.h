@@ -1,6 +1,7 @@
 // GeneralsX @feature Codex 14/09/2026 Bind both hands once; swap logical roles live.
 #pragma once
 #include "XrHandedness.h"
+#include "XrTracking.h"
 struct XrControls {
 	XrActionSet set=XR_NULL_HANDLE;
 	XrAction aim[2]={},trigger[2]={},grip[2]={},gripPose[2]={};
@@ -73,8 +74,9 @@ static XrControllerState pollControls(const XrControls &c,XrSession session,XrSp
 		XrActionStatePose state={XR_TYPE_ACTION_STATE_POSE};
 		if(XR_FAILED(xrGetActionStatePose(session,&get,&state)) || !state.isActive)return false;
 		XrSpaceLocation location={XR_TYPE_SPACE_LOCATION};
-		const auto valid=XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
-		if(XR_FAILED(xrLocateSpace(space,localSpace,time,&location)) || (location.locationFlags & valid)!=valid)return false;
+		// Estimated/inertial poses may be valid after optical tracking is lost.
+		// Never let those estimates drag a window or commit a world command.
+		if(XR_FAILED(xrLocateSpace(space,localSpace,time,&location)) || !xrTrackedSpace(location.locationFlags))return false;
 		pose=location.pose;return true;
 	};
 	XrPhysicalHand hands[2];

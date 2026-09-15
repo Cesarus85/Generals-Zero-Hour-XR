@@ -4001,11 +4001,54 @@ unsafe or unusable while travelling. Mark this as a new-session fallback, not
 as a deletion of the saved arrangement. Once the player confirms or manually
 adjusts the fresh layout, normal per-session save/restore may resume.
 
-Acceptance: clear the surface/session marker, launch in a new room and verify
-board + build window are visible, reachable and independently adjustable;
-relaunch in the same room to verify that an explicitly confirmed layout still
-restores. A denied scene permission and a tracking-loss path must fall back to
-the same safe front-of-player placement without crashing or issuing orders.
+Acceptance: save an intentionally oversized/off-axis arrangement, terminate the
+XR process, and relaunch in the same or another room. Board, build window and
+Commands window must use the compact front-of-player preset while language,
+graphics, handedness and map-coverage preferences remain unchanged. A surface
+or manual/free arrangement confirmed in the new process must survive shell to
+Skirmish/campaign transitions. Denied scene permission and tracking loss must
+fall back safely without crashing or issuing orders.
+
+Implementation note (2026-09-15): because this port intentionally owns no
+persistent room anchor or stable room identity, it cannot safely prove that a
+saved pose belongs to the current room after process restart. The implemented
+safe contract therefore restores non-spatial preferences but resets all spatial
+geometry to the photo-inspired free-standing preset for every XR process. An
+explicit surface or manual/free arrangement remains active within that process.
+The user accepted this initial arrangement but reported later board/build
+separation and a campaign board appearing off-axis and low. P20.2 (2026-09-15)
+adds one-shot alignment when each match first permits gameplay, unless the
+player explicitly chose/adjusted a placement in this process. Plain X in play
+now rigidly recenters the whole workspace, not just the board; selected-surface
+reset remains in arrangement mode. Fully tracked head/controller poses are
+required for placement and input. Lost tracking cancels input/grabs without
+writing inferred poses. Nested campaign video presentation now consumes LOCAL
+reference-space changes immediately through the same exactly-once path as the
+outer game loop. Unknown reference changes recover the upright movie surface
+and require tabletop placement confirmation. There is no head-following or
+automatic relocation of an explicitly chosen real surface. Retest Skirmish,
+campaign, repeated seated/standing X resets and tracking/recenter recovery in
+the worn headset; no claim of hardware tracking stability in a dark room.
+
+P20.3 refinement (2026-09-15): user testing confirms session-local manual placement
+and fresh-process defaults, but exposes deferred match-entry alignment as a source
+of unwanted glance-dependent relocation. Supersede P20.2's match-entry alignment:
+initialize once per process; no placement writes on match/camera readiness. Add
+**Align everything in front of me** directly to the default UI/Windows page.
+Preserve sizes, relative transforms and tilt; use head yaw only. The button and
+gameplay X share a leave/cancel confirmation for confirmed surface/manual-height
+placement. Refresh the menu to its default page when opening it. Retain all
+tracking/reference-space protections. Physical acceptance is required before
+merging the P21/P20 follow-up branch.
+
+Navigation follow-up (2026-09-15): supporting stick click returns the camera to
+the original command-center target, falling back to the most expensive owned
+building. Reuse `MSG_META_VIEW_COMMAND_CENTER`; no selection, orders, tabletop
+poses or network protocol changes. Gate menus, camera locks, construction,
+editing and tracking/focus transitions; a click consumes that frame's pan/zoom.
+Both handedness modes and native radar Grip/Trigger semantics are documented
+in the in-game guide. The user accepted the final headset result, including the
+base-return shortcut, on 2026-09-15; retain these paths in future regression tests.
 
 ### P20.1 - reduce the tabletop underbody thickness
 
@@ -4062,6 +4105,12 @@ multi-unit command flow. The pass must not introduce a measurable sustained
 frame-rate regression in the existing balanced/light-shadow/multiview default.
 The detailed delegation contract is
 `docs/WORKDIR/planning/PLAN-024_QUEST_UI_COMMAND_WINDOWS.md`.
+
+Acceptance record (2026-09-15): the redesigned windows and their default
+arrangement were accepted in the headset. P20/P20.3 then stabilized fresh-process
+placement and added explicit whole-workspace alignment; the supporting-stick
+base shortcut was accepted in the final candidate. Replacement Android CI and
+merge/release packaging remain publication work, not feature-development gates.
 
 ### P22 - keyboard and mouse support investigation (secondary)
 

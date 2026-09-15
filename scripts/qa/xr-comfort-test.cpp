@@ -18,13 +18,14 @@ int main(int argc,char **argv) {
 		check(c.aimValid==dominant && c.select==dominant && c.secondary==dominant);
 		check(c.back==dominant && c.arrange==dominant && c.preset==dominant);
 		check(c.tilt!=dominant && c.recenter!=dominant && c.upright!=dominant);
+		check(c.homeBase!=dominant);
 		check(near(c.pan.x,dominant ? 0:.7f) && near(c.zoom.y,dominant ? -.4f:0));
 		check(c.grip[1]==dominant && c.grip[0]!=dominant);
 		check(c.handValid[1]==dominant && c.handValid[0]!=dominant && c.buttonsHeld);
 		check(near(c.hands[dominant ? 1:0].position.x,20+physical));
 		if(dominant)check(near(c.aim.position.x,10+physical));
 		h.lowerEdge=h.upperEdge=h.stickEdge=false;
-		const auto held=xrMapHands(hands,left,false);check(held.buttonsHeld && !held.arrange && !held.preset && !held.recenter && !held.upright);
+		const auto held=xrMapHands(hands,left,false);check(held.buttonsHeld && !held.arrange && !held.preset && !held.homeBase && !held.recenter && !held.upright);
 	}
 	XrPhysicalHand neutral[2];check(xrMapHands(neutral,true,true).back);check(!xrMapHands(neutral,false,false).buttonsHeld);
 	// Identical intent for near-horizontal and downward rays, any board tilt.

@@ -22,7 +22,16 @@ struct XrLayout {
 	// GeneralsX @bugfix Codex 13/09/2026 Windows stay at the user's chosen tilt.
 	bool snap[3]={false,true,false};
 	XrLayout() {
-		relative[0].width=1.35f; relative[0].pose.position={0,-.02f,-1.1f};
+		applyFreeStandingStart();
+	}
+	// GeneralsX @safety Codex 15/09/2026 Spatial poses are deliberately not
+	// trusted at process start. We do not own a persistent room anchor, so a
+	// layout saved at home can be oversized or behind the player elsewhere.
+	// Keep non-spatial preferences loaded from disk, but begin every XR session
+	// with the complete, reachable presentation relative to the current HMD.
+	void applyFreeStandingStart() {
+		snap[0]=false;
+		relative[0]={};relative[0].width=1.35f;relative[0].pose.position={0,-.02f,-1.1f};
 		applyTabletopPreset();
 	}
 	// GeneralsX @feature Codex 14/09/2026 Photo-inspired defaults from the
