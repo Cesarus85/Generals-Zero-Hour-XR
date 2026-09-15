@@ -89,19 +89,18 @@ The newest installed local Quest candidate combines P21, P20 and PR #2's
 reproducible DXVK gitlink/CI foundation:
 
 ```text
-version 1.2.5-p20-tracking (10205)
-source follow-up c253a7c; integration commit 0036176
+version 1.2.6-p20-alignment (10206)
+source follow-up 5de20bd; integration commit 922b6cd
 build/apk/Generals-Zero-Hour-XR.apk
-SHA-256 cd4e9cd87674a6ea17a251ac3e026144a50915b76ae0730516493f7e7c264d9f
+SHA-256 84f383e69212ad7e16339932cd256cf1e3158db63126e567da30218eb87ab5d8
 ```
 
 Native build and both `zh`/`xr` APKs pass; the XR v2 signature, packaged native
 dependency closure, staged-versus-packaged libmain match and 89 branding checks
 pass. Installation on Quest 3 `2G0YC5ZG9609PY` used `adb install -r` without
-clearing user data; package inspection confirms 10205. The automated launch is
-waiting at Horizon's controller-required dialog, not a verified gameplay boot.
-This contains P20.2 and
-supersedes the 10204 initial-placement candidate. Worn-headset stability is still
+clearing user data; package inspection confirms 10206. A launch was requested;
+this is not a verified worn-headset gameplay boot. This contains P20.3 and
+supersedes 10205. Worn-headset stability is still
 open. The integration commit is local-only and must not replace the PR branches
 as source authority. PR #2 CI run `35007254486` failed from runner disk exhaustion
 during native compilation; neither that CI gate nor the PR #1 merge is complete.
@@ -122,8 +121,8 @@ fully-tracked pose gating and reference-space changes during nested campaign
 video playback. Incident logs were unavailable: these are verified faulty code
 paths, not proof that every observed motion had the same cause. Host validation:
 workspace 684, interaction 115, scene 1280, movie presenter 147, panel text 18625
-and menu routing 317 checks pass; build-controls 4292 also pass. The 10205 APK is
-built and installed as above. Worn-headset Skirmish/campaign transition, dim-room
+and menu routing 317 checks pass; build-controls 4292 also pass. The historical
+10205 APK was built and installed. Worn-headset Skirmish/campaign transition, dim-room
 tracking recovery and seated/standing recenter checks remain open.
 
 P20.3 follow-up: the user verified that manual placement survives Skirmish to
@@ -132,8 +131,10 @@ relocation. Remove deferred match-entry placement altogether. Initialize geometr
 once, expose explicit whole-workspace alignment on the default UI page, and use
 the same real-surface confirmation for the button and gameplay X. Host checks:
 workspace 732, interaction 120, menu routing 327, menu geometry 2869, scene 1280,
-loading presenter 147; bilingual panel tests pass. New APK and physical acceptance
-pending; 10205 above does not contain this follow-up yet. PRs remain unmerged.
+loading presenter 147, bilingual panel payloads 19593 and build-controls 4292
+pass. The 10206 APK is built and installed as above; renewed physical acceptance
+is pending. Test looking sideways during loading, the direct UI button, and
+leave/cancel on a confirmed surface. PRs remain unmerged.
 
 ### P20.1 - thinner tabletop underbody
 
