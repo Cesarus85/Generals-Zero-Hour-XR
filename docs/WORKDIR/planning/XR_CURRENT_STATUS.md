@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-15  
+**Updated:** 2026-09-15
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`

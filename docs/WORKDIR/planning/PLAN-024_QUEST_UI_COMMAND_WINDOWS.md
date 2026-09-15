@@ -1,7 +1,7 @@
 # PLAN-024: Quest UI and Commands Window Presentation
 
 **Milestone:** P21  
-**Status:** Implemented on `claude/p21-ui-command-windows` (2026-09-15); host-verified, CI builds and worn-headset acceptance open  
+**Status:** Implemented on `claude/p21-ui-command-windows` (2026-09-15); host-verified, CI builds and worn-headset acceptance open
 **Target:** Meta Quest 3  
 **Runtime:** Native OpenXR plus Android Canvas panel textures  
 **Primary languages:** English and German
