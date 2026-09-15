@@ -100,6 +100,20 @@ jobs:
           fetch-depth: 0
           submodules: false
 
+      # GeneralsX @build Codex 15/09/2026 The Android job builds its own SDK,
+      # NDK and cross-platform dependencies. Ubuntu's preinstalled .NET, GHC,
+      # Swift and Android stacks are unused and left too little room for the
+      # first cold vcpkg + engine + DXVK build (run 35007254486 exhausted the
+      # runner while writing its log). Reclaim only those documented toolsets;
+      # actions and the apt/Java/Gradle setup below do not use these paths.
+      - name: Reclaim runner disk for cold Android build
+        run: |
+          set -euo pipefail
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/share/swift /usr/local/lib/android
+          df -h /
+
       - name: Checkout DXVK fork submodule
         run: |
           set -euo pipefail
@@ -212,7 +226,9 @@ jobs:
       - name: Configure ccache
         run: |
           set -euo pipefail
-          ccache --set-config=max_size=3G
+          # Two GiB leaves headroom for a cold vcpkg install plus simultaneous
+          # engine and DXVK object trees on the hosted runner.
+          ccache --set-config=max_size=2G
           # Cross-compiles (host clang, target arm64-android via NDK sysroot)
           # confuse ccache's default mtime-based direct mode across different
           # checkouts; content hashing keeps hits reliable and is barely
@@ -225,12 +241,12 @@ jobs:
         id: cache-vcpkg
         uses: actions/cache/restore@v5
         with:
-          # /opt/vcpkg = the tool + ports tree; ~/.cache/vcpkg = the BINARY
-          # cache of already-built packages (what turns the ~45 min
-          # ffmpeg/openssl/curl cross-build into a ~1 min restore).
-          path: |
-            /opt/vcpkg
-            ~/.cache/vcpkg
+          # Cache only vcpkg's binary package archives. Caching /opt/vcpkg as
+          # well duplicates downloads, buildtrees and packages; on a fresh
+          # runner the resulting archive exhausted the disk after a successful
+          # 57-minute dependency build, so no reusable cache was produced.
+          # Bootstrap below reclones the small tool/ports tree when necessary.
+          path: ~/.cache/vcpkg
           key: vcpkg-android-${{ runner.os }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('vcpkg.json', 'vcpkg-lock.json', 'cmake/triplets/arm64-android.cmake') }}
           restore-keys: |
             vcpkg-android-${{ runner.os }}-${{ env.VCPKG_COMMIT }}-
@@ -287,6 +303,15 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DANDROID_CI_BUILD_NUMBER=${{ github.run_number }} \
             2>&1 | tee logs/configure_android.log
+
+      - name: Remove transient dependency build trees
+        run: |
+          set -euo pipefail
+          # Configure has completed vcpkg installation into the CMake build.
+          # Its source/build/package copies are no longer inputs to compilation;
+          # keep installed libraries and the reusable binary archive only.
+          sudo rm -rf /opt/vcpkg/buildtrees /opt/vcpkg/packages /opt/vcpkg/downloads
+          df -h /
 
       - name: Build z_generals (libmain.so) + DXVK d3d8/d3d9
         run: |
@@ -452,7 +477,11 @@ jobs:
       - name: Locate APK
         id: locate
         run: |
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          # GeneralsX @bugfix Quest XR CI 15/09/2026 The Android project now
+          # builds separate zh/xr flavors. The packaging script deliberately
+          # publishes the XR flavor under this stable product name, while the
+          # old unflavored app-debug.apk path no longer exists.
+          APK="build/apk/Generals-Zero-Hour-XR.apk"
           if [ ! -f "$APK" ]; then echo "::error::APK not found at $APK"; exit 1; fi
           cp "$APK" "${{ steps.artifact.outputs.apk_name }}"
           echo "path=${{ steps.artifact.outputs.apk_name }}" >> "$GITHUB_OUTPUT"
@@ -613,6 +642,14 @@ jobs:
       # Save caches even when the job failed (see the restore steps above for
       # why plain actions/cache can't do this). Guard each save so a run that
       # restored an exact-key hit doesn't fail trying to re-save it.
+      - name: Clean transient vcpkg trees before cache save
+        if: always()
+        run: |
+          # The compiled binary archives in ~/.cache/vcpkg are sufficient for
+          # future restores. These directories belong to this ephemeral runner
+          # and can consume enough space to make actions/cache's tar fail.
+          rm -rf /opt/vcpkg/buildtrees /opt/vcpkg/packages /opt/vcpkg/downloads
+
       - name: Save Android SDK cache
         if: always() && steps.cache-android-sdk.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
@@ -624,9 +661,7 @@ jobs:
         if: always() && steps.cache-vcpkg.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
         with:
-          path: |
-            /opt/vcpkg
-            ~/.cache/vcpkg
+          path: ~/.cache/vcpkg
           key: vcpkg-android-${{ runner.os }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('vcpkg.json', 'vcpkg-lock.json', 'cmake/triplets/arm64-android.cmake') }}
 
       - name: Save DXVK build cache
