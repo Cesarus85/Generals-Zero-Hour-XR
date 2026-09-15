@@ -14,7 +14,7 @@ struct Squad {std::vector<Object*> objects;const std::vector<Object*> &getLiveOb
 struct Player {Squad squads[10];Squad *getHotkeySquad(int g){check(g>=0 && g<10);return &squads[g];}} player;
 struct Players {Player *getLocalPlayer(){return &player;}} players;
 static Players *ThePlayerList=&players;
-struct UI {int selected=0;int getSelectCount(){return selected;}} ui;
+struct UI {int selected=0;bool placing=false;int getSelectCount(){return selected;}const void *getPendingPlaceType(){return placing ? this:nullptr;}} ui;
 static UI *TheInGameUI=&ui;
 struct View {int calls=0;void userLookAt(const XrVector3f *){++calls;}} view;
 static View *TheTacticalView=&view;
@@ -44,6 +44,7 @@ int main(int argc,char **argv) {
  check(ui.selected==3 && TouchInput::cancels==0);
  allowed=false;check(!XrGameBoot_ViewBase());allowed=true;
  expanded=true;check(!XrGameBoot_ViewBase());expanded=false;
+ ui.placing=true;check(!XrGameBoot_ViewBase());ui.placing=false;
  TheMessageStream=nullptr;check(!XrGameBoot_ViewBase());TheMessageStream=&stream;
  TheInGameUI=nullptr;check(!XrGameBoot_ViewBase());TheInGameUI=&ui;
  check(stream.messages.size()==1);stream.messages.clear();

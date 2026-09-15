@@ -4041,6 +4041,14 @@ placement. Refresh the menu to its default page when opening it. Retain all
 tracking/reference-space protections. Physical acceptance is required before
 merging the P21/P20 follow-up branch.
 
+Navigation follow-up (2026-09-15): supporting stick click returns the camera to
+the original command-center target, falling back to the most expensive owned
+building. Reuse `MSG_META_VIEW_COMMAND_CENTER`; no selection, orders, tabletop
+poses or network protocol changes. Gate menus, camera locks, construction,
+editing and tracking/focus transitions; a click consumes that frame's pan/zoom.
+Both handedness modes and native radar Grip/Trigger semantics are documented
+in the in-game guide. Validate the shortcut in Skirmish and campaign before merge.
+
 ### P20.1 - reduce the tabletop underbody thickness
 
 Reduce the visible grey/dark lower plinth to no more than half its current

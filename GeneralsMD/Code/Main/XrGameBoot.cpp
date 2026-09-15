@@ -529,6 +529,7 @@ bool XrGameBoot_CanAdjustWorld() {
 // command center, otherwise most expensive owned structure; no unit orders.
 bool XrGameBoot_ViewBase() {
 	if(!XrGameBoot_CanAdjustWorld() || XrGameBoot_ExpandedUI() || !TheMessageStream || !TheInGameUI)return false;
+	if(TheInGameUI->getPendingPlaceType())return false; // Includes non-rotatable line construction.
 	TheMessageStream->appendMessage(GameMessage::MSG_META_VIEW_COMMAND_CENTER);
 	return true;
 }

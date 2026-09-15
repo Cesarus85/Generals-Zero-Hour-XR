@@ -80,7 +80,7 @@ the detailed narrative and command transcripts out of this dashboard.
 - Support-hand stick pans the map; pointing-hand stick rotates and zooms.
 - Support-hand stick click returns the map view to the native command-center
   target (fallback: most expensive owned building), without changing selection
-  or physical workspace. Default left click, right in left-handed mode.
+  or physical workspace. Default left stick click, right in left-handed mode.
   Modal UI, editing, building preview, camera locks and tracking/focus loss block
   it. Radar remains native: pointing Grip looks there, Trigger orders selected
   units with standard mouse controls. The controller guide explains both.
