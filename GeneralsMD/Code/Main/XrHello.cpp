@@ -196,6 +196,7 @@ static bool loadGlProcs()
 #include "XrMath.h"
 #include "XrControls.h"
 #include "XrLayout.h"
+#include "XrWorkspacePlacement.h"
 #include "XrTracking.h"
 #include "XrDiorama.h"
 #include "XrMenu.h"
@@ -948,15 +949,7 @@ static XrSurface displayedSurface(const XrHello &x,int piece) {
 }
 static void placePanel(XrHello &x, const XrView *views)
 {
-	if (!x.anchorKnown) {
-		float fx=0,fz=-1; yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
-		x.layoutAnchor={xrAxisAngle({0,1,0},atan2f(-fx,-fz)),
-			xrScale(xrAdd(views[0].pose.position,views[1].pose.position),.5f)};
-		for (int i=0;i<3;++i) {
-			x.surfaces[i]=x.layout.relative[i];
-			x.surfaces[i].pose=xrPoseMul(x.layoutAnchor,x.layout.relative[i].pose);
-		}
-		x.anchorKnown=true;
+	if (xrInitializeWorkspace(x.anchorKnown,x.layout,x.surfaces,x.layoutAnchor,views)) {
 		XR_LOG("P3 layout anchored to current head heading");
 	}
 	const int slot=activeSurface(x);
@@ -1410,7 +1403,6 @@ static void runLoop(XrHello &x)
 					if (!x.presentationKnown || interactiveGame != x.interactiveGame) {
 						x.presentationKnown = true;
 						x.interactiveGame = interactiveGame;
-						x.layout.gamePlacementPending=interactiveGame;
 						x.startViewApplied=false;
 						x.commands.groupOperation=0;x.commands.input.click.cancel();
 						saveLayout(x);
@@ -1429,12 +1421,6 @@ static void runLoop(XrHello &x)
 						XR_LOG("P5 presentation -> %s",split ? "world + detached UI":"composed fallback");
 					}
 					applyWorkspaceReference(x,views,frameState.predictedDisplayTime);
-					if(xrPlaceWorkspaceForGame(x.layout,x.surfaces,x.layoutAnchor,x.menu.surface,views,
-						x.state==XR_SESSION_STATE_FOCUSED && !x.roomPoseLost && !x.scene.placing && XrGameBoot_CanAdjustWorld())) {
-						x.menu.open=false;x.controlsArmed=false;x.inputArmed=false;x.grab.cancel();
-						placePanel(x,views);
-						XR_LOG("P20.2 fresh match workspace placed at current tracked heading");
-					}
 					// P12.1 Remember intent before the first capture. Cinematic
 					// policy controls actual rendering, not the stored view choice.
 					xrApplyWorldStartup(x,XrGameBoot_CanStereoWorld());

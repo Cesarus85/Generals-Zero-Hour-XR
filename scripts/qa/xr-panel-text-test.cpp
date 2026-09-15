@@ -147,6 +147,12 @@ int main(int argc,char **argv){
   {const auto &c=captures[1];check(hasLabelPrefix(c,std::string(xrTr("Schatten"))+"|"));check(stateOf(c,13)&kXrStateOn);}
   x.performance.report="B · CPU 15.1 ms · GPU 21.8 ms";updateMenuTextures(x,100);
   x.menu.page=0;x.menu.target=2;updateMenuTextures(x,100);
+  check(hasLabel(captures[1],xrTr("Alles vor mir ausrichten")));
+  x.menu.page=6;updateMenuTextures(x,100);
+  check(captures[1].title==xrTr("Spielfläche verlassen?"));
+  check(hasLabel(captures[1],xrTr("Verlassen & vor mir ausrichten")));
+  check(hasLabel(captures[1],xrTr("Abbrechen")));
+  x.menu.page=0;updateMenuTextures(x,100);
   {const auto &c=captures[1];check(stateOf(c,1)&kXrStateSelected);check(hasLabelPrefix(c,std::string(xrTr("Baufenster"))+"|"));}
   x.menu.target=1;updateMenuTextures(x,100);check(stateOf(captures[1],0)&kXrStateSelected);
   // Controller guide pages resolve all placeholders in both handedness modes.

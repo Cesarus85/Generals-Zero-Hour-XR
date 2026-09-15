@@ -4030,6 +4030,17 @@ automatic relocation of an explicitly chosen real surface. Retest Skirmish,
 campaign, repeated seated/standing X resets and tracking/recenter recovery in
 the worn headset; no claim of hardware tracking stability in a dark room.
 
+P20.3 refinement (2026-09-15): user testing confirms session-local manual placement
+and fresh-process defaults, but exposes deferred match-entry alignment as a source
+of unwanted glance-dependent relocation. Supersede P20.2's match-entry alignment:
+initialize once per process; no placement writes on match/camera readiness. Add
+**Align everything in front of me** directly to the default UI/Windows page.
+Preserve sizes, relative transforms and tilt; use head yaw only. The button and
+gameplay X share a leave/cancel confirmation for confirmed surface/manual-height
+placement. Refresh the menu to its default page when opening it. Retain all
+tracking/reference-space protections. Physical acceptance is required before
+merging the P21/P20 follow-up branch.
+
 ### P20.1 - reduce the tabletop underbody thickness
 
 Reduce the visible grey/dark lower plinth to no more than half its current

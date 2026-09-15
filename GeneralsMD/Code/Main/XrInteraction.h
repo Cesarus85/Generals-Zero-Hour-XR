@@ -99,7 +99,6 @@ static void updateInteraction(XrHello &x, const XrControllerState &c, const XrVi
 	}
 	if (c.upright) {
 		if (x.arranging) {
-			x.layout.sessionPlacementChosen=true;
 			x.layout.snap[slot]=!x.layout.snap[slot];
 			if(x.layout.snap[slot]) snapSurface(x.surfaces[slot],slot==1);
 			x.grab.cancel(); x.layoutDirty=true; saveLayout(x);
@@ -110,8 +109,8 @@ static void updateInteraction(XrHello &x, const XrControllerState &c, const XrVi
 		x.cameraCustom=false; x.cameraSaveFailed=false;
 	} else if (c.recenter) {
 		if(!x.arranging && x.interactiveGame) {
-			xrRecenterWorkspace(x.surfaces,x.layoutAnchor,x.menu.surface,views);
-			XR_LOG("P20.2 workspace moved together: controller reset");
+			requestWorkspaceRecenter(x,views);
+			placePanel(x,views);updateControls(x,XrControllerState{},time);return;
 		} else {
 		// X restores a reachable pose; arrangement additionally restores size.
 		float fx=0,fz=-1; yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
@@ -121,7 +120,6 @@ static void updateInteraction(XrHello &x, const XrControllerState &c, const XrVi
 		x.surfaces[slot].pose=xrPoseMul(head,defaults.relative[slot].pose);
 		if(x.arranging) x.surfaces[slot].width=defaults.relative[slot].width;
 		}
-		x.layout.sessionPlacementChosen=true;
 		x.grab.cancel(); x.layoutDirty=true; saveLayout(x);
 	}
 	if (x.arranging) {
@@ -144,7 +142,6 @@ static void updateInteraction(XrHello &x, const XrControllerState &c, const XrVi
 		auto offset=xrSub(surface.pose.position,x.layoutAnchor.position);
 		if(xrLength(offset)>4.5f) surface.pose.position=xrAdd(x.layoutAnchor.position,xrScale(offset,4.5f/xrLength(offset)));
 		x.layoutDirty=x.layoutDirty || changed || stickChanged;
-		if(changed || stickChanged)x.layout.sessionPlacementChosen=true;
 		if(slot==1 && oldMode!=0 && !c.grip[0] && !c.grip[1] && x.layout.snap[slot]) snapSurface(surface,true);
 		if(x.grab.mode==0 && !stickChanged) saveLayout(x);
 	} else if(x.diorama) {

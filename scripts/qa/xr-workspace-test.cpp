@@ -64,26 +64,32 @@ int main(int argc,char **argv) {
 	for(float yaw:{-2.4f,0.0f,1.7f})for(float height:{.7f,1.65f}) {
 		XrLayout prefs;XrSurface surfaces[3],menu;XrPosef anchor={{0,0,0,1},{0,0,0}};
 		XrView eyes[2]={};for(auto &eye:eyes)eye.pose={xrAxisAngle({0,1,0},yaw),{2,height,-3}};
-		prefs.gamePlacementPending=true;
-		check(!xrPlaceWorkspaceForGame(prefs,surfaces,anchor,menu,eyes,false));
-		check(prefs.gamePlacementPending);
-		check(xrPlaceWorkspaceForGame(prefs,surfaces,anchor,menu,eyes,true));
+		bool known=false;
+		check(xrInitializeWorkspace(known,prefs,surfaces,anchor,eyes));check(known);
 		const auto before=surfaces[1];
 		near(before.pose.position.y,height-.54f);
 		const auto relative=xrPoseMul(xrPoseInverse(anchor),surfaces[2].pose);
 		near(relative.position.z,-1.18f);near(relative.position.y,-.38f);
 		for(auto &eye:eyes)eye.pose.position.y+=.5f;
-		check(!xrPlaceWorkspaceForGame(prefs,surfaces,anchor,menu,eyes,true));
+		for(auto &eye:eyes)eye.pose.orientation=xrAxisAngle({0,1,0},yaw+1.0f);
+		check(!xrInitializeWorkspace(known,prefs,surfaces,anchor,eyes));
 		near(surfaces[1].pose.position.y,before.pose.position.y);
-		prefs.sessionPlacementChosen=true;prefs.gamePlacementPending=true;
-		check(!xrPlaceWorkspaceForGame(prefs,surfaces,anchor,menu,eyes,true));
-		near(surfaces[1].pose.position.y,before.pose.position.y);
+		// Manual depth survives later shell/match/camera readiness calls too.
+		surfaces[1].pose.position.y-=.2f;
+		for(int transition=0;transition<3;++transition) {
+			check(!xrInitializeWorkspace(known,prefs,surfaces,anchor,eyes));
+			near(surfaces[1].pose.position.y,before.pose.position.y-.2f);
+			near(surfaces[1].pose.position.x,before.pose.position.x);
+		}
 		// Recenter is rigid: board/build separation, tilt and scale survive.
 		const auto local=xrPoseMul(xrPoseInverse(surfaces[1].pose),surfaces[2].pose);
 		xrRecenterWorkspace(surfaces,anchor,menu,eyes);
 		const auto after=xrPoseMul(xrPoseInverse(surfaces[1].pose),surfaces[2].pose);
 		near(xrLength(xrSub(local.position,after.position)),0);
 		near(local.orientation.x,after.orientation.x);near(surfaces[2].width,1.8f);
+		// A fresh process discards manual spatial offsets and uses current head.
+		known=false;check(xrInitializeWorkspace(known,prefs,surfaces,anchor,eyes));
+		near(surfaces[1].pose.position.y,height+.5f-.54f);
 	}
 	for(auto chosen:{XrLanguage::German,XrLanguage::English})for(int system:{0,1}) {
 		XrLayout saved;saved.language=chosen;saved.initializeLanguage(true,system);check(saved.language==chosen);

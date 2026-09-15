@@ -3,6 +3,7 @@
 #include "XrLayers.h"
 #include "XrCommands.h"
 #include "XrBuildRotation.h"
+#include "XrScene.h"
 #include <cstdlib>
 struct XrControllerState {
 	XrPosef aim={{0,0,0,1},{0,0,0}}, hands[2]={{{0,0,0,1},{-.3f,0,0}},{{0,0,0,1},{.3f,0,0}}};
@@ -12,6 +13,7 @@ struct XrControllerState {
 };
 struct XrHello {
 	bool roomPoseLost=false;
+	XrScene scene;bool inputArmed=true;
 	XrMenuState menu;XrCommandState commands;
 	XrBuildRotation buildRotation;
 	XrLayout layout; XrSurface surfaces[3]; XrSurfaceGrab grab;
@@ -218,11 +220,17 @@ int main(int argc,char **argv)
 	for(int i=0;i<3;++i)x.surfaces[i]=x.layout.relative[i];
 	const float separation=xrLength(xrSub(x.surfaces[2].pose.position,x.surfaces[1].pose.position));
 	for(float height:{1.5f,.7f,1.7f}) {
+		c={};frame(c);frame(c); // Release/re-arm between explicit reset presses.
 		for(auto &eye:views)eye.pose.position={1,height,2};
 		c={};c.recenter=true;frame(c);
 		check(fabsf(xrLength(xrSub(x.surfaces[2].pose.position,x.surfaces[1].pose.position))-separation)<.0001f);
-		check(x.layout.sessionPlacementChosen);
+		check(!x.inputArmed && !x.controlsArmed);
+		check(fabsf(x.surfaces[1].pose.position.y-(height-.54f))<.0001f);
 	}
+	x.scene.placed=true;c={};frame(c);frame(c);
+	const auto placed=x.surfaces[1];c.recenter=true;frame(c);
+	check(x.menu.page==6 && x.menu.open && x.scene.placed);
+	check(xrLength(xrSub(placed.pose.position,x.surfaces[1].pose.position))<.0001f);
 	check(remove(path)==0);
 	printf("PASS %d interaction routing checks\n",checks);
 }

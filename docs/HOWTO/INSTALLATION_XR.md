@@ -110,11 +110,16 @@ remain saved, but spatial sizes and poses from another room are not applied
 automatically. A surface or manual arrangement confirmed during the current
 session remains in use until the app is closed.
 
-If you have not chosen or adjusted a play space in this session, entering a
-match aligns the default workspace once to your current position and heading.
-It then stays put when you look, lean or walk around. During gameplay, **X**
-brings the board and its companion windows in front of you together, preserving
-their relative arrangement and sizes. Tracking loss suspends pointing/grabbing;
+Placement happens once at app startup, not again when a match loads or a campaign
+video ends. The workspace stays put when you look, lean or walk around; manual
+adjustments survive game-mode changes until you close the app.
+
+Open **UI → Windows → Align everything in front of me** to bring the board and
+all companion windows in front of your current horizontal viewing direction.
+Their sizes, tilts and relative arrangement are preserved. During gameplay,
+**X** performs the same action (outside window editing). For a confirmed real
+surface or manual-height placement, choose **Leave surface & align in front**
+to proceed, or **Cancel** to keep it. Tracking loss suspends pointing/grabbing;
 release the controls before continuing after tracking returns.
 
 Open `UI -> Windows` to choose **Table** or **Build window** as the editing

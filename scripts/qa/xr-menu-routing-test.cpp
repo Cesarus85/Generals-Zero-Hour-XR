@@ -4,11 +4,13 @@
 #include "XrLayout.h"
 #include "XrCommands.h"
 #include "XrPerformance.h"
+#include "XrBuildRotation.h"
 #include <cstdio>
 #include <cstdlib>
 struct XrControllerState {XrPosef aim={{0,0,0,1},{0,0,0}};bool aimValid=true,select=false,back=false;};
 struct XrHello {
 	XrScene scene;
+	XrBuildRotation buildRotation;bool inputArmed=true,roomPoseLost=false;
 	XrMenuState menu;XrSurface surfaces[3];XrLayout layout;XrSurfaceGrab grab;
 	XrPerformance performance;
 	bool uprightGame=false,startViewApplied=false;
@@ -39,6 +41,7 @@ static float surfaceAspect(int){return .25f;}
 static void saveLayout(XrHello &){++saves;}
 static void updateControls(XrHello &,const XrControllerState &c,XrTime){check(!c.select);++releases;}
 static bool xrSceneMenuAction(XrHello &,int){return false;}
+static void XrGameBoot_CancelTarget(){}
 #include "XrMenuUI.h"
 #include "XrCommandUI.h"
 int main(){
@@ -221,5 +224,27 @@ int main(){
 	}
 	x.arranging=true;x.menu.open=true;c.back=true;updateXrMenu(x,c,views,123);
 	check(!x.arranging && !x.menu.open && !x.controlsArmed);
+	// New button is directly reachable in the default page, preserves geometry,
+	// and never abandons a confirmed play surface without a second click.
+	x={};for(int i=0;i<3;++i)x.surfaces[i]=x.layout.relative[i];
+	check(xrMenuHit(.5f,1-949.0f/1024,0)==18);
+	x.menu.open=true;const auto board=x.surfaces[1];
+	x.scene.placed=true;applyMenuAction(x,18,views);
+	check(x.menu.page==6 && x.scene.placed && x.menu.open);
+	check(xrLength(xrSub(board.pose.position,x.surfaces[1].pose.position))<.0001f);
+	applyMenuAction(x,19,views);check(x.menu.page==0 && x.scene.placed);
+	check(xrLength(xrSub(board.pose.position,x.surfaces[1].pose.position))<.0001f);
+	applyMenuAction(x,18,views);
+	const auto local=xrPoseMul(xrPoseInverse(x.surfaces[1].pose),x.surfaces[2].pose);
+	for(auto &eye:views)eye.pose={xrMul(xrAxisAngle({0,1,0},1.1f),xrAxisAngle({1,0,0},-.7f)),{1,1.6f,2}};
+	applyMenuAction(x,18,views);
+	check(!x.scene.placed && !x.menu.open && !x.arranging && !x.inputArmed);
+	const auto after=xrPoseMul(xrPoseInverse(x.surfaces[1].pose),x.surfaces[2].pose);
+	check(xrLength(xrSub(local.position,after.position))<.0001f);
+	check(fabsf(xrRotate(x.surfaces[1].pose.orientation,{0,0,1}).y-1)<.0001f);
+	check(x.surfaces[1].width==board.width && x.surfaces[2].width==1.8f);
+	// Free workspace needs only one click, also from the main menu.
+	x.interactiveGame=false;x.splitVisible=false;x.menu.open=true;
+	applyMenuAction(x,18,views);check(!x.menu.open && !x.scene.placed);
 	printf("PASS %d production menu action/routing checks\n",checks);
 }

@@ -8,19 +8,17 @@ inline XrPosef xrWorkspaceHeading(const XrView *views) {
 		xrScale(xrAdd(views[0].pose.position,views[1].pose.position),.5f)};
 }
 
-inline bool xrPlaceWorkspaceForGame(XrLayout &layout,XrSurface surfaces[3],
-	XrPosef &anchor,XrSurface &menu,const XrView *views,bool ready) {
-	if(!layout.gamePlacementPending || !ready)return false;
-	layout.gamePlacementPending=false;
-	if(layout.sessionPlacementChosen)return false;
-	anchor=xrWorkspaceHeading(views);const XrLayout defaults;
+// GeneralsX @bugfix Codex 15/09/2026 Place once per process, never at delayed
+// match/camera readiness. Looking elsewhere during loading cannot move a board.
+inline bool xrInitializeWorkspace(bool &known,const XrLayout &layout,
+	XrSurface surfaces[3],XrPosef &anchor,const XrView *views) {
+	if(known)return false;
+	anchor=xrWorkspaceHeading(views);
 	for(int i=0;i<3;++i) {
-		surfaces[i]=defaults.relative[i];
+		surfaces[i]=layout.relative[i];
 		surfaces[i].pose=xrPoseMul(anchor,surfaces[i].pose);
-		layout.snap[i]=defaults.snap[i];
 	}
-	menu.width=.64f;menu.pose=xrPoseMul(anchor,{{0,0,0,1},{0,-.16f,-.9f}});
-	return true;
+	known=true;return true;
 }
 
 inline void xrRecenterWorkspace(XrSurface surfaces[3],XrPosef &anchor,

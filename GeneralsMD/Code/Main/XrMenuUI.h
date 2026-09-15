@@ -16,6 +16,13 @@ static XrSurface hoverCardSurface(const XrHello &x) {
 }
 #include "XrArrangement.h"
 static void applyMenuAction(XrHello &x,int action,const XrView *views) {
+	if(x.menu.page==6) {
+		if(action==18)requestWorkspaceRecenter(x,views,true);
+		else if(action==19)x.menu.page=0;
+		else if(action==17)finishArrangement(x);
+		return;
+	}
+	if(x.menu.page==0 && action==18){requestWorkspaceRecenter(x,views);return;}
 	// GeneralsX @feature Codex 14/09/2026 Guide is reachable from every tab,
 	// including the shell. Help navigation never dispatches gameplay actions.
 	if(xrSceneMenuAction(x,action))return;
@@ -77,7 +84,6 @@ static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 		if(action==9) {
 			x.layoutAnchor=xrWorkspaceHeading(views);
 			x.layout.applyTabletopPreset();
-			x.layout.sessionPlacementChosen=true;
 			for(int i=1;i<3;++i) {x.surfaces[i]=x.layout.relative[i];x.surfaces[i].pose=xrPoseMul(x.layoutAnchor,x.surfaces[i].pose);}
 			if(XrGameBoot_CanStereoWorld())xrRequestWorldView(x,true);
 			x.menu.open=false;x.controlsArmed=false;x.grab.cancel();
@@ -112,7 +118,6 @@ static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 	case 17:x.menu.open=false;x.controlsArmed=false;break;
 	}
 	// Same recoverable placement bounds as controller arrangement.
-	if((action>=2 && action<=11) || action==15)x.layout.sessionPlacementChosen=true;
 	auto offset=xrSub(s.pose.position,x.layoutAnchor.position);
 	if(xrLength(offset)>4.5f) s.pose.position=xrAdd(x.layoutAnchor.position,xrScale(offset,4.5f/xrLength(offset)));
 	x.layoutDirty=true;saveLayout(x);
@@ -141,6 +146,7 @@ static bool updateXrMenu(XrHello &x,const XrControllerState &c,const XrView *vie
 		if(x.arranging) {finishArrangement(x);return true;}
 		x.menu.open=!x.menu.open;x.controlsArmed=false;
 		if(x.menu.open) {
+			x.menu.page=0; // Always expose the direct workspace recovery action.
 			x.menu.target=x.splitVisible ? 1:0;
 			float fx=0,fz=-1;yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
 			x.menu.surface.pose.orientation=xrAxisAngle({0,1,0},atan2f(-fx,-fz));

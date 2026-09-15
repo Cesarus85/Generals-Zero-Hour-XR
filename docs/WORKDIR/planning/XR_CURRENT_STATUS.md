@@ -61,13 +61,15 @@ the detailed narrative and command transcripts out of this dashboard.
 ## Current visual and interaction defaults
 
 - Every XR process starts in a safe, free-standing tabletop arrangement relative
-  to a fully tracked HMD pose. Each match aligns once to the current player pose
-  when gameplay is available, unless the player has explicitly placed/adjusted
-  the workspace during this session. There is no continuous head-following.
+  to the first fully tracked HMD pose, once per process. Match entry, campaign
+  loading and camera unlock never re-align an existing workspace (P20.3).
   Spatial geometry from a previous room is ignored; preferences remain saved.
 - During gameplay, plain X recenters the board and companion windows together,
   preserving their relative arrangement and sizes. In arrangement mode, X still
-  resets only the selected surface. Estimated/untracked poses cannot place/grab
+  resets only the selected surface. The default UI/Windows page also provides
+  **Align everything in front of me**; confirmed table/floor/manual-height
+  placement requires an explicit leave/cancel choice for this action or X.
+  Estimated/untracked poses cannot place/grab
   surfaces; tracking recovery does not reset the workspace.
 - Board width: 1.65 m in the photo-inspired default layout.
 - Detached build window: 1.8 m wide, above and behind the far board edge, with
@@ -123,6 +125,15 @@ workspace 684, interaction 115, scene 1280, movie presenter 147, panel text 1862
 and menu routing 317 checks pass; build-controls 4292 also pass. The 10205 APK is
 built and installed as above. Worn-headset Skirmish/campaign transition, dim-room
 tracking recovery and seated/standing recenter checks remain open.
+
+P20.3 follow-up: the user verified that manual placement survives Skirmish to
+campaign and resets only after process restart, but observed a late glance-based
+relocation. Remove deferred match-entry placement altogether. Initialize geometry
+once, expose explicit whole-workspace alignment on the default UI page, and use
+the same real-surface confirmation for the button and gameplay X. Host checks:
+workspace 732, interaction 120, menu routing 327, menu geometry 2869, scene 1280,
+loading presenter 147; bilingual panel tests pass. New APK and physical acceptance
+pending; 10205 above does not contain this follow-up yet. PRs remain unmerged.
 
 ### P20.1 - thinner tabletop underbody
 

@@ -36,7 +36,6 @@ static void beginScenePreview(XrHello &x,bool manual) {
  if(x.roomPoseLost)s.workingBoard.pose.orientation=x.layoutAnchor.orientation;
 }
 static void sceneFreeWorkspace(XrHello &x) {
-	x.layout.sessionPlacementChosen=true;
  // Explicit action only. Normal starts keep the user's freely arranged layout.
  if(x.roomPoseLost) {
   XrLayout defaults;
@@ -149,7 +148,6 @@ static bool updateScenePlacement(XrHello &x,const XrControllerState &c,XrTime ti
    for(int i=0;i<3;++i){x.surfaces[i]=defaults.relative[i];x.surfaces[i].pose=xrPoseMul(x.layoutAnchor,x.surfaces[i].pose);}
   }
   xrSceneMoveWorkspace(x.surfaces,s.candidate);x.layout.snap[1]=true;
-	  x.layout.sessionPlacementChosen=true;
   x.roomPoseLost=false;x.layoutDirty=true;saveLayout(x);s.cancel();
   s.placed=true;s.step=XrScene::Step::Done;x.menu.open=true;x.menu.page=5;
   s.message="Auf Fläche platziert; frei weiter anpassbar";

@@ -95,6 +95,13 @@ inline int xrCommandLayout(bool help,bool tactics,XrPanelControl *out,int max) {
 inline int xrMenuLayout(int page,XrPanelControl *out,int max) {
 	if(page==4)return xrHelpLayout(out,max);
 	XrPanelBuilder b{out,max};
+	// GeneralsX @feature Codex 15/09/2026 Explicit surface-detachment prompt.
+	if(page==6) {
+		b.add(-1,32,130,704,84,kXrRoleContext);
+		b.add(18,32,320,704,76,kXrRoleImmediate);
+		b.add(19,32,416,704,76,kXrRoleButton);
+		return b.count;
+	}
 	b.add(24,664,20,72,44,kXrRoleButton); // controller guide
 	for(int i=0;i<4;++i)b.add(20+i,32+i*179,78,168,40,kXrRoleTab);
 	b.add(-1,32,130,704,62,kXrRoleContext);
@@ -116,6 +123,7 @@ inline int xrMenuLayout(int page,XrPanelControl *out,int max) {
 		b.add(15,512,752,224,66,kXrRoleButton);
 		b.add(16,32,834,344,66,kXrRoleButton);
 		b.add(17,392,834,344,66,kXrRoleButton);
+		b.add(18,32,916,704,66,kXrRoleImmediate); // whole workspace, not edit target
 	} else if(page==1) {
 		b.add(-10,32,208,704,20,kXrRoleSection); // orders
 		{const int ids[]={5,6,7,8};

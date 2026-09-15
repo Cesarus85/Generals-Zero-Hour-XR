@@ -6,8 +6,6 @@
 #include <string>
 
 struct XrLayout {
-	// GeneralsX @bugfix Codex 15/09/2026 Session intent is never read from disk.
-	bool sessionPlacementChosen=false,gamePlacementPending=false;
 	XrSurface relative[3]; // composed screen, board, detached UI; relative to launch heading
 	float worldZoom=1;
 	bool startStereo=true,healthBars=true,unitRings=true,boardFrame=true;

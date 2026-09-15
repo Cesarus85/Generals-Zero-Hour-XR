@@ -31,10 +31,10 @@ static void checkTable(const XrPanelControl *t,int n,int height,int hitPage) {
 	}
 }
 int main(){
-	for(int page=0;page<4;++page) {
+	for(int page:{0,1,2,3,6}) {
 		XrPanelControl t[80];
 		const int n=xrMenuLayout(page,t,80);
-		check(n>10);
+		check(n>(page==6 ? 2:10));
 		checkTable(t,n,kXrMenuHeight,page);
 	}
 	{	// Commands compact and expanded share the same contract.

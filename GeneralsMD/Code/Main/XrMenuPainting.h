@@ -186,7 +186,12 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 		mark(20+x.menu.page,kXrStateActive);
 		label(24,"?");
 		std::string title,detail;
-		if(x.menu.page==4) {
+		if(x.menu.page==6) {
+			title=xrTr("Spielfläche verlassen?");
+			detail=std::string(xrTr("Die Tisch-/Bodenplatzierung wird verlassen."))+"\n"+
+				xrTr("Brett und Fenster kommen gemeinsam vor dich.");
+			label(18,xrTr("Verlassen & vor mir ausrichten"));label(19,xrTr("Abbrechen"));
+		} else if(x.menu.page==4) {
 			title=std::string(xrTr("Controller-Anleitung"))+" · "+std::to_string(x.menu.helpPage+1)+"/4";
 			detail=xrControllerHelp(x.menu.helpPage,x.layout.leftHanded);
 			label(33,"✕");label(34,xrTr("Zurück zu Fenstern"));label(36,xrTr("Weiter"));
@@ -215,6 +220,7 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 				label(-14,xrTr("Aktionen"));
 				label(14,xrTr("Greifen / Anordnen"));label(15,xrTr("Position zurücksetzen"));
 				label(16,xrTr("Spielplatz einrichten"));label(17,xrTr("Schließen"));
+				label(18,xrTr("Alles vor mir ausrichten"));
 			} else if(x.menu.page==1) {
 				detail=XrGameBoot_TacticalStatus();
 				label(-10,xrTr("Auftrag · danach Ziel wählen"));
