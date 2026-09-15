@@ -95,18 +95,18 @@ The newest installed local Quest candidate combines P21, P20 and PR #2's
 reproducible DXVK gitlink/CI foundation:
 
 ```text
-version 1.2.6-p20-alignment (10206)
-source follow-up 5de20bd; integration commit 922b6cd
+version 1.2.7-base-navigation (10207)
+source follow-up 5b089cb (base shortcut 6f146a5); integration commit be2fbaf
 build/apk/Generals-Zero-Hour-XR.apk
-SHA-256 84f383e69212ad7e16339932cd256cf1e3158db63126e567da30218eb87ab5d8
+SHA-256 cb05a9fc3d49c089484cfc8a06ffa2e8c00198d935bfe2bfce0b547ddfe47844
 ```
 
 Native build and both `zh`/`xr` APKs pass; the XR v2 signature, packaged native
 dependency closure, staged-versus-packaged libmain match and 89 branding checks
 pass. Installation on Quest 3 `2G0YC5ZG9609PY` used `adb install -r` without
-clearing user data; package inspection confirms 10206. A launch was requested;
-this is not a verified worn-headset gameplay boot. This contains P20.3 and
-supersedes 10205. Worn-headset stability is still
+clearing user data; package inspection confirms 10207. A launch was requested;
+this is not a verified worn-headset gameplay boot. This contains P20.3 plus the
+base shortcut and supersedes 10206. Worn-headset stability is still
 open. The integration commit is local-only and must not replace the PR branches
 as source authority. PR #2 CI run `35007254486` failed from runner disk exhaustion
 during native compilation; neither that CI gate nor the PR #1 merge is complete.
@@ -118,8 +118,11 @@ during native compilation; neither that CI gate nor the PR #1 merge is complete.
 Implemented after P20.3: support-hand stick edge dispatches the original local
 `MSG_META_VIEW_COMMAND_CENTER`. No simulated keyboard events, new unit orders,
 simulation/network changes or multiplayer eligibility expansion. Host tests:
-interaction 135, handedness 264, console bridge 1432, bilingual panel payloads
-19593 pass. New APK/device check pending; 10206 above predates this shortcut.
+interaction 135, handedness 264, console bridge 1433, bilingual panel payloads
+19593, workspace 732 and build-controls 4292 pass. The 10207 APK is built and
+installed as above. Physical check pending: pan away, press supporting stick,
+verify base camera jump with selection and room-space surfaces unchanged; check
+both handedness modes and the original radar Grip-to-look behavior.
 
 ### P20 - safe fresh placement
 
