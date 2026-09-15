@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-15
+**Updated:** 2026-09-16
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`
@@ -89,10 +89,30 @@ the detailed narrative and command transcripts out of this dashboard.
 - The UI menu identifies the selected manipulation target in orange; cyan is
   reserved for laser hover.
 
-## Last reproducible device artifact
+## Release and device baseline
 
-The newest installed local Quest candidate combines P21, P20 and PR #2's
-reproducible DXVK gitlink/CI foundation:
+The current authoritative private release is built from merged `main` and
+combines P21, P20/P20.3, base navigation and PR #2's reproducible DXVK/Android
+foundation:
+
+```text
+tag v1.2.8-xr-preview
+version 1.2.8-xr-preview (10208)
+source 29fbcb9 (PR #1 merge fc37591; PR #2 merge c01ad1d)
+release asset Generals-Zero-Hour-XR.apk
+SHA-256 0763b01dd0dfccfc99666a1a4dd614fdc0dde41a2f72282db9258eeee0927660
+Android release CI 35032355387
+```
+
+The release APK is ARM64, reports package `com.generalsx.zerohour.xr`, has the
+expected product label/launcher and verifies with APK Signature Scheme v2. CI
+verified native artifacts and the packaged `libmain.so` dependency closure.
+Release and checksum assets are attached at
+`releases/tag/v1.2.8-xr-preview`. Installation of this final 10208 package was
+explicitly deferred to the next device session; do not claim it as installed.
+
+The newest installed and worn-headset-accepted Quest candidate is the
+content-equivalent predecessor:
 
 ```text
 version 1.2.7-base-navigation (10207)
@@ -107,9 +127,11 @@ pass. Installation on Quest 3 `2G0YC5ZG9609PY` used `adb install -r` without
 clearing user data; package inspection confirms 10207. A launch was requested;
 the user subsequently accepted the final presentation, workspace stability and
 base-navigation result in the headset. This contains P20.3 plus the base shortcut
-and supersedes 10206. The integration commit is local-only and must not replace the PR branches
-as source authority. PR #2 CI run `35007254486` failed from runner disk exhaustion
-during native compilation; a replacement CI run and both PR merges are in progress.
+and supersedes 10206. The integration commit is historical and local-only; merged
+`main` is now the source authority. PR #2 Android CI `35021079076`, PR #1 Android
+CI `35027123032` and release CI `35032355387` pass. The repository-wide generic
+Linux/macOS workflow remains a known unrelated red baseline and is not evidence
+against the Quest APK gate.
 
 ## Immediate implementation queue
 
@@ -152,8 +174,9 @@ workspace 732, interaction 120, menu routing 327, menu geometry 2869, scene 1280
 loading presenter 147, bilingual panel payloads 19593 and build-controls 4292
 pass. The later 10207 candidate is built and installed as above. Headset testing
 confirmed stable Skirmish/campaign placement across a session, reset on a new
-process, explicit whole-workspace X alignment and the final presentation. PRs
-remain unmerged only until the replacement Android CI gates complete.
+process, explicit whole-workspace X alignment and the final presentation. Pull
+requests #1 and #2 are merged and the final 10208 APK is published; only
+installation of that final package is deferred to the next device session.
 
 ### P20.1 - thinner tabletop underbody
 
@@ -174,9 +197,9 @@ delegation contract is `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md`.
 Implementation (2026-09-15, `claude/p21-ui-command-windows`) is complete,
 host-verified and accepted in the headset. P20 and its alignment/navigation
 follow-ups were added on the same branch and accepted as the stable presentation
-baseline. Replacement Android CI and the PR merges are the remaining publication
-gates. P20.1 is the recommended next implementation; no P20.1 or P22 changes are
-included here.
+baseline. Android CI passes, PRs #1/#2 are merged and private release
+`v1.2.8-xr-preview` is published. P20.1 is the recommended next implementation;
+no P20.1 or P22 changes are included here.
 
 ### P22 - keyboard and mouse investigation
 

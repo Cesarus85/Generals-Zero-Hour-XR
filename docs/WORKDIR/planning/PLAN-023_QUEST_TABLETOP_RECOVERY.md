@@ -4039,7 +4039,8 @@ Preserve sizes, relative transforms and tilt; use head yaw only. The button and
 gameplay X share a leave/cancel confirmation for confirmed surface/manual-height
 placement. Refresh the menu to its default page when opening it. Retain all
 tracking/reference-space protections. Physical acceptance is required before
-merging the P21/P20 follow-up branch.
+merging the P21/P20 follow-up branch. That acceptance completed on 2026-09-15;
+PR #1 is merged and published in `v1.2.8-xr-preview`.
 
 Navigation follow-up (2026-09-15): supporting stick click returns the camera to
 the original command-center target, falling back to the most expensive owned
@@ -4110,7 +4111,12 @@ Acceptance record (2026-09-15): the redesigned windows and their default
 arrangement were accepted in the headset. P20/P20.3 then stabilized fresh-process
 placement and added explicit whole-workspace alignment; the supporting-stick
 base shortcut was accepted in the final candidate. Replacement Android CI and
-merge/release packaging remain publication work, not feature-development gates.
+merge/release packaging completed on 2026-09-16: PR #2 `c01ad1d`, PR #1
+`fc37591`, release infrastructure `29fbcb9`, Android release CI `35032355387`
+and private tag `v1.2.8-xr-preview`. APK SHA-256 is
+`0763b01dd0dfccfc99666a1a4dd614fdc0dde41a2f72282db9258eeee0927660`.
+Final 10208 device installation is deferred to the next Quest session; the
+installed 10207 candidate is the current physical acceptance evidence.
 
 ### P22 - keyboard and mouse support investigation (secondary)
 
