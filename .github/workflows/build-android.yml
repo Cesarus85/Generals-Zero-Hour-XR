@@ -612,7 +612,9 @@ jobs:
       # preinstalled/preauthenticated on every GitHub-hosted runner;
       # `actions: write` above is what authorizes the delete call itself.
       # Best-effort throughout: a delete failing (already expired, already
-      # deleted by a concurrent run) must not fail the build.
+      # deleted by a concurrent run) must not fail the build. Always retain
+      # this run explicitly: another workflow can have a newer run ID on the
+      # same branch even though it did not publish an Android artifact.
       - name: Delete superseded artifacts across all branches
         if: always()
         env:
@@ -633,6 +635,10 @@ jobs:
             --jq '.artifacts[] | [(.workflow_run.head_branch // ""), .workflow_run.id, .id] | @tsv' \
           | while IFS=$'\t' read -r branch run_id artifact_id; do
               [ -z "${branch}" ] && continue
+              if [ "${run_id}" = "${{ github.run_id }}" ]; then
+                echo "Keeping current-run artifact ${artifact_id} (run ${run_id})"
+                continue
+              fi
               if [ "${run_id}" != "${latest_run[$branch]:-}" ]; then
                 echo "Deleting old artifact ${artifact_id} (branch ${branch}, run ${run_id}, latest for that branch is ${latest_run[$branch]})"
                 gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/${artifact_id}" || true
