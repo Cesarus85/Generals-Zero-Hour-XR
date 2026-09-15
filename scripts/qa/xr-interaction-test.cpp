@@ -8,7 +8,7 @@
 struct XrControllerState {
 	XrPosef aim={{0,0,0,1},{0,0,0}}, hands[2]={{{0,0,0,1},{-.3f,0,0}},{{0,0,0,1},{.3f,0,0}}};
 	bool aimValid=true,select=false,secondary=false,back=false,recenter=false,upright=false;
-	bool arrange=false,preset=false,tilt=false,buttonsHeld=false,grip[2]={},handValid[2]={true,true};
+	bool arrange=false,preset=false,homeBase=false,tilt=false,buttonsHeld=false,grip[2]={},handValid[2]={true,true};
 	XrVector2f pan={},zoom={};
 };
 struct XrHello {
@@ -59,6 +59,8 @@ static int XrGameBoot_DefaultCameraPreset(){return hasFavorite ? 4:1;}
 static bool XrGameBoot_SaveCameraDefault(){if(cameraLocked || saveFails)return false;hasFavorite=true;return true;}
 static bool XrGameBoot_CanStereoWorld(){return canStereo;}
 static bool XrGameBoot_CanAdjustWorld(){return canStereo && !cameraLocked;}
+static int baseViews=0;
+static bool XrGameBoot_ViewBase(){if(!XrGameBoot_CanAdjustWorld() || expanded)return false;++baseViews;return true;}
 static void placePanel(XrHello &,const XrView *){}
 static int activeSurface(const XrHello &x){return x.diorama ? 1:x.splitVisible ? (x.arranging ? x.arrangeSlot:1):0;}
 static void updateControls(XrHello &,const XrControllerState &c,XrTime){lastInput=c;}
@@ -163,6 +165,28 @@ int main(int argc,char **argv)
 	c.back=true;frame(c);check(!x.arranging && x.diorama);
 	c={};frame(c);c.back=true;frame(c);check(!x.diorama && !lastInput.back);
 	c={};frame(c);x.dioramaReady=false;c.tilt=true;c.upright=true;frame(c);check(!x.diorama);
+	// Home is camera-only, one press, and wins over accidental stick deflection.
+	x=XrHello{};x.controlsArmed=true;x.stereoWorld=true;canStereo=true;
+	c={};c.homeBase=true;c.pan={1,1};c.zoom={1,1};
+	const int navBeforeHome=navigations,anglesBeforeHome=adjustments;
+	const auto poseBeforeHome=x.surfaces[1].pose;const float zoomBeforeHome=x.worldZoom;
+	frame(c);check(baseViews==1 && navigations==navBeforeHome && adjustments==anglesBeforeHome);
+	check(x.worldZoom==zoomBeforeHome && xrLength(xrSub(poseBeforeHome.position,x.surfaces[1].pose.position))==0);
+	c={};c.buttonsHeld=true;frame(c);check(baseViews==1); // no repeated edge
+	for(int gate=0;gate<10;++gate) {
+		x=XrHello{};x.controlsArmed=true;x.stereoWorld=true;c={};c.homeBase=true;
+		if(gate==0)x.arranging=true;if(gate==1)x.state=XR_SESSION_STATE_VISIBLE;
+		if(gate==2)c.aimValid=false;if(gate==3)x.interactiveGame=false;
+		if(gate==4)menuCapture=true;if(gate==5)expanded=true;
+		if(gate==6)cameraLocked=true;if(gate==7)buildPending=true;
+		if(gate==8)c.select=true;if(gate==9)c.grip[0]=true;
+		frame(c);check(baseViews==1);
+		menuCapture=false;expanded=false;cameraLocked=false;buildPending=false;
+	}
+	// A held shortcut after focus loss must be released before re-arming.
+	x=XrHello{};c={};c.homeBase=true;frame(c);check(!x.controlsArmed && baseViews==1);
+	c={};frame(c);c.homeBase=true;consoleCapture=true;frame(c);consoleCapture=false;
+	check(baseViews==2);
 	check(remove(path)==0);
 	// P10.1: console hover cannot steal pan; modal menu and rearming can.
 	x={};x.controlsArmed=true;x.stereoWorld=true;canStereo=true;c={};frame(c);

@@ -135,12 +135,23 @@ Back exits editing.
 The default layout is right-handed. Open `UI -> View` to switch to left-handed
 controls; the pointing hand, off hand, and A/B/X/Y roles are swapped logically.
 
+The base shortcut uses the supporting stick: left by default, right in left-handed
+mode. It changes only the map view, never the physical board or selected units.
+It is unavailable during dialogs, scripted camera sequences, window editing or
+building placement. With no owned building, the original command has no target.
+
+Radar controls retain the original mouse behavior. With standard mouse controls,
+point at the radar and press the pointing-hand **Grip** to look there. **Trigger**
+orders selected units there (or moves the camera when nothing is selected).
+The native alternate-mouse option swaps these radar actions.
+
 | Input | Function |
 |---|---|
 | Right Trigger, short press | Select a unit or use the context order at the laser target |
 | Right Trigger, hold and drag | Draw a selection rectangle; release to select |
 | Left Grip while pressing | Add to the selection or remove one unit |
 | Left Thumbstick | Pan the map |
+| Left Thumbstick click | Return the camera to your command center, otherwise your most expensive building |
 | Right Thumbstick left/right | Rotate the map or camera |
 | Right Thumbstick up/down | Zoom in or out |
 | Right Grip | Cancel a targeted order; otherwise clear the selection |

@@ -78,6 +78,12 @@ the detailed narrative and command transcripts out of this dashboard.
   inward toward the player.
 - Pointing-hand trigger selects, orders and draws a selection rectangle.
 - Support-hand stick pans the map; pointing-hand stick rotates and zooms.
+- Support-hand stick click returns the map view to the native command-center
+  target (fallback: most expensive owned building), without changing selection
+  or physical workspace. Default left click, right in left-handed mode.
+  Modal UI, editing, building preview, camera locks and tracking/focus loss block
+  it. Radar remains native: pointing Grip looks there, Trigger orders selected
+  units with standard mouse controls. The controller guide explains both.
 - Handedness swaps these roles. The in-game controller guide is authoritative
   for the complete mapping.
 - The UI menu identifies the selected manipulation target in orange; cyan is
@@ -106,6 +112,14 @@ as source authority. PR #2 CI run `35007254486` failed from runner disk exhausti
 during native compilation; neither that CI gate nor the PR #1 merge is complete.
 
 ## Immediate implementation queue
+
+### Navigation follow-up - base shortcut
+
+Implemented after P20.3: support-hand stick edge dispatches the original local
+`MSG_META_VIEW_COMMAND_CENTER`. No simulated keyboard events, new unit orders,
+simulation/network changes or multiplayer eligibility expansion. Host tests:
+interaction 135, handedness 264, console bridge 1432, bilingual panel payloads
+19593 pass. New APK/device check pending; 10206 above predates this shortcut.
 
 ### P20 - safe fresh placement
 

@@ -24,6 +24,7 @@ bool XrGameBoot_CanRotatePlacement();
 bool XrGameBoot_RotatePlacement(float radians);
 float XrGameBoot_PlacementDegrees();
 void XrGameBoot_TacticalAction(int action);
+bool XrGameBoot_ViewBase(); // Native command-center view; selection unchanged.
 // GeneralsX @feature Codex 14/09/2026 Native tactics and session-only views.
 std::string XrGameBoot_TacticalReason(int action);
 bool XrGameBoot_FormationActive();

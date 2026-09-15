@@ -49,7 +49,7 @@ static void updateInteraction(XrHello &x, const XrControllerState &c, const XrVi
 	// loss cannot become a click, camera motion or a new grab on reacquisition.
 	if (!x.controlsArmed && !x.menu.open) {
 		if (!c.buttonsHeld && !c.select && !c.grip[0] && !c.grip[1] && !c.back && !c.tilt &&
-		    !c.arrange && !c.preset && !c.upright && !c.recenter &&
+		    !c.arrange && !c.preset && !c.homeBase && !c.upright && !c.recenter &&
 		    xrStick(c.pan.x)==0 && xrStick(c.pan.y)==0 && xrStick(c.zoom.x)==0 && xrStick(c.zoom.y)==0)
 			x.controlsArmed=true;
 		updateControls(x,XrControllerState{},time); return;
@@ -70,6 +70,14 @@ static void updateInteraction(XrHello &x, const XrControllerState &c, const XrVi
 	const float buildDelta=x.buildRotation.update(buildPending,c.grip[0],c.zoom,
 		c.select || c.secondary || c.back || c.tilt,dt);
 	const bool buildControl=x.buildRotation.captured;
+	// GeneralsX @feature Codex 15/09/2026 Home consumes this frame before pan,
+	// zoom or ray orders. It remains available over the nonmodal Commands panel.
+	if(c.homeBase && !x.arranging) {
+		if(!buildPending && !buildControl && !x.diorama && x.interactiveGame && x.splitVisible &&
+			!c.select && !c.secondary && !c.grip[0] && !c.grip[1] && !c.tilt && !c.back &&
+			!c.recenter && !c.upright && !c.preset && XrGameBoot_ViewBase())x.cameraCustom=true;
+		placePanel(x,views);updateControls(x,XrControllerState{},time);return;
+	}
 	// GeneralsX @bugfix Codex 14/09/2026 The console captures the pointer,
 	// not the supporting stick. Modal workspace/focus/arrangement still block pan.
 	if(!buildControl && !x.arranging && !x.diorama && x.stereoWorld && x.splitVisible && c.aimValid &&

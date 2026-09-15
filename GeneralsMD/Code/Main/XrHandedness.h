@@ -11,7 +11,7 @@ struct XrControllerState {
 	XrPosef aim={{0,0,0,1},{0,0,0}};
 	bool aimValid=false,select=false,secondary=false,back=false,recenter=false,upright=false;
 	XrVector2f pan={},zoom={};
-	bool arrange=false,preset=false,tilt=false,buttonsHeld=false;
+	bool arrange=false,preset=false,homeBase=false,tilt=false,buttonsHeld=false;
 	// Index 0 = supporting hand; index 1 = pointing hand, in BOTH modes.
 	XrPosef hands[2]={{{0,0,0,1},{0,0,0}},{{0,0,0,1},{0,0,0}}};
 	bool grip[2]={},handValid[2]={};
@@ -22,6 +22,9 @@ inline XrControllerState xrMapHands(const XrPhysicalHand (&hands)[2],bool leftHa
 	out.aim=dominant.aim;out.aimValid=dominant.aimValid;out.select=dominant.trigger;
 	out.secondary=dominant.grip;out.back=dominant.upper || menu;
 	out.arrange=dominant.lowerEdge;out.preset=dominant.stickEdge;
+	// GeneralsX @feature Codex 15/09/2026 Supporting stick click is map Home,
+	// independent of handedness; held clicks do not repeat the camera jump.
+	out.homeBase=support.stickEdge;
 	out.tilt=support.trigger;out.recenter=support.lowerEdge;out.upright=support.upperEdge;
 	out.pan=support.stick;out.zoom=dominant.stick;
 	out.hands[0]=support.pose;out.hands[1]=dominant.pose;
