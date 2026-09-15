@@ -87,19 +87,22 @@ The newest installed local Quest candidate combines P21, P20 and PR #2's
 reproducible DXVK gitlink/CI foundation:
 
 ```text
-version 1.2.4-p20-test (10204)
-integration commit d4d441f
+version 1.2.5-p20-tracking (10205)
+source follow-up c253a7c; integration commit 0036176
 build/apk/Generals-Zero-Hour-XR.apk
-SHA-256 85b95f302eaf16de4489ab267c6aad0fc31d0fae093386a22731b269adbe06a1
+SHA-256 cd4e9cd87674a6ea17a251ac3e026144a50915b76ae0730516493f7e7c264d9f
 ```
 
-The XR APK built, its v2 signature and packaged native dependency closure pass,
-and installation on Quest 3 `2G0YC5ZG9609PY` used `adb install -r` without
-clearing user data. Horizon intercepted the automated cold launch because the
-controllers were asleep. Subsequent user testing accepted the initial layout but
-reported board/build separation and a misplaced campaign board. The P20.2 source
-follow-up below is not yet in this APK. The integration commit is local-only and
-must not replace the PR branches as source authority.
+Native build and both `zh`/`xr` APKs pass; the XR v2 signature, packaged native
+dependency closure, staged-versus-packaged libmain match and 89 branding checks
+pass. Installation on Quest 3 `2G0YC5ZG9609PY` used `adb install -r` without
+clearing user data; package inspection confirms 10205. The automated launch is
+waiting at Horizon's controller-required dialog, not a verified gameplay boot.
+This contains P20.2 and
+supersedes the 10204 initial-placement candidate. Worn-headset stability is still
+open. The integration commit is local-only and must not replace the PR branches
+as source authority. PR #2 CI run `35007254486` failed from runner disk exhaustion
+during native compilation; neither that CI gate nor the PR #1 merge is complete.
 
 ## Immediate implementation queue
 
@@ -117,7 +120,9 @@ fully-tracked pose gating and reference-space changes during nested campaign
 video playback. Incident logs were unavailable: these are verified faulty code
 paths, not proof that every observed motion had the same cause. Host validation:
 workspace 684, interaction 115, scene 1280, movie presenter 147, panel text 18625
-and menu routing 317 checks pass. Updated APK/device validation is pending.
+and menu routing 317 checks pass; build-controls 4292 also pass. The 10205 APK is
+built and installed as above. Worn-headset Skirmish/campaign transition, dim-room
+tracking recovery and seated/standing recenter checks remain open.
 
 ### P20.1 - thinner tabletop underbody
 
