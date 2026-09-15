@@ -97,10 +97,12 @@ these paths in order:
 - **Manual height**: record controller height, aim at the desired location and
   confirm again.
 
-The room workflow is optional and is not a permanent furniture anchor. If no
-surface is selected, the current build restores the saved arrangement; the next
-XR milestone changes that fallback so a fresh board and build window appear in
-front of the player instead of inheriting an inconvenient travelling setup.
+The room workflow is optional and is not a permanent furniture anchor. Every
+new XR process starts with a compact board, build window and Commands window in
+front of the first fully tracked head pose. Spatial positions from another room
+are deliberately ignored, while language, handedness, graphics and map-coverage
+preferences remain saved. A placement or adjustment then remains stable for the
+current process, including transitions between Skirmish and campaign.
 
 `UI → Windows` selects the object to edit. The selected table or build window
 receives an orange outline and check mark. One Grip moves and tilts it; both
@@ -120,8 +122,10 @@ object in front of you. Finish, the commands button or Back exits editing.
 | Right Thumbstick left/right | Rotate the map/camera |
 | Right Thumbstick up/down | Zoom in/out |
 | Right Grip | Cancel an armed order; otherwise clear selection |
+| Left Thumbstick click | Return the map camera to the command center (right stick in left-handed mode) |
 | A | Toggle the commands window |
 | B or system menu | Open/close the game menu |
+| X | Align the board and companion windows in front of the current view |
 | Left Grip + Right Stick left/right while placing | Rotate a building preview before placement |
 
 Select units first, then choose `Move`, `Attack move` or `Guard` in the
@@ -131,6 +135,9 @@ pressing the number later recalls it. To extend one, select more units → `Add 
 selection` → the number → `Save selection` again. `Commands → Help` contains
 the same four-page guide in German and English. `UI → View` switches handedness
 and language; in left-handed mode the logical roles and A/B/X/Y mappings swap.
+The radar preserves the original mouse behavior: point and press Grip to move
+the map view there, or press Trigger to order selected units there. The native
+alternate-mouse option swaps those two radar actions.
 
 The first-run launcher language follows the system: German for a German Quest,
 English otherwise. The game-text language is kept separate and only switches to

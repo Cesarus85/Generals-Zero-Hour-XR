@@ -49,11 +49,11 @@ the detailed narrative and command transcripts out of this dashboard.
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
 | View model | Gameplay is tabletop-only; videos and full native dialogs use an upright presentation | Implemented and exercised, not every campaign transition exhaustively tested |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
-| Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | Implemented on `claude/p21-ui-command-windows`; all host tests pass; worn-headset acceptance open |
-| Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | Implemented on `claude/p21-ui-command-windows`; all host tests pass; worn-headset acceptance open |
+| Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
+| Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |
 | Build window | Original production/build UI detached above the tabletop and independently movable, scalable and tiltable | User accepted current arrangement and interaction |
 | Localization | XR interface and help support German and English; initial choice follows German OS, otherwise English | Resource/host checks pass in both languages, including long German labels with shrink-to-fit rendering; device use remains a physical gate |
-| Play-space setup | Optional free board, detected table/floor and manual-height workflows; no required room binding; unanchored launches use safe HMD-relative geometry | P19.1 user accepted; P20 source/host validation complete, renewed headset acceptance open |
+| Play-space setup | Optional free board, detected table/floor and manual-height workflows; no required room binding; unanchored launches use safe HMD-relative geometry | P19.1 and P20/P20.3 startup, transition and explicit-alignment behavior accepted in the headset |
 | Game-data setup | Guided Steam or installed/extracted CD/ISO folder import with validation; raw images/installers are not extracted | Host and Quest instrumentation pass; real Steam-based use confirmed |
 | Returning launch | Saved valid data is checked inside the XR Activity; setup opens only when data is missing or invalid | Device launch verified; final visual no-flash confirmation remains a physical gate |
 | Performance defaults | Balanced resolution, light shadows, Multiview preferred, redundant extra world copy omitted automatically | Reported as relatively smooth and playable; no universal FPS guarantee |
@@ -105,24 +105,25 @@ Native build and both `zh`/`xr` APKs pass; the XR v2 signature, packaged native
 dependency closure, staged-versus-packaged libmain match and 89 branding checks
 pass. Installation on Quest 3 `2G0YC5ZG9609PY` used `adb install -r` without
 clearing user data; package inspection confirms 10207. A launch was requested;
-this is not a verified worn-headset gameplay boot. This contains P20.3 plus the
-base shortcut and supersedes 10206. Worn-headset stability is still
-open. The integration commit is local-only and must not replace the PR branches
+the user subsequently accepted the final presentation, workspace stability and
+base-navigation result in the headset. This contains P20.3 plus the base shortcut
+and supersedes 10206. The integration commit is local-only and must not replace the PR branches
 as source authority. PR #2 CI run `35007254486` failed from runner disk exhaustion
-during native compilation; neither that CI gate nor the PR #1 merge is complete.
+during native compilation; a replacement CI run and both PR merges are in progress.
 
 ## Immediate implementation queue
 
 ### Navigation follow-up - base shortcut
 
-Implemented after P20.3: support-hand stick edge dispatches the original local
+Accepted after P20.3: support-hand stick edge dispatches the original local
 `MSG_META_VIEW_COMMAND_CENTER`. No simulated keyboard events, new unit orders,
 simulation/network changes or multiplayer eligibility expansion. Host tests:
 interaction 135, handedness 264, console bridge 1433, bilingual panel payloads
 19593, workspace 732 and build-controls 4292 pass. The 10207 APK is built and
-installed as above. Physical check pending: pan away, press supporting stick,
-verify base camera jump with selection and room-space surfaces unchanged; check
-both handedness modes and the original radar Grip-to-look behavior.
+installed as above. The user confirmed the shortcut returns to the base and the
+overall result feels correct. Both handedness modes and the original radar
+Grip-to-look/Trigger-to-order distinction remain useful regression checks rather
+than blockers for this merge.
 
 ### P20 - safe fresh placement
 
@@ -149,9 +150,10 @@ once, expose explicit whole-workspace alignment on the default UI page, and use
 the same real-surface confirmation for the button and gameplay X. Host checks:
 workspace 732, interaction 120, menu routing 327, menu geometry 2869, scene 1280,
 loading presenter 147, bilingual panel payloads 19593 and build-controls 4292
-pass. The 10206 APK is built and installed as above; renewed physical acceptance
-is pending. Test looking sideways during loading, the direct UI button, and
-leave/cancel on a confirmed surface. PRs remain unmerged.
+pass. The later 10207 candidate is built and installed as above. Headset testing
+confirmed stable Skirmish/campaign placement across a session, reset on a new
+process, explicit whole-workspace X alignment and the final presentation. PRs
+remain unmerged only until the replacement Android CI gates complete.
 
 ### P20.1 - thinner tabletop underbody
 
@@ -169,11 +171,12 @@ Rework both spatial windows into a coherent, attractive and quickly readable
 Generals-inspired interface without changing command semantics. The complete
 delegation contract is `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md`.
 
-Implementation (2026-09-15, `claude/p21-ui-command-windows`) is complete and
-host-verified; the visual redesign was accepted in the headset. P20 was then
-added as a focused startup-safety follow-up on the same unmerged branch. CI APK
-builds and P20 worn-headset acceptance remain open. No P20.1 or P22 changes are
-included.
+Implementation (2026-09-15, `claude/p21-ui-command-windows`) is complete,
+host-verified and accepted in the headset. P20 and its alignment/navigation
+follow-ups were added on the same branch and accepted as the stable presentation
+baseline. Replacement Android CI and the PR merges are the remaining publication
+gates. P20.1 is the recommended next implementation; no P20.1 or P22 changes are
+included here.
 
 ### P22 - keyboard and mouse investigation
 

@@ -4047,7 +4047,8 @@ building. Reuse `MSG_META_VIEW_COMMAND_CENTER`; no selection, orders, tabletop
 poses or network protocol changes. Gate menus, camera locks, construction,
 editing and tracking/focus transitions; a click consumes that frame's pan/zoom.
 Both handedness modes and native radar Grip/Trigger semantics are documented
-in the in-game guide. Validate the shortcut in Skirmish and campaign before merge.
+in the in-game guide. The user accepted the final headset result, including the
+base-return shortcut, on 2026-09-15; retain these paths in future regression tests.
 
 ### P20.1 - reduce the tabletop underbody thickness
 
@@ -4104,6 +4105,12 @@ multi-unit command flow. The pass must not introduce a measurable sustained
 frame-rate regression in the existing balanced/light-shadow/multiview default.
 The detailed delegation contract is
 `docs/WORKDIR/planning/PLAN-024_QUEST_UI_COMMAND_WINDOWS.md`.
+
+Acceptance record (2026-09-15): the redesigned windows and their default
+arrangement were accepted in the headset. P20/P20.3 then stabilized fresh-process
+placement and added explicit whole-workspace alignment; the supporting-stick
+base shortcut was accepted in the final candidate. Replacement Android CI and
+merge/release packaging remain publication work, not feature-development gates.
 
 ### P22 - keyboard and mouse support investigation (secondary)
 

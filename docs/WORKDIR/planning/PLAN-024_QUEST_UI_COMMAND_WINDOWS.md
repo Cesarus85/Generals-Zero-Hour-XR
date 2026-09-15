@@ -1,7 +1,7 @@
 # PLAN-024: Quest UI and Commands Window Presentation
 
 **Milestone:** P21  
-**Status:** Implemented on `claude/p21-ui-command-windows` (2026-09-15); host-verified, CI builds and worn-headset acceptance open
+**Status:** Implemented and accepted in-headset on `claude/p21-ui-command-windows` (2026-09-15); replacement Android CI and merge in progress
 **Target:** Meta Quest 3  
 **Runtime:** Native OpenXR plus Android Canvas panel textures  
 **Primary languages:** English and German
@@ -299,5 +299,13 @@ Branch `claude/p21-ui-command-windows`, starting from `f27d450`.
   console-bridge 1404, scene 1280, workspace 565, build-controls 4292,
   input 27, tactics 2030, board 64, height 272818, math 111, camera 43,
   comfort 260, interaction 109 — all PASS. `git diff --check` clean.
-- Open: CI `assembleXrDebug` / `assembleZhDebug` plus APK hash, Quest
-  install with preserved data, and the full §13 worn-headset matrix.
+- Both APK flavors, signature, dependency closure and branding checks pass on
+  the integrated candidate. Version 1.2.7-base-navigation (10207), SHA-256
+  `cb05a9fc3d49c089484cfc8a06ffa2e8c00198d935bfe2bfce0b547ddfe47844`,
+  was installed with preserved data on Quest 3.
+- The user accepted the visual redesign, compact default arrangement, explicit
+  whole-workspace alignment, session-stable Skirmish/campaign transitions and
+  home-base navigation in the headset. Exhaustive combinations in §13 remain a
+  regression matrix, not a blocker for the accepted P21 presentation merge.
+- Open for publication: replacement GitHub Android CI, PR merge and a release
+  APK built from the resulting `main` commit.
