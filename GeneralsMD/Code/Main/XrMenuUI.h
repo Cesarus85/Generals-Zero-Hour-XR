@@ -2,6 +2,7 @@
 // and ray hit testing share geometry; modal capture never leaks game clicks.
 #pragma once
 #include "XrViewMode.h"
+#include "XrWorkspacePlacement.h"
 static XrSurface uiButtonSurface(const XrHello &x) {
 	const int slot=x.splitVisible ? 2:0;
 	auto s=x.surfaces[slot];
@@ -74,7 +75,9 @@ static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 		if(action==8) {x.layout.leftHanded=!x.layout.leftHanded;x.menu.open=false;x.controlsArmed=false;x.grab.cancel();x.menu.click.cancel();x.commands.input.click.cancel();}
 		// GeneralsX @feature Codex 14/09/2026 Recover the whole photo arrangement.
 		if(action==9) {
+			x.layoutAnchor=xrWorkspaceHeading(views);
 			x.layout.applyTabletopPreset();
+			x.layout.sessionPlacementChosen=true;
 			for(int i=1;i<3;++i) {x.surfaces[i]=x.layout.relative[i];x.surfaces[i].pose=xrPoseMul(x.layoutAnchor,x.surfaces[i].pose);}
 			if(XrGameBoot_CanStereoWorld())xrRequestWorldView(x,true);
 			x.menu.open=false;x.controlsArmed=false;x.grab.cancel();
@@ -109,6 +112,7 @@ static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 	case 17:x.menu.open=false;x.controlsArmed=false;break;
 	}
 	// Same recoverable placement bounds as controller arrangement.
+	if((action>=2 && action<=11) || action==15)x.layout.sessionPlacementChosen=true;
 	auto offset=xrSub(s.pose.position,x.layoutAnchor.position);
 	if(xrLength(offset)>4.5f) s.pose.position=xrAdd(x.layoutAnchor.position,xrScale(offset,4.5f/xrLength(offset)));
 	x.layoutDirty=true;saveLayout(x);

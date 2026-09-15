@@ -4015,8 +4015,20 @@ saved pose belongs to the current room after process restart. The implemented
 safe contract therefore restores non-spatial preferences but resets all spatial
 geometry to the photo-inspired free-standing preset for every XR process. An
 explicit surface or manual/free arrangement remains active within that process.
-Host validation is complete; the new startup behavior still requires renewed
-worn-headset acceptance.
+The user accepted this initial arrangement but reported later board/build
+separation and a campaign board appearing off-axis and low. P20.2 (2026-09-15)
+adds one-shot alignment when each match first permits gameplay, unless the
+player explicitly chose/adjusted a placement in this process. Plain X in play
+now rigidly recenters the whole workspace, not just the board; selected-surface
+reset remains in arrangement mode. Fully tracked head/controller poses are
+required for placement and input. Lost tracking cancels input/grabs without
+writing inferred poses. Nested campaign video presentation now consumes LOCAL
+reference-space changes immediately through the same exactly-once path as the
+outer game loop. Unknown reference changes recover the upright movie surface
+and require tabletop placement confirmation. There is no head-following or
+automatic relocation of an explicitly chosen real surface. Retest Skirmish,
+campaign, repeated seated/standing X resets and tracking/recenter recovery in
+the worn headset; no claim of hardware tracking stability in a dark room.
 
 ### P20.1 - reduce the tabletop underbody thickness
 

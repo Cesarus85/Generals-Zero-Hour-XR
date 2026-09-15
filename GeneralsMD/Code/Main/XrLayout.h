@@ -6,6 +6,8 @@
 #include <string>
 
 struct XrLayout {
+	// GeneralsX @bugfix Codex 15/09/2026 Session intent is never read from disk.
+	bool sessionPlacementChosen=false,gamePlacementPending=false;
 	XrSurface relative[3]; // composed screen, board, detached UI; relative to launch heading
 	float worldZoom=1;
 	bool startStereo=true,healthBars=true,unitRings=true,boardFrame=true;
@@ -30,6 +32,7 @@ struct XrLayout {
 	// Keep non-spatial preferences loaded from disk, but begin every XR session
 	// with the complete, reachable presentation relative to the current HMD.
 	void applyFreeStandingStart() {
+		snap[0]=false;
 		relative[0]={};relative[0].width=1.35f;relative[0].pose.position={0,-.02f,-1.1f};
 		applyTabletopPreset();
 	}

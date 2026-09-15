@@ -213,6 +213,16 @@ int main(int argc,char **argv)
 	persisted.layoutDirty=true;saveLayout(persisted);
 	check(persisted.layoutDirty && afterLost.load(path));
 	check(afterLost.relative[1].pose.position.y==beforeLost.relative[1].pose.position.y);
+	// Repeated live reset at different head heights moves companions rigidly.
+	x=XrHello{};x.controlsArmed=true;canStereo=true;buildPending=false;
+	for(int i=0;i<3;++i)x.surfaces[i]=x.layout.relative[i];
+	const float separation=xrLength(xrSub(x.surfaces[2].pose.position,x.surfaces[1].pose.position));
+	for(float height:{1.5f,.7f,1.7f}) {
+		for(auto &eye:views)eye.pose.position={1,height,2};
+		c={};c.recenter=true;frame(c);
+		check(fabsf(xrLength(xrSub(x.surfaces[2].pose.position,x.surfaces[1].pose.position))-separation)<.0001f);
+		check(x.layout.sessionPlacementChosen);
+	}
 	check(remove(path)==0);
 	printf("PASS %d interaction routing checks\n",checks);
 }

@@ -61,8 +61,14 @@ the detailed narrative and command transcripts out of this dashboard.
 ## Current visual and interaction defaults
 
 - Every XR process starts in a safe, free-standing tabletop arrangement relative
-  to the first valid HMD pose. Spatial geometry from a previous room is ignored;
-  non-spatial preferences remain saved.
+  to a fully tracked HMD pose. Each match aligns once to the current player pose
+  when gameplay is available, unless the player has explicitly placed/adjusted
+  the workspace during this session. There is no continuous head-following.
+  Spatial geometry from a previous room is ignored; preferences remain saved.
+- During gameplay, plain X recenters the board and companion windows together,
+  preserving their relative arrangement and sizes. In arrangement mode, X still
+  resets only the selected surface. Estimated/untracked poses cannot place/grab
+  surfaces; tracking recovery does not reset the workspace.
 - Board width: 1.65 m in the photo-inspired default layout.
 - Detached build window: 1.8 m wide, above and behind the far board edge, with
   free tilt retained after release.
@@ -90,9 +96,10 @@ SHA-256 85b95f302eaf16de4489ab267c6aad0fc31d0fae093386a22731b269adbe06a1
 The XR APK built, its v2 signature and packaged native dependency closure pass,
 and installation on Quest 3 `2G0YC5ZG9609PY` used `adb install -r` without
 clearing user data. Horizon intercepted the automated cold launch because the
-controllers were asleep; P20's visible startup arrangement therefore remains a
-worn-headset gate. The integration commit is local-only and must not replace the
-PR branches as source authority.
+controllers were asleep. Subsequent user testing accepted the initial layout but
+reported board/build separation and a misplaced campaign board. The P20.2 source
+follow-up below is not yet in this APK. The integration commit is local-only and
+must not replace the PR branches as source authority.
 
 ## Immediate implementation queue
 
@@ -104,7 +111,13 @@ photo arrangement in front of the first valid HMD pose: 1.65 m board, angled
 build window behind it and gravity-upright Commands window on the left. Language,
 graphics, handedness and map-coverage preferences still load from disk. Explicit
 surface/manual placement and free adjustment remain valid for the current app
-session. Focused host validation passes; renewed worn-headset acceptance is open.
+session. The user accepted initial placement but reported later separation and
+campaign misplacement. P20.2 fixes match-entry alignment, whole-workspace X reset,
+fully-tracked pose gating and reference-space changes during nested campaign
+video playback. Incident logs were unavailable: these are verified faulty code
+paths, not proof that every observed motion had the same cause. Host validation:
+workspace 684, interaction 115, scene 1280, movie presenter 147, panel text 18625
+and menu routing 317 checks pass. Updated APK/device validation is pending.
 
 ### P20.1 - thinner tabletop underbody
 

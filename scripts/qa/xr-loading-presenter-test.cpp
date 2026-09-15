@@ -4,6 +4,7 @@
 #include "XrLoadingFrame.h"
 #include "XrCommands.h"
 #include "XrLayout.h"
+#include "XrTracking.h"
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
@@ -42,6 +43,8 @@ static void pollEvents(XrHello &,bool &){}
 static XrControllerState pollControls(int,XrSession,XrSpace,XrTime time,bool,bool){check(time==predicted);return controller;}
 static void updateControls(XrHello &,const XrControllerState &c,XrTime){check(!c.select && !c.back);}
 static void placePanel(XrHello &x,const XrView *views){check(!x.splitVisible && !x.stereoVisible && !x.arranging && x.loadingPresentation);check(views[0].pose.position.x==-.03f);}
+static int referenceUpdates=0;
+static void applyWorkspaceReference(XrHello &x,const XrView *views,XrTime time){check(time==predicted);++referenceUpdates;placePanel(x,views);}
 static bool renderEye(XrHello &,int eye,const XrPosef &pose,const XrFovf &){++draws;check(pose.position.x==(eye ? .03f:-.03f));return drawOK;}
 static void d3d8gles_InvalidateCachedState(){++invalidations;}
 static unsigned gameTexture=1,recoveries=0;
@@ -55,7 +58,8 @@ XRAPI_ATTR XrResult XRAPI_CALL xrWaitFrame(XrSession,const XrFrameWaitInfo *,XrF
 XRAPI_ATTR XrResult XRAPI_CALL xrBeginFrame(XrSession,const XrFrameBeginInfo *){check(!begun);begun=true;++begins;return XR_SUCCESS;}
 XRAPI_ATTR XrResult XRAPI_CALL xrLocateViews(XrSession,const XrViewLocateInfo *info,XrViewState *state,uint32_t,uint32_t *count,XrView *views){
 	check(begun && info->displayTime==predicted);*count=2;
-	state->viewStateFlags=valid ? XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT:0;
+	state->viewStateFlags=valid ? XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT |
+		XR_VIEW_STATE_POSITION_TRACKED_BIT | XR_VIEW_STATE_ORIENTATION_TRACKED_BIT:0;
 	for(int eye=0;eye<2;++eye){views[eye].pose.orientation.w=1;views[eye].pose.position.x=eye ? .03f:-.03f;}
 	return XR_SUCCESS;
 }

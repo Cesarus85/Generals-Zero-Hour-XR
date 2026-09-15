@@ -1,5 +1,7 @@
 // GeneralsX @test Codex 14/09/2026 Production dialog detection and UI geometry.
 #include "XrLayout.h"
+#include "XrWorkspacePlacement.h"
+#include "XrTracking.h"
 #include "XrWorld.h"
 #include "XrLayers.h"
 #include "XrTactics.h"
@@ -53,6 +55,36 @@ static void check(bool v){++checks;if(!v){fprintf(stderr,"workspace check %d fai
 static void near(float a,float b){check(std::isfinite(a+b) && fabsf(a-b)<.0001f);}
 int main(int argc,char **argv) {
 	check(argc==2);
+	// Estimated positions must neither anchor a workspace nor enable grabbing.
+	for(unsigned flags=0;flags<16;++flags) {
+		check(xrTrackedViews(flags)==(flags==15));
+		check(xrTrackedSpace(flags)==(flags==15));
+	}
+	// Start after a turned/seated movie, then remain stationary during play.
+	for(float yaw:{-2.4f,0.0f,1.7f})for(float height:{.7f,1.65f}) {
+		XrLayout prefs;XrSurface surfaces[3],menu;XrPosef anchor={{0,0,0,1},{0,0,0}};
+		XrView eyes[2]={};for(auto &eye:eyes)eye.pose={xrAxisAngle({0,1,0},yaw),{2,height,-3}};
+		prefs.gamePlacementPending=true;
+		check(!xrPlaceWorkspaceForGame(prefs,surfaces,anchor,menu,eyes,false));
+		check(prefs.gamePlacementPending);
+		check(xrPlaceWorkspaceForGame(prefs,surfaces,anchor,menu,eyes,true));
+		const auto before=surfaces[1];
+		near(before.pose.position.y,height-.54f);
+		const auto relative=xrPoseMul(xrPoseInverse(anchor),surfaces[2].pose);
+		near(relative.position.z,-1.18f);near(relative.position.y,-.38f);
+		for(auto &eye:eyes)eye.pose.position.y+=.5f;
+		check(!xrPlaceWorkspaceForGame(prefs,surfaces,anchor,menu,eyes,true));
+		near(surfaces[1].pose.position.y,before.pose.position.y);
+		prefs.sessionPlacementChosen=true;prefs.gamePlacementPending=true;
+		check(!xrPlaceWorkspaceForGame(prefs,surfaces,anchor,menu,eyes,true));
+		near(surfaces[1].pose.position.y,before.pose.position.y);
+		// Recenter is rigid: board/build separation, tilt and scale survive.
+		const auto local=xrPoseMul(xrPoseInverse(surfaces[1].pose),surfaces[2].pose);
+		xrRecenterWorkspace(surfaces,anchor,menu,eyes);
+		const auto after=xrPoseMul(xrPoseInverse(surfaces[1].pose),surfaces[2].pose);
+		near(xrLength(xrSub(local.position,after.position)),0);
+		near(local.orientation.x,after.orientation.x);near(surfaces[2].width,1.8f);
+	}
 	for(auto chosen:{XrLanguage::German,XrLanguage::English})for(int system:{0,1}) {
 		XrLayout saved;saved.language=chosen;saved.initializeLanguage(true,system);check(saved.language==chosen);
 		saved.initializeLanguage(false,system);check(saved.language==(system==0 ? XrLanguage::German:XrLanguage::English));

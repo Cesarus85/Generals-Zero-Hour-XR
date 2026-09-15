@@ -110,6 +110,13 @@ remain saved, but spatial sizes and poses from another room are not applied
 automatically. A surface or manual arrangement confirmed during the current
 session remains in use until the app is closed.
 
+If you have not chosen or adjusted a play space in this session, entering a
+match aligns the default workspace once to your current position and heading.
+It then stays put when you look, lean or walk around. During gameplay, **X**
+brings the board and its companion windows in front of you together, preserving
+their relative arrangement and sizes. Tracking loss suspends pointing/grabbing;
+release the controls before continuing after tracking returns.
+
 Open `UI -> Windows` to choose **Table** or **Build window** as the editing
 target. An orange outline and check mark identify the selected object. One Grip
 moves and tilts it; both Grips scale it uniformly. With no Grip held, the

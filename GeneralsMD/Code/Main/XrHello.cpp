@@ -196,6 +196,7 @@ static bool loadGlProcs()
 #include "XrMath.h"
 #include "XrControls.h"
 #include "XrLayout.h"
+#include "XrTracking.h"
 #include "XrDiorama.h"
 #include "XrMenu.h"
 #include "XrCommands.h"
@@ -403,7 +404,7 @@ struct XrHello {
 	XrPointerRoute pointerRoute;
 	XrBuildRotation buildRotation;
 	XrScene scene; jobject activityRef=nullptr;
-	XrReferenceChanges referenceChanges;bool roomPoseLost=false;
+	XrReferenceChanges referenceChanges;bool roomPoseLost=false,headTrackingLost=false;
 	GLuint sceneTexture=0;std::string sceneKey;
 	JNIEnv *panelEnv=nullptr;jclass panelPainter=nullptr;
 	XrMenuState menu;XrCommandState commands;float worldZoom=1.0f;bool startViewApplied=false;
@@ -978,6 +979,31 @@ static void xrSceneMenuText(const XrHello &,std::string &,char *,size_t);
 #include "XrInteraction.h"
 #include "XrSceneUI.h"
 
+// GeneralsX @bugfix Codex 15/09/2026 Movies and gameplay consume origin changes
+// before rendering with current eye poses, exactly once through the same path.
+static void applyWorkspaceReference(XrHello &x,const XrView *views,XrTime time) {
+	if(!x.anchorKnown)x.referenceChanges.adoptCurrentOrigin(time);
+	placePanel(x,views);
+	const int rebase=x.referenceChanges.apply(time,x.surfaces,x.layoutAnchor,x.menu.surface);
+	if(!rebase)return;
+	x.grab.cancel();x.controlsArmed=false;x.inputArmed=false;x.buildRotation={};
+	x.menu.click.cancel();x.commands.input.click.cancel();XrGameBoot_CancelTarget();
+	updateControls(x,XrControllerState{},time);
+	if(x.scene.placing){x.scene.cancel();x.menu.open=true;x.menu.page=5;}
+	if(rebase==2) {
+		x.roomPoseLost=true;x.scene.step=XrScene::Step::Choice;
+		x.layoutAnchor=xrWorkspaceHeading(views);
+		x.menu.surface.pose=xrPoseMul(x.layoutAnchor,{{0,0,0,1},{0,-.16f,-.9f}});
+		x.menu.surface.width=.64f;x.menu.open=true;x.menu.page=5;
+		// The upright movie/shell surface is also unsafe after an unknown origin.
+		// Recover it in front of the user while the tabletop awaits confirmation.
+		const XrLayout defaults;x.surfaces[0]=defaults.relative[0];
+		x.surfaces[0].pose=xrPoseMul(x.layoutAnchor,x.surfaces[0].pose);
+	}
+	placePanel(x,views);
+	XR_LOG("P20.2 reference change applied result=%d movie=%d",rebase,int(x.loadingPresentation));
+}
+
 
 static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fov)
 {
@@ -1262,13 +1288,12 @@ struct XrLoadingPresenter {
 			locate.displayTime=state.predictedDisplayTime;locate.space=x.localSpace;
 			XrViewState viewState={XR_TYPE_VIEW_STATE,nullptr};uint32_t viewCount=0;
 			const auto located=xrLocateViews(x.session,&locate,&viewState,2,&viewCount,views);
-			const auto valid=XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT;
-			if(!XR_SUCCEEDED(located) || viewCount!=2 || (viewState.viewStateFlags & valid)!=valid)return true;
+			if(!XR_SUCCEEDED(located) || viewCount!=2 || !xrTrackedViews(viewState.viewStateFlags))return true;
 			// GeneralsX @bugfix Codex 14/09/2026 Nested movie frames also respect
 			// P17 completeness; a fresh movie Present clears a prior recovery card.
 			x.recoveryVisible=XrGameBoot_GameTexture()==0;
 			if(x.recoveryVisible) {d3d8gles_RequireXRFullWorld();updateMenuTextures(x,state.predictedDisplayTime);}
-			placePanel(x,views);
+			applyWorkspaceReference(x,views,state.predictedDisplayTime);
 			bool drawn=true;
 			for(int eye=0;eye<2 && drawn;++eye)drawn=renderEye(x,eye,views[eye].pose,views[eye].fov);
 			d3d8gles_InvalidateCachedState();
@@ -1374,9 +1399,9 @@ static void runLoop(XrHello &x)
 			x.lastLocateResult = xrLocateViews(x.session, &locateInfo, &viewState,
 				2, &viewCount, views);
 			x.lastViewCount = viewCount;
-			const XrViewStateFlags validPose = XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT;
-			if (XR_SUCCEEDED(x.lastLocateResult) && viewCount == 2 &&
-			    (viewState.viewStateFlags & validPose) == validPose) {
+				if (XR_SUCCEEDED(x.lastLocateResult) && viewCount == 2 &&
+				    xrTrackedViews(viewState.viewStateFlags)) {
+					if(x.headTrackingLost){XR_LOG("P20.2 head tracking recovered; workspace retained");x.headTrackingLost=false;}
 				if (x.gameBooted) {
 					const bool interactiveGame = XrGameBoot_IsInteractiveGame();
 					// Never obscure a match started by any asynchronous shell transition.
@@ -1385,6 +1410,7 @@ static void runLoop(XrHello &x)
 					if (!x.presentationKnown || interactiveGame != x.interactiveGame) {
 						x.presentationKnown = true;
 						x.interactiveGame = interactiveGame;
+						x.layout.gamePlacementPending=interactiveGame;
 						x.startViewApplied=false;
 						x.commands.groupOperation=0;x.commands.input.click.cancel();
 						saveLayout(x);
@@ -1402,28 +1428,12 @@ static void runLoop(XrHello &x)
 						x.grab.cancel(); x.arranging=false; x.controlsArmed=false; x.inputArmed=false;
 						XR_LOG("P5 presentation -> %s",split ? "world + detached UI":"composed fallback");
 					}
-					if(!x.anchorKnown)x.referenceChanges.adoptCurrentOrigin(frameState.predictedDisplayTime);
-					placePanel(x, views);
-					// GeneralsX @bugfix Codex 14/09/2026 Apply before placement,
-					// game rays and rendering, including while a wizard is modal.
-					const int rebase=x.referenceChanges.apply(frameState.predictedDisplayTime,
-						x.surfaces,x.layoutAnchor,x.menu.surface);
-					if(rebase) {
-						x.grab.cancel();x.controlsArmed=false;x.inputArmed=false;x.buildRotation={};
-						x.menu.click.cancel();x.commands.input.click.cancel();XrGameBoot_CancelTarget();
-						updateControls(x,XrControllerState{},frameState.predictedDisplayTime);
-						if(x.scene.placing){x.scene.cancel();x.menu.open=true;x.menu.page=5;}
-						if(rebase==2) {
-							// No valid old/new transform: do not pretend the old room
-							// coordinates are still trustworthy. Only recovery UI follows head.
-							x.roomPoseLost=true;x.scene.step=XrScene::Step::Choice;
-							float fx=0,fz=-1;yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
-							x.layoutAnchor={xrAxisAngle({0,1,0},atan2f(-fx,-fz)),
-								xrScale(xrAdd(views[0].pose.position,views[1].pose.position),.5f)};
-							x.menu.surface.pose=xrPoseMul(x.layoutAnchor,{{0,0,0,1},{0,-.16f,-.9f}});
-							x.menu.surface.width=.64f;x.menu.open=true;x.menu.page=5;
-						}
-						XR_LOG("P19.1 reference change applied result=%d",rebase);
+					applyWorkspaceReference(x,views,frameState.predictedDisplayTime);
+					if(xrPlaceWorkspaceForGame(x.layout,x.surfaces,x.layoutAnchor,x.menu.surface,views,
+						x.state==XR_SESSION_STATE_FOCUSED && !x.roomPoseLost && !x.scene.placing && XrGameBoot_CanAdjustWorld())) {
+						x.menu.open=false;x.controlsArmed=false;x.inputArmed=false;x.grab.cancel();
+						placePanel(x,views);
+						XR_LOG("P20.2 fresh match workspace placed at current tracked heading");
 					}
 					// P12.1 Remember intent before the first capture. Cinematic
 					// policy controls actual rendering, not the stored view choice.
@@ -1524,6 +1534,9 @@ static void runLoop(XrHello &x)
 					layerCount = layerBase + 1;
 				}
 			} else if (x.gameBooted) {
+				if(!x.headTrackingLost)XR_LOG("P20.2 head tracking lost flags=%llu; input suspended",(unsigned long long)viewState.viewStateFlags);
+				x.headTrackingLost=true;XrGameBoot_CancelTarget();x.buildRotation={};
+				x.menu.click.cancel();x.commands.input.click.cancel();x.inputArmed=false;
 				x.performance.invalidate();
 				updateControls(x,XrControllerState{},frameState.predictedDisplayTime);
 				x.grab.cancel(); x.controlsArmed=false; x.previousInputTime=0;
