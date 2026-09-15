@@ -53,14 +53,16 @@ the detailed narrative and command transcripts out of this dashboard.
 | Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | Implemented on `claude/p21-ui-command-windows`; all host tests pass; worn-headset acceptance open |
 | Build window | Original production/build UI detached above the tabletop and independently movable, scalable and tiltable | User accepted current arrangement and interaction |
 | Localization | XR interface and help support German and English; initial choice follows German OS, otherwise English | Resource/host checks pass in both languages, including long German labels with shrink-to-fit rendering; device use remains a physical gate |
-| Play-space setup | Optional free board, detected table/floor and manual-height workflows; no required room binding | P19.1 user accepted as working; recognition depends on Meta room data |
+| Play-space setup | Optional free board, detected table/floor and manual-height workflows; no required room binding; unanchored launches use safe HMD-relative geometry | P19.1 user accepted; P20 source/host validation complete, renewed headset acceptance open |
 | Game-data setup | Guided Steam or installed/extracted CD/ISO folder import with validation; raw images/installers are not extracted | Host and Quest instrumentation pass; real Steam-based use confirmed |
 | Returning launch | Saved valid data is checked inside the XR Activity; setup opens only when data is missing or invalid | Device launch verified; final visual no-flash confirmation remains a physical gate |
 | Performance defaults | Balanced resolution, light shadows, Multiview preferred, redundant extra world copy omitted automatically | Reported as relatively smooth and playable; no universal FPS guarantee |
 
 ## Current visual and interaction defaults
 
-- A fresh compatible layout starts in tabletop mode.
+- Every XR process starts in a safe, free-standing tabletop arrangement relative
+  to the first valid HMD pose. Spatial geometry from a previous room is ignored;
+  non-spatial preferences remain saved.
 - Board width: 1.65 m in the photo-inspired default layout.
 - Detached build window: 1.8 m wide, above and behind the far board edge, with
   free tilt retained after release.
@@ -75,28 +77,34 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Last reproducible device artifact
 
-The newest local Quest artifact containing the silent returning-launch fix is:
+The newest installed local Quest candidate combines P21, P20 and PR #2's
+reproducible DXVK gitlink/CI foundation:
 
 ```text
-build/quest-direct-start/Generals-Zero-Hour-XR.apk
-SHA-256 1c6ed6f5e53b57613c7457d705900a5c4f9f32942fbe5f7639ac21e3351afaf9
+version 1.2.4-p20-test (10204)
+integration commit d4d441f
+build/apk/Generals-Zero-Hour-XR.apk
+SHA-256 85b95f302eaf16de4489ab267c6aad0fc31d0fae093386a22731b269adbe06a1
 ```
 
-Both XR and ordinary Android debug packages built and verified. Twenty-one host
-game-data checks and twenty-one Quest instrumentation checks passed. Installation
-used `adb install -r` without clearing user data. The native game library is
-unchanged from the accepted gameplay/graphics baseline. See
-`build/quest-direct-start/validation.md` in the development checkout; generated
-build evidence is not part of the source repository.
+The XR APK built, its v2 signature and packaged native dependency closure pass,
+and installation on Quest 3 `2G0YC5ZG9609PY` used `adb install -r` without
+clearing user data. Horizon intercepted the automated cold launch because the
+controllers were asleep; P20's visible startup arrangement therefore remains a
+worn-headset gate. The integration commit is local-only and must not replace the
+PR branches as source authority.
 
 ## Immediate implementation queue
 
 ### P20 - safe fresh placement
 
-If no play surface is confirmed for the current session, start with the board
-and build window comfortably in front of the player instead of blindly applying
-a world-relative pose saved in another room. Preserve the saved arrangement as
-a recoverable preference; this is a safe session fallback, not a data reset.
+Implemented on the P21 follow-up branch after headset review. Each new XR
+process discards unanchored spatial poses and starts with the complete compact
+photo arrangement in front of the first valid HMD pose: 1.65 m board, angled
+build window behind it and gravity-upright Commands window on the left. Language,
+graphics, handedness and map-coverage preferences still load from disk. Explicit
+surface/manual placement and free adjustment remain valid for the current app
+session. Focused host validation passes; renewed worn-headset acceptance is open.
 
 ### P20.1 - thinner tabletop underbody
 
@@ -115,8 +123,10 @@ Generals-inspired interface without changing command semantics. The complete
 delegation contract is `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md`.
 
 Implementation (2026-09-15, `claude/p21-ui-command-windows`) is complete and
-host-verified; CI APK builds and worn-headset acceptance remain open. No P20,
-P20.1 or P22 changes are included.
+host-verified; the visual redesign was accepted in the headset. P20 was then
+added as a focused startup-safety follow-up on the same unmerged branch. CI APK
+builds and P20 worn-headset acceptance remain open. No P20.1 or P22 changes are
+included.
 
 ### P22 - keyboard and mouse investigation
 

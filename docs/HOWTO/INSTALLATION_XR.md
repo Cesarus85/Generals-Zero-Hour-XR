@@ -102,10 +102,13 @@ of these paths:
    desired position and confirm a second time.
 
 Surface detection is optional, session-based placement, not a permanent
-furniture anchor. The current preview can restore the last confirmed layout. A
-future XR milestone will use a safe fallback directly in front of the player
-when a new room has no saved surface; until then, use **Set up play space** if
-the restored layout is inconvenient.
+furniture anchor. Each XR app session therefore starts with a compact free-standing
+tabletop arrangement in front of the current viewing direction: the board is
+horizontal, the build window is tilted behind it, and the Commands window is
+upright on the left. Language, graphics, handedness and map-coverage preferences
+remain saved, but spatial sizes and poses from another room are not applied
+automatically. A surface or manual arrangement confirmed during the current
+session remains in use until the app is closed.
 
 Open `UI -> Windows` to choose **Table** or **Build window** as the editing
 target. An orange outline and check mark identify the selected object. One Grip

@@ -1705,10 +1705,15 @@ Java_com_generalsx_zerohour_XrHelloActivity_runHello(JNIEnv *env, jclass, jobjec
 		if(!restored) restored=x.layout.load(XrGameBoot_LegacyLayoutPath());
 		x.layout.initializeLanguage(restored,initialLanguage);
 		// Versioned requested adjustments run once, retaining other custom choices.
-		x.layoutDirty=x.layout.upgradeDefaults() || !restored;
+		const bool upgraded=x.layout.upgradeDefaults();
+		// P20: room surfaces are session-owned and there is no persistent spatial
+		// anchor. Restore preferences, never yesterday's room-relative geometry.
+		// placePanel() composes this safe arrangement with the first valid HMD pose.
+		x.layout.applyFreeStandingStart();
+		x.layoutDirty=upgraded || !restored;
 		g_xrLanguage=x.layout.language;
 		x.worldZoom=x.layout.worldZoom;
-		XR_LOG("P8 display: on-demand UI workspace menu; compact command band; layout=%s",restored ? "restored/migrated":"defaults");
+		XR_LOG("P20 display: free-standing session geometry; preferences=%s",restored ? "restored/migrated":"defaults");
 		if (x.gameBooted && !buildQuadResources(x)) {
 			XR_LOGE("quad build failed, shutting engine down for triangle fallback");
 			XrGameBoot_Shutdown();

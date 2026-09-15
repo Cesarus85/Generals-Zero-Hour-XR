@@ -4001,11 +4001,22 @@ unsafe or unusable while travelling. Mark this as a new-session fallback, not
 as a deletion of the saved arrangement. Once the player confirms or manually
 adjusts the fresh layout, normal per-session save/restore may resume.
 
-Acceptance: clear the surface/session marker, launch in a new room and verify
-board + build window are visible, reachable and independently adjustable;
-relaunch in the same room to verify that an explicitly confirmed layout still
-restores. A denied scene permission and a tracking-loss path must fall back to
-the same safe front-of-player placement without crashing or issuing orders.
+Acceptance: save an intentionally oversized/off-axis arrangement, terminate the
+XR process, and relaunch in the same or another room. Board, build window and
+Commands window must use the compact front-of-player preset while language,
+graphics, handedness and map-coverage preferences remain unchanged. A surface
+or manual/free arrangement confirmed in the new process must survive shell to
+Skirmish/campaign transitions. Denied scene permission and tracking loss must
+fall back safely without crashing or issuing orders.
+
+Implementation note (2026-09-15): because this port intentionally owns no
+persistent room anchor or stable room identity, it cannot safely prove that a
+saved pose belongs to the current room after process restart. The implemented
+safe contract therefore restores non-spatial preferences but resets all spatial
+geometry to the photo-inspired free-standing preset for every XR process. An
+explicit surface or manual/free arrangement remains active within that process.
+Host validation is complete; the new startup behavior still requires renewed
+worn-headset acceptance.
 
 ### P20.1 - reduce the tabletop underbody thickness
 

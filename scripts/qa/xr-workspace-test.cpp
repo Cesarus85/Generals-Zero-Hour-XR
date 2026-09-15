@@ -122,6 +122,20 @@ int main(int argc,char **argv) {
 	check(layout.save(argv[1]));XrLayout restored;check(restored.load(argv[1]));check(!restored.upgradeDefaults());
 	near(restored.relative[2].width,1.9f);check(!restored.highQuality && !restored.startStereo && restored.leftHanded);
 	check(restored.language==XrLanguage::English);
+	// P20 startup retains preferences but never trusts room-relative geometry
+	// without a persistent room anchor. All three surfaces must be reachable.
+	XrLayout sessionStart=restored;
+	sessionStart.relative[0].pose.position={3,2,-4};sessionStart.relative[0].width=2.4f;
+	sessionStart.relative[1].pose.position={-3,1,2};sessionStart.relative[1].width=4.0f;
+	sessionStart.relative[2].pose.position={2,-2,3};sessionStart.relative[2].width=2.5f;
+	sessionStart.worldZoom=.61f;sessionStart.highQuality=true;sessionStart.leftHanded=true;
+	sessionStart.language=XrLanguage::English;sessionStart.commandsVisible=false;sessionStart.startStereo=false;
+	sessionStart.applyFreeStandingStart();
+	near(sessionStart.relative[0].width,1.35f);near(sessionStart.relative[0].pose.position.z,-1.1f);
+	near(sessionStart.relative[1].width,1.65f);near(sessionStart.relative[1].pose.position.y,-.54f);
+	near(sessionStart.relative[2].width,1.8f);near(sessionStart.relative[2].pose.position.z,-1.18f);
+	check(sessionStart.startStereo && sessionStart.commandsVisible && sessionStart.highQuality && sessionStart.leftHanded);
+	check(sessionStart.language==XrLanguage::English);near(sessionStart.worldZoom,.61f);
 	// v7/v8 retain P15 quality migration and receive only the additional UI setback.
 	layout.formatVersion=7;check(layout.upgradeDefaults());near(layout.relative[2].width,1.9f);check(layout.startStereo);
 	// P16.1 preserves the complete current arrangement except the requested UI depth.
