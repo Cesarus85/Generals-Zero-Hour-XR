@@ -225,12 +225,12 @@ jobs:
         id: cache-vcpkg
         uses: actions/cache/restore@v5
         with:
-          # /opt/vcpkg = the tool + ports tree; ~/.cache/vcpkg = the BINARY
-          # cache of already-built packages (what turns the ~45 min
-          # ffmpeg/openssl/curl cross-build into a ~1 min restore).
-          path: |
-            /opt/vcpkg
-            ~/.cache/vcpkg
+          # Cache only vcpkg's binary package archives. Caching /opt/vcpkg as
+          # well duplicates downloads, buildtrees and packages; on a fresh
+          # runner the resulting archive exhausted the disk after a successful
+          # 57-minute dependency build, so no reusable cache was produced.
+          # Bootstrap below reclones the small tool/ports tree when necessary.
+          path: ~/.cache/vcpkg
           key: vcpkg-android-${{ runner.os }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('vcpkg.json', 'vcpkg-lock.json', 'cmake/triplets/arm64-android.cmake') }}
           restore-keys: |
             vcpkg-android-${{ runner.os }}-${{ env.VCPKG_COMMIT }}-
@@ -613,6 +613,14 @@ jobs:
       # Save caches even when the job failed (see the restore steps above for
       # why plain actions/cache can't do this). Guard each save so a run that
       # restored an exact-key hit doesn't fail trying to re-save it.
+      - name: Clean transient vcpkg trees before cache save
+        if: always()
+        run: |
+          # The compiled binary archives in ~/.cache/vcpkg are sufficient for
+          # future restores. These directories belong to this ephemeral runner
+          # and can consume enough space to make actions/cache's tar fail.
+          rm -rf /opt/vcpkg/buildtrees /opt/vcpkg/packages /opt/vcpkg/downloads
+
       - name: Save Android SDK cache
         if: always() && steps.cache-android-sdk.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
@@ -624,9 +632,7 @@ jobs:
         if: always() && steps.cache-vcpkg.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
         with:
-          path: |
-            /opt/vcpkg
-            ~/.cache/vcpkg
+          path: ~/.cache/vcpkg
           key: vcpkg-android-${{ runner.os }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('vcpkg.json', 'vcpkg-lock.json', 'cmake/triplets/arm64-android.cmake') }}
 
       - name: Save DXVK build cache
