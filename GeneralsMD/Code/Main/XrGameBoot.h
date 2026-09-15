@@ -34,6 +34,9 @@ void XrGameBoot_TacticalGroup(int group,int operation); // recall, save, add, ce
 void XrGameBoot_SpatialTrigger(bool down,bool available,bool additive);
 std::string XrGameBoot_TacticalStatus();
 std::string XrGameBoot_TacticalHint();
+// GeneralsX @feature Ultron 15/09/2026 P21 read-only panel state: armed
+// order mode, current group and waypoint queue for persistent button states.
+void XrGameBoot_TacticalState(int &mode,int &group,bool &queue);
 int XrGameBoot_GroupSize(int group);
 void XrGameBoot_Communicator();
 void XrGameBoot_SetLanguage(int language);

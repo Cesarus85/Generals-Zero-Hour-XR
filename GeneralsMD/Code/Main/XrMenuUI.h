@@ -124,7 +124,7 @@ static bool updateXrMenu(XrHello &x,const XrControllerState &c,const XrView *vie
 		const auto point=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{(u-.5f)*s.width,(v-.5f)*s.width*aspect,0}));
 		const float distance=xrLength(xrSub(point,c.aim.position));
 		if(distance<nearest) {nearest=distance;endpoint=point;hit=piece==0 ? 100:
-			(x.menu.page==4 ? xrCommandHit(u,v,true):x.menu.page==5 ? xrSceneMenuHit(u,v):xrMenuHit(u,v));}
+			(x.menu.page==4 ? xrCommandHit(u,v,true):x.menu.page==5 ? xrSceneMenuHit(u,v):xrMenuHit(u,v,x.menu.page));}
 	}
 	const bool captured=x.menu.open || hit==100;
 	const bool fire=x.menu.update(c.select,hit,tracked);x.menu.hover=hit;

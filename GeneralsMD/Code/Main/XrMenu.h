@@ -3,8 +3,8 @@
 #include "XrLayers.h"
 #include "XrPlacement.h"
 #include "XrControllerHelp.h"
-constexpr int kXrMenuWidth=768,kXrMenuHeight=1024;
-constexpr int kXrMenuRows=9,kXrMenuButtons=18;
+#include "XrPanelLayout.h"
+constexpr int kXrMenuWidth=kXrPanelWidth,kXrMenuHeight=kXrPanelHeight;
 // GeneralsX @feature Codex 14/09/2026 Dedicated sequential setup, no inert tabs.
 inline int xrSceneMenuHit(float u,float v) {
 	if(!std::isfinite(u) || !std::isfinite(v))return -1;
@@ -15,17 +15,12 @@ inline int xrSceneMenuHit(float u,float v) {
 	const int row=int((y-300)/82);
 	return y<300+row*82+68 ? row:-1;
 }
-inline int xrMenuHit(float u,float v) {
-	if(!std::isfinite(u) || !std::isfinite(v)) return -1;
-	const float x=u*kXrMenuWidth,y=(1-v)*kXrMenuHeight;
-	if(x>=664 && x<736 && y>=18 && y<54)return 24; // Controller guide.
-	if(y>=108 && y<146 && x>=32 && x<734) {
-		const int tab=int((x-32)/178);return x<32+tab*178+168 ? 20+tab:-1;
-	}
-	if(x<32 || x>=736 || y<160 || y>=970) return -1;
-	const int row=int((y-160)/90),column=x>=392 ? 1:0;
-	if((column==0 && x>=376) || y>=160+row*90+72) return -1;
-	return row*2+column;
+// GeneralsX @refactor Ultron 15/09/2026 P21 menu hit testing reads the
+// single shared control table for the active page (XrPanelLayout.h).
+inline int xrMenuHit(float u,float v,int page=0) {
+	XrPanelControl table[80];
+	const int count=xrMenuLayout(page,table,80);
+	return xrPanelHit(table,count,u,v,kXrMenuHeight);
 }
 struct XrMenuState {
 	bool open=false;int hover=-1,pressed=-1,target=1,page=0,helpPage=0;

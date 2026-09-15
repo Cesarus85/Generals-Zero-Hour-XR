@@ -1019,6 +1019,9 @@ std::string XrGameBoot_TacticalHint() {
 	if(*s_groupNotice)return xrTr(s_groupNotice);
 	return xrTr(xrOrderHint(s_tactics.mode,TheInGameUI ? TheInGameUI->getSelectCount():0));
 }
+void XrGameBoot_TacticalState(int &mode,int &group,bool &queue) {
+	mode=int(s_tactics.mode);group=s_tactics.group;queue=s_tactics.queue;
+}
 
 static std::string xrText(const UnicodeString &s) {
 	char *bytes=SDL_iconv_string("UTF-8","WCHAR_T",reinterpret_cast<const char *>(s.str()),(s.getLength()+1)*sizeof(WideChar));

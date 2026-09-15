@@ -48,8 +48,8 @@ int main(){
 	check(x.commands.tactics && xrCommandHeight(x.commands)==1280);
 	const auto expandedConsole=commandSurface(x);
 	check(fabsf(compact.pose.position.y+.72f*1024/1536-(expandedConsole.pose.position.y+.72f*1280/1536))<.0001f);
-	for(int id=0;id<4;++id)check(xrCommandHit(((id%2 ? 392:32)+100)/768.0f,1-(1024+id/2*64+28)/1280.0f,false,true)==40+id);
-	for(int id=0;id<4;++id)check(xrCommandHit((32+id*178+80)/768.0f,1-1188.0f/1280,false,true)==44+id);
+	for(int id=0;id<4;++id)check(xrCommandHit((id%2 ? 564:204)/768.0f,1-(1074+id/2*68)/1280.0f,false,true)==40+id);
+	for(int id=0;id<4;++id)check(xrCommandHit((116+id*179)/768.0f,1-1242.0f/1280,false,true)==44+id);
 	applyCommandAction(x,43);applyCommandAction(x,46);check(bookmark==2 && bookmarkSave && !x.commands.bookmarkSave);
 	applyCommandAction(x,44);check(bookmark==0 && !bookmarkSave);
 	for(int id=40;id<43;++id){applyCommandAction(x,id);check(tactic==id && x.stereoWorld);}
@@ -176,23 +176,32 @@ int main(){
 	applyCommandAction(x,34);check(!x.commands.help);
 	applyCommandAction(x,35);check(communicator==1);
 	locked=true;applyCommandAction(x,35);check(communicator==1);locked=false;
-	for(int id=0;id<16;++id)check(xrCommandHit(((id%2 ? 392:32)+100)/768.0f,1-(144+id/2*64+28)/1024.0f)==id);
-	for(int id=0;id<10;++id)check(xrCommandHit((32+id%5*142+67)/768.0f,1-(704+id/5*64+28)/1024.0f)==20+id);
-	for(int id=0;id<3;++id)check(xrCommandHit((32+id*238+100)/768.0f,1-880/1024.0f)==30+id);
-	check(xrCommandHit(700.0f/768,1-60.0f/1024)==33);
-	check(xrCommandHit(.5f,.5f)==-1);check(xrCommandHit(.1f,.99f)==-1);
+	// GeneralsX @test Ultron 15/09/2026 P21 redesigned console: assert each
+	// direct order at its new shared-table rect center (XrPanelLayout.h).
+	const int cx[16]={564,204,564,204,564,144,384,144,204,624,264,144,384,384,624,624};
+	const int cy[16]={406,254,254,330,330,514,514,582,406,650,718,650,650,582,582,514};
+	for(int id=0;id<16;++id)check(xrCommandHit(cx[id]/768.0f,1-cy[id]/1024.0f)==id);
+	for(int id=0;id<10;++id)check(xrCommandHit((64+id*71)/768.0f,1-816.0f/1024.0f)==20+id);
+	for(int id=0;id<3;++id)check(xrCommandHit((144+id*240)/768.0f,1-876.0f/1024.0f)==30+id);
+	check(xrCommandHit(700.0f/768,1-50.0f/1024)==33);
+	check(xrCommandHit(264.0f/768,1-514.0f/1024)==-1);check(xrCommandHit(.5f,1-470.0f/1024)==-1);check(xrCommandHit(.1f,.99f)==-1);
 	// Nonmodal: a ray outside the panel is free; background is captured.
 	x.surfaces[2].pose={{0,0,0,1},{0,0,-1}};c={};c.aim.position={5,0,0};
 	check(!updateCommands(x,c,100));
-	const auto fixed=commandSurface(x);c.aim.position={fixed.pose.position.x,fixed.pose.position.y,0};
-	check(updateCommands(x,c,101)); // column gutter
+	const auto fixed=commandSurface(x);
+	// GeneralsX @test Ultron 15/09/2026 P21 the console center is a real
+	// button in the new layout; the no-dispatch contract moves to a true
+	// gutter between the selection buttons (canvas x=264, y=514).
+	const auto gutter=xrAdd(fixed.pose.position,xrRotate(fixed.pose.orientation,{(264.0f/768-.5f)*fixed.width,(.5f-514.0f/1024)*fixed.width*1024/768,0}));
+	c.aim.position={gutter.x,gutter.y,0};
+	check(updateCommands(x,c,101)); // panel gutter
 	c.select=true;check(updateCommands(x,c,102));c.select=false;check(updateCommands(x,c,103));check(tactic==previous);
 	applyCommandAction(x,33);check(!x.layout.commandsVisible);
 	check(!updateCommands(x,c,104));
 	x.layout.commandsVisible=true;c.back=true;check(!updateCommands(x,c,105));c.back=false;
 	// A world-origin press must never activate a console button on release.
 	c.aim.position={5,0,0};updateCommands(x,c,106);c.select=true;updateCommands(x,c,107);
-	const auto target=xrAdd(fixed.pose.position,xrRotate(fixed.pose.orientation,{(132.0f/768-.5f)*fixed.width,(.5f-172.0f/1024)*fixed.width*1024/768,0}));
+	const auto target=xrAdd(fixed.pose.position,xrRotate(fixed.pose.orientation,{(564.0f/768-.5f)*fixed.width,(.5f-406.0f/1024)*fixed.width*1024/768,0}));
 	c.aim.position={target.x,target.y,0};updateCommands(x,c,108);c.select=false;updateCommands(x,c,109);check(tactic==previous);
 	// A fresh click now reaches precisely command zero.
 	updateCommands(x,c,110);c.select=true;updateCommands(x,c,111);c.select=false;updateCommands(x,c,112);check(tactic==0);

@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-14  
+**Updated:** 2026-09-15  
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`
@@ -49,10 +49,10 @@ the detailed narrative and command transcripts out of this dashboard.
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
 | View model | Gameplay is tabletop-only; videos and full native dialogs use an upright presentation | Implemented and exercised, not every campaign transition exhaustively tested |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
-| Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help | Functional; visual and information-design redesign is P21 |
-| Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup | Functional; visual and information-design redesign is P21 |
+| Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | Implemented on `claude/p21-ui-command-windows`; all host tests pass; worn-headset acceptance open |
+| Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | Implemented on `claude/p21-ui-command-windows`; all host tests pass; worn-headset acceptance open |
 | Build window | Original production/build UI detached above the tabletop and independently movable, scalable and tiltable | User accepted current arrangement and interaction |
-| Localization | XR interface and help support German and English; initial choice follows German OS, otherwise English | Resource/host checks plus device use; long-label layout remains part of P21 |
+| Localization | XR interface and help support German and English; initial choice follows German OS, otherwise English | Resource/host checks pass in both languages, including long German labels with shrink-to-fit rendering; device use remains a physical gate |
 | Play-space setup | Optional free board, detected table/floor and manual-height workflows; no required room binding | P19.1 user accepted as working; recognition depends on Meta room data |
 | Game-data setup | Guided Steam or installed/extracted CD/ISO folder import with validation; raw images/installers are not extracted | Host and Quest instrumentation pass; real Steam-based use confirmed |
 | Returning launch | Saved valid data is checked inside the XR Activity; setup opens only when data is missing or invalid | Device launch verified; final visual no-flash confirmation remains a physical gate |
@@ -114,6 +114,10 @@ Rework both spatial windows into a coherent, attractive and quickly readable
 Generals-inspired interface without changing command semantics. The complete
 delegation contract is `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md`.
 
+Implementation (2026-09-15, `claude/p21-ui-command-windows`) is complete and
+host-verified; CI APK builds and worn-headset acceptance remain open. No P20,
+P20.1 or P22 changes are included.
+
 ### P22 - keyboard and mouse investigation
 
 Audit Quest Bluetooth/USB keyboard and mouse behavior as a secondary input path.
@@ -132,12 +136,14 @@ slice. P20-P22 must not change simulation commands or wire formats casually.
 
 | File | Responsibility |
 |---|---|
-| `android/app/src/main/java/com/generalsx/zerohour/XrPanelPainter.java` | Android Canvas artwork, typography, buttons and panel pixels |
-| `GeneralsMD/Code/Main/XrMenuPainting.h` | Dynamic UI/Commands text, status, labels and texture invalidation keys |
+| `android/app/src/main/java/com/generalsx/zerohour/XrPanelPainter.java` | Android Canvas artwork, typography, buttons and panel pixels; `paint2` renders primitives from the shared native control table and owns no geometry |
+| `GeneralsMD/Code/Main/XrPanelLayout.h` | Single layout source: control tables, roles/states, shared hit test, JNI packing (new in P21) |
+| `GeneralsMD/Code/Main/XrMenuPainting.h` | Dynamic UI/Commands text, status, labels, per-control states and texture invalidation keys |
 | `GeneralsMD/Code/Main/XrMenu.h` | Workspace panel dimensions and hit geometry |
 | `GeneralsMD/Code/Main/XrMenuUI.h` | Workspace-menu routing, placement and actions |
 | `GeneralsMD/Code/Main/XrCommands.h` | Commands panel dimensions, hit geometry and action mapping |
 | `GeneralsMD/Code/Main/XrCommandUI.h` | Commands placement, visibility and input dispatch |
+| `GeneralsMD/Code/Main/XrGameBoot.h` / `XrGameBoot.cpp` | Unchanged command semantics plus read-only `XrGameBoot_TacticalState` for persistent panel states |
 | `GeneralsMD/Code/Main/XrStrings.h` | German/English XR strings |
 | `GeneralsMD/Code/Main/XrControllerHelp.h` | Controller and command guidance |
 | `GeneralsMD/Code/Main/XrHello.cpp` | Panel texture upload and rendering integration |
@@ -166,7 +172,10 @@ slice. P20-P22 must not change simulation commands or wire formats casually.
   Do not change the accepted Balanced/light-shadow defaults without same-scene
   device evidence.
 - Canvas pixels, panel render geometry and ray hit geometry are separate pieces
-  of code. P21 is incomplete unless all three stay aligned.
+  of code. P21 is incomplete unless all three stay aligned. Since the P21
+  implementation, one shared native control table (`XrPanelLayout.h`) drives
+  Canvas pixels (via `paint2`), UV hit regions and state rendering, so the
+  three can no longer drift apart silently.
 - The user's room photographs are useful visual references but contain private
   surroundings. Do not add them to GitHub. Use cropped/redacted panel captures
   or synthetic Canvas fixtures for a pull request.
