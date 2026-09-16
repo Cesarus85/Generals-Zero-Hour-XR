@@ -28,18 +28,18 @@ The **supported preview path is offline play**. Human LAN/Internet multiplayer, 
 
 ## Get the tested offline APK
 
-The currently downloadable offline candidate is [P23: command and Ultra+ preview](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/xr-preview-2026-09-16-p23). Download its [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/xr-preview-2026-09-16-p23/Generals-Zero-Hour-XR.apk) asset, not a diagnostic APK from the LAN branch. This older asset is a debug-signed development preview. A separately signed, non-debuggable replacement is in local validation and is **not yet published**; see [release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md).
+Download the release-signed [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.15-xr-preview/Generals-Zero-Hour-XR.apk) from the [1.2.15 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.15-xr-preview). This is the tested offline build, not an experimental LAN diagnostic APK or an older debug-signed preview. The repository and release are private until the maintainer explicitly decides to make them public; the links require repository access meanwhile.
 
-- APK SHA-256: `978c627e276ab1627d014f68a8e1ad436ecaae215e8946ef900e5b999077273f`
+- APK SHA-256: `bafff443d77e7b9e925a73fcf16b5bf7234c54f256e2cb7fa0f95d1aad008d2b`
 - Android package: `com.generalsx.zerohour.xr` (retained for update compatibility)
-- Android versionCode: `10209`; the inherited versionName is `1.2.9-p20.1-thin-underbody` even though this tagged asset includes P23.
+- Android versionCode: `10215`; versionName: `1.2.15-xr-preview`.
 
-GitHub currently marks the older 1.2.8 preview as “Latest” because P23 is a prerelease. The explicit P23 link above is intentional. A final public release has **not** been published from this preparation work.
+The earlier P23 and 1.2.8 downloads are historical debug-signed development builds. Use the exact release link above rather than an older asset or a copied APK from the LAN branch. See [release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md) for verification and remaining public-release gates.
 
 ## Install and play
 
 1. Supply your own legally obtained, complete *Generals* **and** *Zero Hour* installation. The APK/repository contains no retail `.big` archives, maps, videos or other game data. See [which files to copy](docs/HOWTO/GETTING_THE_GAME_FILES.md).
-2. Enable Quest Developer Mode, connect the headset by USB and accept its debugging prompt. With Android platform-tools installed, run `adb devices`, then `adb -s <quest-serial> install -r Generals-Zero-Hour-XR.apk`. The `-r` update keeps the existing app's settings and selected game folders; uninstalling does not. A development Quest already running diagnostic versionCode 10214 cannot use this ordinary update command to roll back to P23's 10209; see the [release-preparation audit](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md).
+2. Enable Quest Developer Mode, connect the headset by USB and accept its debugging prompt. With Android platform-tools installed, run `adb devices`, then `adb -s <quest-serial> install -r Generals-Zero-Hour-XR.apk`. The `-r` update keeps the existing app's settings and selected game folders; uninstalling does not. Updating the maintainer's Quest from diagnostic versionCode 10214 to this release-signed 10215 build was verified; other prior signing lineages have not been tested. See the [release-preparation audit](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md).
 3. Open **Generals: Zero Hour XR** in the Quest app library. On first run, the English/German data assistant guides you through choosing the Zero Hour folder and, if needed, the separate base Generals folder. It accepts complete Steam installs and installed/extracted CD/ISO layouts, not raw ISO images or Windows installers.
 4. Start a campaign or offline Skirmish. The board, build window and Commands window appear in front of you. Use `UI → Set up play space` only if you want to reposition them or choose a detected table/floor.
 

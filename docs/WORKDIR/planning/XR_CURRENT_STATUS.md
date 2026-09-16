@@ -93,7 +93,7 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Release and device baseline
 
-The first public-build preparation is on `codex/xr-release-safe-build`, based
+The first release preparation is on `codex/xr-release-safe-build`, based
 on `main` at `b515e75`. It preserves the offline P23 game engine and adds a
 separate, non-debuggable XR release package path. A privately signed local
 candidate is `1.2.15-xr-preview` (10215), SHA-256
@@ -105,11 +105,14 @@ Quest 3/API 34 without uninstalling; the original first-install timestamp
 remained unchanged. The app is no longer debuggable. A clean ARM64/DXVK native
 source build passes; its packaged `libmain.so` matches the newly built file,
 and the installed APK SHA-256 matches the local final artifact above.
-Worn-headset play of this **exact final hash** is still open. The first launch
-attempt was intercepted by Quest's inactive-controller gate. The user later
-played the first signed repack, but its session was interrupted by our ADB
-installation of the final source-built candidate, not a proven app crash.
-No new GitHub Release has been published; the repository remains private.
+The maintainer confirmed worn-headset Skirmish and Campaign launch with this
+**exact final hash**, with prior settings and game data retained. This is not a
+fresh-import or all-missions test. An earlier session with a preliminary signed
+repack was interrupted by our ADB installation of the final candidate, not a
+proven app crash; avoid installing while the user plays.
+The intended source-matched private release tag is `v1.2.15-xr-preview`;
+the repository remains private. Verify the tag and uploaded asset digest
+against the candidate above before treating the GitHub release as authoritative.
 See the [release audit](../audit/RELEASE_PREPARATION_XR.md) for signing,
 migration, artifact and publication gates. The tracked development key remains
 for debug builds and old-signature lineage only.
@@ -315,10 +318,12 @@ scene shows a regression.
 
 The first offline release preparation is documented in
 [`RELEASE_PREPARATION_XR.md`](../audit/RELEASE_PREPARATION_XR.md). The P23
-asset/tag remains the linked, debug-signed development preview; the 10215
-privately signed candidate is local only. Neither the LAN diagnostic build nor
-the untested 10215 package is a published first release. Exact-artifact
-worn-headset confirmation and the source-rebuild gate remain open.
+asset/tag remains a historical debug-signed development preview; the 10215
+privately signed candidate is the intended private-release checkpoint. Neither
+the LAN diagnostic build nor the now headset-accepted 10215 package alone
+establishes a public release.
+Its clean source-rebuild and installed-hash gates pass; a private release
+checkpoint, signing-key backup and public-visibility review remain separate.
 
 ## P21 key implementation map
 

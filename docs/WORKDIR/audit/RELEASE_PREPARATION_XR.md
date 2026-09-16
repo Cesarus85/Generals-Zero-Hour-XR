@@ -1,7 +1,7 @@
 # First XR release preparation
 
-**Updated:** 2026-09-16 — release-signing and Quest update test
-**Publication state:** A non-debuggable, privately signed local candidate exists. No new GitHub Release or repository visibility change has been made.
+**Updated:** 2026-09-16 — release-signing and final Quest play test
+**Publication state:** A non-debuggable, privately signed candidate is headset-accepted. The intended private release tag is `v1.2.15-xr-preview`; public repository visibility requires a separate decision.
 
 ## Candidate and provenance
 
@@ -18,7 +18,7 @@
 | Debuggability | Manifest has `android:debuggable=true` |
 | Contents | Engine/runtime libraries are present; no retail `.big`, `.scb`, `.map` or `.w3d` game data was found in the APK |
 
-The current GitHub “Latest” pointer still resolves to older `v1.2.8-xr-preview` because P23 is a prerelease. README and Quest installation instructions therefore use an **explicit P23 tag/asset URL**, not `releases/latest`. Do not silently move the pointer or substitute the unpublished LAN 10214 diagnostic APK. The P23 versionName is misleading; correcting it would create a new APK that needs installation and physical validation. For this first candidate, document the discrepancy instead of pretending the binary says P23 internally.
+Before the 1.2.15 release, GitHub's “Latest” pointer resolved to older `v1.2.8-xr-preview` because P23 was a prerelease. README and Quest installation instructions therefore used an **explicit P23 tag/asset URL**, not `releases/latest`. The P23 versionName is misleading; this historical asset must not be substituted for the release-signed 10215 build. The LAN 10214 diagnostic APK was never a supported release candidate.
 
 The P23 release notes report local native/Android build and focused host-test success, plus user-played Quest feedback for commands, waypoints and visual readability. The exact uploaded artifact's device-side hash and a sustained Ultra+ busy-campaign performance capture were **not** supplied. Campaign coverage and device compatibility are incremental rather than universal. The APK has been inspected here, not newly built or freshly worn-headset-tested by this documentation pass.
 
@@ -33,7 +33,7 @@ without it, Quest installation fails with `INSTALL_FAILED_DUPLICATE_PERMISSION`.
 The development CI workflow can no longer publish a debug artifact as a
 GitHub Release.
 
-## Local release-signed candidate (not published)
+## Release-signed candidate
 
 | Item | Verified value |
 |---|---|
@@ -45,6 +45,7 @@ GitHub Release.
 | Native provenance | Clean ARM64/DXVK source build from this `main`-based branch; packaged `libmain.so` SHA-256 `28ac8c653c24b361c2eadf4f802dde2a6d565abf76f9b6e7bc106773380df382` equals the newly built native library |
 | Quest update | `adb install -r` succeeded over diagnostic `10214` on Quest 3/API 34 without uninstalling, then the exact source-built APK update also succeeded; `firstInstallTime` remained `2026-09-16 14:55:36` and `run-as` is rejected because the package is not debuggable |
 | Device-side artifact | Installed `/data/app/.../base.apk` SHA-256 `bafff443d77e7b9e925a73fcf16b5bf7234c54f256e2cb7fa0f95d1aad008d2b`, matching the local file |
+| Worn-headset acceptance | The maintainer confirmed that this installed final build starts Skirmish and Campaign and retains existing settings and game data. This is not a clean-profile first-import or all-missions test. |
 
 The signing key lives outside Git in the maintainer's private user directory;
 its password is in macOS Keychain service `Generals Zero Hour XR Release
@@ -78,7 +79,7 @@ are the platform basis, not a promise of universal migration.
 - [Quest installation and controls](../../HOWTO/INSTALLATION_XR.md) and [game-file sourcing](../../HOWTO/GETTING_THE_GAME_FILES.md) are the user guides. No original game files are distributed.
 - [Multiplayer status](../planning/MULTIPLAYER_STATUS.md) explicitly pauses LAN and records the paired CRC evidence and resumption plan. Experimental LAN code remains on its own branch, outside this candidate.
 
-## Publication gates still open
+## Remaining public gates and validation scope
 
 1. Decide whether this first release will be public; the repository is currently **private**. Review the four passthrough screenshots for visible personal surroundings and audit **all existing debug-signed release assets** before changing visibility. Making the repository public would also expose those older downloads; do not present them as supported public builds.
 2. Preserve a secure backup of the release key **and** Keychain password.
@@ -88,13 +89,16 @@ are the platform basis, not a promise of universal migration.
    source-built replacement was installed while the app was running. That
    interruption was caused by our ADB update, not evidence of a game crash.
    Do not install again during an active play session without asking first.
-3. The clean native source rebuild and exact-device APK hash now pass. Run a
-   worn-headset test of **this final hash**: returning launch with retained
-   game-data selection, one Skirmish, a campaign intro/mission and the
-   Commands/group/waypoint controls. Separately test first-time import with
-   legitimate Steam files on a clean profile/device; do not erase this user's
-   saved data merely to perform that test. Keep all retail data outside Git.
-4. Confirm README/guide links and screenshot rendering on the GitHub default branch after the documentation change is merged. Recheck the source tag, APK asset digest and release notes at publication time.
-5. Choose a user-facing release tag/name and whether to retain the prerelease classification. Publish only the exact verified, privately signed APK and matching source checkpoint. Do not claim the experimental LAN feature in release notes.
+3. The clean native source rebuild, exact-device APK hash and returning
+   worn-headset Skirmish/Campaign launch with retained settings and game data
+   pass. The maintainer did not report a fresh Commands/group/waypoint matrix
+   for this exact hash; earlier P23 play covered those controls. Separately
+   test first-time import with legitimate Steam files on a clean profile/device
+   when available; do not erase this user's saved data merely to perform that
+   test. Keep all retail data outside Git.
+4. Confirm README/guide links and screenshot rendering on the GitHub default branch after the documentation change is merged. Recheck the source tag, APK asset digest and release notes when staging the private release and again before public visibility.
+5. Use `v1.2.15-xr-preview` for the first private release checkpoint. Publish only the exact verified, privately signed APK and matching source checkpoint. Do not claim the experimental LAN feature in release notes.
 
-The 10215 APK is local only. The P23 GitHub asset and README download link remain unchanged until the final artifact passes the remaining gates.
+The 10215 APK becomes the supported private preview only when its matching
+source tag, uploaded asset digest and installation links are verified. Do not
+publish the old debug-signed asset as the new release.
