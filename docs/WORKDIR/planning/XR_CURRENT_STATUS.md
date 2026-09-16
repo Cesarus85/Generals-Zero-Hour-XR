@@ -315,16 +315,26 @@ source guards and 788 workspace checks for each LAN-gate setting pass. APK v2
 signing, package/version/ABI, bundled native-library equality and the installed
 APK hash verify. Update-install on Quest `2G0YC5ZG9609PY` retained data. The
 `gx_lan_crc.txt` marker was placed in its saved game-data folder for the next
-test. Meta intercepted the attempted launch with **Controller required**;
-therefore no 10213 gameplay or real trace capture has yet passed. The device
-still permits the app's existing all-files access; no permissions were changed.
+test. The initial launch was blocked pending controllers; the user subsequently
+reproduced the error and the real 10213 LAN trace was captured successfully.
+No runtime permissions were changed.
 
-**Next:** activate both controllers, reproduce the same Steam/Proton Direct
-Connect match without orders initially, and collect the Quest logs promptly.
-Compare the first checkpoints even if only Omarchy reports mismatch. If needed,
-use an identically instrumented same-source PC/Quest peer. The host checks are
-not a full-engine CRC-invariance or retail-compatibility proof. Do not merge or
-publish LAN as supported; keep the P23 release separate.
+At validation frame 105, both peers' CRCs arrived but differed (Quest
+`FF3C9DF3`, peer `EB80E220`); frame 207 confirms another unequal pair. The
+observer reports `different_crc` while the original detector reports `none`.
+Source inspection confirms an inherited index-space defect: cached engine
+player indices 2/3 are passed to a connected-network-slot check expecting 0/1,
+so the Quest skips these CRC comparisons. At frame 305 only slot 0 remains
+connected. This explains a missing Quest-side error, not the original differing
+CRC values. The first divergent simulation tick/subsystem remains unknown;
+an idle-before-error test has not yet been confirmed by the user.
+
+**Next:** correct and regression-test the inherited detector's slot mapping,
+then compare an identically instrumented same-source PC/Quest peer to isolate
+the differing CRCs. A no-popup Quest-to-Quest match is NOT sufficient evidence:
+both peers could silently skip checks with the current detector. Preserve
+normal CRC enforcement/cadence. Do not merge or publish LAN as supported;
+keep the P23 release separate. PLAN-025 records the sanitized trace evidence.
 
 ### P22 - deferred keyboard and mouse investigation
 

@@ -1,6 +1,6 @@
 # PLAN-025 — Quest ↔ PC LAN preflight
 
-**Status:** Quest 10212 and Steam/Proton enter a match, then Omarchy reports an in-game synchronization mismatch, reproduced after reinstalling P23 and updating to 10212. Six Zero Hour gameplay-data hashes match; the cause is not yet isolated. Diagnostic APK 10213 is built and installed with opt-in prepared; its first instrumented match is pending.
+**Status:** The first instrumented APK-10213 match confirms unequal received peer CRCs and an inherited Quest-side detector index-space defect that masks the mismatch locally. The cause of the CRC divergence is not yet isolated. Six Zero Hour gameplay-data hashes match; LAN remains unsupported.
 **Scope:** One Quest 3 against a PC on the same LAN. The first peer is the user's Steam Zero Hour running through Proton on Omarchy; the planned Windows Steam peer remains a separate validation. If retail gameplay desynchronizes, isolate it with a same-source GeneralsX PC build. Internet services, public matchmaking, replay and reconnect are later gates.
 
 ## Decision and evidence
@@ -282,6 +282,44 @@ No first 10213 match/startup trace is claimed. The existing all-files app-op
 remains allowed; no runtime permissions were changed. Activate controllers
 and perform the above physical procedure. The full diagnostic records become
 available only once a live LAN match begins.
+
+### First 10213 instrumented failure
+
+The user reported the error again. The current and previous XR logs were
+read-only captured; installed version 10213 was confirmed. The current log's
+SHA-256 is `7bf9c8e33586b2e4bc6a92dd794ae4f449e03c99c3e5dd00010366b3cfbd3f06`; raw logs remain outside the repository
+because they contain unrelated private runtime details. Sanitized checkpoints:
+
+| Quest validation frame | Connected network slots | Received CRCs | Observer | Existing detector |
+|---|---|---|---|---|
+| 105 | 0, 1 | slot 0 / player 2: `FF3C9DF3`; slot 1 / player 3: `EB80E220` | `different_crc` | `none` |
+| 207 | 0, 1 | slot 0 / player 2: `C2F2A005`; slot 1 / player 3: `A6E45BA5` | `different_crc` | `none` |
+| 305 | 0 | slot 0 / player 2: `2B8C9C08` | `none` | `none` |
+
+Map CRC is `DEA9E8E4`, seed `14391758`, negotiated interval 100. The Quest
+generated the matching local CRCs at frames 100 and 200. Frame 0 also has a
+local generation record, but no paired validation record: do not claim the
+very first simulation tick or first divergent subsystem has been identified.
+Both values are present in the failed comparisons, excluding missing CRC
+messages as the explanation for those particular checkpoints. Their different
+values still require simulation/data/numerical or scheduling investigation.
+
+`onLogicCrc` verifies a name-matched network slot, then stores the value under
+`msgPlayer->getPlayerIndex()`. `processCommandList` subsequently passes that
+cache key to `TheNetwork->isPlayerConnected()`, which expects a network slot.
+Here that means testing slots 2/3 instead of connected slots 0/1, skipping both
+values. `git blame` traces this check to the initial XR source import
+`b99838b`, not the new diagnostic observer. This explains the local detector's
+silence; repairing it alone would detect the mismatch, NOT make the peers
+synchronize. No detector or simulation behavior was changed during capture.
+
+Next bounded implementation: unify the detector's player-to-slot handling,
+including missing-connected-peer checks, with production-derived regression
+fixtures for non-identity indices, disconnected entries, equal/different CRCs
+and missing peers. Preserve wire messages, CRC contents and cadence. Then use
+a paired instrumented peer to localize divergence. Until corrected, even two
+Quests running without an error popup could be silently desynchronized.
+Whether the user issued gameplay orders before this failure is still pending.
 
 ### Two Quests: expected advantage, unverified
 
