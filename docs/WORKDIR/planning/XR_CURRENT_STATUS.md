@@ -198,9 +198,11 @@ published 10208 release. Android CI run 35055859028 passed and produced the
 43,462,061-byte ARM64 APK with SHA-256
 `ef5c544cee9fd9212b71807a62ddfbfc1a33ce7feb22f28ff5dd8a7487ad9742`;
 package identity, launcher and APK Signature Scheme v2 were verified locally.
-Only worn-headset visual/placement acceptance remains open. Do not merge this
-branch as physically accepted before checking the thin edge from above/below
-and on a real surface.
+The 10209 APK was update-installed with existing app data preserved, launched
+successfully and accepted by the user in the Quest 3 on 2026-09-16. The thinner
+edge reads correctly in the headset and no regression was reported. P20.1 is
+therefore ready to merge; retain real-surface placement and underside artifact
+checks in later tabletop regressions.
 
 ### P21 - UI and Commands window presentation
 

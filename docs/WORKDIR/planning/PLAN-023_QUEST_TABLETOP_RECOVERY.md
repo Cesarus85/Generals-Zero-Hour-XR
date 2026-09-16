@@ -4080,7 +4080,11 @@ Host checks pass: board 74, height 272822, scene 1280, build controls 4292, menu
 stays update-installable over release 10208. Its 43,462,061-byte ARM64 APK has
 SHA-256 `ef5c544cee9fd9212b71807a62ddfbfc1a33ce7feb22f28ff5dd8a7487ad9742`;
 package/launcher metadata and APK Signature Scheme v2 pass local verification.
-Only worn-headset edge and real-surface acceptance remain open.
+The 10209 APK was update-installed with user data preserved, launched
+successfully and accepted by the user in a Quest 3 on 2026-09-16. The thinner
+edge reads correctly and no regression was reported; P20.1 is accepted for
+merge. Keep real-surface clearance and underside artifact checks in later
+tabletop regression passes.
 
 ### P21 - UI and Commands window presentation pass
 
