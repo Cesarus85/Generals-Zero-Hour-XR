@@ -1,6 +1,6 @@
 # PLAN-025 — Quest ↔ Windows PC LAN preflight
 
-**Status:** Source preflight and opt-in Quest tabletop candidate built; no two-endpoint test yet.  
+**Status:** Opt-in Quest candidate reaches a Steam/Proton lobby by Direct Connect; map availability blocks the first match.
 **Scope:** One Quest 3 against a Windows PC on the same LAN. Start with the user's installed Steam Zero Hour (record its displayed version); if incompatible, isolate whether a same-source GeneralsX Windows build solves it. Internet services, public matchmaking, replay and reconnect are later gates.
 
 ## Decision and evidence
@@ -24,10 +24,10 @@ If Steam discovery/join or in-match synchronization fails, reproduce with a Wind
 
 | Gate | Evidence needed | State |
 |---|---|---|
-| Build safety | Default-off and preview-on mode tests; Android native/XR APK build | Passed locally; exact APK installed on Quest 3, launch/open still pending |
+| Build safety | Default-off and preview-on mode tests; Android native/XR APK build | 10210 lobby candidate tested; 10212 keyboard/map candidate built and installed, headset test pending |
 | Lobby | Discovery and direct-IP outcomes, both endpoint IPs, host/join/leave, chat/input | Direct Connect to Steam/Proton reaches the game lobby; automatic discovery still fails |
 | Simulation | 15-minute Quest ↔ PC human match, orders from both players, no desync/CRC/stall | Open |
-| XR usability | Tabletop and upright shell transitions, controller menu/text entry, headset pause/resume and performance | Open |
+| XR usability | Tabletop and upright shell transitions, controller menu/text entry, headset pause/resume and performance | Open; controller-operated Direct Connect keyboard built in 10212, worn-headset test pending |
 | Retail compatibility | Above gates against the user's unmodified Steam Zero Hour | Open |
 | Regression | Offline Skirmish/campaign retain accepted tabletop behavior | Host eligibility test passes; device regression open |
 
@@ -59,11 +59,40 @@ isolation for that peer, not a UDP firewall, LAN socket or game protocol
 failure. Direct Connect subsequently reached the shared game lobby, proving
 that at least the initial Quest ↔ Steam/Proton LAN exchange works. The Omarchy
 side then reported that it did not have the selected map. The latest Quest
-`Network.ini` names `Maps\\Alpine Assault\\Alpine Assault.map`; confirmation
-that this is the failed lobby map and which side hosted is pending. `hasMap`
+`Network.ini` names `Maps\\Alpine Assault\\Alpine Assault.map`; the Quest
+hosted, and the user believes this was the failed lobby map. SHA-256 of the
+Quest and Omarchy Steam/Proton `MapsZH.big` and base Generals `maps.big`
+archives matches on both systems. This rules out different bytes in those
+archives, not a local map override, map-cache discrepancy or LAN map-path/CRC
+mismatch. `hasMap`
 is false both when the map is absent from `MapCache` and when its file CRC
 differs, so do not treat the warning as proof that the file is missing. Check
-the map name, whether it is official/custom, the host's map CRC and each
-side's actual map bytes/cache before changing transfer rules or CRC checks.
+the exact lobby map, effective map metadata/CRC and serialized map path before
+changing transfer rules or CRC checks. The Quest also needs an XR controller
+text-entry path for Direct Connect IP fields; for now the Quest-host direction
+avoids typing on the headset.
+
+The source inspection identified a concrete retail-compatibility candidate:
+`GameInfoToAsciiString` percent-encoded spaces in every map directory, including
+LAN announcements and game options. A stock `Alpine Assault` path therefore
+sent `Alpine%20Assault` to the Steam peer. LAN call sites now serialize the
+literal legacy directory while replay/save callers retain percent encoding;
+the parser still accepts both. This explanation is strongly consistent with
+the warning but remains unconfirmed until a Steam/Proton lobby retest.
+
+The same candidate adds a controller-operated XR keyboard for the Direct
+Connect player-name and remote-IPv4 fields. The keyboard is a native spatial
+panel, not an Android 2D IME; numeric/IP and alphabetic layouts share their
+paint/hit geometry. Host regressions pass: 3848 menu geometry/capture, 329
+menu action/routing, and 22429 bilingual panel-payload checks (including both
+keyboard layouts).
+The Android ARM64 native build and XR APK package pass. Test version 10212
+(`1.2.12-lan-keyboard`), SHA-256
+`e8f05cc2c77a3d125117ed7a836e36fdcd159f59d4807d37a89006954fd166fc`,
+is at `build/apk/Generals-Zero-Hour-XR.apk` and was installed on Quest 3
+`2G0YC5ZG9609PY` with `adb install -r` (data retained). APK v2 signature,
+package/version and bundled native-library hash were verified. This is a
+test candidate only; keyboard visibility/typing and the same-map LAN join
+still require worn-headset testing before merge or publication.
 
 Do not enable LAN tabletop by default, merge a network-eligibility expansion into a release, or claim multiplayer support while these physical gates remain open. Keep replay and internet as separate later work. Keyboard/mouse remains secondary to the controller path.

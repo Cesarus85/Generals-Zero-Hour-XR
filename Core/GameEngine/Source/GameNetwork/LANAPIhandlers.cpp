@@ -236,7 +236,7 @@ void LANAPI::handleRequestGameInfo( LANMessage *msg, UnsignedInt senderIP )
 			fillInLANMessage( &reply );
 			reply.messageType = LANMessage::MSG_GAME_ANNOUNCE;
 
-			AsciiString gameOpts = GameInfoToAsciiString(m_currentGame);
+			AsciiString gameOpts = GameInfoToAsciiString(m_currentGame, FALSE);
 			strlcpy(reply.GameInfo.options,gameOpts.str(), ARRAY_SIZE(reply.GameInfo.options));
 			// GeneralsX @bugfix BenderAI 13/02/2026 Use CopyWcharToWindowsWideChar (fighter19 pattern)
 			CopyWcharToWindowsWideChar(reply.GameInfo.gameName, m_currentGame->getName().str(), ARRAY_SIZE(reply.GameInfo.gameName) - 1);
@@ -490,7 +490,7 @@ void LANAPI::handleJoinAccept( LANMessage *msg, UnsignedInt senderIP )
 			else
 			{
 				m_inLobby = false;
-				AsciiString options = GameInfoToAsciiString(m_currentGame);
+				AsciiString options = GameInfoToAsciiString(m_currentGame, FALSE);
 				m_currentGame->enterGame();
 				ParseAsciiStringToGameInfo(m_currentGame, options);
 

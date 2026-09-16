@@ -895,7 +895,7 @@ Bool GameInfo::isSandbox()
 
 static const char slotListID		= 'S';
 
-AsciiString GameInfoToAsciiString( const GameInfo *game )
+AsciiString GameInfoToAsciiString( const GameInfo *game, Bool encodeMapName )
 {
 	if (!game)
 		return AsciiString::TheEmptyString;
@@ -925,12 +925,16 @@ AsciiString GameInfoToAsciiString( const GameInfo *game )
 		DEBUG_LOG(("Map name is %s", mapName.str()));
 	}
 
+	// Retail Zero Hour LAN options use the literal map directory. Percent
+	// encoding here makes a stock map such as "Alpine Assault" look absent to
+	// Steam peers, even when both sides have identical game-data archives.
+	const AsciiString wireMapName = encodeMapName ? percentEncodeMapName(newMapName) : newMapName;
 	AsciiString optionsString;
 #if RTS_GENERALS
-	optionsString.format("M=%2.2x%s;MC=%X;MS=%d;SD=%d;C=%d;", game->getMapContentsMask(), percentEncodeMapName(newMapName).str(),
+	optionsString.format("M=%2.2x%s;MC=%X;MS=%d;SD=%d;C=%d;", game->getMapContentsMask(), wireMapName.str(),
 		game->getMapCRC(), game->getMapSize(), game->getSeed(), game->getCRCInterval());
 #else
-	optionsString.format("US=%d;M=%2.2x%s;MC=%X;MS=%d;SD=%d;C=%d;SR=%u;SC=%u;O=%c;", game->getUseStats(), game->getMapContentsMask(), percentEncodeMapName(newMapName).str(),
+	optionsString.format("US=%d;M=%2.2x%s;MC=%X;MS=%d;SD=%d;C=%d;SR=%u;SC=%u;O=%c;", game->getUseStats(), game->getMapContentsMask(), wireMapName.str(),
 		game->getMapCRC(), game->getMapSize(), game->getSeed(), game->getCRCInterval(), game->getSuperweaponRestriction(),
 		game->getStartingCash().countMoney(), game->oldFactionsOnly() ? 'Y' : 'N' );
 #endif
@@ -1753,5 +1757,4 @@ void SkirmishGameInfo::xfer( Xfer *xfer )
 void SkirmishGameInfo::loadPostProcess()
 {
 }
-
 

@@ -164,7 +164,29 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 		// GeneralsX @refactor Ultron 15/09/2026 P21 the workspace window uses
 		// the same shared-table contract as the commands console; the
 		// play-space wizard (page 5) keeps its sequential kind-7 layout.
-		if(x.menu.page==5) {
+		if(x.menu.page==7) {
+			XrPanelControl table[80];
+			const int count=xrTextKeyboardLayout(x.keyboardField==2,table,80);
+			std::vector<std::string> labels;
+			for(int i=0;i<count;++i) {
+				auto &control=table[i];std::string label;
+				if(control.id==-1) label=x.keyboardField==2 ? xrTr("Remote-IP") : xrTr("Spielername");
+				else if(control.id==1000) label=xrTr("Löschen");
+				else if(control.id==1001) label=xrTr("Fertig");
+				else if(control.id==int(' ')) label=xrTr("Leerzeichen");
+				else label=std::string(1,char(control.id));
+				control.label=int(labels.size());labels.push_back(label);
+				if(control.id==x.menu.hover)control.state|=kXrStateHover;
+			}
+			const std::string title=xrTr("Virtuelle Tastatur");
+			const std::string detail=std::string(xrTr(x.keyboardField==2 ? "Remote-IP" : "Spielername"))+": "+
+				XrGameBoot_DirectConnectTextValue(x.keyboardField);
+			std::vector<int> packed;xrPackControls(packed,table,count);
+			std::string key=title+detail+xrControlsKey(table,count);
+			std::string joined;
+			for(const auto &label:labels) {key+='\x1f';key+=label;if(!joined.empty())joined+='\n';joined+=label;}
+			if(key!=x.settingsKey && paintPanel2(x,x.settingsTexture,title,detail,joined,packed,1))x.settingsKey=key;
+		} else if(x.menu.page==5) {
 			std::string labels;char state[512];
 			xrSceneMenuText(x,labels,state,sizeof(state));
 			while(std::count(labels.begin(),labels.end(),'\n')<17)labels+='\n';

@@ -7,6 +7,11 @@ enum class XrLanguage {German,English};
 inline XrLanguage g_xrLanguage=XrLanguage::German; // XR thread only
 struct XrTranslation {const char *de,*en;};
 inline constexpr XrTranslation kXrTranslations[]={
+ {"Virtuelle Tastatur","Virtual keyboard"},
+ {"Remote-IP","Remote IP"},
+ {"Spielername","Player name"},
+ {"Löschen","Delete"},
+ {"Leerzeichen","Space"},
  {"Bearbeitung: %s · %.2f m · Karte %.1fx · P19.1","Editing: %s · %.2f m · Map %.1fx · P19.1"},
  // GeneralsX @feature Codex 14/09/2026 P19.1 optional placement wizard.
  {"Spielplatz einrichten · P19.1","Set up play space · P19.1"},

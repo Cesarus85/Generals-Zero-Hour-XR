@@ -14,6 +14,7 @@
 using GLuint=unsigned;
 struct XrHello {
  XrLayout layout;XrCommandState commands;XrMenuState menu;XrSurface surfaces[3];
+	int keyboardField=0;
  XrPerformance performance;
 	bool stereoVisible=false,stereoWorld=false;
 	bool recoveryVisible=false;GLuint recoveryTexture=0;
@@ -36,6 +37,7 @@ static int XrGameBoot_GroupSize(int group){return group;}
 static int tacticMode=0,tacticGroup=0;static bool tacticQueue=false;
 static void XrGameBoot_TacticalState(int &mode,int &group,bool &queue){mode=tacticMode;group=tacticGroup;queue=tacticQueue;}
 static std::string XrGameBoot_WorldHoverInfo(){return {};}
+static std::string XrGameBoot_DirectConnectTextValue(int field){return field==2 ? "192.168.178.158":"Player";}
 static bool building=false;
 static bool XrGameBoot_CanRotatePlacement(){return building;}
 static float XrGameBoot_PlacementDegrees(){return 90;}
@@ -161,6 +163,16 @@ int main(int argc,char **argv){
   x.menu.page=0;updateMenuTextures(x,100);
   {const auto &c=captures[1];check(stateOf(c,1)&kXrStateSelected);check(hasLabelPrefix(c,std::string(xrTr("Baufenster"))+"|"));}
   x.menu.target=1;updateMenuTextures(x,100);check(stateOf(captures[1],0)&kXrStateSelected);
+  // Direct Connect keyboard: numeric IP and alphabetic player-name pages
+  // use the same painted and hittable table in both supported languages.
+  x.menu.page=7;x.keyboardField=2;updateMenuTextures(x,100);
+  {const auto &c=captures[1];check(c.title==xrTr("Virtuelle Tastatur"));
+   check(c.detail.find("192.168.178.158")!=std::string::npos);
+   check(hasLabel(c,".") && hasLabel(c,xrTr("Löschen")) && hasLabel(c,xrTr("Fertig")));
+   check(!hasLabel(c,"Q"));}
+  x.keyboardField=1;updateMenuTextures(x,100);
+  {const auto &c=captures[1];check(c.detail.find("Player")!=std::string::npos);
+   check(hasLabel(c,"Q") && hasLabel(c,xrTr("Leerzeichen")));}
   // Controller guide pages resolve all placeholders in both handedness modes.
   x.menu.page=4;for(bool left:{false,true})for(int page=0;page<kXrControllerHelpPages;++page) {
    x.layout.leftHanded=left;x.menu.helpPage=page;updateMenuTextures(x,100);

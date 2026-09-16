@@ -278,7 +278,7 @@ void LANAPI::OnGameOptions( UnsignedInt playerIP, Int playerSlot, AsciiString op
 	if (playerSlot == 0 && !m_currentGame->amIHost())
 	{
 		m_currentGame->setLastHeard(timeGetTime());
-		AsciiString oldOptions = GameInfoToAsciiString(m_currentGame); // save these off for if we get booted
+		AsciiString oldOptions = GameInfoToAsciiString(m_currentGame, FALSE); // save these off for if we get booted
 		if(ParseGameOptionsString(m_currentGame,options))
 		{
 			lanUpdateSlotList();

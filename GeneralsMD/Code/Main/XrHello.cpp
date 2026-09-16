@@ -409,6 +409,7 @@ struct XrHello {
 	GLuint sceneTexture=0;std::string sceneKey;
 	JNIEnv *panelEnv=nullptr;jclass panelPainter=nullptr;
 	XrMenuState menu;XrCommandState commands;float worldZoom=1.0f;bool startViewApplied=false;
+	int keyboardField=0;bool keyboardReady=false,keyboardPointerHeld=false;
 	GLuint commandsTexture=0,commandButtonTexture=0;std::string commandsKey;
 	GLuint uiButtonTexture=0,settingsTexture=0,hoverTexture=0;
 	GLuint recoveryTexture=0;
@@ -1250,7 +1251,8 @@ struct XrLoadingPresenter {
 			const bool ended=XR_SUCCEEDED(xrEndFrame(x.session,&end));
 			x.splitVisible=false;x.stereoVisible=false;x.diorama=false;
 			x.loadingPresentation=true;x.previousInputTime=0;
-			x.menu.open=false;x.arranging=false;x.grab.cancel();x.controlsArmed=false;x.inputArmed=false;
+			x.menu.open=false;x.keyboardField=0;x.keyboardReady=false;
+			x.arranging=false;x.grab.cancel();x.controlsArmed=false;x.inputArmed=false;
 			x.menu.click.cancel();x.commands.input.click.cancel();
 			x.rayVisible=false;x.pointerVisible=false;x.hoverVisible=false;
 			updateControls(x,XrControllerState{},outerTime);
@@ -1405,6 +1407,7 @@ static void runLoop(XrHello &x)
 						x.interactiveGame = interactiveGame;
 						x.startViewApplied=false;
 						x.commands.groupOperation=0;x.commands.input.click.cancel();
+						if(x.menu.page==7) {x.menu.open=false;x.keyboardField=0;x.keyboardReady=false;}
 						saveLayout(x);
 						x.grab.cancel(); x.arranging=false; x.controlsArmed=false;
 						x.cameraPending=interactiveGame; x.cameraCustom=false; x.cameraSaveFailed=false;
@@ -1475,6 +1478,22 @@ static void runLoop(XrHello &x)
 					if(loadingConsumed) {
 						XR_LOG("P11.1 loading returned; next frame reacquires gameplay poses");
 						continue; // The callback already ended this outer frame.
+					}
+					// A ray click focuses the game's native edit box first; then open
+					// the controller keyboard on its own XR surface, never an Android
+					// 2D IME that may replace the immersive Quest environment.
+					const bool textFieldPress=x.pointerPressed && !x.keyboardPointerHeld &&
+						!x.menu.open && !x.arranging && x.pointerPiece==0;
+					x.keyboardPointerHeld=x.pointerPressed;
+					if(textFieldPress) {
+						const int field=XrGameBoot_DirectConnectTextField();
+						if(field) {
+							x.keyboardField=field;x.keyboardReady=false;x.menu.click.cancel();
+							x.menu.open=true;x.menu.page=7;x.controlsArmed=false;
+							x.menu.surface.pose=xrPoseMul(xrWorkspaceHeading(views),{{0,0,0,1},{0,-.12f,-.85f}});
+							x.menu.surface.width=.68f;
+							XR_LOG("XR keyboard opened for Direct Connect field %d",field);
+						}
 					}
 					// Movies/dialogs can start during the native frame. Never use
 					// the previous frame's crop or show stale stereo captures.

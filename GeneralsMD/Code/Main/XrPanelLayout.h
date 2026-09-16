@@ -46,6 +46,29 @@ struct XrPanelBuilder {
 		out[count++]={id,x,y,w,h,role,0,-1};
 	}
 };
+// The Direct Connect keyboard is a native XR panel; its control table is
+// shared by Canvas painting and ray hit testing like the other XR windows.
+inline int xrTextKeyboardLayout(bool ip,XrPanelControl *out,int max) {
+	XrPanelBuilder b{out,max};
+	b.add(-1,32,112,704,84,kXrRoleContext);
+	const char *digits="1234567890";
+	for(int i=0;i<10;++i)b.add(int(digits[i]),32+i*71,228,64,68,kXrRoleButton);
+	if(ip) {
+		b.add(int('.'),32,320,216,76,kXrRoleButton);
+		b.add(1000,264,320,216,76,kXrRoleButton);
+		b.add(1001,496,320,240,76,kXrRoleImmediate);
+	} else {
+		const char *rows[]={"QWERTYUIOP","ASDFGHJKL","ZXCVBNM"};
+		const int lengths[]={10,9,7};
+		for(int row=0;row<3;++row)
+			for(int i=0;i<lengths[row];++i)
+				b.add(int(rows[row][i]),32+i*71,320+row*92,64,68,kXrRoleButton);
+		b.add(int(' '),32,612,320,76,kXrRoleButton);
+		b.add(1000,368,612,176,76,kXrRoleButton);
+		b.add(1001,560,612,176,76,kXrRoleImmediate);
+	}
+	return b.count;
+}
 // GeneralsX @feature Ultron 15/09/2026 Shared help/guide geometry, used by
 // the commands help and the workspace controller guide.
 inline int xrHelpLayout(XrPanelControl *out,int max) {

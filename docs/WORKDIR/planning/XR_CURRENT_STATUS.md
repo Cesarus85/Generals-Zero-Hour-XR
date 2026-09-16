@@ -260,8 +260,22 @@ Steam incompatibility or usable LAN gameplay.
 An alternate Omarchy laptop (`192.168.178.158`) runs Steam Zero Hour through
 Proton and is reachable from Quest WLAN (3/3 ICMP replies). Direct Connect
 reaches the shared game lobby, but Omarchy reports that it lacks the selected
-map. The latest Quest `Network.ini` names Alpine Assault; exact map/host and
-file-CRC diagnosis are pending. Automatic LAN discovery remains broken.
+map. The Quest hosted and the user believes the selected map was Alpine
+Assault, matching its last `Network.ini`. Quest and Omarchy SHA-256 values for
+`MapsZH.big` and base Generals `maps.big` are identical, so reimporting those
+archives is not the next step. Effective map lookup/cache/path/CRC still need
+diagnosis; the match has not started. Quest Direct Connect IP entry also lacks
+a usable controller-triggered virtual keyboard in the 10210 test. A new
+unmerged 10212 candidate changes LAN map serialization to literal legacy
+paths (retaining encoded replay/save metadata) and adds a controller-operated
+spatial keyboard for Direct Connect player name and IPv4 entry. Native and
+APK builds, v2 signing, embedded-library verification, 3848 menu geometry,
+329 menu routing, and 22429 bilingual panel-payload checks pass. Version
+10212 (`1.2.12-lan-keyboard`), SHA-256
+`e8f05cc2c77a3d125117ed7a836e36fdcd159f59d4807d37a89006954fd166fc`,
+was update-installed on Quest 3 `2G0YC5ZG9609PY` with data retained. The
+map hypothesis and keyboard both need worn-headset/Steam-Proton validation;
+no human match has started. Automatic LAN discovery remains broken.
 
 ### P22 - deferred keyboard and mouse investigation
 

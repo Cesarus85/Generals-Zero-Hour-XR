@@ -12,6 +12,7 @@ struct XrHello {
 	XrScene scene;
 	XrBuildRotation buildRotation;bool inputArmed=true,roomPoseLost=false;
 	XrMenuState menu;XrSurface surfaces[3];XrLayout layout;XrSurfaceGrab grab;
+	int keyboardField=0;bool keyboardReady=false;
 	XrPerformance performance;
 	bool uprightGame=false,startViewApplied=false;
 	XrCommandState commands;bool diorama=false;
@@ -37,6 +38,7 @@ static std::string XrGameBoot_TacticalReason(int){return {};}
 static int communicator=0,language=-1;
 static void XrGameBoot_Communicator(){++communicator;}
 static void XrGameBoot_SetLanguage(int value){language=value;}
+static bool XrGameBoot_DirectConnectTextKey(int,int){return true;}
 static float surfaceAspect(int){return .25f;}
 static void saveLayout(XrHello &){++saves;}
 static void updateControls(XrHello &,const XrControllerState &c,XrTime){check(!c.select);++releases;}
