@@ -88,15 +88,15 @@ are the platform basis, not a promise of universal migration.
 
 ## Release-facing content
 
-- README now centers Quest tabletop features, requirements, controls, honest limits and the exact P23 download.
-- Four maintainer-provided Quest captures illustrate separate maps, the build window and Commands/group UI. Original JPEG pixels and color profiles were retained; EXIF/TIFF/GPS metadata was removed from the repository copies. These captures can show the user's physical room in passthrough: review the *visible image content* before making the repository public.
+- README now centers Quest tabletop features, requirements, controls, honest limits and the exact v1.2.15 download.
+- Four maintainer-provided Quest captures illustrate separate maps, the build window and Commands/group UI. Original JPEG pixels and color profiles were retained; EXIF/TIFF/GPS metadata was removed from the repository copies. The maintainer reports that they visually reviewed the passthrough room content and approved it for publication.
 - [Quest installation and controls](../../HOWTO/INSTALLATION_XR.md) and [game-file sourcing](../../HOWTO/GETTING_THE_GAME_FILES.md) are the user guides. No original game files are distributed.
 - [Multiplayer status](../planning/MULTIPLAYER_STATUS.md) explicitly pauses LAN and records the paired CRC evidence and resumption plan. Experimental LAN code remains on its own branch, outside this candidate.
 
 ## Remaining public gates and validation scope
 
-1. Decide whether this first release will be public; the repository is currently **private**. Review the four passthrough screenshots for visible personal surroundings before changing visibility. Older debug-signed assets remain available but are prominently marked as historical development builds; making the repository public would expose them too.
-2. Preserve a secure backup of the release key **and** Keychain password.
+1. Decide whether this first release will be public; the repository is currently **private**. The maintainer reports that the four passthrough screenshots have been visually approved. Older debug-signed assets remain available but are prominently marked as historical development builds; making the repository public would expose them too. Resolve the newly reported missing XR win-result presentation before public visibility.
+2. The maintainer reports that the release key **and** Keychain password have been backed up; the backup was not independently verified and no secret belongs in Git.
    The 10215 update was installed over 10214 without uninstalling and a
    private pre-update app-data backup was captured. The first release-signed
    repack was playable according to the user; its session ended when the exact
