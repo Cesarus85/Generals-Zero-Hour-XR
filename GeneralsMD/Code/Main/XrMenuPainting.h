@@ -83,6 +83,19 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 	if(x.recoveryVisible && (!x.recoveryTexture || recoveryLanguage!=g_xrLanguage))
 		if(paintPanel(x,x.recoveryTexture,xrTr("Darstellung wird wiederhergestellt"),
 			xrTr("Die Spielwelt wird neu gezeichnet. Bitte die Trigger loslassen."),"",-1,2))recoveryLanguage=g_xrLanguage;
+	// GeneralsX @feature Muse 16/09/2026 Match-result card: accent-colored
+	// kind-2 card from the read-only latch; repainted on result/language
+	// change, kept across the transition to statistics.
+	if(x.resultVisible) {
+		const auto endResult=XrGameBoot_MatchResult();
+		const char *endTitle=endResult==XrEndgameResult::Victory ? "Sieg!" :
+			endResult==XrEndgameResult::Defeat ? "Niederlage" : "Partie beendet";
+		const int accent=endResult==XrEndgameResult::Victory ? 1 :
+			endResult==XrEndgameResult::Defeat ? 2 : 3;
+		const std::string key=std::to_string(static_cast<int>(g_xrLanguage))+endTitle;
+		if(key!=x.resultKey && paintPanel(x,x.resultTexture,xrTr(endTitle),
+			xrTr("Die Partie ist entschieden.\nBeliebige Taste zum Schließen."),"",accent,2))x.resultKey=key;
+	}
 	// GeneralsX @bugfix Codex 14/09/2026 The entry button becomes a direct exit.
 	static std::string uiButtonTitle;
 	const std::string uiTitle=x.arranging ? xrTr("Fertig"):"UI";

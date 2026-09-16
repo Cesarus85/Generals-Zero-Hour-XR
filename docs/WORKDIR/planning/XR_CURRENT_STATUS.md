@@ -59,10 +59,10 @@ the detailed narrative and command transcripts out of this dashboard.
 | Game-data setup | Guided Steam or installed/extracted CD/ISO folder import with validation; raw images/installers are not extracted | Host and Quest instrumentation pass; real Steam-based use confirmed |
 | Returning launch | Saved valid data is checked inside the XR Activity; setup opens only when data is missing or invalid | Device launch verified; final visual no-flash confirmation remains a physical gate |
 | Performance defaults | Balanced resolution, light shadows, Multiview preferred, redundant extra world copy omitted automatically | Reported as relatively smooth and playable; no universal FPS guarantee |
-| End-of-match result | A complete offline Skirmish win (all opponents destroyed) went directly to statistics without a perceptible “Victory” screen | User-observed on the installed 1.2.15 release; XR presentation fix is the next priority, not yet implemented |
+| End-of-match result | Read-only XR latch presents Victory/Defeat/Match-over across the direct score transition | PR #11: host tests and local signed Quest build pass; maintainer reports the short headset test works perfectly; other mission/network end paths are not exhaustively validated |
 | Controller text entry | No general in-game virtual keyboard in the 1.2.15 offline release; a Direct Connect name/IP prototype exists only on the separate LAN branch | Separate follow-up; do not merge LAN diagnostics into the offline fix |
 
-## Next priority: visible XR victory and defeat results
+## XR match-result milestone: headset accepted
 
 The maintainer completed a long, ordinary offline Skirmish, destroyed every
 opponent and saw the statistics screen immediately, with no visible win result.
@@ -70,20 +70,41 @@ Do not ask for another full match to reproduce this. The original engine has
 `Menus/Victorious.wnd` and `Menus/Defeat.wnd` via
 `ScriptActions::doVictory`/`doDefeat`, normally followed by an end-game timer;
 `doQuickVictory` is an end-transition action that omits the native window, not
-a statement about how long the match lasted. The exact action taken in the
-reported match and whether XR cropping hid a native window are **unconfirmed**.
+a statement about how long the match lasted. Diagnosis (PR #11): retail
+`MultiplayerScripts.scb` fires the normal `VICTORY` action, whose non-modal
+`Victorious.wnd` plus ~4 s end
+timer reach XR tabletop only through the small blended HUD overlay, so the
+message is missed; then `exitGame` leads directly to the score screen, which
+itself shows no Skirmish win/loss marker (winner logic commented out in
+`ScoreScreen.cpp`). The quick path skips even that.
 
-The next PR should determine the end action with bounded diagnostics, then
-provide a clear, controller-independent XR “Victory”/“Defeat” presentation
-before the statistics become usable. It must work for both normal and quick
-end paths without altering victory conditions, simulation/network state or
-retail game data. Preserve the tabletop and the existing statistics screen.
-Cover win, loss, direct-to-score, reset/new match and campaign transitions in
-host tests or short controlled scenarios. A brief worn-headset visual check is
-still needed before acceptance, but the maintainer need not replay a full
-Skirmish. Keep any diagnostic shortcut out of the release build. Submit a PR
-with tests and remaining headset gate; do not publish or install a new APK
-while the user may be playing.
+The fix latches the result from read-only end state (`VictoryConditions`
+trio for Skirmish/LAN/replay with a neutral observer card,
+`ScriptEngine::isGameEnding` plus `CampaignManager::isVictorious` for
+campaign) and shows an unmissable head-yaw “Victory”/“Defeat”/“Match over”
+card that survives the direct score transition and dismisses on any press or
+a new match, without altering victory conditions, simulation/network state or
+retail game data. Host tests plus bilingual card payloads pass; debug-only
+controller chords (both grips plus A/stick clicks) drive the four retail end
+actions for short controlled scenarios and stay out of normal release builds.
+The maintainer reports that the installed short-test build works perfectly.
+Do not infer exhaustive campaign or network end-path coverage from this test.
+
+Review identified two corrections added to PR #11: poll before as well as
+after the game frame to catch a one-frame quick end, and prevent the
+result-triggering press from dismissing
+the card before first render. A scripted quick victory in Skirmish also needs
+the end-action result fallback when VictoryConditions has not yet latched.
+The local signed test APK is `Generals-Zero-Hour-XR-1.2.16-endgame-test.apk`,
+versionCode 10216, SHA-256
+`051b7163d2199803d4c20eec0551350e46ba6a0bc4506d1603662e927f2379df`.
+This is **not** the authoritative release APK and must not be published.
+The test APK was subsequently installed as an in-place update on Quest 3;
+device package inspection confirms versionCode 10216. The maintainer accepted
+the short worn-headset test. A new production APK without debug cheats has
+not yet been released. Android CI cannot start because GitHub currently
+rejects runner jobs for account billing/spending-limit reasons. Before
+distributing this fix, build and verify a normal APK with debug cheats off.
 
 General controller text entry is **not** part of that end-game PR. The LAN
 branch's Direct Connect keyboard is hard-coded to player name and IPv4; reuse

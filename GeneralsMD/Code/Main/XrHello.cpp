@@ -413,6 +413,12 @@ struct XrHello {
 	GLuint uiButtonTexture=0,settingsTexture=0,hoverTexture=0;
 	GLuint recoveryTexture=0;
 	bool recoveryVisible=false;
+	// GeneralsX @feature Muse 16/09/2026 Match-result card: head-yaw
+	// billboard texture, refreshed from the read-only end-state latch.
+	GLuint resultTexture=0;
+	std::string resultKey;
+	XrSurface resultSurface{};
+	bool resultVisible=false,resultPressHeld=false;
 	bool loadingPresentation=false;
 	std::string settingsKey,hoverKey,hoverCandidate;XrTime hoverSince=0;
 	bool hoverVisible=false;
@@ -1170,6 +1176,9 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 		}
 		if(!x.loadingPresentation && !hideWorkspace)panel(uiButtonSurface(x),128.0f/192,x.uiButtonTexture);
 		if(x.menu.open) panel(x.menu.surface,float(kXrMenuHeight)/kXrMenuWidth,x.settingsTexture);
+		// GeneralsX @feature Muse 16/09/2026 Match-result card last: the
+		// head-yaw billboard stays readable above every other panel.
+		if(x.resultVisible && !x.loadingPresentation) panel(x.resultSurface,.5f,x.resultTexture);
 		xr_glDisable(GL_BLEND);xr_glEnable(GL_DEPTH_TEST);xr_glDepthMask(GL_TRUE);
 		// P7.4 Always show the tracked right aim, including misses. UI is an
 		// overlay, so the pointer is drawn last and stops at its selected surface.
@@ -1454,6 +1463,9 @@ static void runLoop(XrHello &x)
 					world.elideWorldCopy=x.performance.elideWorldCopy;
 					for(int eye=0;eye<2;++eye) {world.eyes[eye]=views[eye].pose;world.fov[eye]=views[eye].fov;}
 					XrGameBoot_SetWorldFrame(world);XrGameBoot_SetSplitEnabled(!x.uprightGame);
+					// A one-frame quick end can exit during executeSingleFrame;
+					// capture its still-interactive end state before that update.
+					XrGameBoot_PollMatchResult();
 					// GeneralsX @performance Codex 14/09/2026 Settings changes,
 					// focus loss and movies start a fresh, warmed-up measurement epoch.
 					char perfKey[192];snprintf(perfKey,sizeof(perfKey),"scene=%s shadows=%s eye=%dx%d coverage=%.4f board=%.4f stereo=%s copy=%s",
@@ -1486,6 +1498,39 @@ static void runLoop(XrHello &x)
 						x.rayVisible=x.hoverVisible=false;
 						XR_LOG("P17 late capture loss: suppress incomplete image, full world requested");
 					}
+					// GeneralsX @feature Muse 16/09/2026 Match-result card: poll
+					// the read-only end-state latch, pose the head-yaw
+					// billboard, dismiss on any controller press. Debug chords
+					// fire retail end actions for short controlled scenarios
+					// (absent from release builds); their ordinary input side
+					// effects are irrelevant once the match ends.
+					XrGameBoot_PollMatchResult();
+					const bool hadResult=x.resultVisible;
+					x.resultVisible=XrGameBoot_MatchResult()!=XrEndgameResult::None;
+					if(x.resultVisible) {
+						float fx=0,fz=-1;yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
+						const auto head=xrScale(xrAdd(views[0].pose.position,views[1].pose.position),.5f);
+						const auto card=xrEndgameCardPose(head.x,head.y,head.z,fx,fz);
+						x.resultSurface.pose.position={card.x,card.y,card.z};
+						x.resultSurface.pose.orientation=xrAxisAngle({0,1,0},card.yaw);
+						x.resultSurface.width=card.width;
+					}
+					const bool pressed=controls.select || controls.secondary || controls.back ||
+						controls.tilt || controls.buttonsHeld;
+					// Never dismiss a card with the same press that ended the match.
+					if(x.resultVisible && !hadResult)x.resultPressHeld=pressed;
+					if(x.resultVisible && pressed && !x.resultPressHeld) {
+						XrGameBoot_DismissMatchResult();x.resultVisible=false;
+					}
+					x.resultPressHeld=pressed;
+#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+					if(x.gameBooted && x.interactiveGame && controls.grip[0] && controls.grip[1]) {
+						if(controls.arrange)XrGameBoot_DebugEndgame(XrDebugEndgame::Victory);
+						else if(controls.preset)XrGameBoot_DebugEndgame(XrDebugEndgame::Defeat);
+						else if(controls.homeBase)XrGameBoot_DebugEndgame(XrDebugEndgame::QuickVictory);
+						else if(controls.upright)XrGameBoot_DebugEndgame(XrDebugEndgame::LocalDefeat);
+					}
+#endif
 					if(!x.stereoVisible || perfEngine>=1000){perfMeasured=false;x.performance.invalidate();}
 					if(x.frame%120==0)XR_LOG("P17 presentation: %s requested=%d upright=%d split=%d quality=%s",
 						XrGameBoot_PresentationStatus(x.stereoVisible,x.stereoWorld).c_str(),int(x.stereoWorld),int(x.uprightGame),int(x.splitVisible),x.layout.resolutionTier==2 ? "ultra+":x.layout.resolutionTier==1 ? "high":"balanced");
@@ -1619,6 +1664,7 @@ static void shutdownXr(XrHello &x)
 	if (x.hoverTexture) xr_glDeleteTextures(1,&x.hoverTexture);
 	if (x.sceneTexture) xr_glDeleteTextures(1,&x.sceneTexture);
 	if (x.recoveryTexture) xr_glDeleteTextures(1,&x.recoveryTexture);
+	if (x.resultTexture) xr_glDeleteTextures(1,&x.resultTexture);
 	if (x.commandsTexture) xr_glDeleteTextures(1,&x.commandsTexture);
 	if (x.commandButtonTexture) xr_glDeleteTextures(1,&x.commandButtonTexture);
 	for (int i=0;i<2;++i) if(x.controls.gripSpace[i]!=XR_NULL_HANDLE) xrDestroySpace(x.controls.gripSpace[i]);

@@ -14,6 +14,7 @@
 #ifdef __ANDROID__
 
 #include <jni.h>
+#include "XrEndgame.h"
 #include "XrLayers.h"
 #include "XrWorld.h"
 #include <string>
@@ -44,6 +45,18 @@ void XrGameBoot_SetLanguage(int language);
 std::string XrGameBoot_LanguageStatus();
 bool XrGameBoot_ExpandedUI();
 std::string XrGameBoot_WorldHoverInfo();
+// GeneralsX @feature Muse 16/09/2026 Read-only match-result latch: poll once
+// before and after the game frame; MatchResult returns None when no result
+// is latched or the card was dismissed. Dismiss never touches the engine.
+void XrGameBoot_PollMatchResult();
+XrEndgameResult XrGameBoot_MatchResult();
+void XrGameBoot_DismissMatchResult();
+#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+// Debug-only end-game triggers for short controlled scenarios; absent from
+// release builds unless RTS_DEBUG_CHEATS=ON is set explicitly.
+enum class XrDebugEndgame { Victory, Defeat, QuickVictory, LocalDefeat };
+void XrGameBoot_DebugEndgame(XrDebugEndgame action);
+#endif
 
 #include "Lib/BaseType.h" // Bool
 

@@ -249,7 +249,12 @@ inline constexpr XrTranslation kXrTranslations[]={
  {"Sprache","Language"},
  {"Deutsch","German"},
  {"English","English"},
- {"Linkshändig","Left-handed"}
+ {"Linkshändig","Left-handed"},
+ // GeneralsX @feature Muse 16/09/2026 Match-result card titles and hint.
+ {"Sieg!","Victory!"},
+ {"Niederlage","Defeat"},
+ {"Partie beendet","Match over"},
+ {"Die Partie ist entschieden.\nBeliebige Taste zum Schließen.","The match is decided.\nPress any button to dismiss."}
 };
 inline const char *xrTr(const char *source) {
  if(g_xrLanguage==XrLanguage::German)return source;

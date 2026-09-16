@@ -76,6 +76,11 @@
 #include "SDL3Device/GameClient/SDL3Keyboard.h"
 #include "GameLogic/GameLogic.h"
 #include "GameLogic/FPUControl.h"
+// GeneralsX @feature Muse 16/09/2026 Read-only match-result queries.
+#include "Common/Recorder.h"
+#include "GameClient/CampaignManager.h"
+#include "GameLogic/ScriptEngine.h"
+#include "GameLogic/VictoryConditions.h"
 #include "SDL3GameEngine.h"
 #include "GeneratedVersion.h"
 #include "d3d8gles.h"
@@ -1312,6 +1317,71 @@ bool XrGameBoot_IsInteractiveGame()
 	}
 	return GameLogic::isInInteractiveGame(TheGameLogic->getGameMode()) == TRUE;
 }
+
+// GeneralsX @feature Muse 16/09/2026 Poll read-only end state into the
+// match-result latch (XrEndgame.h). The VictoryConditions trio indexes a
+// cached player slot, so it is only queried for a loaded multiplayer match;
+// ScriptEngine::isGameEnding and CampaignManager::isVictorious are plain
+// scalar reads. Nothing here writes simulation or network state.
+static XrEndgameState s_endgame;
+void XrGameBoot_PollMatchResult()
+{
+	XrEndgameInput in;
+	if (s_booted && TheGameLogic != nullptr) {
+		in.interactive = XrGameBoot_IsInteractiveGame();
+		in.frame = TheGameLogic->getFrame();
+		const bool loading = TheGameLogic->isLoadingMap() || TheGameLogic->isLoadingSave();
+		if (in.interactive && !loading) {
+			if (TheScriptEngine != nullptr) in.ending = TheScriptEngine->isGameEnding();
+			if (TheRecorder != nullptr && TheVictoryConditions != nullptr &&
+				TheRecorder->isMultiplayer()) {
+				in.vcValid = true;
+				in.observer = TheVictoryConditions->amIObserver();
+				in.localVictory = TheVictoryConditions->isLocalAlliedVictory();
+				in.alliedDefeat = TheVictoryConditions->isLocalAlliedDefeat();
+				in.localDefeat = TheVictoryConditions->isLocalDefeat();
+			}
+			if (TheCampaignManager != nullptr) {
+				in.endActionValid = true;
+				in.victorious = TheCampaignManager->isVictorious();
+			}
+		}
+	}
+	const auto before = s_endgame.latch;
+	xrEndgamePoll(s_endgame, in);
+	if (s_endgame.latch != before && s_endgame.latch != XrEndgameResult::None) {
+		const bool vcTerminal = in.vcValid && (in.observer ? in.alliedDefeat :
+			in.localVictory || in.alliedDefeat || in.localDefeat);
+		GXLOG("match result latched: %s (frame %u, source %s)",
+			s_endgame.latch == XrEndgameResult::Victory ? "victory" :
+			s_endgame.latch == XrEndgameResult::Defeat ? "defeat" : "match-over",
+			s_endgame.latchFrame, vcTerminal ? "victory-conditions" : "end-action-timer");
+	}
+}
+XrEndgameResult XrGameBoot_MatchResult()
+{
+	return xrEndgameVisible(s_endgame) ? s_endgame.latch : XrEndgameResult::None;
+}
+void XrGameBoot_DismissMatchResult()
+{
+	xrEndgameDismiss(s_endgame);
+}
+#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+// GeneralsX @feature Muse 16/09/2026 Debug-only end-game triggers for short
+// controlled scenarios (same XR thread, retail end actions, no new semantics).
+// Absent from release builds; enable explicitly with RTS_DEBUG_CHEATS=ON.
+void XrGameBoot_DebugEndgame(XrDebugEndgame action)
+{
+	if (!s_booted || TheScriptEngine == nullptr) return;
+	switch (action) {
+		case XrDebugEndgame::Victory: TheScriptEngine->debugVictory(); break;
+		case XrDebugEndgame::Defeat: TheScriptEngine->debugDefeat(); break;
+		case XrDebugEndgame::QuickVictory: TheScriptEngine->debugQuickVictory(); break;
+		case XrDebugEndgame::LocalDefeat: TheScriptEngine->debugLocalDefeat(); break;
+	}
+	GXLOG("debug endgame trigger: %d", static_cast<int>(action));
+}
+#endif
 
 // GeneralsX @feature Codex 13/09/2026 Persistent controller ray -> existing
 // pointer pipeline, including hover, drag and balanced button releases.
