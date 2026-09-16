@@ -25,7 +25,7 @@ If Steam discovery/join or in-match synchronization fails, reproduce with a Wind
 | Gate | Evidence needed | State |
 |---|---|---|
 | Build safety | Default-off and preview-on mode tests; Android native/XR APK build | Passed locally; exact APK installed on Quest 3, launch/open still pending |
-| Lobby | Discovery and direct-IP outcomes, both endpoint IPs, host/join/leave, chat/input | Quest ↔ Steam automatic discovery failed in first user test; direct IP open |
+| Lobby | Discovery and direct-IP outcomes, both endpoint IPs, host/join/leave, chat/input | Direct Connect to Steam/Proton reaches the game lobby; automatic discovery still fails |
 | Simulation | 15-minute Quest ↔ PC human match, orders from both players, no desync/CRC/stall | Open |
 | XR usability | Tabletop and upright shell transitions, controller menu/text entry, headset pause/resume and performance | Open |
 | Retail compatibility | Above gates against the user's unmodified Steam Zero Hour | Open |
@@ -48,15 +48,22 @@ Zero Hour and share the same Wi-Fi, but neither LAN lobby discovers the other.
 Their animated shell backgrounds differ; that does not identify the network
 failure or prove an SKU mismatch. Quest has only one active non-loopback IPv4
 interface (`wlan0`), and no fixed `IPAddress` entry was found in its options.
-The next test is native Direct Connect to the peer's IPv4 address in both
-directions. A direct-IP success would isolate broadcast discovery; a failure
-requires packet reachability/firewall and wire-protocol investigation. Avoid
-changing the simulation or relaxing compatibility checks on this evidence alone.
+The diagnostic next test was native Direct Connect to the peer's IPv4 address.
+Avoid changing the simulation or relaxing compatibility checks on discovery
+failure alone.
 The user subsequently tried an Omarchy laptop at `192.168.178.158` as an
 alternate peer, running Steam Zero Hour through Proton (the Windows game,
 not a native GeneralsX build). The Quest routes to it via `wlan0` and
 received all three ICMP replies (0% loss). This rules out total IP/subnet
 isolation for that peer, not a UDP firewall, LAN socket or game protocol
-failure. The exact result of Direct Connect still needs confirmation.
+failure. Direct Connect subsequently reached the shared game lobby, proving
+that at least the initial Quest ↔ Steam/Proton LAN exchange works. The Omarchy
+side then reported that it did not have the selected map. The latest Quest
+`Network.ini` names `Maps\\Alpine Assault\\Alpine Assault.map`; confirmation
+that this is the failed lobby map and which side hosted is pending. `hasMap`
+is false both when the map is absent from `MapCache` and when its file CRC
+differs, so do not treat the warning as proof that the file is missing. Check
+the map name, whether it is official/custom, the host's map CRC and each
+side's actual map bytes/cache before changing transfer rules or CRC checks.
 
 Do not enable LAN tabletop by default, merge a network-eligibility expansion into a release, or claim multiplayer support while these physical gates remain open. Keep replay and internet as separate later work. Keyboard/mouse remains secondary to the controller path.
