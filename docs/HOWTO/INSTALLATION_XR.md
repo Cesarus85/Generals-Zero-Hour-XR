@@ -31,12 +31,12 @@ outside the scope of this project; see
 
 ## Install the APK
 
-1. Download the tested offline, release-signed
-   [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.15-xr-preview/Generals-Zero-Hour-XR.apk)
-   from the [1.2.15 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.15-xr-preview).
+1. Download the current offline, release-signed
+   [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.17-xr-preview/Generals-Zero-Hour-XR.apk)
+   from the [1.2.17 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.17-xr-preview).
    Do not use an older debug-signed release or an experimental LAN diagnostic
    APK. The APK SHA-256 is
-   `bafff443d77e7b9e925a73fcf16b5bf7234c54f256e2cb7fa0f95d1aad008d2b`.
+   `8913648e9c8c124367ac812a4a3e9db0d0f296ec3a2c7e83a7d22627c2182869`.
    The repository and release currently require private-repository access.
 2. Enable Developer Mode in the Meta Quest mobile app, connect the headset over
    USB, and accept the USB debugging prompt inside the headset.
@@ -61,7 +61,7 @@ outside the scope of this project; see
 
 ## Select game data
 
-The 1.2.15 XR preview provides a three-step assistant:
+The 1.2.17 XR preview provides a three-step assistant:
 
 1. **Prepare your game files.** Copy your own complete installed Generals and
    Zero Hour folders to the Quest, for example `Download/GeneralsZH`.
