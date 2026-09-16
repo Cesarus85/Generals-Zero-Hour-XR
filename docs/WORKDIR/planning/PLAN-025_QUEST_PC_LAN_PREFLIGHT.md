@@ -1,6 +1,6 @@
 # PLAN-025 — Quest ↔ PC LAN preflight
 
-**Status:** Quest 10212 and Steam/Proton enter a match, then Omarchy reports an in-game synchronization mismatch, reproduced after reinstalling P23 and updating to 10212. Six Zero Hour gameplay-data hashes match; the cause is not yet isolated.
+**Status:** Quest 10212 and Steam/Proton enter a match, then Omarchy reports an in-game synchronization mismatch, reproduced after reinstalling P23 and updating to 10212. Six Zero Hour gameplay-data hashes match; the cause is not yet isolated. Diagnostic APK 10213 is built and installed with opt-in prepared; its first instrumented match is pending.
 **Scope:** One Quest 3 against a PC on the same LAN. The first peer is the user's Steam Zero Hour running through Proton on Omarchy; the planned Windows Steam peer remains a separate validation. If retail gameplay desynchronizes, isolate it with a same-source GeneralsX PC build. Internet services, public matchmaking, replay and reconnect are later gates.
 
 ## Decision and evidence
@@ -24,7 +24,7 @@ If Steam discovery/join or in-match synchronization fails, reproduce with a PC G
 
 | Gate | Evidence needed | State |
 |---|---|---|
-| Build safety | Default-off and preview-on mode tests; Android native/XR APK build | 10210 lobby candidate tested; 10212 keyboard/map candidate built and installed, headset test pending |
+| Build safety | Default-off and preview-on mode tests; Android native/XR APK build | 10213 native + both APK flavors pass; observer and workspace regressions pass; installed APK hash verified |
 | Lobby | Discovery and direct-IP outcomes, both endpoint IPs, host/join/leave, chat/input | Direct Connect reaches lobby and starts match; automatic discovery still fails |
 | Simulation | 15-minute Quest ↔ PC human match, orders from both players, no desync/CRC/stall | Failed first Steam/Proton attempt: peer shows the in-game synchronization mismatch dialog shortly after map start |
 | XR usability | Tabletop and upright shell transitions, controller menu/text entry, headset pause/resume and performance | Open; controller-operated Direct Connect keyboard built in 10212, worn-headset test pending |
@@ -191,7 +191,7 @@ are guarded by `DEBUG_LOGGING`. No first divergent frame/subsystem is known.
    interaction. The matching six Zero Hour files plus map archives lower the
    data-mismatch priority, but base archives and loose overrides remain open.
 
-### Next bounded diagnostic slice
+### Bounded diagnostic slice
 
 Before changing simulation behavior, log the first few normal CRC checkpoints
 (retain the negotiated interval), local logic frame, connected player IDs,
@@ -203,6 +203,86 @@ Use these traces with a same-source desktop peer or a second Quest. Retail
 replay comparison is useful only if the replay actually contains recorded
 logic CRCs; a replay that merely finishes is not proof of synchronization.
 
+The observer is implemented in `Core/Libraries/Include/GXLanCRCTrace.h`, with
+read-only integration in the existing Zero Hour logic CRC generation and
+validation paths. It starts at actual live LAN map-load entry after the game
+information is selected, not at the pre-intro/early-return step. Reset and new
+match clear its budget. Campaign, offline Skirmish and replay are excluded.
+
+Enable **Setup → Diagnostics → LAN sync checkpoints** (German:
+**LAN-Synchronisationsprüfung**) and restart the game. Equivalently, create
+`gx_lan_crc.txt` in the selected game-data directory; the XR boot path changes
+to that directory before loading the game. Desktop same-source builds can use
+`GX_LAN_CRC=1`. Neither mechanism changes network eligibility or makes LAN
+supported in a normal offline release.
+
+Each match emits metadata plus at most eight generation and eight validation
+records and one additional local failure after that budget. Generation records
+include local frame, local network slot, final CRC, RNG seed checksum and
+rolling CRCs after objects, RNG, partition, players and AI. They use the
+existing normal CRC traversal, without another object scan, random-number draw
+or message. Validation records preserve received values and distinguish the
+game's actual `detector_reason` from the observer's missing/different check.
+The observer maps cached player indices to network slots using the same
+read-only name lookup as `onLogicCrc`, but logs no names. `s0/p2:...` means
+network slot 0, engine player index 2. These are different index spaces; the
+existing mismatch detector is deliberately left untouched. A diagnostic
+disagreement with that detector is evidence to investigate, not silently fix.
+Do not compare a generation frame directly with a validation frame: the stock
+CRC payload has no source-frame field and is processed later.
+
+Quest **View Logs → Share** now includes the complete current and previous
+XR stderr files in the existing ZIP, even if the on-screen log preview is
+truncated. The new records contain no player names or IPs; the surrounding
+existing logs can contain personal paths/network details. Keep raw captures
+private. Export promptly, since subsequent launches rotate old logs.
+
+Next physical procedure:
+
+1. With the diagnostic candidate and marker enabled, repeat the same Direct
+   Connect match against unmodified Steam/Proton. Retain map, seed/settings,
+   factions and start slots where practical.
+2. Initially issue no gameplay orders for about 30 seconds (or until mismatch).
+   Note which endpoint reports the error and approximately when.
+3. Stop and collect the current/previous Quest logs before repeated relaunches.
+   If the idle test passes, repeat with one move order, then build/attack.
+4. Compare the first normal checkpoints even when only Omarchy reports a
+   failure. A Quest-local failure is not required for useful captured values.
+5. Use an identically instrumented same-source desktop or second Quest for
+   paired subsystem traces if the retail mismatch cannot be isolated.
+
+The host observer test checks bounds, activation/reset and reasons; source
+guards check unchanged cadence/message/traversal sites. Full simulation CRC
+identity, actual two-peer trace collection and the 15-minute human match remain
+device gates. A successful APK build does not close them.
+
+#### 10213 build and device handoff
+
+Version `1.2.13-lan-diagnostics` (10213), package
+`com.generalsx.zerohour.xr`, is the current unmerged/unpublished local candidate
+at `build/apk/Generals-Zero-Hour-XR.apk`. SHA-256:
+`bd781f6462e0f959419ade77faca32b967a6407c08659a046b4547e02e22f0a8`.
+Source is the implementation checkpoint accompanying this entry on
+`codex/quest-pc-lan-preflight`. The accepted P23 default-off release is unchanged;
+version overrides are packaging arguments, not a changed public default.
+
+Verification: `cmake --build build/android-vulkan --target z_generals -j 6`,
+local `package-android-zh.sh` for `GX_FLAVORS="zh xr"`,
+`bash scripts/qa/lan-crc-trace-test.sh`, and
+`bash scripts/qa/xr-workspace-test.sh build/android-vulkan` all pass (788
+workspace assertions with preview disabled and again enabled). APK v2 signature,
+ARM64 identity and packaged/native `libmain.so` hash equality were checked.
+`adb install -r` succeeded on Quest `2G0YC5ZG9609PY`, and the installed APK
+hash matches. Game data was retained; a marker was placed in the currently
+saved game-data folder, not an obsolete prior import path. Previous APK/logs
+were preserved locally before replacement.
+
+The launch attempt was intercepted by Meta's **Controller required** dialog.
+No first 10213 match/startup trace is claimed. The existing all-files app-op
+remains allowed; no runtime permissions were changed. Activate controllers
+and perform the above physical procedure. The full diagnostic records become
+available only once a live LAN match begins.
+
 ### Two Quests: expected advantage, unverified
 
 Two Quest 3 devices using identical APK 10212 and matching game data avoid the
@@ -213,5 +293,5 @@ uninitialized memory or missing CRC messages. Test first with Direct Connect
 and an idle match, then orders from both players and the 15-minute gate.
 Automatic discovery and sustained Quest-to-Quest play have not been verified.
 
-P23 remains the planned public offline preview; LAN 10212 stays experimental.
+P23 remains the planned public offline preview; LAN 10213 stays experimental.
 Do not enable LAN tabletop by default, merge a network-eligibility expansion into a release, or claim multiplayer support while these physical gates remain open. Keep replay and internet as separate later work. Keyboard/mouse remains secondary to the controller path.

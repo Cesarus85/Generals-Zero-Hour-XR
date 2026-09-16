@@ -20,6 +20,36 @@ Common command line parameters for `GeneralsX` (Generals) and `GeneralsXZH` (Zer
 | `-debug` | Enable debug mode | `./GeneralsXZH -debug` |
 | `-logToCon` | Enables legacy debug-log console routing (`DEBUG_LOG`). **Debug builds only** (`ALLOW_DEBUG_UTILS` / `RTS_BUILD_OPTION_DEBUG=ON`); ignored in release builds. | `./GeneralsXZH -logToCon` |
 
+### Opt-in LAN synchronization trace (Zero Hour)
+
+This is a diagnostic option, not a multiplayer compatibility fix. Set
+`GX_LAN_CRC=1` in the process environment, or create an empty `gx_lan_crc.txt`
+in the selected game-data/working directory. On Android/Quest, use
+**Setup → Diagnostics → LAN sync checkpoints**, then restart the game.
+The opt-in is checked at each live LAN match start; offline play and replay
+remain silent. Remove the marker and unset the environment variable to disable
+it. `GX_LAN_CRC=0` does not override an existing marker.
+
+Release builds write `[GX-LAN-CRC]` records to stderr without `-logToCon`:
+match metadata, the first eight scheduled CRC generations and validations,
+and at most one additional local mismatch after the normal output budget.
+The negotiated CRC interval, game messages and simulation rules are unchanged.
+Generation frames and validation frames are distinct; the retail CRC message
+does not carry its generation frame. Intermediate values after objects, RNG,
+partition, players and AI are **rolling** CRCs, not independent subsystem hashes.
+`detector_reason` is the game's actual decision; `reason` separately checks
+whether every connected slot has a value and whether those values agree.
+Received entries use `s<network-slot>/p<engine-player-index>:<CRC>`; do not
+assume that those two indices are identical.
+
+On Quest, **View Logs → Share** includes the full current and previous
+`generals-xr-stderr.log` files. The on-screen preview may be truncated. Capture
+the logs promptly after reproducing, before repeated restarts rotate them out.
+No player names or IP addresses are added by this trace, but the complete
+existing game logs can contain personal paths/network details: review before
+sharing publicly. Stock Steam peers expose no matching subsystem trace, so a
+same-source peer may still be required to isolate a divergent subsystem.
+
 ## Mods & Content
 
 | Parameter | Description | Example |

@@ -1,0 +1,64 @@
+// GeneralsX @feature Codex 16/09/2026 Host checks for bounded LAN CRC diagnostics.
+#include "GXLanCRCTrace.h"
+
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+
+int main()
+{
+	using namespace GXLanCRCTrace;
+	unsetenv("GX_LAN_CRC");
+	beginMatch(true, 0x1234u, 7, 5);
+	assert(!state().enabled); // No marker and no environment override.
+	FILE *marker = fopen("gx_lan_crc.txt", "w");
+	assert(marker);
+	fclose(marker);
+	beginMatch(false, 0x1234u, 7, 5);
+	assert(!state().enabled);
+	armGeneration();
+	assert(!captureGeneration());
+
+	beginMatch(true, 0x1234u, 7, 5);
+	assert(state().enabled && state().generated == 0 && state().validated == 0);
+	int connected[] = { 0, 1 };
+	// Player indices intentionally differ from network slots.
+	PeerCRC matching[] = { { 2, 0, 0xABCDu }, { 3, 1, 0xABCDu } };
+	PeerCRC differing[] = { { 2, 0, 0xABCDu }, { 3, 1, 0xABCEu } };
+	PeerCRC absent[] = { { 2, 0, 0xABCDu } };
+	PeerCRC disconnectedExtra[] = { { 2, 0, 0xABCDu }, { 4, 3, 0xABCDu } };
+	assert(classify(connected, 2, matching, 2) == no_mismatch);
+	assert(classify(connected, 2, differing, 2) == different_crc);
+	assert(classify(connected, 2, absent, 1) == missing_crc);
+	assert(classify(connected, 2, disconnectedExtra, 2) == missing_crc);
+	assert(std::strcmp(reasonName(missing_crc), "missing_crc") == 0);
+
+	const unsigned int engineCRC = 0xABCDu;
+	const Stages stages = { 1u, 2u, 3u, 4u, 5u };
+	int scheduled = 0;
+	for (int frame = 0; frame < 100; ++frame) {
+		if (frame % 5 != 0) continue; // The existing caller owns this interval.
+		++scheduled;
+		armGeneration();
+		if (captureGeneration()) generated(frame, 0, engineCRC, 42u, stages);
+		checkpoint(frame + 1, 0, connected, 2, matching, 2, no_mismatch);
+	}
+	assert(scheduled == 20 && state().generated == kFirstCheckpoints && state().validated == kFirstCheckpoints);
+	assert(engineCRC == 0xABCDu && matching[0].crc == 0xABCDu);
+	checkpoint(101, 0, connected, 2, absent, 1, missing_crc);
+	assert(state().failureWritten && state().validated == kFirstCheckpoints);
+	checkpoint(102, 0, connected, 2, differing, 2, different_crc);
+	assert(state().failureWritten && state().validated == kFirstCheckpoints);
+
+	endMatch();
+	assert(!state().enabled && !state().failureWritten);
+	assert(remove("gx_lan_crc.txt") == 0);
+	setenv("GX_LAN_CRC", "1", 1);
+	beginMatch(true, 0x5678u, 11, 10);
+	assert(state().enabled && state().generated == 0 && state().validated == 0);
+	checkpoint(1, 0, connected, 2, differing, 2, different_crc);
+	assert(state().failureWritten && state().validated == 1);
+	endMatch();
+	unsetenv("GX_LAN_CRC");
+	return 0;
+}

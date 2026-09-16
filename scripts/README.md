@@ -196,6 +196,13 @@ Utilities for large-scale code refactoring and fixes:
   verbatim with engine spies under UBSan. Checks spatial versus ordinary GUI
   refusal, terrain occlusion and model hits without ground. Run with
   `bash scripts/qa/xr-pick-bridge-test.sh`; no device or game assets required.
+- `lan-crc-trace-test.sh` / `.cpp` - Compiles the opt-in LAN CRC observer with
+  UBSan and warnings-as-errors. Tests marker/environment activation, offline
+  silence, reset/new match, bounded generation/validation output and one-shot
+  missing/different failure records. Source guards check the existing CRC
+  cadence, message and traversal sites; these are not proof of full-engine
+  CRC identity or retail multiplayer compatibility. Run with
+  `bash scripts/qa/lan-crc-trace-test.sh`; no device or retail assets required.
 - `xr-workspace-test.sh` / `.cpp` - Compiles production native-dialog detection
   and video/loadscreen split eligibility plus surface crop/placement functions
   with spies. Checks science-tree expansion, full-screen video fallback, complete dialog corner

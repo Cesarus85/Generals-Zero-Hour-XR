@@ -294,11 +294,37 @@ verified update to 10212 (installed APK hash matches the candidate). Source
 audit finds native platform math active and the alternative GameMath wrappers
 still partly TODO; `-ffp-contract=off` is already present. Inherited retail
 simulation differences remain candidates. The same mismatch handler also
-handles missing expected CRC messages, so the next diagnostic must distinguish
-missing messages from different values and record the first divergent
-subsystem. PLAN-025 contains the ranked audit. Two identical Quest 3 peers
+handles missing expected CRC messages, so the diagnostic must distinguish
+missing messages from different values and collect rolling subsystem
+checkpoints for comparison. PLAN-025 contains the ranked audit. Two identical Quest 3 peers
 should avoid several cross-build differences but remain untested. P23 remains
 the planned public offline preview, with LAN development continuing separately.
+
+The current **unpublished diagnostic candidate** is 10213
+(`1.2.13-lan-diagnostics`) on `codex/quest-pc-lan-preflight`, at
+`build/apk/Generals-Zero-Hour-XR.apk`, SHA-256
+`bd781f6462e0f959419ade77faca32b967a6407c08659a046b4547e02e22f0a8`.
+It adds opt-in first-eight generation/validation CRC records and one later
+local failure, without changing simulation rules, messages or CRC cadence.
+Records distinguish network slots from engine player indices and actual
+detector reasons from the observer's classification. Setup has an EN/DE
+diagnostic switch; View Logs shares current and previous full XR stderr logs.
+
+The native ARM64 build and both Android APK flavors pass; observer UBSan tests,
+source guards and 788 workspace checks for each LAN-gate setting pass. APK v2
+signing, package/version/ABI, bundled native-library equality and the installed
+APK hash verify. Update-install on Quest `2G0YC5ZG9609PY` retained data. The
+`gx_lan_crc.txt` marker was placed in its saved game-data folder for the next
+test. Meta intercepted the attempted launch with **Controller required**;
+therefore no 10213 gameplay or real trace capture has yet passed. The device
+still permits the app's existing all-files access; no permissions were changed.
+
+**Next:** activate both controllers, reproduce the same Steam/Proton Direct
+Connect match without orders initially, and collect the Quest logs promptly.
+Compare the first checkpoints even if only Omarchy reports mismatch. If needed,
+use an identically instrumented same-source PC/Quest peer. The host checks are
+not a full-engine CRC-invariance or retail-compatibility proof. Do not merge or
+publish LAN as supported; keep the P23 release separate.
 
 ### P22 - deferred keyboard and mouse investigation
 
