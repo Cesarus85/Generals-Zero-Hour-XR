@@ -67,11 +67,22 @@ static std::unordered_map<int, std::string> g_mapServiceIndexToPlayerTemplateStr
 #include "Common/UnicodeString.h"
 #include "Common/AsciiString.h"
 // standard libs
+// GeneralsX @build Codex 16/09/2026 Keep GameSpy min/max macros out of C++ standard headers.
+#pragma push_macro("min")
+#pragma push_macro("max")
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include <fstream>
 #include <vector>
 #include <map>
 #include <unordered_map>
 #include <functional>
+#pragma pop_macro("max")
+#pragma pop_macro("min")
 
 #include "GameNetwork/GeneralsOnline/NextGenMP_defines.h"
 // GeneralsX @feature Android port 12/07/2026 P2P match-transport layer,
@@ -90,7 +101,18 @@ class NetworkMesh;
 #include "../Console/Console.h"
 #endif
 
+// GeneralsX @build Codex 16/09/2026 Keep GameSpy min/max macros out of JSON's C++ standard headers.
+#pragma push_macro("min")
+#pragma push_macro("max")
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include "GameNetwork/GeneralsOnline/json.hpp"
+#pragma pop_macro("max")
+#pragma pop_macro("min")
 
 std::string Base64Encode(const std::vector<uint8_t>& data);
 std::vector<uint8_t> Base64Decode(const std::string& encodedData);

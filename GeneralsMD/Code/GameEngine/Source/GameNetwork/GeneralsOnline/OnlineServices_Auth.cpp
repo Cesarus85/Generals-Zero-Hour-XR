@@ -4,9 +4,20 @@
 #include "GameNetwork/GeneralsOnline/HTTP/HTTPRequest.h"
 #include "GameNetwork/GeneralsOnline/PluginInterfaces.h"
 #include "GameNetwork/GeneralsOnline/json.hpp"
+// GeneralsX @build Codex 16/09/2026 Shield C++ headers from GameSpy min/max macros and restore them afterward.
+#pragma push_macro("min")
+#pragma push_macro("max")
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include <algorithm>
 #include <chrono>
 #include <random>
+#pragma pop_macro("max")
+#pragma pop_macro("min")
 #if defined(_WIN32)
 #include <windows.h>
 #include <shellapi.h>

@@ -216,6 +216,8 @@ inline void OutputDebugString(const char* lpOutputString) {
 
 // strlcpy weak symbol (FTP.cpp uses for safe string copy)
 // Declared weak to avoid conflicts with BSD libc or Dependencies/Utility version
+// GeneralsX @build Codex 16/09/2026 Use host libc when CMake reports this function available.
+#ifndef HAVE_STRLCPY
 extern "C" __attribute__((weak))
 size_t strlcpy(char *dst, const char *src, size_t dsize) {
     const char *osrc = src;
@@ -231,8 +233,11 @@ size_t strlcpy(char *dst, const char *src, size_t dsize) {
     }
     return(src - osrc - 1);
 }
+#endif
 
 // GeneralsX @TheSuperHackers @build BenderAI 11/02/2026 strlcat weak symbol (Download.cpp, FTP.cpp)
+// GeneralsX @build Codex 16/09/2026 Use host libc when CMake reports this function available.
+#ifndef HAVE_STRLCAT
 extern "C" __attribute__((weak))
 size_t strlcat(char *dst, const char *src, size_t dsize) {
    const char *odst = dst;
@@ -259,5 +264,6 @@ size_t strlcat(char *dst, const char *src, size_t dsize) {
 
     return(dlen + (src - osrc)); // Total length that would have been created
 }
+#endif
 
 #endif // !_WIN32

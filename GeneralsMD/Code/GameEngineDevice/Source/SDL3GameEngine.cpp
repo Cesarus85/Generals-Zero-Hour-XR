@@ -2365,6 +2365,8 @@ void SDL3GameEngine::pollSDL3Events(void)
 
 			case SDL_EVENT_KEY_DOWN:
 			case SDL_EVENT_KEY_UP:
+				// GeneralsX @build Codex 16/09/2026 Quest BACK uses mobile-only touch state.
+#if defined(SAGE_MOBILE_PLATFORM)
 				// Quest port: BACK is the universal cancel. Every Quest
 				// controller button (stick-click, grip, A/B/X/Y) arrives as
 				// SDL_SCANCODE_AC_BACK -- verified on device via getevent ([gxpad]
@@ -2402,6 +2404,7 @@ void SDL3GameEngine::pollSDL3Events(void)
 						break;
 					}
 				}
+#endif
 				// Fighter19 pattern: direct addSDLEvent() call
 				// GeneralsX @refactor felipebraz 16/02/2026 Simplified event routing
 				if (TheKeyboard) {
@@ -2751,4 +2754,3 @@ AudioManager *SDL3GameEngine::createAudioManager(Bool dummy)
 }
 
 #endif // !_WIN32
-

@@ -112,6 +112,12 @@ HWND ApplicationHWnd = nullptr;  ///< our application window handle
 // SDL3 window created in main() before GameMain(), stored globally for engine access
 SDL_Window* TheSDL3Window = nullptr;
 
+// GeneralsX @build Codex 16/09/2026 Android XR boot defines this itself;
+// non-Android SDL builds have no offscreen XR boot and use normal windowing.
+#if !defined(__ANDROID__)
+bool GX_XR_OffscreenBoot = false;
+#endif
+
 // GAME TEXT FILE PATHS
 // TheSuperHackers @build felipebraz 13/02/2026
 // GameText.cpp uses these paths to load CSF and STR files (game localization)

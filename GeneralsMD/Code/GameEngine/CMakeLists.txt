@@ -1242,7 +1242,8 @@ target_link_libraries(z_gameengine PUBLIC CURL::libcurl)
 # steamwebrtc/webrtc-lite binary is needed -- upstream's Windows build predates
 # that and still vendors webrtc-lite.lib. Our static triplet exports the _s
 # target (which also injects STEAMNETWORKINGSOCKETS_STATIC_LINK for consumers).
-if(ANDROID)
+# GeneralsX @build Codex 16/09/2026 Supply the existing mesh sources on Linux; the P2P feature gate below stays Android-only.
+if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_package(GameNetworkingSockets CONFIG REQUIRED)
     if(TARGET GameNetworkingSockets::GameNetworkingSockets_s)
         target_link_libraries(z_gameengine PUBLIC GameNetworkingSockets::GameNetworkingSockets_s)

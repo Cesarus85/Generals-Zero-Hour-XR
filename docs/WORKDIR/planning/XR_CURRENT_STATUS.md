@@ -340,18 +340,32 @@ generation cadence, message format or shared replay cache was changed.
 `c13aac9a39858771cf0232d29cf396f181fb9a0d105fe43b82617c7e501e34d1`.
 Native ARM64 and both Android flavors build; v2 signing, package/version/ABI
 and bundled-library equality verify. Workspace regressions pass 788 checks
-with each LAN gate setting. **Not installed:** ADB returned no connected Quest
-during this build. The last verified installed version remains 10213.
+with each LAN gate setting. **Installed:** the subsequent Quest reconnection
+allowed an update-install of 10214 without clearing data; package inspection
+confirms the version and on-device APK SHA-256 matches the value above. Meta's
+controller-required dialog blocks the requested launch until controllers wake.
+Worn-headset detection and paired-match acceptance remain open.
 
 A paired-log comparator (`scripts/qa/lan-crc-compare.py`) is ready and passes
 ten synthetic tests. It requires matching map CRC/seed/interval, handles
 explicit multi-match selection, compares generation rather than validation
 frames and reports only the first observed rolling-checkpoint difference.
-There is no same-source PC build or paired-PC result yet; Omarchy SSH access
-was requested, not assumed. No Steam files or Proton settings were changed.
+Omarchy SSH access now works. An isolated native PC diagnostic lab contains a
+clone of engine checkpoint `78207e6` plus the build-compatibility fixes in PLAN-025,
+a separate copy of Steam game data and user-local build tools. Its launcher
+has passed asset-free tests on macOS and
+Omarchy and redirects engine configuration, saves and diagnostics to the lab.
+**Native PC build is complete and staged.** Executable SHA-256:
+`9bad0faa0c075f4f3de71c63ab8615806818a9f39fbd70bc8558599f5cb6597f`.
+Project libraries are staged beside it; `ldd -r` reports no missing libraries
+or unresolved symbols, with FFmpeg supplied by the current host. Final Android
+native regression compilation and 788 workspace checks per LAN-gate setting
+pass; the installed 10214 APK is unchanged. **No graphical PC startup or paired
+match has been tested yet.** No original Steam files or Proton settings were changed. The two remaining
+base Generals INI/Patch archive hashes also match Quest (details in PLAN-025).
 
-**Next:** install/physically verify 10214 when Quest reconnects, then compare
-an identically instrumented same-source PC peer to isolate the differing CRCs
+**Next:** launch the staged PC diagnostic from Omarchy's graphical terminal
+(PLAN-025), physically verify 10214, then compare instrumented peers to isolate the differing CRCs
 and return to Steam retesting. The user's primary goal is Quest versus the
 unmodified Steam PC version, with Quest peers retained. The custom PC build
 is a diagnostic tool, not a replacement compatibility promise. A no-popup

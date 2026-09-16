@@ -50,6 +50,14 @@ existing game logs can contain personal paths/network details: review before
 sharing publicly. Stock Steam peers expose no matching subsystem trace, so a
 same-source peer may still be required to isolate a divergent subsystem.
 
+For an independently staged Linux comparison, run
+`bash scripts/build/linux/run-lan-diagnostic-zh.sh /absolute/path/to/lab`
+from the PC's graphical terminal. The launcher enables this observer, adds
+`-win -quickstart`, and writes a unique `logs/native-zh-*` file on every run.
+It requires a separate `game/` data copy and `runtime/` binary/library set;
+it does not install assets or make an incompatible retail peer synchronize.
+Do not use debug builds or add optional game patches for the comparison.
+
 ## Mods & Content
 
 | Parameter | Description | Example |

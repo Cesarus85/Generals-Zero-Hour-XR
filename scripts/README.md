@@ -24,6 +24,16 @@ It interrupts the running app; finish any match first. Remove the separate
 
 #### `build/linux/` - Linux & Docker Build
 Scripts for Linux native and Docker-based builds:
+- `run-lan-diagnostic-zh.sh /absolute/path/to/lab` - Run a separately staged
+  native Zero Hour CRC diagnostic from a graphical PC terminal. Requires
+  `runtime/GeneralsXZH` and its shared libraries, plus an independent Steam-layout
+  game-data copy in `game/` (including `ZH_Generals`). Keeps engine settings,
+  saves, DXVK caches and unique diagnostic logs under the lab; leaves `HOME`
+  unchanged and refuses Steam-library/symlinked lab destinations. Enables
+  `GX_LAN_CRC=1` and disables optional SagePatch injection. This is a diagnostic
+  comparator, not a replacement for retail Steam compatibility. See PLAN-025.
+  Run `bash scripts/qa/lan-diagnostic-launcher-test.sh` for asset-free launcher
+  preflight, quoting, isolation, unique-log and exit-status regression tests.
 - `build-linux-appimage-generals.sh` - Package GeneralsX as AppImage (portable single-file Linux distribution)
 - `docker-configure-linux.sh` - Configure CMake for Linux build
 - `docker-build-linux-zh.sh` - Build GeneralsXZH (Zero Hour) for Linux

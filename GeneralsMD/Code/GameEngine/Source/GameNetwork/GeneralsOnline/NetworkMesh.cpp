@@ -12,10 +12,21 @@
 #include "GameNetwork/GeneralsOnline/json.hpp"
 #include "GameNetwork/GeneralsOnline/HTTP/HTTPManager.h"
 #include "GameNetwork/GeneralsOnline/OnlineServices_Init.h"
+// GeneralsX @build Codex 16/09/2026 Shield SDK/C++ headers from GameSpy min/max macros and restore them afterward.
+#pragma push_macro("min")
+#pragma push_macro("max")
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include <steam/isteamnetworkingutils.h>
 #include <steam/steamnetworkingcustomsignaling.h>
 #include <cmath>
 #include <algorithm>
+#pragma pop_macro("max")
+#pragma pop_macro("min")
 
 // GeneralsX @bugfix Android port 12/07/2026 - g_bForceRelay/m_exeCRCOriginal
 // are already defined (as real definitions) in OnlineServices_Init.cpp,

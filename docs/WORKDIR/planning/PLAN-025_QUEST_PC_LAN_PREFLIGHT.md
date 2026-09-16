@@ -1,6 +1,6 @@
 # PLAN-025 — Quest ↔ PC LAN preflight
 
-**Status:** The first instrumented APK-10213 match confirms unequal received peer CRCs and an inherited Quest-side detector index-space defect that masks the mismatch locally. The detector correction is built as APK 10214 but not installed because Quest disconnected. The cause of the CRC divergence is not yet isolated. Six Zero Hour gameplay-data hashes match; LAN remains unsupported.
+**Status:** The first instrumented APK-10213 match confirms unequal received peer CRCs and an inherited Quest-side detector index-space defect that masks the mismatch locally. The detector correction is built and update-installed as APK 10214. The isolated native Linux diagnostic now builds and passes staged dependency/relocation checks on Omarchy; graphical startup and a paired match are still open. The cause of CRC divergence is not yet isolated. Zero Hour and base gameplay archive hashes match; LAN remains unsupported.
 **Scope:** One Quest 3 against a PC on the same LAN. The first peer is the user's Steam Zero Hour running through Proton on Omarchy; the planned Windows Steam peer remains a separate validation. If retail gameplay desynchronizes, isolate it with a same-source GeneralsX PC build. Internet services, public matchmaking, replay and reconnect are later gates.
 
 **User priority:** Quest versus the unmodified Steam PC game is the primary
@@ -363,12 +363,11 @@ cannot invent them. Its ten synthetic parser/comparison tests pass, and the
 captured 10213 log self-comparison correctly reads all eight samples (parser
 smoke only, not a peer result).
 
-The next useful comparison remains an identically instrumented native PC
-build against Quest, followed by Steam retests. No Linux/Windows binary or
-PC match is claimed from this implementation: this Mac has Docker/Colima
-installed but its VM is stopped and no Linux build tree is configured. SSH
-availability on Omarchy was requested before any remote access. Steam files
-and Proton settings have not been modified.
+At the detector-only checkpoint, no PC binary or match existed: the Mac's
+Docker/Colima VM was stopped and no Linux build tree was configured. SSH
+availability on Omarchy was requested before any remote access. The subsequent
+authorized native diagnostic build is recorded below; retail Steam/Proton
+interoperability remains the goal, not replacement by the custom PC executable.
 
 #### 10214 artifact and remaining gates
 
@@ -379,9 +378,141 @@ ARM64 native and both `zh xr` APK flavors build successfully. APK v2 signature,
 package/version/ABI and embedded `libmain.so` equality verify. Production
 detector and observer host tests, ten comparator cases, and 788 workspace
 checks for each LAN-preview gate setting pass. No GitHub Actions were used.
-ADB reported no connected Quest; installation and worn-headset detection are
-pending, and 10213 remains the last verified installed version. The previous
+ADB initially reported no connected Quest. After reconnection, update-install
+and package inspection confirm 10214; the on-device APK hash also matches.
+Meta's controller-required dialog blocks the requested launch pending active
+controllers; worn-headset detection remains pending. The previous
 10213 APK was preserved locally before packaging. No release/defaults changed.
+
+### Isolated Omarchy diagnostic preparation
+
+Authorized SSH access succeeded. Docker daemon access is unavailable to the
+user, and system CMake is absent; neither permissions nor system packages were
+changed. A dedicated user-owned lab contains a source clone of `78207e6`,
+checksum-verified portable CMake 3.31.6, pinned vcpkg
+`a1cae005c39be7b18ba319fced856b68d7276271`, and an independent copy of the Steam
+Zero Hour installation including nested `ZH_Generals`. Build tools may use
+normal user caches; this is not an OS sandbox. Original Steam files, Proton
+configuration and normal saves remain untouched.
+
+The local test-machine lab is named `generals-xr-lan-diagnostics-78207e6`
+under the SSH user's home directory. Its `bootstrap.sh` records tool versions
+and configuration, `source/` contains the mirrored source delta, and `logs/`
+contains successive configure/build attempts. `start.sh` delegates to the
+versioned launcher. The executable and project-library closure are now staged
+under `runtime/`. Do not commit this lab or its retail data.
+
+Native configuration uses Clang, `linux64-deploy`, debug OFF, deterministic
+math OFF and update checks OFF, matching the relevant Quest choices. SDL_image
+3.4.0's actual `SDLIMAGE_AVIF=OFF` option is additionally required on this host;
+the older `SDL3IMAGE_AVIF` variable does not disable its optional system AVIF
+backend, whose imported target lacks a RelWithDebInfo location. No generated
+dependency source was edited. Configuration now passes. The first compile
+stopped at incompatible `strlcpy`/`strlcat` declarations against the host libc.
+The local authoritative source now applies the existing `HAVE_STRLCPY` and
+`HAVE_STRLCAT` guards to declarations in `stringex.h` and weak fallbacks in both
+Generals and GeneralsMD `socket_compat.h` copies. The real Linux compile probes
+pass with the configured feature macros. Subsequent builds exposed GameSpy's
+`min`/`max` macros colliding with libstdc++ 16's chrono and valarray headers.
+Scoped push/undef/pop guards at affected GeneralsOnline include boundaries now shield
+standard/JSON includes while restoring legacy macro state for engine code.
+These exact source edits were mirrored to the diagnostic clone; no dependency
+sources, simulation expressions or class layout were changed. A subsequent
+failure exposed an inherited build mismatch: the Linux source list compiles
+`NetworkMesh.cpp`/`NextGenTransport.cpp`, but the GameNetworkingSockets 1.6.0
+dependency was installed and linked only for Android. The diagnostic follow-up
+extends dependency availability to Linux without changing the existing
+Android-only P2P feature definition. This does not enable desktop internet
+match support or change native LAN dispatch. No transport implementation was
+removed to make the compiler pass.
+The additional user-local abseil/protobuf/utf8-range/GNS builds and final Linux
+configuration succeed; the native engine build then resumed with these targets.
+Compilation then exposed `OWNERSHIP_COOKIE` declared only inside
+`MEMORYPOOL_DEBUG` despite unconditional release-code uses. Its unchanged
+`0x47454e58` declaration is moved outside that guard; allocation algorithms,
+field layout and ownership checks are unchanged. Debug mode is not enabled
+as a workaround.
+Both exact Linux memory-pool object targets compile after this correction.
+A separate desktop compile failure exposed Quest BACK cancellation referencing
+mobile-only `TouchState`/`s_touch` without its platform guard. Only that block
+is now guarded by `SAGE_MOBILE_PLATFORM`, matching the declarations; ordinary
+keyboard dispatch stays outside and mobile behavior is unchanged.
+The final desktop link additionally lacked `GX_XR_OffscreenBoot`: its only
+definition was in the Android-only XR bootstrap. Non-Android SDL main now
+defines the normal-windowing default `false`; Android retains its original
+single definition. No desktop XR capability is being introduced.
+
+The PC source is therefore `78207e6` plus these explicit build-compatibility
+fixes, not a byte-identical source snapshot of installed APK 10214. The
+simulation and CRC implementation remain unchanged. The header changes pass
+Android compilation, including a successful CMake/vcpkg reconfiguration and
+final native `z_generals` rebuild after all compatibility changes. Workspace
+regressions also pass 788 checks with each LAN-preview gate setting.
+Do not silently replace the installed APK or its recorded hash
+with outputs of this compile-only regression run.
+
+The versioned `scripts/build/linux/run-lan-diagnostic-zh.sh` accepts an explicit
+lab path with staged `runtime/` and copied `game/` directories. It requires a
+real graphical terminal, retains `HOME`, redirects XDG paths and DXVK outputs,
+disables optional SagePatch preload, enables the bounded CRC observer and keeps
+one unique log per run. Its synthetic tests pass on macOS and Omarchy, including
+quoted paths/arguments, child exit status and missing-data/symlink/headless
+refusal. These tests do not launch the real game or establish synchronization.
+The detector/observer UBSan tests and all ten comparator tests also pass on the
+actual x86_64 Linux host.
+
+Two additional real-Linux syntax probes use production GeneralsOnline headers
+and the Recorder translation unit's actual CMake flags/PCH. With GameSpy
+`min`/`max` initially defined, the protected includes compile and both macros
+remain intact afterward. With both initially undefined, they remain undefined.
+These probes pass on Clang 22/libstdc++ 16; they do not establish runtime LAN
+compatibility.
+
+Read-only SSH hashing also confirms the remaining base gameplay archives match
+the previously measured Quest values:
+
+```text
+ZH_Generals/INI.big   bff8d621088b25fd8b041c8acca020a020fabc66f972ab2bd131fc67d905a72c
+ZH_Generals/Patch.big 28dc194412f96dc1f66412430cf74f2d89ad0cdabf70d2c8d1179d8e51743494
+```
+
+This reduces archive-mismatch uncertainty; it does not exclude loose overrides
+or prove identical effective simulation.
+
+#### Native diagnostic artifact and next physical test
+
+The full Linux `z_generals` build/link passes. Staged `runtime/GeneralsXZH`
+is 100603368 bytes, SHA-256:
+
+```text
+9bad0faa0c075f4f3de71c63ab8615806818a9f39fbd70bc8558599f5cb6597f
+```
+
+DXVK d3d8/d3d9/dxgi, SDL3, SDL3_image, OpenAL and GameSpy are staged alongside
+the executable. `LD_LIBRARY_PATH` points to this runtime; `ldd -r` reports no
+missing libraries or unresolved relocations. FFmpeg and other system libraries
+resolve on this particular host, so this is not a portable Linux distribution.
+Copied game/base asset checks pass. No actual game was launched through SSH;
+loader validation is not graphical startup or synchronization acceptance.
+
+From a graphical terminal on the PC, run:
+
+```bash
+bash "$HOME/generals-xr-lan-diagnostics-78207e6/start.sh"
+```
+
+Keep the retail Steam game closed for this diagnostic comparison. Activate
+both Quest controllers and start installed 10214. Host a native LAN match on
+Quest and join from the diagnostic PC through Direct Connect, using Quest's
+current LAN address. Use the same map, fixed factions, no AI and identical
+settings; leave both sides without orders for the initial 30 seconds. Record
+whether either side reports a mismatch, then capture both logs before restarting.
+The PC launcher prints its unique `logs/native-zh-*` path; Quest logging remains
+in the current/previous XR stderr logs. Compare only matching map CRC/seed and
+generation frames with `lan-crc-compare.py`. Initial agreement is not a sustained
+match pass; unit orders, longer play and original Steam/Proton are later gates.
+
+Retail Steam/Proton retests remain the goal after localization of divergence.
 
 ### Two Quests: expected advantage, unverified
 
