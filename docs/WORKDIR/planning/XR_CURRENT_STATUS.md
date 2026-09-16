@@ -93,10 +93,10 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Release and device baseline
 
-The first release preparation is on `codex/xr-release-safe-build`, based
-on `main` at `b515e75`. It preserves the offline P23 game engine and adds a
-separate, non-debuggable XR release package path. A privately signed local
-candidate is `1.2.15-xr-preview` (10215), SHA-256
+The first release-signed offline preview is tagged `v1.2.15-xr-preview` at
+`main` merge `683997a89198ff418f0c7c2191836a2f62c25add` (PR #8). It
+preserves P23 gameplay without the experimental LAN branch and adds a separate,
+non-debuggable XR release package path. The APK is `1.2.15-xr-preview` (10215), SHA-256
 `bafff443d77e7b9e925a73fcf16b5bf7234c54f256e2cb7fa0f95d1aad008d2b`;
 certificate SHA-256
 `a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`.
@@ -110,17 +110,20 @@ The maintainer confirmed worn-headset Skirmish and Campaign launch with this
 fresh-import or all-missions test. An earlier session with a preliminary signed
 repack was interrupted by our ADB installation of the final candidate, not a
 proven app crash; avoid installing while the user plays.
-The intended source-matched private release tag is `v1.2.15-xr-preview`;
-the repository remains private. Verify the tag and uploaded asset digest
-against the candidate above before treating the GitHub release as authoritative.
+The [private GitHub release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.15-xr-preview)
+is the authoritative download: GitHub's asset digest and a fresh independent
+download match the exact Quest-installed APK. Its checksum file also verifies.
+The repository remains private; all older debug-signed assets are marked as
+historical prereleases. Key backup, passthrough-image review and an explicit
+visibility decision remain before a public release.
 See the [release audit](../audit/RELEASE_PREPARATION_XR.md) for signing,
 migration, artifact and publication gates. The tracked development key remains
 for debug builds and old-signature lineage only.
 
-The newest private Quest preview is `xr-preview-2026-09-16-p23` from PR #5,
+The previous private Quest preview was `xr-preview-2026-09-16-p23` from PR #5,
 merge `ba9169d5c81604aa9fac00508cf2e5dcbf9a4939`; its APK and hash are
-recorded in the P23 section below. The earlier 10208 release remains the latest
-non-prerelease checkpoint and combines P21, P20/P20.3, base navigation and PR
+recorded in the P23 section below. The earlier 10208 release combined P21,
+P20/P20.3, base navigation and PR
 #2's reproducible DXVK/Android foundation:
 
 ```text
@@ -319,11 +322,10 @@ scene shows a regression.
 The first offline release preparation is documented in
 [`RELEASE_PREPARATION_XR.md`](../audit/RELEASE_PREPARATION_XR.md). The P23
 asset/tag remains a historical debug-signed development preview; the 10215
-privately signed candidate is the intended private-release checkpoint. Neither
-the LAN diagnostic build nor the now headset-accepted 10215 package alone
-establishes a public release.
-Its clean source-rebuild and installed-hash gates pass; a private release
-checkpoint, signing-key backup and public-visibility review remain separate.
+privately signed candidate is now the verified private-release checkpoint.
+Neither it nor the LAN diagnostic build establishes a **public** release. The
+source-rebuild, installed-hash and downloaded-asset gates pass; signing-key
+backup and public-visibility review remain separate.
 
 ## P21 key implementation map
 
