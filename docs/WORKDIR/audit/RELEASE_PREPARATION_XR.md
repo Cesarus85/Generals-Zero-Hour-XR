@@ -1,7 +1,7 @@
 # First XR release preparation
 
 **Updated:** 2026-09-16 — release-signing and final Quest play test
-**Publication state:** A non-debuggable, privately signed candidate is headset-accepted. The intended private release tag is `v1.2.15-xr-preview`; public repository visibility requires a separate decision.
+**Publication state:** The headset-accepted, non-debuggable 1.2.15 build is published as a release in the **private** repository. Public repository visibility requires a separate decision.
 
 ## Candidate and provenance
 
@@ -47,6 +47,20 @@ GitHub Release.
 | Device-side artifact | Installed `/data/app/.../base.apk` SHA-256 `bafff443d77e7b9e925a73fcf16b5bf7234c54f256e2cb7fa0f95d1aad008d2b`, matching the local file |
 | Worn-headset acceptance | The maintainer confirmed that this installed final build starts Skirmish and Campaign and retains existing settings and game data. This is not a clean-profile first-import or all-missions test. |
 
+## Verified private release checkpoint
+
+| Item | Verified value |
+|---|---|
+| Source | `main` merge `683997a89198ff418f0c7c2191836a2f62c25add` (PR #8); tag `v1.2.15-xr-preview` resolves to that exact commit |
+| Release | [Generals: Zero Hour XR — Preview 1.2.15](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.15-xr-preview), private repository, non-prerelease “Latest” |
+| APK asset | `Generals-Zero-Hour-XR.apk`, 124,995,766 bytes; GitHub asset digest `sha256:bafff443d77e7b9e925a73fcf16b5bf7234c54f256e2cb7fa0f95d1aad008d2b` |
+| Independent download | Fresh GitHub release download hashes to the same value; its separately downloaded `.sha256` file verifies with `shasum -a 256 -c` |
+| Historical releases | All four older debug-signed releases retain their assets and original notes, with a prominent superseded-build warning; all are marked prerelease |
+
+The release asset is the **same bytes** as the locally built and Quest-installed
+candidate. The original app data is not in the APK or this repository. The
+repository has not been made public, and no LAN diagnostic APK was uploaded.
+
 The signing key lives outside Git in the maintainer's private user directory;
 its password is in macOS Keychain service `Generals Zero Hour XR Release
 Signing`. **Back up the private keystore and its password separately before
@@ -81,7 +95,7 @@ are the platform basis, not a promise of universal migration.
 
 ## Remaining public gates and validation scope
 
-1. Decide whether this first release will be public; the repository is currently **private**. Review the four passthrough screenshots for visible personal surroundings and audit **all existing debug-signed release assets** before changing visibility. Making the repository public would also expose those older downloads; do not present them as supported public builds.
+1. Decide whether this first release will be public; the repository is currently **private**. Review the four passthrough screenshots for visible personal surroundings before changing visibility. Older debug-signed assets remain available but are prominently marked as historical development builds; making the repository public would expose them too.
 2. Preserve a secure backup of the release key **and** Keychain password.
    The 10215 update was installed over 10214 without uninstalling and a
    private pre-update app-data backup was captured. The first release-signed
@@ -96,9 +110,8 @@ are the platform basis, not a promise of universal migration.
    test first-time import with legitimate Steam files on a clean profile/device
    when available; do not erase this user's saved data merely to perform that
    test. Keep all retail data outside Git.
-4. Confirm README/guide links and screenshot rendering on the GitHub default branch after the documentation change is merged. Recheck the source tag, APK asset digest and release notes when staging the private release and again before public visibility.
-5. Use `v1.2.15-xr-preview` for the first private release checkpoint. Publish only the exact verified, privately signed APK and matching source checkpoint. Do not claim the experimental LAN feature in release notes.
+4. README/guide links, source tag, GitHub APK asset digest and independent download are verified for the private release. Review screenshot presentation and release notes again before public visibility.
+5. Keep the experimental LAN feature out of release claims. A fresh first-time data import and exhaustive mission/commands tests remain later validation work, not claims of this first preview.
 
-The 10215 APK becomes the supported private preview only when its matching
-source tag, uploaded asset digest and installation links are verified. Do not
-publish the old debug-signed asset as the new release.
+The 10215 APK is the supported **private** offline preview. Do not substitute
+an older debug-signed or LAN diagnostic asset for it.
