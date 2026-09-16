@@ -194,9 +194,13 @@ Host validation passes: board 74, height/plinth/render-pick 272822, scene 1280,
 build controls/outline 4292, menu geometry 2869, menu routing 327, interaction
 135 and workspace 732 checks. The Android candidate is versioned
 `1.2.9-p20.1-thin-underbody` (10209) so it remains update-installable over the
-published 10208 release. Android packaging and worn-headset visual/placement
-acceptance remain open; do not merge this branch as physically accepted before
-checking the thin edge from above/below and on a real surface.
+published 10208 release. Android CI run 35055859028 passed and produced the
+43,462,061-byte ARM64 APK with SHA-256
+`ef5c544cee9fd9212b71807a62ddfbfc1a33ce7feb22f28ff5dd8a7487ad9742`;
+package identity, launcher and APK Signature Scheme v2 were verified locally.
+Only worn-headset visual/placement acceptance remains open. Do not merge this
+branch as physically accepted before checking the thin edge from above/below
+and on a real surface.
 
 ### P21 - UI and Commands window presentation
 

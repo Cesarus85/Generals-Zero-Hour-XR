@@ -4075,9 +4075,12 @@ underside to -0.027, halving only the dark lower trim to 0.009. Mesh, physical
 surface placement, editing outline and diagnostics consume the shared values;
 terrain height/registration, map coverage and free-standing poses are unchanged.
 Host checks pass: board 74, height 272822, scene 1280, build controls 4292, menu
-2869, menu routing 327, interaction 135 and workspace 732. Android packaging
-and worn-headset edge/real-surface acceptance remain open. Candidate version
-`1.2.9-p20.1-thin-underbody` (10209) stays update-installable over release 10208.
+2869, menu routing 327, interaction 135 and workspace 732. Android CI run
+35055859028 passes for candidate `1.2.9-p20.1-thin-underbody` (10209), which
+stays update-installable over release 10208. Its 43,462,061-byte ARM64 APK has
+SHA-256 `ef5c544cee9fd9212b71807a62ddfbfc1a33ce7feb22f28ff5dd8a7487ad9742`;
+package/launcher metadata and APK Signature Scheme v2 pass local verification.
+Only worn-headset edge and real-surface acceptance remain open.
 
 ### P21 - UI and Commands window presentation pass
 
