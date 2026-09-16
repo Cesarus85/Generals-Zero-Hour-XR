@@ -248,8 +248,16 @@ with the flag both off and on. The local native build and XR APK package pass:
 APK v2 signing and native staging match are verified. On 2026-09-16 the test
 APK was update-installed on Quest 3 `2G0YC5ZG9609PY` with app data retained;
 the installed `base.apk` reads back with that exact SHA-256. It has not been
-published. No headset launch, Steam interoperability or human match has been
-verified. The accepted P23 release APK remains unchanged.
+published. The user reached the Quest LAN lobby, but Steam interoperability,
+tabletop human gameplay and a sustained match are not verified. The accepted
+P23 release APK remains unchanged.
+The first user Quest ↔ Windows Steam Zero Hour test found that the LAN lobbies
+do not automatically discover each other despite the same Wi-Fi. Both menus
+explicitly identify Zero Hour; their differing animated shell backgrounds are
+not proof of a network/SKU mismatch. Quest has one active WLAN IPv4 interface
+and no saved fixed LAN IP. Direct-IP connect and Windows firewall/packet checks
+are the next diagnostic gates; do not claim Steam incompatibility or LAN support
+yet.
 
 ### P22 - deferred keyboard and mouse investigation
 

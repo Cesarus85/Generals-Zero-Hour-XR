@@ -25,7 +25,7 @@ If Steam discovery/join or in-match synchronization fails, reproduce with a Wind
 | Gate | Evidence needed | State |
 |---|---|---|
 | Build safety | Default-off and preview-on mode tests; Android native/XR APK build | Passed locally; exact APK installed on Quest 3, launch/open still pending |
-| Lobby | Discovery and direct-IP outcomes, both endpoint IPs, host/join/leave, chat/input | Open |
+| Lobby | Discovery and direct-IP outcomes, both endpoint IPs, host/join/leave, chat/input | Quest ↔ Steam automatic discovery failed in first user test; direct IP open |
 | Simulation | 15-minute Quest ↔ PC human match, orders from both players, no desync/CRC/stall | Open |
 | XR usability | Tabletop and upright shell transitions, controller menu/text entry, headset pause/resume and performance | Open |
 | Retail compatibility | Above gates against the user's unmodified Steam Zero Hour | Open |
@@ -39,7 +39,18 @@ The native ARM64 target and XR APK build passed; v2 signing and staged native
 library equality were verified. Its source is the unmerged
 `codex/quest-pc-lan-preflight` branch. It was installed in place on Quest 3
 `2G0YC5ZG9609PY` using `adb install -r`, without clearing app data. The APK
-read back from the device has the same SHA-256. Launch, headset UX and LAN
-gameplay remain untested. Preserve the prior release APK for rollback.
+read back from the device has the same SHA-256. The user reached the LAN lobby;
+tabletop human gameplay and broader headset UX remain untested. Preserve the
+prior release APK for rollback.
+
+First user feedback after installation: both machines run explicitly labelled
+Zero Hour and share the same Wi-Fi, but neither LAN lobby discovers the other.
+Their animated shell backgrounds differ; that does not identify the network
+failure or prove an SKU mismatch. Quest has only one active non-loopback IPv4
+interface (`wlan0`), and no fixed `IPAddress` entry was found in its options.
+The next test is native Direct Connect to the peer's IPv4 address in both
+directions. A direct-IP success would isolate broadcast discovery; a failure
+requires packet reachability/firewall and wire-protocol investigation. Avoid
+changing the simulation or relaxing compatibility checks on this evidence alone.
 
 Do not enable LAN tabletop by default, merge a network-eligibility expansion into a release, or claim multiplayer support while these physical gates remain open. Keep replay and internet as separate later work. Keyboard/mouse remains secondary to the controller path.
