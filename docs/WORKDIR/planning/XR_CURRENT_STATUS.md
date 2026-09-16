@@ -192,9 +192,11 @@ that underside.
 
 Host validation passes: board 74, height/plinth/render-pick 272822, scene 1280,
 build controls/outline 4292, menu geometry 2869, menu routing 327, interaction
-135 and workspace 732 checks. Android packaging and worn-headset visual/
-placement acceptance remain open; do not merge this branch as physically
-accepted before checking the thin edge from above/below and on a real surface.
+135 and workspace 732 checks. The Android candidate is versioned
+`1.2.9-p20.1-thin-underbody` (10209) so it remains update-installable over the
+published 10208 release. Android packaging and worn-headset visual/placement
+acceptance remain open; do not merge this branch as physically accepted before
+checking the thin edge from above/below and on a real surface.
 
 ### P21 - UI and Commands window presentation
 

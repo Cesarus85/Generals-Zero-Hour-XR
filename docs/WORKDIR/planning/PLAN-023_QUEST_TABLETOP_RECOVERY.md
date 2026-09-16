@@ -4076,7 +4076,8 @@ surface placement, editing outline and diagnostics consume the shared values;
 terrain height/registration, map coverage and free-standing poses are unchanged.
 Host checks pass: board 74, height 272822, scene 1280, build controls 4292, menu
 2869, menu routing 327, interaction 135 and workspace 732. Android packaging
-and worn-headset edge/real-surface acceptance remain open.
+and worn-headset edge/real-surface acceptance remain open. Candidate version
+`1.2.9-p20.1-thin-underbody` (10209) stays update-installable over release 10208.
 
 ### P21 - UI and Commands window presentation pass
 
