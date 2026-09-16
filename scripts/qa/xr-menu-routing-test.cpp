@@ -146,7 +146,9 @@ int main(){
 	x.menu.open=true;x.controlsArmed=true;applyMenuAction(x,8,views);
 	check(x.layout.leftHanded && !x.menu.open && !x.controlsArmed);
 	applyMenuAction(x,8,views);check(!x.layout.leftHanded);
-	applyMenuAction(x,10,views);check(x.layout.highQuality);
+	applyMenuAction(x,10,views);check(x.layout.resolutionTier==1);
+	applyMenuAction(x,10,views);check(x.layout.resolutionTier==2);
+	applyMenuAction(x,10,views);check(x.layout.resolutionTier==0);
 	applyMenuAction(x,11,views);check(language==1 && x.layout.language==XrLanguage::English && g_xrLanguage==XrLanguage::English);
 	applyMenuAction(x,11,views);check(language==0 && x.layout.language==XrLanguage::German);
 	x.surfaces[1].width=4;applyMenuAction(x,9,views);

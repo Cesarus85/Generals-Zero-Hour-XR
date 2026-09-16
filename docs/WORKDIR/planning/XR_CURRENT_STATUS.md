@@ -239,6 +239,48 @@ input path. The user explicitly moved this behind the current tabletop visual,
 content, campaign and controller-quality work on 2026-09-16. Controllers remain
 primary; P22 is not the next implementation candidate after P20.1.
 
+### P23 - controller command usability and completeness
+
+The source audit found that the persistent Commands window plus the original
+context-sensitive build/control window already cover most useful offline
+commands. P23 therefore improves and accepts those paths instead of creating a
+second command system. On 2026-09-16 the first confirmed usability defects were
+addressed locally: the native waypoint state now stays active for the complete
+XR plotting session so its route is visible, and group extension is reduced to
+select additional units → **New / Extend** → number. An empty slot creates a
+new group; an occupied one extends it. The old reverse operation
+(`Add group to current selection`, followed by another save) is no longer the
+primary XR workflow. The full ARM64 native build and XR APK packaging pass; the
+132 MiB candidate reports package `com.generalsx.zerohour.xr`, version 10209,
+verifies with APK Signature Scheme v2 and has SHA-256
+`24d2b1f8a9a1d95ac98b90cbffd596489b44a2b72feecaa4ef73c460b93e1f17`.
+The user reports that this candidate runs well in the Quest and confirms that
+group creation via the former Extend button works. They requested a clearer
+**New / Extend** label and an optional XR resolution above High. The follow-up
+source change retains Balanced as default, cycles Balanced → High → Ultra+,
+preserves v10 spatial poses during v11 preference migration, and updates the
+DE/EN help. The optional Ultra+ target is 2304 pixels wide per eye at the
+runtime aspect (bounded to 2560 per dimension); it is not the original game's
+separate "Ultra" graphics setting. The ARM64 native build, focused host checks
+and signed XR APK build pass. The untested candidate at
+`build/apk/Generals-Zero-Hour-XR.apk` is version 10209, SHA-256
+`978c627e276ab1627d014f68a8e1ad436ecaae215e8946ef900e5b999077273f`.
+The user reports extensive play with good readability/visibility and confirms
+that waypoint plotting works. No device-side APK hash or sustained Ultra+
+busy-campaign frame-time capture has been supplied. The earlier hash above is
+the previously accepted P23 candidate, not the current file at this path.
+
+The user considers the important everyday commands covered. Defer the remaining
+P23 edge-command audit (formation/force-move/guard variants and faction-specific
+coverage). Extensive play has not exposed a pressing visual/readability problem,
+so do not schedule another generic graphics QA pass as the next feature. The
+recommended next substantial slice is QTR-MP preflight: verify whether the
+existing native LAN human-match path can be carried into the Quest build without
+changing simulation or wire format, document two-endpoint setup, and isolate the
+XR-specific UI/input/network lifecycle work. Do not infer human-multiplayer or
+replay compatibility from offline AI Skirmish. Keep P22 keyboard/mouse secondary;
+revisit Ultra+ performance only if a real campaign scene shows a regression.
+
 ## P21 key implementation map
 
 | File | Responsibility |

@@ -88,7 +88,7 @@ static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 			if(XrGameBoot_CanStereoWorld())xrRequestWorldView(x,true);
 			x.menu.open=false;x.controlsArmed=false;x.grab.cancel();
 		}
-		if(action==10)x.layout.highQuality=!x.layout.highQuality;
+		if(action==10)x.layout.resolutionTier=(x.layout.resolutionTier+1)%3;
 		// GeneralsX @feature Codex 14/09/2026 XR text switches immediately;
 		// native game strings are validated and staged for a clean restart.
 		if(action==11) {

@@ -1825,12 +1825,16 @@ again in this step. Do not declare P8 visually accepted from build logs alone.
    **Move**, **Attack move**, **Force attack**, **Guard position**, **STOP** and
    **Scatter**. Right-grip cancellation exits a pending
    mode/rectangle/waypoint mode before ordinary cancellation or deselection.
-4. **Waypoints on / off** enables native queued movement. Place successive
-   destinations with context/move mode; toggle off, cancel or stop to end it.
-   This does not claim arbitrary attacks, abilities or guard orders are queued.
-5. **UI → Groups** provides ten numbered slots: choose a slot, **Save
-   selection**, then later **Select group**, **Add to group** or **View group**.
-   Membership and commands use the engine's hotkey
+4. **Waypoints on / off** enables native queued movement. Select units, enable
+   it, place successive destinations, then toggle off, cancel or stop to end
+   it. The native waypoint state remains active between XR clicks so the route
+   nodes and connecting line remain visible while plotting. This does not claim
+   arbitrary attacks, abilities or guard orders are queued.
+5. The persistent Commands window provides ten numbered slots. A number alone
+   recalls its group. **Replace group → number** stores the current selection.
+   **Extend group → number** merges the currently selected additional units
+   into that group and stores the result immediately; a second save is no
+   longer required. Membership and commands use the engine's hotkey
    squads. These are match groups, not global persisted armies. Shortcuts also
    select idle/next workers, next unit, hero, aircraft, matching types or all
    eligible mobile units across the map. Native unit caps remain enforced.

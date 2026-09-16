@@ -23,6 +23,7 @@ int main(){
 	int width=0,height=0;
 	xrStereoExtent(2064,2160,width,height);check(width==1920 && height==2009);
 	xrStereoExtent(2064,2160,width,height,false);check(width==1536 && height==1607);
+	xrStereoExtent(2064,2160,width,height,2);check(width==2304 && height==2411);
 	xrStereoExtent(1000,2000,width,height);check(width==1024 && height==2048);
 	xrStereoExtent(0,0,width,height);check(width==1920 && height==1920);
 	for(const XrVector3f end:{XrVector3f{0,0,-2},XrVector3f{0,2,0},XrVector3f{1,1,-1}}) {

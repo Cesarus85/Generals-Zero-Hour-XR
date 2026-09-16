@@ -115,7 +115,7 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 			label(34,xrTr("Zurück zu Befehlen"));label(36,xrTr("Weiter"));
 		} else {
 			title=xrTr("Befehle");
-			const char *operations[]={"Gruppe auswählen; zum Anlegen: Speichern → Zahl","Speichern: Zahl wählen (ersetzt die Gruppe)","Zur Auswahl: Zahl wählen (Gruppe bleibt gleich)","Zentrieren: Zahl wählen"};
+				const char *operations[]={"Zahl wählt Gruppe; Aktion → Zahl führt sie aus","Gruppe ersetzen: jetzt Zahl wählen","Neu / Erweitern: jetzt Zahl wählen","Zentrieren: Zahl wählen"};
 			const auto hint=x.commands.bookmarkSave ? std::string(xrTr("Ansicht merken: jetzt A–D wählen")):XrGameBoot_TacticalHint();
 			detail=XrGameBoot_TacticalStatus()+"\n"+
 				(x.commands.groupOperation || hint.empty() ? xrTr(operations[x.commands.groupOperation]):hint);
@@ -128,9 +128,9 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 			label(7,xrTr("Freier Bauarbeiter"));label(13,xrTr("Nächste Einheit"));label(14,xrTr("Nächster Bauarbeiter"));
 			label(11,xrTr("Held auswählen"));label(12,xrTr("Alle Flugzeuge"));label(9,xrTr("Gleicher Typ: Karte"));
 			label(10,xrTr("Alle Einheiten"));label(35,xrTr("Communicator"));
-			label(-12,xrTr("Gruppen · Zahl wählt · Speichern → Zahl legt an"));
+				label(-12,xrTr("Gruppen · Aktion wählen → Zahl"));
 			for(int i=0;i<10;++i)label(20+i,std::to_string(i+1)+"|"+std::to_string(XrGameBoot_GroupSize(i)));
-			label(30,xrTr("Speichern"));label(31,xrTr("Zur Auswahl"));label(32,xrTr("Zentrieren"));
+				label(30,xrTr("Gruppe ersetzen"));label(31,xrTr("Neu / Erweitern"));label(32,xrTr("Zentrieren"));
 			label(37,xrTr(x.commands.tactics ? "Taktik −":"Taktik +"));label(34,xrTr("Hilfe"));
 			if(x.commands.tactics) {
 				label(-13,xrTr("Taktik · erweitert"));
@@ -257,8 +257,8 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 				toggle(5,"Einheitenringe",x.layout.unitRings);
 				toggle(6,"Brettkörper",x.layout.boardFrame);
 				label(-11,xrTr("Grafik"));
-				label(10,std::string(xrTr("Auflösung"))+"|"+xrTr(x.layout.highQuality ? "Hoch":"Ausgewogen"));
-				if(x.layout.highQuality)mark(10,kXrStateOn);
+				label(10,std::string(xrTr("Auflösung"))+"|"+xrTr(x.layout.resolutionTier==2 ? "Ultra+":x.layout.resolutionTier==1 ? "Hoch":"Ausgewogen"));
+				if(x.layout.resolutionTier)mark(10,kXrStateOn);
 				label(12,std::string(xrTr("Schatten"))+"|"+xrTr(x.performance.volumeShadows ? "Original":"Leicht"));
 				if(x.performance.volumeShadows)mark(12,kXrStateOn);
 				label(14,std::string(xrTr("Stereo"))+"|"+xrTr(x.performance.multiviewStereo ? "Multiview":x.performance.atlasStereo ? "Kompakt":"Referenz"));

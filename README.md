@@ -130,11 +130,15 @@ object in front of you. Finish, the commands button or Back exits editing.
 
 Select units first, then choose `Move`, `Attack move` or `Guard` in the
 commands window and point at the target on the table. `STOP` and `Scatter` act
-immediately. To create a group, select units → `Save selection` → a number;
-pressing the number later recalls it. To extend one, select more units → `Add to
-selection` → the number → `Save selection` again. `Commands → Help` contains
-the same four-page guide in German and English. `UI → View` switches handedness
-and language; in left-handed mode the logical roles and A/B/X/Y mappings swap.
+immediately. To create or replace a group, select units → `Replace group` → a
+number; pressing the number later recalls it. To extend one, select only the
+additional units → `New / Extend` → the number. An empty number creates a
+new group; an occupied number extends it. No second save is required.
+For a route, select units → enable `Waypoints` → click the destinations in
+order → disable `Waypoints`; the native route remains visible while plotting.
+`Commands → Help` contains the same four-page guide in German and English.
+`UI → View` switches handedness and language; in left-handed mode the logical
+roles and A/B/X/Y mappings swap.
 The radar preserves the original mouse behavior: point and press Grip to move
 the map view there, or press Trigger to order selected units there. The native
 alternate-mouse option swaps those two radar actions.

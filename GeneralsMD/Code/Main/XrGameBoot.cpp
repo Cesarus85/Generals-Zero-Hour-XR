@@ -545,6 +545,19 @@ static Vector3 s_triggerRayStart,s_triggerRayEnd;
 static ICoord2D s_triggerPixel={};
 static XrRayDrag s_rayDrag;
 static XrTactics s_tactics;
+// Keep the engine's native waypoint state alive for the complete XR plotting
+// session. Besides controlling queued orders, W3DWaypointBuffer reads this
+// state while rendering the route. Temporarily setting it only around a click
+// made a valid queue look broken because its nodes and connecting line vanished
+// before the next frame.
+static void xrSetWaypointQueue(bool enabled) {
+	s_tactics.queue=enabled;
+	if(TheInGameUI)TheInGameUI->setWaypointMode(enabled);
+}
+static void xrCancelTactics() {
+	s_tactics.cancel();
+	if(TheInGameUI)TheInGameUI->setWaypointMode(false);
+}
 // GeneralsX @feature Codex 14/09/2026 XR bookmarks use native ViewLocation,
 // never room poses. They expire on leaving/restarting/loading a match.
 static ViewLocation s_bookmarks[4];
@@ -584,13 +597,13 @@ bool GX_XR_UpdateTerrainCoverage() {
 static void xrUpdateBookmarkSession(bool active,unsigned gameFrame) {
 	if(!active || gameFrame<s_bookmarkFrame) {
 		for(auto &known:s_bookmarkKnown)known=false;
-		s_tactics.cancel();s_groupNotice="";
+		xrCancelTactics();s_groupNotice="";
 	}
 	s_bookmarkFrame=gameFrame;
 }
 void XrGameBoot_SetWorldFrame(const XrWorldFrame &frame) {
-	if(s_worldFrame.enabled && !frame.enabled) s_tactics.cancel();
-	if(!XrGameBoot_IsInteractiveGame()) s_tactics=XrTactics{};
+	if(s_worldFrame.enabled && !frame.enabled) xrCancelTactics();
+	if(!XrGameBoot_IsInteractiveGame()) {xrSetWaypointQueue(false);s_tactics=XrTactics{};}
 	xrUpdateBookmarkSession(XrGameBoot_CanStereoWorld(),TheGameLogic ? TheGameLogic->getFrame():0);
 	s_worldFrame=frame;
 	if(!frame.enabled) {s_mappingReady=false;XrGameBoot_SpatialPointer(false);}
@@ -787,7 +800,7 @@ void XrGameBoot_SpatialClick(bool cancel) {
 	if(!s_spatialActive || !XrGameBoot_CanAdjustWorld() || !TheInGameUI || !TheMessageStream || !TheGameClient) return;
 	if(cancel) {
 		s_groupNotice="";
-		if(s_tactics.mode!=XrOrderMode::Context || s_tactics.cornerKnown || s_tactics.queue) s_tactics.cancel();
+		if(s_tactics.mode!=XrOrderMode::Context || s_tactics.cornerKnown || s_tactics.queue) xrCancelTactics();
 		else TouchInput::cancelOrDeselect();return;
 	}
 	if(TouchInput::hasArmedCommand() || TheInGameUI->getPendingPlaceType()) {
@@ -837,7 +850,7 @@ void XrGameBoot_SpatialClick(bool cancel) {
 		} else if(mode==XrOrderMode::Context && !s_tactics.queue) TouchInput::tap(s_activePixel.x,s_activePixel.y,TRUE);
 		else if(TouchInput::hasControllableSelection()) {
 			if(mode==XrOrderMode::Guard || mode==XrOrderMode::GuardHold) {
-				if(xrIssueGuard(picked,ground,onTerrain,mode==XrOrderMode::GuardHold))s_tactics.cancel();
+				if(xrIssueGuard(picked,ground,onTerrain,mode==XrOrderMode::GuardHold))xrCancelTactics();
 				return;
 			}
 			if(!onTerrain){s_groupNotice="Keine Bodenposition getroffen";return;}
@@ -896,20 +909,20 @@ void XrGameBoot_TacticalAction(int action) {
 	s_groupNotice="";
 	if(action>=40 && action<=42) {
 		if(!XrGameBoot_TacticalReason(action).empty())return;
-		TouchInput::backOutOfArmedState();s_tactics.cancel();
+		TouchInput::backOutOfArmedState();xrCancelTactics();
 		if(action==40){TheMessageStream->appendMessage(GameMessage::MSG_META_CREATE_FORMATION);return;}
 		s_tactics.setMode(action==41 ? XrOrderMode::ForceMove:XrOrderMode::GuardHold);return;
 	}
 	if(action>=0 && action<=8) {
 		if(action==8 && !XrGameBoot_TacticalReason(action).empty())return;
 		TouchInput::backOutOfArmedState();s_tactics.setMode(static_cast<XrOrderMode>(action));
-		if(action!=5)s_tactics.queue=false;return;
+		if(action!=5)xrSetWaypointQueue(false);return;
 	}
-	if(action==9) {s_tactics.queue=!s_tactics.queue;if(s_tactics.queue)s_tactics.setMode(XrOrderMode::Move);return;}
-	if(action==10) {s_tactics.cancel();TouchInput::backOutOfArmedState();TheMessageStream->appendMessage(GameMessage::MSG_META_STOP);return;}
+	if(action==9) {xrSetWaypointQueue(!s_tactics.queue);if(s_tactics.queue)s_tactics.setMode(XrOrderMode::Move);return;}
+	if(action==10) {xrCancelTactics();TouchInput::backOutOfArmedState();TheMessageStream->appendMessage(GameMessage::MSG_META_STOP);return;}
 	if(action==11) {TheMessageStream->appendMessage(GameMessage::MSG_META_SCATTER);return;}
 	if(action==12) {TheMessageStream->appendMessage(GameMessage::MSG_META_SELECT_NEXT_IDLE_WORKER);return;}
-	if(action==13) {s_tactics.cancel();TouchInput::cancelOrDeselect();return;}
+	if(action==13) {xrCancelTactics();TouchInput::cancelOrDeselect();return;}
 	if(action==20 || action==21) {s_tactics.group=(s_tactics.group+(action==20 ? 9:1))%10;return;}
 	GameMessage::Type message=GameMessage::MSG_INVALID;
 	switch(action) {
@@ -958,14 +971,14 @@ bool XrGameBoot_BookmarkKnown(int slot) {
 void XrGameBoot_Bookmark(int slot,bool save) {
 	if(slot<0 || slot>=4 || !XrGameBoot_CanAdjustWorld())return;
 	if(!save && !s_bookmarkKnown[slot]){s_groupNotice="Kartenplatz leer: Ansicht merken → A–D";return;}
-	TouchInput::backOutOfArmedState();s_tactics.cancel();
+	TouchInput::backOutOfArmedState();xrCancelTactics();
 	if(save){TheTacticalView->getLocation(&s_bookmarks[slot]);s_bookmarkKnown[slot]=true;}
 	else TheTacticalView->userSetLocation(&s_bookmarks[slot]);
 	s_groupNotice=save ? "Kartenansicht gespeichert (nur diese Partie)":"Kartenansicht aufgerufen; Tisch bleibt unverändert";
 }
 void XrGameBoot_CancelTarget() {
 	// Focus/tracking cancellation never becomes deselection or an order.
-	s_tactics.cancel();s_triggerGesture=XrTriggerGesture{};s_triggerPreview=false;s_groupNotice="";
+	xrCancelTactics();s_triggerGesture=XrTriggerGesture{};s_triggerPreview=false;s_groupNotice="";
 	if(TheInGameUI)TouchInput::backOutOfArmedState();
 }
 void XrGameBoot_TacticalGroup(int group,int operation) {
@@ -973,8 +986,8 @@ void XrGameBoot_TacticalGroup(int group,int operation) {
 	s_tactics.group=group;
 	// GeneralsX @bugfix Codex 14/09/2026 Empty recall must explain itself,
 	// not silently clear the units the player was trying to put in a group.
-	if(operation==1 && TheInGameUI->getSelectCount()==0){s_groupNotice="Keine Auswahl: zuerst eigene Einheiten markieren";return;}
-	if(operation!=1 && XrGameBoot_GroupSize(group)==0){s_groupNotice="Gruppe leer: Einheiten wählen → Speichern → Zahl";return;}
+	if((operation==1 || operation==2) && TheInGameUI->getSelectCount()==0){s_groupNotice="Keine Auswahl: zuerst eigene Einheiten markieren";return;}
+	if((operation==0 || operation==3) && XrGameBoot_GroupSize(group)==0){s_groupNotice="Gruppe leer: Einheiten wählen → Speichern → Zahl";return;}
 	TouchInput::backOutOfArmedState();s_tactics.setMode(XrOrderMode::Context);
 	if(operation==3) {
 		// Native view-team translator excludes slot zero (group >= 1). Use
@@ -984,11 +997,20 @@ void XrGameBoot_TacticalGroup(int group,int operation) {
 		if(squad)for(auto *object:squad->getLiveObjects())if(object && object->getDrawable()) {
 			TheTacticalView->userLookAt(object->getDrawable()->getPosition());break;
 		}
+	} else if(operation==2) {
+		// XR convenience operation: extend the chosen hotkey squad in one
+		// action. The native ADD meta command merges the old squad into the
+		// player's current selection; the following CREATE meta command stores
+		// that union back into the same squad. Message order and group ownership
+		// remain with the original selection translator/network stream.
+		if(XrGameBoot_GroupSize(group)>0)
+			TheMessageStream->appendMessage(static_cast<GameMessage::Type>(GameMessage::MSG_META_ADD_TEAM0+group));
+		TheMessageStream->appendMessage(static_cast<GameMessage::Type>(GameMessage::MSG_META_CREATE_TEAM0+group));
 	} else {
 		const GameMessage::Type messages[]={GameMessage::MSG_META_SELECT_TEAM0,GameMessage::MSG_META_CREATE_TEAM0,GameMessage::MSG_META_ADD_TEAM0};
 		TheMessageStream->appendMessage(static_cast<GameMessage::Type>(messages[operation]+group));
 	}
-	const char *notices[]={"Gruppe ausgewählt","Speicherauftrag gesendet; Belegung siehe Gruppentaste","Gruppe zur Auswahl hinzugefügt, nicht neu gespeichert","Gruppenansicht zentriert"};
+	const char *notices[]={"Gruppe ausgewählt","Gruppe gespeichert","Auswahl zur Gruppe hinzugefügt","Gruppenansicht zentriert"};
 	s_groupNotice=notices[operation];
 }
 int XrGameBoot_GroupSize(int group) {
@@ -999,7 +1021,7 @@ int XrGameBoot_GroupSize(int group) {
 }
 void XrGameBoot_Communicator() {
 	if(!XrGameBoot_CanAdjustWorld())return;
-	s_tactics.cancel();s_groupNotice="";TouchInput::backOutOfArmedState();ToggleDiplomacy(FALSE);
+	xrCancelTactics();s_groupNotice="";TouchInput::backOutOfArmedState();ToggleDiplomacy(FALSE);
 }
 void XrGameBoot_SetLanguage(int language) {
 	if(language<0 || language>1)return;
@@ -1026,6 +1048,8 @@ std::string XrGameBoot_TacticalStatus() {
 }
 std::string XrGameBoot_TacticalHint() {
 	if(*s_groupNotice)return xrTr(s_groupNotice);
+	if(s_tactics.queue)return xrTr(TheInGameUI && TheInGameUI->getSelectCount()>0 ?
+		"Wegpunkte aktiv: Ziele nacheinander anklicken; erneut Wegpunkte tippen beendet":"Zuerst eine eigene Einheit auswählen");
 	return xrTr(xrOrderHint(s_tactics.mode,TheInGameUI ? TheInGameUI->getSelectCount():0));
 }
 void XrGameBoot_TacticalState(int &mode,int &group,bool &queue) {

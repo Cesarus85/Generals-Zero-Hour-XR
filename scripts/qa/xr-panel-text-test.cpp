@@ -111,7 +111,8 @@ int main(int argc,char **argv){
   x.layout.commandsVisible=true;updateMenuTextures(x,100);
   {const auto &c=captures[3];check(c.title==xrTr("Befehle"));
    check(hasLabel(c,xrTr("Auftrag · danach Ziel wählen")));check(hasLabel(c,xrTr("Sofort & Auswahl")));
-   check(hasLabel(c,xrTr("Gruppen · Zahl wählt · Speichern → Zahl legt an")));
+   check(hasLabel(c,xrTr("Gruppen · Aktion wählen → Zahl")));
+   check(hasLabel(c,xrTr("Gruppe ersetzen")));check(hasLabel(c,xrTr("Neu / Erweitern")));
    check(hasLabel(c,xrTr("Bewegen")));check(hasLabel(c,xrTr("STOPP")));check(hasLabel(c,xrTr("Communicator")));
    check(hasLabel(c,"1|0") && hasLabel(c,"10|9"));check(c.detail.find('\n')!=std::string::npos);}
   // Pending group operation, waypoint toggle and armed order are visible bits.
@@ -135,6 +136,8 @@ int main(int argc,char **argv){
   x.commands.help=true;for(int page=0;page<4;++page){x.commands.helpPage=page;updateMenuTextures(x,100);
    const auto &c=captures[4];check(c.detail.find('{')==std::string::npos);check(c.detail.size()>100);
    check(hasLabel(c,xrTr("Zurück zu Befehlen")));check(c.title.find("/4")!=std::string::npos);}
+  x.commands.helpPage=0;updateMenuTextures(x,100);
+  check(captures[4].detail.find(xrTr("Neu / Erweitern"))!=std::string::npos);
   x.commands.help=false;
   // Workspace window pages 0..3: active tab marker on every page.
   x.menu.open=true;
@@ -143,6 +146,9 @@ int main(int argc,char **argv){
   {const auto &c=captures[1];
    const std::string expected=std::string(xrTr("Sprache"))+"|"+xrTr(lang==XrLanguage::German ? "Deutsch":"English");
    check(hasLabel(c,expected));}
+  for(int tier=0;tier<3;++tier){x.layout.resolutionTier=tier;updateMenuTextures(x,100);
+   const char *name=tier==0 ? "Ausgewogen":tier==1 ? "Hoch":"Ultra+";
+   check(hasLabel(captures[1],std::string(xrTr("Auflösung"))+"|"+xrTr(name)));}
   x.performance.volumeShadows=true;x.performance.enabled=true;updateMenuTextures(x,100);
   {const auto &c=captures[1];check(hasLabelPrefix(c,std::string(xrTr("Schatten"))+"|"));check(stateOf(c,13)&kXrStateOn);}
   x.performance.report="B · CPU 15.1 ms · GPU 21.8 ms";updateMenuTextures(x,100);

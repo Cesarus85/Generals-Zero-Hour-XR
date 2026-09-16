@@ -1445,7 +1445,7 @@ static void runLoop(XrHello &x)
 					// GeneralsX @feature Codex 13/09/2026 Locate before rendering:
 					// captured geometry and compositor submission use the SAME eye poses.
 					XrWorldFrame world;world.enabled=x.stereoWorld;world.board=x.surfaces[1];
-					xrStereoExtent(x.viewWidth,x.viewHeight,world.width,world.height,x.layout.highQuality);
+					xrStereoExtent(x.viewWidth,x.viewHeight,world.width,world.height,x.layout.resolutionTier);
 					world.coverage=xrMapCoverage(x.worldZoom,x.surfaces[1].width);
 					world.healthBars=x.layout.healthBars;world.unitRings=x.layout.unitRings;world.boardFrame=x.layout.boardFrame;
 					world.volumeShadows=x.performance.volumeShadows;
@@ -1488,7 +1488,7 @@ static void runLoop(XrHello &x)
 					}
 					if(!x.stereoVisible || perfEngine>=1000){perfMeasured=false;x.performance.invalidate();}
 					if(x.frame%120==0)XR_LOG("P17 presentation: %s requested=%d upright=%d split=%d quality=%s",
-						XrGameBoot_PresentationStatus(x.stereoVisible,x.stereoWorld).c_str(),int(x.stereoWorld),int(x.uprightGame),int(x.splitVisible),x.layout.highQuality ? "high":"balanced");
+						XrGameBoot_PresentationStatus(x.stereoVisible,x.stereoWorld).c_str(),int(x.stereoWorld),int(x.uprightGame),int(x.splitVisible),x.layout.resolutionTier==2 ? "ultra+":x.layout.resolutionTier==1 ? "high":"balanced");
 					updateMenuTextures(x,frameState.predictedDisplayTime);
 				}
 				bool ok = true;

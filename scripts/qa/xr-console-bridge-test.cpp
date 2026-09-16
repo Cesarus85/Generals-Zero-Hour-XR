@@ -14,7 +14,7 @@ struct Squad {std::vector<Object*> objects;const std::vector<Object*> &getLiveOb
 struct Player {Squad squads[10];Squad *getHotkeySquad(int g){check(g>=0 && g<10);return &squads[g];}} player;
 struct Players {Player *getLocalPlayer(){return &player;}} players;
 static Players *ThePlayerList=&players;
-struct UI {int selected=0;bool placing=false;int getSelectCount(){return selected;}const void *getPendingPlaceType(){return placing ? this:nullptr;}} ui;
+struct UI {int selected=0;bool placing=false,queue=false;int getSelectCount(){return selected;}const void *getPendingPlaceType(){return placing ? this:nullptr;}void setWaypointMode(bool value){queue=value;}} ui;
 static UI *TheInGameUI=&ui;
 struct View {int calls=0;void userLookAt(const XrVector3f *){++calls;}} view;
 static View *TheTacticalView=&view;
@@ -50,12 +50,15 @@ int main(int argc,char **argv) {
  check(stream.messages.size()==1);stream.messages.clear();
  for(int group=0;group<10;++group) {
   player.squads[group].objects={};ui.selected=3;const auto before=stream.messages.size();
-  for(int op:{0,2,3}){XrGameBoot_TacticalGroup(group,op);check(stream.messages.size()==before);check(std::strstr(s_groupNotice,"leer"));}
-  ui.selected=0;XrGameBoot_TacticalGroup(group,1);check(stream.messages.size()==before);
+  for(int op:{0,3}){XrGameBoot_TacticalGroup(group,op);check(stream.messages.size()==before);check(std::strstr(s_groupNotice,"leer"));}
+  XrGameBoot_TacticalGroup(group,2);check(stream.messages.size()==before+1 && stream.messages.back()==200+group);
+  const auto afterEmptyExtend=stream.messages.size();
+  ui.selected=0;XrGameBoot_TacticalGroup(group,1);check(stream.messages.size()==afterEmptyExtend);
   ui.selected=3;XrGameBoot_TacticalGroup(group,1);check(stream.messages.back()==200+group);
   player.squads[group].objects={&object};check(XrGameBoot_GroupSize(group)==1);
   XrGameBoot_TacticalGroup(group,0);check(stream.messages.back()==100+group);
-  XrGameBoot_TacticalGroup(group,2);check(stream.messages.back()==300+group);
+  const auto extend=stream.messages.size();XrGameBoot_TacticalGroup(group,2);
+  check(stream.messages.size()==extend+2 && stream.messages[extend]==300+group && stream.messages.back()==200+group);
   const int views=view.calls;XrGameBoot_TacticalGroup(group,3);check(view.calls==views+1);
  }
  const auto messages=stream.messages.size();const auto views=view.calls;
