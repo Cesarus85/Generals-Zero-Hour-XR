@@ -2824,7 +2824,7 @@ bool WebGLPipeline::beginXRStereo(int width,int height,const float *left,const f
 	m_xrStereoActive=m_xrStereoReady=false;m_xrStereoDraws=0;m_xrTerrainDraws=m_xrModelDraws=0;
 	m_xrEffectDraws=m_xrShadowDraws=0;
 	if(!m_xrMode || !m_ctxReady || !m_xrSplitRequested || m_curFBO!=0 ||
-		width<64 || height<64 || width>2048 || height>2048 || !left || !right || !board || !camera ||
+		width<64 || height<64 || width>2560 || height>2560 || !left || !right || !board || !camera ||
 		!std::isfinite(aspect) || aspect<=0 || aspect>2) return false;
 	for(int i=0;i<16;++i) if(!std::isfinite(left[i]) || !std::isfinite(right[i]) || !std::isfinite(board[i]) || !std::isfinite(camera[i])) return false;
 	memcpy(m_xrCamera,camera,sizeof(m_xrCamera));

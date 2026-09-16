@@ -28,13 +28,15 @@ inline bool xrBoardContainsSphere(const float *mapping,float aspect,XrVector3f c
 }
 
 // GeneralsX @feature Codex 14/09/2026 Sharper eyes within the validated
-// 2048 backend limit. Balanced mode retains P10.1's allocation and FOV.
-inline void xrStereoExtent(unsigned viewWidth,unsigned viewHeight,int &width,int &height,bool highQuality=true) {
-	const int target=highQuality ? 1920:1536;
+// Ultra+ is explicitly opt-in. Balanced and High preserve their proven extents;
+// the larger target is bounded to 2560 and must pass the GPU allocation gate.
+inline void xrStereoExtent(unsigned viewWidth,unsigned viewHeight,int &width,int &height,int tier=1) {
+	const int target=tier>=2 ? 2304:tier==1 ? 1920:1536;
+	const int limit=tier>=2 ? 2560:2048;
 	if(!viewWidth || !viewHeight) {width=height=target;return;}
-	const double scale=std::min(double(target)/viewWidth,2048.0/viewHeight);
-	width=std::clamp(int(viewWidth*scale),64,2048);
-	height=std::clamp(int(viewHeight*scale),64,2048);
+	const double scale=std::min(double(target)/viewWidth,double(limit)/viewHeight);
+	width=std::clamp(int(viewWidth*scale),64,limit);
+	height=std::clamp(int(viewHeight*scale),64,limit);
 }
 
 // Eye-facing ribbon, not a GL line (whose width varies by driver). Endpoints

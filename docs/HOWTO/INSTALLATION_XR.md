@@ -161,10 +161,13 @@ The native alternate-mouse option swaps these radar actions.
 
 Select units first. Then choose **Move**, **Attack move**, or **Guard** in the
 Commands window and point at a target on the table. **STOP** and **Scatter** act
-immediately. To create a group, select units, choose **Save selection**, and
-press a number. Press that number later to recall the group. To extend a group,
-select more units, choose **Add to selection**, press the number, and choose
-**Save selection** again. **Commands -> Help** opens the same four-page guide in
+immediately. To create or replace a group, select units, choose **Replace
+group**, and press a number. Press that number later to recall the group. To
+create or extend a group without replacing it, select only the new units, choose
+**New / Extend**, and press the number. An empty slot creates a group; an
+occupied slot extends it. No second save is required. For a route, select units, enable
+**Waypoints**, click the destinations in order, then disable **Waypoints**; the
+native route remains visible while plotting. **Commands -> Help** opens the same four-page guide in
 the app.
 
 ## Language and graphics

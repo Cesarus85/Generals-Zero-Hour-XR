@@ -88,8 +88,8 @@ int main(){
  a.formation=b.formation=0;ui.selection={&da};check(!XrGameBoot_TacticalReason(40).empty());a.formation=7;check(XrGameBoot_TacticalReason(40).empty());
  a.structure=true;check(!XrGameBoot_TacticalReason(41).empty());a.structure=false;a.local=false;check(!XrGameBoot_TacticalReason(42).empty());a.local=true;
  for(int action:{41,42}){s_tactics.queue=true;XrGameBoot_TacticalAction(action);check(!s_tactics.queue);check(s_tactics.mode==(action==41 ? XrOrderMode::ForceMove:XrOrderMode::GuardHold));}
- XrGameBoot_TacticalAction(9);check(s_tactics.queue && s_tactics.mode==XrOrderMode::Move);
- XrGameBoot_TacticalAction(8);check(!s_tactics.queue && s_tactics.mode==XrOrderMode::Guard);
+ XrGameBoot_TacticalAction(9);check(s_tactics.queue && ui.queue && s_tactics.mode==XrOrderMode::Move);
+ XrGameBoot_TacticalAction(8);check(!s_tactics.queue && !ui.queue && s_tactics.mode==XrOrderMode::Guard);
  ui.selection.clear();const auto count=stream.messages.size();XrGameBoot_TacticalAction(40);check(stream.messages.size()==count);
  for(int slot=0;slot<4;++slot){
   check(!XrGameBoot_BookmarkKnown(slot));const int calls=view.recalls;XrGameBoot_Bookmark(slot,false);check(view.recalls==calls);
@@ -101,6 +101,6 @@ int main(){
  xrUpdateBookmarkSession(true,100);check(XrGameBoot_BookmarkKnown(0));xrUpdateBookmarkSession(true,99);check(!XrGameBoot_BookmarkKnown(0));
  XrGameBoot_Bookmark(0,true);xrUpdateBookmarkSession(false,100);check(!XrGameBoot_BookmarkKnown(0));
  s_tactics.setMode(XrOrderMode::ForceMove);s_tactics.queue=true;s_triggerGesture.active=true;s_triggerPreview=true;
- XrGameBoot_CancelTarget();check(s_tactics.mode==XrOrderMode::Context && !s_tactics.queue && !s_triggerGesture.active && !s_triggerPreview);
+ XrGameBoot_CancelTarget();check(s_tactics.mode==XrOrderMode::Context && !s_tactics.queue && !ui.queue && !s_triggerGesture.active && !s_triggerPreview);
  printf("PASS %d production tactical/native-message checks\n",checks);
 }

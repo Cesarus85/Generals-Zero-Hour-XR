@@ -128,9 +128,9 @@ int main(int argc,char **argv) {
 	GX_XR_OffscreenBoot=false;check(!XrGameBoot_ExpandedUI());GX_XR_OffscreenBoot=true;
 	interactive=false;check(!XrGameBoot_ExpandedUI());interactive=true;options.hidden=true;
 	// Full UI expands upward from the original bottom edge, not into the table.
-	XrLayout layout;check(layout.startStereo && !layout.highQuality && layout.commandsVisible);
+	XrLayout layout;check(layout.startStereo && layout.resolutionTier==0 && layout.commandsVisible);
 	near(layout.relative[2].pose.position.z,-1.18f);
-	check(layout.formatVersion==10 && !layout.upgradeDefaults());
+	check(layout.formatVersion==11 && !layout.upgradeDefaults());
 	XrHello x;for(int i=0;i<3;++i)x.surfaces[i]=layout.relative[i];
 	for(float crop:{.18f,.3f,.6f}) for(float pitch:{0.0f,-.42f,-1.2f}) {
 		bar=xrCommandRect(crop);x.surfaces[2].pose.orientation=xrAxisAngle({1,0,0},pitch);
@@ -155,10 +155,10 @@ int main(int argc,char **argv) {
 	check(layout.relative[2].pose.position.z<layout.relative[1].pose.position.z);
 	check(layout.relative[2].pose.position.y>layout.relative[1].pose.position.y);
 	check(xrRotate(layout.relative[2].pose.orientation,{0,0,1}).y>.3f);
-	layout.relative[2].width=1.9f;layout.highQuality=false;layout.startStereo=false;
+	layout.relative[2].width=1.9f;layout.resolutionTier=0;layout.startStereo=false;
 	layout.language=XrLanguage::English;
 	check(layout.save(argv[1]));XrLayout restored;check(restored.load(argv[1]));check(!restored.upgradeDefaults());
-	near(restored.relative[2].width,1.9f);check(!restored.highQuality && !restored.startStereo && restored.leftHanded);
+	near(restored.relative[2].width,1.9f);check(restored.resolutionTier==0 && !restored.startStereo && restored.leftHanded);
 	check(restored.language==XrLanguage::English);
 	// P20 startup retains preferences but never trusts room-relative geometry
 	// without a persistent room anchor. All three surfaces must be reachable.
@@ -166,22 +166,22 @@ int main(int argc,char **argv) {
 	sessionStart.relative[0].pose.position={3,2,-4};sessionStart.relative[0].width=2.4f;
 	sessionStart.relative[1].pose.position={-3,1,2};sessionStart.relative[1].width=4.0f;
 	sessionStart.relative[2].pose.position={2,-2,3};sessionStart.relative[2].width=2.5f;
-	sessionStart.worldZoom=.61f;sessionStart.highQuality=true;sessionStart.leftHanded=true;
+	sessionStart.worldZoom=.61f;sessionStart.resolutionTier=2;sessionStart.leftHanded=true;
 	sessionStart.language=XrLanguage::English;sessionStart.commandsVisible=false;sessionStart.startStereo=false;
 	sessionStart.applyFreeStandingStart();
 	near(sessionStart.relative[0].width,1.35f);near(sessionStart.relative[0].pose.position.z,-1.1f);
 	near(sessionStart.relative[1].width,1.65f);near(sessionStart.relative[1].pose.position.y,-.54f);
 	near(sessionStart.relative[2].width,1.8f);near(sessionStart.relative[2].pose.position.z,-1.18f);
-	check(sessionStart.startStereo && sessionStart.commandsVisible && sessionStart.highQuality && sessionStart.leftHanded);
+	check(sessionStart.startStereo && sessionStart.commandsVisible && sessionStart.resolutionTier==2 && sessionStart.leftHanded);
 	check(sessionStart.language==XrLanguage::English);near(sessionStart.worldZoom,.61f);
 	// v7/v8 retain P15 quality migration and receive only the additional UI setback.
 	layout.formatVersion=7;check(layout.upgradeDefaults());near(layout.relative[2].width,1.9f);check(layout.startStereo);
 	// P16.1 preserves the complete current arrangement except the requested UI depth.
-	layout.formatVersion=8;layout.highQuality=true;layout.startStereo=false;
+	layout.formatVersion=8;layout.resolutionTier=1;layout.startStereo=false;
 	layout.relative[1].width=2.7f;layout.relative[1].pose.position={.2f,-.7f,-.9f};
 	layout.relative[2].pose.orientation=xrAxisAngle({1,0,0},-.31f);
 	const auto previous=layout;
-	check(layout.upgradeDefaults() && layout.formatVersion==10 && !layout.highQuality && layout.startStereo);
+	check(layout.upgradeDefaults() && layout.formatVersion==11 && layout.resolutionTier==0 && layout.startStereo);
 	for(int i=0;i<3;++i){
 		near(layout.relative[i].width,previous.relative[i].width);
 		const auto &a=layout.relative[i].pose;const auto &b=previous.relative[i].pose;
@@ -191,18 +191,18 @@ int main(int argc,char **argv) {
 	}
 	check(layout.language==previous.language && layout.leftHanded==previous.leftHanded);
 	near(layout.worldZoom,previous.worldZoom);
-	layout.highQuality=true;check(!layout.upgradeDefaults() && layout.highQuality);
+	layout.resolutionTier=2;check(!layout.upgradeDefaults() && layout.resolutionTier==2);
 	check(layout.save(argv[1]));XrLayout deliberateHigh;check(deliberateHigh.load(argv[1]));
-	check(!deliberateHigh.upgradeDefaults() && deliberateHigh.highQuality);
+	check(!deliberateHigh.upgradeDefaults() && deliberateHigh.resolutionTier==2);
 	// Real v9 file: move only UI depth once, preserve every independent choice.
-	layout=previous;layout.formatVersion=9;layout.highQuality=true;layout.startStereo=false;
+	layout=previous;layout.formatVersion=9;layout.resolutionTier=1;layout.startStereo=false;
 	layout.healthBars=false;layout.unitRings=false;layout.boardFrame=false;layout.commandsVisible=false;
 	FILE *old=fopen(argv[1],"w");check(old!=nullptr);fprintf(old,"GENERALS_XR_LAYOUT 9\n");
 	for(int i=0;i<3;++i){const auto &s=layout.relative[i];const auto &p=s.pose.position;const auto &q=s.pose.orientation;
 		fprintf(old,"%.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g %d\n",s.width,p.x,p.y,p.z,q.x,q.y,q.z,q.w,int(layout.snap[i]));}
 	fprintf(old,"%.9g\n0 0 0 0\n0\n%d\n1\n%d\n",layout.worldZoom,int(layout.leftHanded),int(layout.language));fclose(old);
 	XrLayout v9;check(v9.load(argv[1]) && v9.formatVersion==9 && v9.upgradeDefaults());
-	check(v9.highQuality && !v9.startStereo && !v9.healthBars && !v9.unitRings && !v9.boardFrame && !v9.commandsVisible);
+	check(v9.resolutionTier==1 && !v9.startStereo && !v9.healthBars && !v9.unitRings && !v9.boardFrame && !v9.commandsVisible);
 	check(v9.language==layout.language && v9.leftHanded==layout.leftHanded);near(v9.worldZoom,layout.worldZoom);
 	for(int i=0;i<3;++i){const auto &a=v9.relative[i];const auto &b=layout.relative[i];
 		near(a.width,b.width);near(a.pose.position.x,b.pose.position.x);near(a.pose.position.y,b.pose.position.y);
@@ -210,10 +210,19 @@ int main(int argc,char **argv) {
 		near(a.pose.orientation.x,b.pose.orientation.x);near(a.pose.orientation.y,b.pose.orientation.y);
 		near(a.pose.orientation.z,b.pose.orientation.z);near(a.pose.orientation.w,b.pose.orientation.w);check(v9.snap[i]==layout.snap[i]);}
 	const float migratedZ=v9.relative[2].pose.position.z;check(v9.save(argv[1]));
-	XrLayout current;check(current.load(argv[1]) && current.formatVersion==10 && !current.upgradeDefaults());
+	XrLayout current;check(current.load(argv[1]) && current.formatVersion==11 && !current.upgradeDefaults());
 	near(current.relative[2].pose.position.z,migratedZ);
 	current.relative[2].pose.position.z=-1.6f;check(current.save(argv[1]));
 	check(current.load(argv[1]) && !current.upgradeDefaults());near(current.relative[2].pose.position.z,-1.6f);
+	// A v10 arrangement already received the UI setback; adding the new quality
+	// tier must not shift any spatial pose a second time.
+	FILE *v10=fopen(argv[1],"w");check(v10!=nullptr);fprintf(v10,"GENERALS_XR_LAYOUT 10\n");
+	for(int i=0;i<3;++i){const auto &s=current.relative[i];const auto &p=s.pose.position;const auto &q=s.pose.orientation;
+		fprintf(v10,"%.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g %d\n",s.width,p.x,p.y,p.z,q.x,q.y,q.z,q.w,int(current.snap[i]));}
+	fprintf(v10,"%.9g\n%d %d %d %d\n%d\n%d\n1\n%d\n",current.worldZoom,int(current.startStereo),int(current.healthBars),int(current.unitRings),int(current.boardFrame),int(current.commandsVisible),int(current.leftHanded),int(current.language));fclose(v10);
+	XrLayout oldV10;check(oldV10.load(argv[1]) && oldV10.formatVersion==10 && oldV10.resolutionTier==1);
+	check(oldV10.upgradeDefaults() && oldV10.formatVersion==11 && oldV10.resolutionTier==1);
+	near(oldV10.relative[2].pose.position.z,-1.6f);
 	// Keep an unusually distant valid custom pose valid instead of crossing the 5 m limit.
 	current.formatVersion=9;current.relative[2].pose.position={0,0,-4.95f};check(current.upgradeDefaults());
 	near(current.relative[2].pose.position.z,-4.95f);check(current.save(argv[1]));check(current.load(argv[1]));
@@ -230,8 +239,17 @@ int main(int argc,char **argv) {
 		fprintf(bad,"1\n1 1 1 1\n1\n0\n%s\n",quality);fclose(bad);
 		check(!restored.load(argv[1]));near(restored.relative[2].width,1.9f);
 	}
+	for(const char *quality:{"3","-1",""}) {
+		FILE *bad=fopen(argv[1],"w");check(bad!=nullptr);fprintf(bad,"GENERALS_XR_LAYOUT 11\n");
+		for(int i=0;i<3;++i)fprintf(bad,"1 0 0 -1 0 0 0 1 0\n");
+		fprintf(bad,"1\n1 1 1 1\n1\n0\n%s\n0\n",quality);fclose(bad);
+		check(!restored.load(argv[1]));near(restored.relative[2].width,1.9f);
+	}
 	for(int width:{0,64,1000,2064,3000,10000})for(int height:{0,64,1000,2160,3000,10000})for(bool high:{false,true}) {
 		int w=0,h=0;xrStereoExtent(width,height,w,h,high);check(w>=64 && w<=2048 && h>=64 && h<=2048);
+	}
+	for(int width:{0,64,1000,2064,3000,10000})for(int height:{0,64,1000,2160,3000,10000}) {
+		int w=0,h=0;xrStereoExtent(width,height,w,h,2);check(w>=64 && w<=2560 && h>=64 && h<=2560);
 	}
 	check(std::strstr(xrOrderHint(XrOrderMode::Guard,1),"verbündetes Objekt")!=nullptr);
 	check(std::strstr(xrOrderHint(XrOrderMode::Guard,0),"Zuerst")!=nullptr);
