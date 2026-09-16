@@ -2,6 +2,7 @@
 #pragma once
 #include "XrLayers.h"
 #include "XrPlacement.h"
+#include "XrBoardGeometry.h"
 #include "XrControllerHelp.h"
 #include "XrPanelLayout.h"
 constexpr int kXrMenuWidth=kXrPanelWidth,kXrMenuHeight=kXrPanelHeight;
@@ -39,7 +40,10 @@ template<class Workspace> int xrEditTarget(const Workspace &x) {
 }
 inline XrSurface xrEditOutline(XrSurface s,float &aspect,bool board) {
 	if(board) {
-		s.pose.position=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{0,0,-.017f*s.width}));
+		// GeneralsX @tweak Codex 16/09/2026 P20.1 follows the shared physical
+		// underside instead of retaining a separate P18 depth literal.
+		s.pose.position=xrAdd(s.pose.position,xrRotate(s.pose.orientation,
+			{0,0,(kXrBoardUnderside+kXrBoardOutlineClearance)*s.width}));
 		aspect=(aspect+.024f)/1.024f;s.width*=1.024f;
 	} else s.pose.position=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{0,0,.003f}));
 	return s;

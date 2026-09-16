@@ -8,6 +8,9 @@ static unsigned checks=0;
 static void check(bool b){++checks;if(!b){fprintf(stderr,"height check %u failed\n",checks);exit(1);}}
 static void near(float a,float b,float epsilon=.0003f){check(std::isfinite(a+b) && fabsf(a-b)<epsilon);}
 int main(){
+	near(kXrBoardSoilBottom,-.018f);near(kXrBoardUnderside,-.027f);
+	near(kXrBoardSoilBottom-kXrBoardUnderside,kXrBoardPlinthThickness);
+	check(kXrBoardPlinthThickness<=.009f);
  const float pitch=37.5f*3.141592654f/180,fov=50*3.141592654f/180;
  near(xrStableWorldSpan(500,fov,pitch,1),612.814f,.02f);
  near(xrStableWorldSpan(250,fov,pitch,1)*2,xrStableWorldSpan(500,fov,pitch,1));
@@ -52,7 +55,7 @@ int main(){
     if(a.r!=.31f)near(xrLength(xrSub(a.position,b.position)),0);
    }
    for(size_t i=high.vertices.size()-6;i<high.vertices.size();++i) {
-    near(high.vertices[i].position.z,-.036f);
+    near(high.vertices[i].position.z,kXrBoardUnderside);
     near(xrLength(xrSub(room(high.vertices[i].position),room(low.vertices[i].position))),0);
    }
   }

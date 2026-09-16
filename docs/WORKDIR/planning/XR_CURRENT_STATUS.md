@@ -180,13 +180,21 @@ installation of that final package is deferred to the next device session.
 
 ### P20.1 - thinner tabletop underbody
 
-Reduce the visible grey/dark lower plinth to no more than half its current
-thickness. The current mesh places the soil/base transition at `-0.018` board
-widths and the underside at `-0.036`; the lower trim is therefore `0.018` board
-widths thick. Target at most `0.009` for that lower trim while leaving the table
-top, terrain registration and apparent terrain-cut depth unchanged. Update
-surface-placement clearance, editing outlines and numerical tests to use the
-same new underside. This is a near-term visual geometry task, separate from P21.
+Implemented on `codex/p20-1-thin-underbody` (2026-09-16). The soil/base
+transition remains `-0.018` board widths while the underside moves from
+`-0.036` to `-0.027`; the visible grey/dark lower trim is therefore exactly
+halved from `0.018` to `0.009`. New `XrBoardGeometry.h` is the single source for
+the soil datum, underside, lip, real-surface clearance and editing-outline
+clearance. Terrain registration, world height, map coverage and free-standing
+board poses do not move. Real table/floor placement now rests the thinner
+underside at the same 2 mm clearance, and the orange editing outline follows
+that underside.
+
+Host validation passes: board 74, height/plinth/render-pick 272822, scene 1280,
+build controls/outline 4292, menu geometry 2869, menu routing 327, interaction
+135 and workspace 732 checks. Android packaging and worn-headset visual/
+placement acceptance remain open; do not merge this branch as physically
+accepted before checking the thin edge from above/below and on a real surface.
 
 ### P21 - UI and Commands window presentation
 
@@ -201,12 +209,6 @@ baseline. Android CI passes, PRs #1/#2 are merged and private release
 `v1.2.8-xr-preview` is published. P20.1 is the recommended next implementation;
 no P20.1 or P22 changes are included here.
 
-### P22 - keyboard and mouse investigation
-
-Audit Quest Bluetooth/USB keyboard and mouse behavior as a secondary input path.
-Controllers remain primary; do not let this delay controller, campaign or UI
-quality work.
-
 ### QTR-MP - retained multiplayer and replay milestone
 
 Offline AI Skirmish is the primary supported test mode but is not evidence for
@@ -214,6 +216,13 @@ human networking. LAN/internet matches, deterministic synchronization, reconnect
 chat/team chat, diplomacy/player controls, observer/replay access and their XR
 interaction need a separately authorized compatibility and headset-validation
 slice. P20-P22 must not change simulation commands or wire formats casually.
+
+### P22 - deferred keyboard and mouse investigation
+
+Audit Quest Bluetooth/USB keyboard and mouse behavior only as a later secondary
+input path. The user explicitly moved this behind the current tabletop visual,
+content, campaign and controller-quality work on 2026-09-16. Controllers remain
+primary; P22 is not the next implementation candidate after P20.1.
 
 ## P21 key implementation map
 

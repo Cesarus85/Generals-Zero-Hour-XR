@@ -1,6 +1,7 @@
 // GeneralsX @feature Codex 13/09/2026 Real terrain boundary, never replacement scenery.
 #pragma once
 #include "XrWorld.h"
+#include "XrBoardGeometry.h"
 #include <vector>
 struct XrBoardVertex {XrVector3f position;float r,g,b,a;};
 static_assert(sizeof(XrBoardVertex)==7*sizeof(float),"GLES decoration stride");
@@ -21,11 +22,11 @@ template<class Height> XrBoardMesh xrBuildBoard(float aspect,int segments,Height
 	XrBoardMesh m;segments=std::clamp(segments,16,1024);
 	if(!std::isfinite(aspect) || aspect<=0 || !std::isfinite(ceiling) || ceiling<0) return m;
 	const auto sample=[&](float x,float y) {const float z=height(x,y);return std::isfinite(z) ? z:0.0f;};
-	// GeneralsX @bugfix Codex 14/09/2026 P18 physical plinth never follows
-	// visible edge minima. Terrain is relative to the fixed map minimum.
-	const float bottom=-.018f,lip=.012f;
+	// GeneralsX @tweak Codex 16/09/2026 P20.1 keeps P18's fixed soil datum
+	// while halving only the visible lower plinth thickness.
+	const float bottom=kXrBoardSoilBottom,underside=kXrBoardUnderside,lip=kXrBoardLip;
 	const XrVector3f corners[]={{-.5f,-aspect*.5f,0},{.5f,-aspect*.5f,0},{.5f,aspect*.5f,0},{-.5f,aspect*.5f,0}};
-	const auto outer=[&](XrVector3f p){return XrVector3f{p.x+(p.x<0 ? -lip:lip),p.y+(p.y<0 ? -lip:lip),bottom-.018f};};
+	const auto outer=[&](XrVector3f p){return XrVector3f{p.x+(p.x<0 ? -lip:lip),p.y+(p.y<0 ? -lip:lip),underside};};
 	for(int side=0;side<4;++side) {
 		const auto a=corners[side],b=corners[(side+1)%4];
 		const auto delta=xrSub(b,a),oa=outer(a),od=xrSub(outer(b),oa);
@@ -37,7 +38,7 @@ template<class Height> XrBoardMesh xrBuildBoard(float aspect,int segments,Height
 			// Miter outer corners, closing both the trim and its underside.
 			const auto po=xrAdd(oa,xrScale(od,float(i)/segments)),qo=xrAdd(oa,xrScale(od,float(i+1)/segments));
 			m.quad({p.x,p.y,bottom},{q.x,q.y,bottom},{qo.x,qo.y,bottom},{po.x,po.y,bottom},{.12f,.20f,.22f});
-			m.quad({po.x,po.y,bottom-.018f},{qo.x,qo.y,bottom-.018f},{qo.x,qo.y,bottom},{po.x,po.y,bottom},{.08f,.12f,.14f});
+			m.quad({po.x,po.y,underside},{qo.x,qo.y,underside},{qo.x,qo.y,bottom},{po.x,po.y,bottom},{.08f,.12f,.14f});
 		}
 	}
 	m.quad(outer(corners[0]),outer(corners[3]),outer(corners[2]),outer(corners[1]),{.08f,.12f,.14f});

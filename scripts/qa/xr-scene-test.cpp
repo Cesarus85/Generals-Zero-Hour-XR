@@ -73,14 +73,15 @@ int main(int argc,char **argv) {
 	check(!xrSceneInside(floor.boundary,{4,0}));
 	XrSurface old;old.width=1.2f;old.pose.orientation=xrAxisAngle({0,1,0},.7f);
 	auto board=xrSceneBoard(old,hit,old.width);
-	check(fabsf(board.pose.position.y-.0452f)<.0001f);
+	check(fabsf(board.pose.position.y-(-kXrBoardUnderside*old.width+kXrBoardSurfaceClearance))<.0001f);
 	check(xrRotate(board.pose.orientation,{0,0,1}).y>.999f);
 	check(xrSceneFits(floor,board,.7f));
 	auto slope=floor;slope.pose.orientation=xrMul(xrAxisAngle({0,0,1},.05f),floor.pose.orientation);
 	const auto supported=xrSceneSupportedBoard(slope,old,{0,0,0},old.width,.7f);
 	const auto normal=xrRotate(slope.pose.orientation,{0,0,1});
 	for(int x:{-1,1})for(int y:{-1,1}) {
-		const auto corner=xrAdd(supported.pose.position,xrRotate(supported.pose.orientation,{x*.512f*old.width,y*.362f*old.width,-.036f*old.width}));
+		const auto corner=xrAdd(supported.pose.position,xrRotate(supported.pose.orientation,
+			{x*.512f*old.width,y*.362f*old.width,kXrBoardUnderside*old.width}));
 		check(xrDot(normal,corner)>.001f);
 	}
 	auto beyond=board;beyond.pose.position.x=3;check(!xrSceneFits(floor,beyond,.7f));
@@ -192,7 +193,8 @@ int main(int argc,char **argv) {
  c.select=false;updateScenePlacement(x,c,123);check(x.scene.preview);
  check(fabsf(x.scene.manualFace.pose.position.y-1.5f)<.0001f);
  c.select=true;updateScenePlacement(x,c,124);check(saves==2 && !x.scene.placing);
- check(fabsf(x.surfaces[1].pose.position.y-(1.5f+.036f*x.surfaces[1].width+.002f))<.0001f);
+ check(fabsf(x.surfaces[1].pose.position.y-(1.5f-kXrBoardUnderside*x.surfaces[1].width+
+  kXrBoardSurfaceClearance))<.0001f);
  // No matching table has explicit feedback, not a silent preview miss.
  x.scene.step=XrScene::Step::Surfaces;x.scene.entries[0].floor=true;
  xrSceneMenuAction(x,0);check(!x.scene.placing && x.scene.message.find("Kein Tisch")!=std::string::npos);

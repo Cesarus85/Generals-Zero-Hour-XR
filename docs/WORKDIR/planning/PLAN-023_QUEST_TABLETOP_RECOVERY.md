@@ -4068,6 +4068,16 @@ placement on detected/manual planes, selection/picking, terrain relief, window
 poses and saved layouts must not move. Update the board, height and scene tests
 for the new underside. This task is separate from P21's window redesign.
 
+Implementation record (2026-09-16): branch
+`codex/p20-1-thin-underbody` introduces `XrBoardGeometry.h` as the single
+geometry contract. Keep the soil datum at -0.018 board widths and move the
+underside to -0.027, halving only the dark lower trim to 0.009. Mesh, physical
+surface placement, editing outline and diagnostics consume the shared values;
+terrain height/registration, map coverage and free-standing poses are unchanged.
+Host checks pass: board 74, height 272822, scene 1280, build controls 4292, menu
+2869, menu routing 327, interaction 135 and workspace 732. Android packaging
+and worn-headset edge/real-surface acceptance remain open.
+
 ### P21 - UI and Commands window presentation pass
 
 Rework the spatial `UI` and `Commands` windows as a coherent, polished pair of
@@ -4132,4 +4142,6 @@ investigation.
 Acceptance is a documented device matrix, a diagnostic input trace and an
 explicit go/no-go decision for a small mapping slice. Full keyboard/mouse
 parity remains below controller ergonomics, campaign polish and multiplayer
-compatibility in priority.
+compatibility in priority. On 2026-09-16 the user explicitly moved this farther
+back: it is not the follow-up to P20.1 and must not displace the next tabletop
+visual, content, campaign or controller-quality milestone.
