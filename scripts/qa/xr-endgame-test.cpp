@@ -22,7 +22,7 @@ static XrEndgameInput campaign(unsigned frame, bool ending, bool victorious) {
 	in.interactive = true;
 	in.frame = frame;
 	in.ending = ending;
-	in.campaignValid = true;
+	in.endActionValid = true;
 	in.victorious = victorious;
 	return in;
 }
@@ -114,6 +114,16 @@ int main() {
 	XrEndgameInput qscore;
 	xrEndgamePoll(q, qscore);
 	check(q.latch == XrEndgameResult::Victory && xrEndgameVisible(q));
+	// A quick end action can also run in a multiplayer-mode Skirmish before
+	// VictoryConditions marks a winning alliance.
+	XrEndgameState quickSkirmish;
+	xrEndgamePoll(quickSkirmish, skirmish(59));
+	XrEndgameInput quickMp = skirmish(60);
+	quickMp.ending = true;
+	quickMp.endActionValid = true;
+	quickMp.victorious = true;
+	xrEndgamePoll(quickSkirmish, quickMp);
+	check(quickSkirmish.latch == XrEndgameResult::Victory);
 	// Campaign defeat needs the visible end timer; the flag alone is nothing.
 	XrEndgameState c;
 	for (unsigned f = 10; f < 60; ++f) xrEndgamePoll(c, campaign(f, false, true));

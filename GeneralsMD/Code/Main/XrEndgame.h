@@ -33,7 +33,7 @@ struct XrEndgameInput {
 	bool localVictory = false; // TheVictoryConditions->isLocalAlliedVictory()
 	bool alliedDefeat = false; // TheVictoryConditions->isLocalAlliedDefeat()
 	bool localDefeat = false; // TheVictoryConditions->isLocalDefeat()
-	bool campaignValid = false; // single-player mission result state usable
+	bool endActionValid = false; // CampaignManager result usable while end timer runs
 	bool victorious = false; // TheCampaignManager->isVictorious()
 };
 
@@ -72,7 +72,10 @@ inline void xrEndgamePoll(XrEndgameState &state, const XrEndgameInput &in) {
 		} else if (in.localVictory) {
 			result = XrEndgameResult::Victory;
 		}
-	} else if (in.campaignValid && in.ending) {
+	}
+	// A scripted quick victory can end a Skirmish before VictoryConditions
+	// produces a terminal flag. Its end action sets CampaignManager's result.
+	if (result == XrEndgameResult::None && in.endActionValid && in.ending) {
 		result = in.victorious ? XrEndgameResult::Victory : XrEndgameResult::Defeat;
 	}
 	if (result != XrEndgameResult::None) {

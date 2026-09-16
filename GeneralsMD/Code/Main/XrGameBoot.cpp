@@ -1341,19 +1341,22 @@ void XrGameBoot_PollMatchResult()
 				in.alliedDefeat = TheVictoryConditions->isLocalAlliedDefeat();
 				in.localDefeat = TheVictoryConditions->isLocalDefeat();
 			}
-			if (TheGameLogic->getGameMode() == GAME_SINGLE_PLAYER && TheCampaignManager != nullptr) {
-				in.campaignValid = true;
+			if (TheCampaignManager != nullptr) {
+				in.endActionValid = true;
 				in.victorious = TheCampaignManager->isVictorious();
 			}
 		}
 	}
 	const auto before = s_endgame.latch;
 	xrEndgamePoll(s_endgame, in);
-	if (s_endgame.latch != before && s_endgame.latch != XrEndgameResult::None)
+	if (s_endgame.latch != before && s_endgame.latch != XrEndgameResult::None) {
+		const bool vcTerminal = in.vcValid && (in.observer ? in.alliedDefeat :
+			in.localVictory || in.alliedDefeat || in.localDefeat);
 		GXLOG("match result latched: %s (frame %u, source %s)",
 			s_endgame.latch == XrEndgameResult::Victory ? "victory" :
 			s_endgame.latch == XrEndgameResult::Defeat ? "defeat" : "match-over",
-			s_endgame.latchFrame, in.vcValid ? "victory-conditions" : "campaign-end-timer");
+			s_endgame.latchFrame, vcTerminal ? "victory-conditions" : "end-action-timer");
+	}
 }
 XrEndgameResult XrGameBoot_MatchResult()
 {

@@ -46,7 +46,7 @@ std::string XrGameBoot_LanguageStatus();
 bool XrGameBoot_ExpandedUI();
 std::string XrGameBoot_WorldHoverInfo();
 // GeneralsX @feature Muse 16/09/2026 Read-only match-result latch: poll once
-// per XR frame after the game frame; MatchResult returns None when no result
+// before and after the game frame; MatchResult returns None when no result
 // is latched or the card was dismissed. Dismiss never touches the engine.
 void XrGameBoot_PollMatchResult();
 XrEndgameResult XrGameBoot_MatchResult();

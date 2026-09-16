@@ -1463,6 +1463,9 @@ static void runLoop(XrHello &x)
 					world.elideWorldCopy=x.performance.elideWorldCopy;
 					for(int eye=0;eye<2;++eye) {world.eyes[eye]=views[eye].pose;world.fov[eye]=views[eye].fov;}
 					XrGameBoot_SetWorldFrame(world);XrGameBoot_SetSplitEnabled(!x.uprightGame);
+					// A one-frame quick end can exit during executeSingleFrame;
+					// capture its still-interactive end state before that update.
+					XrGameBoot_PollMatchResult();
 					// GeneralsX @performance Codex 14/09/2026 Settings changes,
 					// focus loss and movies start a fresh, warmed-up measurement epoch.
 					char perfKey[192];snprintf(perfKey,sizeof(perfKey),"scene=%s shadows=%s eye=%dx%d coverage=%.4f board=%.4f stereo=%s copy=%s",
@@ -1502,6 +1505,7 @@ static void runLoop(XrHello &x)
 					// (absent from release builds); their ordinary input side
 					// effects are irrelevant once the match ends.
 					XrGameBoot_PollMatchResult();
+					const bool hadResult=x.resultVisible;
 					x.resultVisible=XrGameBoot_MatchResult()!=XrEndgameResult::None;
 					if(x.resultVisible) {
 						float fx=0,fz=-1;yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
@@ -1513,6 +1517,8 @@ static void runLoop(XrHello &x)
 					}
 					const bool pressed=controls.select || controls.secondary || controls.back ||
 						controls.tilt || controls.buttonsHeld;
+					// Never dismiss a card with the same press that ended the match.
+					if(x.resultVisible && !hadResult)x.resultPressHeld=pressed;
 					if(x.resultVisible && pressed && !x.resultPressHeld) {
 						XrGameBoot_DismissMatchResult();x.resultVisible=false;
 					}
