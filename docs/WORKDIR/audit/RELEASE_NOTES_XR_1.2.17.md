@@ -32,8 +32,8 @@ On first launch, select your own complete, legally obtained *Generals* and
 *Zero Hour* installation with the in-app assistant. Steam and fully
 installed/extracted CD/ISO layouts are supported; raw ISO images and Windows
 installers are not. **No original game archives, maps, videos or other retail
-assets are included.** See the [Quest installation and controller guide](../../HOWTO/INSTALLATION_XR.md)
-and [game-data guide](../../HOWTO/GETTING_THE_GAME_FILES.md).
+assets are included.** See the [Quest installation and controller guide](https://github.com/Cesarus85/Generals-Zero-Hour-XR/blob/main/docs/HOWTO/INSTALLATION_XR.md)
+and [game-data guide](https://github.com/Cesarus85/Generals-Zero-Hour-XR/blob/main/docs/HOWTO/GETTING_THE_GAME_FILES.md).
 
 ## Scope and limits
 
@@ -46,5 +46,5 @@ and [game-data guide](../../HOWTO/GETTING_THE_GAME_FILES.md).
   Higher quality modes can reduce frame rate in demanding missions.
 - This is an independent, modified community port, not an Electronic Arts
   product or endorsement. Its engine source retains GPLv3 and EA's additional
-  terms in [LICENSE.md](../../../LICENSE.md); retail game data must be supplied
+  terms in [LICENSE.md](https://github.com/Cesarus85/Generals-Zero-Hour-XR/blob/main/LICENSE.md); retail game data must be supplied
   separately by the user. Repository visibility remains private.
