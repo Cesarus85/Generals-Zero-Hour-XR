@@ -22,24 +22,25 @@ These are headset captures supplied by the project maintainer. Map, faction, gra
 - Touch-controller selection, drag-box multi-selection, contextual orders, map pan/rotate/zoom, radar navigation, building rotation, groups and waypoint routes.
 - Detached build window, persistent Commands window and a spatial UI panel; move, tilt, scale or recenter the workspace. Optional detected-surface or manual-height placement does not require a room scan.
 - English and German XR interface/help, left-handed controller mode, hover names and build costs.
+- An XR Victory/Defeat/Match over card remains visible across the transition to match statistics.
 - Quest 3 defaults: Balanced resolution, Light shadows and Multiview. Higher quality modes, including Ultra+, are optional and may cost performance.
 
 The **supported preview path is offline play**. Human LAN/Internet multiplayer, replay XR, keyboard/mouse input and persistent room anchors are **not release-ready**. Direct Connect can start an experimental LAN match, but Quest–PC games currently fail simulation synchronization. Do not use a LAN diagnostic APK as the public preview. See [multiplayer status](docs/WORKDIR/planning/MULTIPLAYER_STATUS.md).
 
-## Get the tested offline APK
+## Get the current offline APK
 
-Download the release-signed [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.15-xr-preview/Generals-Zero-Hour-XR.apk) from the [1.2.15 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.15-xr-preview). This is the tested offline build, not an experimental LAN diagnostic APK or an older debug-signed preview. The repository and release are private until the maintainer explicitly decides to make them public; the links require repository access meanwhile.
+Download the release-signed [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.17-xr-preview/Generals-Zero-Hour-XR.apk) from the [1.2.17 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.17-xr-preview). This is the current offline build, not an experimental LAN diagnostic APK or an older debug-signed preview. The repository and release remain private; the links require repository access.
 
-- APK SHA-256: `bafff443d77e7b9e925a73fcf16b5bf7234c54f256e2cb7fa0f95d1aad008d2b`
+- APK SHA-256: `8913648e9c8c124367ac812a4a3e9db0d0f296ec3a2c7e83a7d22627c2182869`
 - Android package: `com.generalsx.zerohour.xr` (retained for update compatibility)
-- Android versionCode: `10215`; versionName: `1.2.15-xr-preview`.
+- Android versionCode: `10217`; versionName: `1.2.17-xr-preview`.
 
-The earlier P23 and 1.2.8 downloads are historical debug-signed development builds. Use the exact release link above rather than an older asset or a copied APK from the LAN branch. See [release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md) for verification and remaining public-release gates.
+The maintainer accepted the result-card behavior in the 1.2.16 headset test APK. The 1.2.17 release is rebuilt from merged source without its debug-only test controls; it has not separately been worn-headset-tested across every match ending. The earlier P23 and 1.2.8 downloads are historical debug-signed development builds. Use the exact release link above rather than an older asset or a copied APK from the LAN branch. See [release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md) for verification and remaining public-release gates.
 
 ## Install and play
 
 1. Supply your own legally obtained, complete *Generals* **and** *Zero Hour* installation. The APK/repository contains no retail `.big` archives, maps, videos or other game data. See [which files to copy](docs/HOWTO/GETTING_THE_GAME_FILES.md).
-2. Enable Quest Developer Mode, connect the headset by USB and accept its debugging prompt. With Android platform-tools installed, run `adb devices`, then `adb -s <quest-serial> install -r Generals-Zero-Hour-XR.apk`. The `-r` update keeps the existing app's settings and selected game folders; uninstalling does not. Updating the maintainer's Quest from diagnostic versionCode 10214 to this release-signed 10215 build was verified; other prior signing lineages have not been tested. See the [release-preparation audit](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md).
+2. Enable Quest Developer Mode, connect the headset by USB and accept its debugging prompt. With Android platform-tools installed, run `adb devices`, then `adb -s <quest-serial> install -r Generals-Zero-Hour-XR.apk`. The `-r` update keeps the existing app's settings and selected game folders; uninstalling does not. The maintainer's Quest updated from 10214 to release-signed 10215 and from the 10216 test to this 10217 release without uninstalling; other prior signing lineages have not been tested. See the [release-preparation audit](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md).
 3. Open **Generals: Zero Hour XR** in the Quest app library. On first run, the English/German data assistant guides you through choosing the Zero Hour folder and, if needed, the separate base Generals folder. It accepts complete Steam installs and installed/extracted CD/ISO layouts, not raw ISO images or Windows installers.
 4. Start a campaign or offline Skirmish. The board, build window and Commands window appear in front of you. Use `UI → Set up play space` only if you want to reposition them or choose a detected table/floor.
 
@@ -62,7 +63,7 @@ The Commands window also has an in-game help guide. In left-handed mode, the log
 
 ## Source, lineage and licensing
 
-This repository contains the Quest-focused extension of the community [GeneralsZH-Android](https://github.com/tarek369/GeneralsZH-Android) work, through the developer's [Android fork](https://github.com/Cesarus85/GeneralsZH-Android), together with the [GeneralsX](https://github.com/fbraz3/GeneralsX), [Fighter19](https://github.com/Fighter19/CnC_Generals_Zero_Hour) and [TheSuperHackers](https://github.com/TheSuperHackers/GeneralsGameCode) lineage. The Android foundation and XR work are distinct contributions; the original game and assets remain EA's. Engine source is released under GPLv3 with EA's additional terms; see [LICENSE.md](LICENSE.md) and the source history for conditions and attribution. No affiliation with EA, Westwood Studios or any other rights holder is implied.
+This repository contains the Quest-focused extension of the community [GeneralsZH-Android](https://github.com/tarek369/GeneralsZH-Android) work, through the developer's [Android fork](https://github.com/Cesarus85/GeneralsZH-Android), together with the [GeneralsX](https://github.com/fbraz3/GeneralsX), [Fighter19](https://github.com/Fighter19/CnC_Generals_Zero_Hour) and [TheSuperHackers](https://github.com/TheSuperHackers/GeneralsGameCode) lineage. The Android foundation and XR work are distinct contributions; the original game and assets remain EA's. Engine source is released under GPLv3 with EA's additional terms; see [LICENSE.md](LICENSE.md) and the source history for conditions and attribution. No affiliation with EA, Westwood Studios or any other rights holder is implied. The existing product name is retained for this private preview; EA's additional trademark condition requires separate review before any public distribution.
 
 To build from source, initialize submodules and follow the [Android port guide](docs/port/ANDROID_PORT.md). With its SDK/NDK and vcpkg prerequisites installed:
 

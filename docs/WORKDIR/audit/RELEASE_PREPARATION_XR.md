@@ -1,7 +1,8 @@
-# First XR release preparation
+# XR release preparation and checkpoints
 
-**Updated:** 2026-09-16 — release-signing and final Quest play test
-**Publication state:** The headset-accepted, non-debuggable 1.2.15 build is published as a release in the **private** repository. Public repository visibility requires a separate decision.
+**Updated:** 2026-09-16 — private 1.2.17 release verification
+
+**Publication state:** The non-debuggable 1.2.17 APK is the current release in the **private** repository. Public visibility, especially under the retained product name, requires separate review of EA's trademark terms.
 
 ## Candidate and provenance
 
@@ -47,12 +48,12 @@ GitHub Release.
 | Device-side artifact | Installed `/data/app/.../base.apk` SHA-256 `bafff443d77e7b9e925a73fcf16b5bf7234c54f256e2cb7fa0f95d1aad008d2b`, matching the local file |
 | Worn-headset acceptance | The maintainer confirmed that this installed final build starts Skirmish and Campaign and retains existing settings and game data. This is not a clean-profile first-import or all-missions test. |
 
-## Verified private release checkpoint
+## Previous private release checkpoint: 1.2.15
 
 | Item | Verified value |
 |---|---|
 | Source | `main` merge `683997a89198ff418f0c7c2191836a2f62c25add` (PR #8); tag `v1.2.15-xr-preview` resolves to that exact commit |
-| Release | [Generals: Zero Hour XR — Preview 1.2.15](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.15-xr-preview), private repository, non-prerelease “Latest” |
+| Release | [Generals: Zero Hour XR — Preview 1.2.15](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.15-xr-preview), private repository, formerly “Latest” |
 | APK asset | `Generals-Zero-Hour-XR.apk`, 124,995,766 bytes; GitHub asset digest `sha256:bafff443d77e7b9e925a73fcf16b5bf7234c54f256e2cb7fa0f95d1aad008d2b` |
 | Independent download | Fresh GitHub release download hashes to the same value; its separately downloaded `.sha256` file verifies with `shasum -a 256 -c` |
 | Historical releases | All four older debug-signed releases retain their assets and original notes, with a prominent superseded-build warning; all are marked prerelease |
@@ -60,6 +61,27 @@ GitHub Release.
 The release asset is the **same bytes** as the locally built and Quest-installed
 candidate. The original app data is not in the APK or this repository. The
 repository has not been made public, and no LAN diagnostic APK was uploaded.
+
+## Current private release checkpoint: 1.2.17
+
+| Item | Verified value |
+|---|---|
+| Source | PR #11 endgame fix and PR #12 version bump merged to `main`; tag `v1.2.17-xr-preview` resolves to `af439c387f91905c5df0d8d6345c9647b8521563` |
+| Release | [Generals: Zero Hour XR — Preview 1.2.17](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.17-xr-preview), private repository, non-prerelease “Latest” |
+| Package/version | `com.generalsx.zerohour.xr`, versionName `1.2.17-xr-preview`, versionCode `10217` |
+| APK asset | `Generals-Zero-Hour-XR.apk`, 124,999,862 bytes; GitHub asset SHA-256 `8913648e9c8c124367ac812a4a3e9db0d0f296ec3a2c7e83a7d22627c2182869` |
+| Independent download | Fresh GitHub download verifies against the separately downloaded `.sha256` asset and matches the local candidate |
+| Signing and contents | Android v3 signature valid; signer certificate SHA-256 `a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`; ARM64; no manifest `debuggable` attribute; no retail `.big`, `.scb`, `.map` or `.w3d` |
+| Native provenance | Complete local ARM64 build with `RTS_DEBUG_CHEATS=OFF`; packaged `libmain.so` SHA-256 `71195868054412b20af4e9ebad062839c4bb5dff10b6320a111eaeeb43e6beeb` matches the native build |
+| Tests | Endgame 33, bilingual panel text 20,469, console bridge 1,467 and workspace 781 host checks pass; hosted Android CI is blocked by the account billing/spending limit |
+| Quest installation | `adb install -r` succeeded over 10216 without uninstalling; versionCode 10217 and unchanged `firstInstallTime` confirmed; device-side `base.apk` SHA-256 matches the release asset |
+| Headset scope | The maintainer accepted the short result-card test in separate 10216 APK; exact 10217 release bytes have not yet had a separate worn-headset play test |
+
+The 10216 test APK contains debug-only retail end-action controller chords and
+was **not** uploaded. The 1.2.17 APK is built without those chords. The release
+does not include experimental LAN diagnostics. The GitHub repository remains
+private. The original GPLv3 license and EA's additional conditions remain in
+`LICENSE.md`; a separate public-distribution/trademark review is still open.
 
 The signing key lives outside Git in the maintainer's private user directory;
 its password is in macOS Keychain service `Generals Zero Hour XR Release
@@ -88,14 +110,14 @@ are the platform basis, not a promise of universal migration.
 
 ## Release-facing content
 
-- README now centers Quest tabletop features, requirements, controls, honest limits and the exact v1.2.15 download.
+- README now centers Quest tabletop features, requirements, controls, honest limits and the exact current v1.2.17 download.
 - Four maintainer-provided Quest captures illustrate separate maps, the build window and Commands/group UI. Original JPEG pixels and color profiles were retained; EXIF/TIFF/GPS metadata was removed from the repository copies. The maintainer reports that they visually reviewed the passthrough room content and approved it for publication.
 - [Quest installation and controls](../../HOWTO/INSTALLATION_XR.md) and [game-file sourcing](../../HOWTO/GETTING_THE_GAME_FILES.md) are the user guides. No original game files are distributed.
 - [Multiplayer status](../planning/MULTIPLAYER_STATUS.md) explicitly pauses LAN and records the paired CRC evidence and resumption plan. Experimental LAN code remains on its own branch, outside this candidate.
 
 ## Remaining public gates and validation scope
 
-1. Decide whether this first release will be public; the repository is currently **private**. The maintainer reports that the four passthrough screenshots have been visually approved. Older debug-signed assets remain available but are prominently marked as historical development builds; making the repository public would expose them too. Resolve the newly reported missing XR win-result presentation before public visibility.
+1. The repository and 1.2.17 release are **private**. The maintainer reports that the four passthrough screenshots have been visually approved. Older debug-signed assets remain available but are prominently marked as historical development builds; making the repository public would expose them too. The XR win-result presentation is implemented and accepted in the 10216 test, then included in 1.2.17. Before public distribution under the retained name, review the EA license's trademark restriction; a private release is not a decision to make the repository public.
 2. The maintainer reports that the release key **and** Keychain password have been backed up; the backup was not independently verified and no secret belongs in Git.
    The 10215 update was installed over 10214 without uninstalling and a
    private pre-update app-data backup was captured. The first release-signed
@@ -110,8 +132,9 @@ are the platform basis, not a promise of universal migration.
    test first-time import with legitimate Steam files on a clean profile/device
    when available; do not erase this user's saved data merely to perform that
    test. Keep all retail data outside Git.
-4. README/guide links, source tag, GitHub APK asset digest and independent download are verified for the private release. Review screenshot presentation and release notes again before public visibility.
+4. README/guide links, source tag, GitHub APK asset digest, independent download and 10216→10217 Quest update are verified for the 1.2.17 private release. Its exact bytes have not yet been worn-headset-played; do not conflate the accepted 10216 result-card test with that gate. Review screenshot presentation and release notes again before public visibility.
 5. Keep the experimental LAN feature out of release claims. A fresh first-time data import and exhaustive mission/commands tests remain later validation work, not claims of this first preview.
 
-The 10215 APK is the supported **private** offline preview. Do not substitute
-an older debug-signed or LAN diagnostic asset for it.
+The 10217 APK is the supported **private** offline preview. The 10215 release
+remains historical; do not substitute an older debug-signed, 10216 test or LAN
+diagnostic asset for the current download.

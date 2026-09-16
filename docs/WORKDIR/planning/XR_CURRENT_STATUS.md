@@ -59,8 +59,8 @@ the detailed narrative and command transcripts out of this dashboard.
 | Game-data setup | Guided Steam or installed/extracted CD/ISO folder import with validation; raw images/installers are not extracted | Host and Quest instrumentation pass; real Steam-based use confirmed |
 | Returning launch | Saved valid data is checked inside the XR Activity; setup opens only when data is missing or invalid | Device launch verified; final visual no-flash confirmation remains a physical gate |
 | Performance defaults | Balanced resolution, light shadows, Multiview preferred, redundant extra world copy omitted automatically | Reported as relatively smooth and playable; no universal FPS guarantee |
-| End-of-match result | Read-only XR latch presents Victory/Defeat/Match-over across the direct score transition | PR #11: host tests and local signed Quest build pass; maintainer reports the short headset test works perfectly; other mission/network end paths are not exhaustively validated |
-| Controller text entry | No general in-game virtual keyboard in the 1.2.15 offline release; a Direct Connect name/IP prototype exists only on the separate LAN branch | Separate follow-up; do not merge LAN diagnostics into the offline fix |
+| End-of-match result | Read-only XR latch presents Victory/Defeat/Match-over across the direct score transition | PR #11: host tests and the 10216 short headset test pass; shipped in private 10217 release without debug controls; exact 10217 headset play and other mission/network end paths remain open |
+| Controller text entry | No general in-game virtual keyboard in the 1.2.17 offline release; a Direct Connect name/IP prototype exists only on the separate LAN branch | Separate follow-up; do not merge LAN diagnostics into the offline fix |
 
 ## XR match-result milestone: headset accepted
 
@@ -101,10 +101,12 @@ versionCode 10216, SHA-256
 This is **not** the authoritative release APK and must not be published.
 The test APK was subsequently installed as an in-place update on Quest 3;
 device package inspection confirms versionCode 10216. The maintainer accepted
-the short worn-headset test. A new production APK without debug cheats has
-not yet been released. Android CI cannot start because GitHub currently
-rejects runner jobs for account billing/spending-limit reasons. Before
-distributing this fix, build and verify a normal APK with debug cheats off.
+the short worn-headset test. The separate 10217 production APK was then built
+with `RTS_DEBUG_CHEATS=OFF`, release-signed, verified and published privately;
+the debug-chord test APK was not uploaded. Android CI could not start because
+GitHub rejected runner jobs for account billing/spending-limit reasons, so the
+release relied on a complete local ARM64 build and host tests. The exact
+10217 release bytes have not yet had a separate worn-headset play test.
 
 General controller text entry is **not** part of that end-game PR. The LAN
 branch's Direct Connect keyboard is hard-coded to player name and IPv4; reuse
@@ -145,12 +147,22 @@ text-field task. The native Android setup/importer input is separate.
 ## Release and device baseline
 
 PR #11 is merged and the maintainer accepted the 10216 headset-only result
-test. The next release candidate is `1.2.17-xr-preview` (10217), to be built
-with debug cheats disabled from the merged source. Until its signed artifact
-and update install are verified and published, 1.2.15 remains the supported
-private download; the 10216 diagnostic APK must not be published.
+test. The authoritative private offline download is now
+[`v1.2.17-xr-preview`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.17-xr-preview),
+tagged at `af439c387f91905c5df0d8d6345c9647b8521563` (PRs #11/#12). The
+non-debuggable ARM64 APK is versionCode 10217, SHA-256
+`8913648e9c8c124367ac812a4a3e9db0d0f296ec3a2c7e83a7d22627c2182869`.
+It was built locally with debug cheats off and signed with the established
+private release certificate. The GitHub asset digest and an independent fresh
+download match; the checksum asset verifies, and GitHub's `latest` endpoint
+selects this release. It update-installed over 10216 on Quest 3 without
+uninstalling; `firstInstallTime` remained unchanged and device-side `base.apk`
+SHA-256 matches the release. Its exact bytes have not yet been separately
+worn-headset-played. The 10216 diagnostic APK must
+not be published. The repository remains private; public distribution under
+the retained product name needs a separate EA trademark-terms review.
 
-The first release-signed offline preview is tagged `v1.2.15-xr-preview` at
+The previous release-signed offline preview is tagged `v1.2.15-xr-preview` at
 `main` merge `683997a89198ff418f0c7c2191836a2f62c25add` (PR #8). It
 preserves P23 gameplay without the experimental LAN branch and adds a separate,
 non-debuggable XR release package path. The APK is `1.2.15-xr-preview` (10215), SHA-256
@@ -167,15 +179,15 @@ The maintainer confirmed worn-headset Skirmish and Campaign launch with this
 fresh-import or all-missions test. An earlier session with a preliminary signed
 repack was interrupted by our ADB installation of the final candidate, not a
 proven app crash; avoid installing while the user plays.
-The [private GitHub release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.15-xr-preview)
-is the authoritative download: GitHub's asset digest and a fresh independent
+The [previous private GitHub release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.15-xr-preview)
+remains available as history: GitHub's asset digest and a fresh independent
 download match the exact Quest-installed APK. Its checksum file also verifies.
 The repository remains private; all older debug-signed assets are marked as
 historical prereleases. The maintainer reports that the signing key/password
 are backed up and has visually approved the passthrough screenshots. An
 explicit visibility decision remains before any public release. The
 end-of-match result gap was addressed by PR #11 and its accepted Quest test;
-it is not yet part of the published 1.2.15 APK.
+it is included in 1.2.17, not in the historical 1.2.15 APK.
 See the [release audit](../audit/RELEASE_PREPARATION_XR.md) for signing,
 migration, artifact and publication gates. The tracked development key remains
 for debug builds and old-signature lineage only.
@@ -379,13 +391,13 @@ multiplayer or replay compatibility from offline AI Skirmish. Keep P22
 keyboard/mouse secondary; revisit Ultra+ performance only if a real campaign
 scene shows a regression.
 
-The first offline release preparation is documented in
+The offline release preparation and checkpoints are documented in
 [`RELEASE_PREPARATION_XR.md`](../audit/RELEASE_PREPARATION_XR.md). The P23
-asset/tag remains a historical debug-signed development preview; the 10215
-privately signed candidate is now the verified private-release checkpoint.
-Neither it nor the LAN diagnostic build establishes a **public** release. The
-source-rebuild, installed-hash and downloaded-asset gates pass; signing-key
-backup and public-visibility review remain separate.
+asset/tag remains a historical debug-signed development preview; the 10217
+privately signed APK is now the current verified private-release checkpoint.
+It is not a **public** release. Its source rebuild, local artifact and
+downloaded-asset gates pass; exact-byte headset play, signing-key backup and
+public-visibility/trademark review remain separate.
 
 ## P21 key implementation map
 
