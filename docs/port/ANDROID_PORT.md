@@ -205,8 +205,13 @@ and uses the manually managed or explicitly overridden `versionCode`.
 The shared signature permits updates only when Android's version and package
 rules also allow them; the workflow no longer auto-increments versionCode.
 This committed signing key and the debuggable preview APK are **not** a
-production-signing strategy for a public release. See the
-[XR release-preparation audit](../WORKDIR/audit/RELEASE_PREPARATION_XR.md).
+production-signing strategy for a public release. Hosted Actions now uploads
+debug test artifacts only and cannot publish a GitHub Release. The XR-only
+`package-android-zh.sh --release` path builds an unsigned, non-debuggable
+Gradle variant, then signs it locally using a private out-of-repository key
+and an Android v3 update lineage. See the
+[XR release-preparation audit](../WORKDIR/audit/RELEASE_PREPARATION_XR.md)
+for key custody, exact variables, migration evidence and remaining gates.
 
 **On a fork, Actions must be enabled once**: GitHub disables workflow runs on
 forks by default. Go to the repo's **Actions** tab → click **"I understand my

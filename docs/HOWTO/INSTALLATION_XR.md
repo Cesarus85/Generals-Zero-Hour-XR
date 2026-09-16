@@ -31,15 +31,13 @@ outside the scope of this project; see
 
 ## Install the APK
 
-1. Download the tested offline P23 prerelease
-   [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/xr-preview-2026-09-16-p23/Generals-Zero-Hour-XR.apk)
-   from its [explicit release page](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/xr-preview-2026-09-16-p23).
-   GitHub's “Latest” pointer still selects the older 1.2.8 release; do not use
-   that shortcut or an experimental LAN diagnostic APK for this guide. The P23
-   APK SHA-256 is
-   `978c627e276ab1627d014f68a8e1ad436ecaae215e8946ef900e5b999077273f`.
-   This is a debug-signed development preview, not yet a production-signed
-   public release.
+1. Download the tested offline, release-signed
+   [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.15-xr-preview/Generals-Zero-Hour-XR.apk)
+   from the [1.2.15 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.15-xr-preview).
+   Do not use an older debug-signed release or an experimental LAN diagnostic
+   APK. The APK SHA-256 is
+   `bafff443d77e7b9e925a73fcf16b5bf7234c54f256e2cb7fa0f95d1aad008d2b`.
+   The repository and release currently require private-repository access.
 2. Enable Developer Mode in the Meta Quest mobile app, connect the headset over
    USB, and accept the USB debugging prompt inside the headset.
 3. Check the connection and install the APK from a computer with Android
@@ -63,7 +61,7 @@ outside the scope of this project; see
 
 ## Select game data
 
-The P23 preview provides a three-step assistant:
+The 1.2.15 XR preview provides a three-step assistant:
 
 1. **Prepare your game files.** Copy your own complete installed Generals and
    Zero Hour folders to the Quest, for example `Download/GeneralsZH`.
