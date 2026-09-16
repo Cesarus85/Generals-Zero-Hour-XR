@@ -1,6 +1,6 @@
 # PLAN-025 — Quest ↔ PC LAN preflight
 
-**Status:** Quest 10212 and Steam/Proton enter a match, then Omarchy reports an in-game synchronization mismatch. Six Zero Hour gameplay-data hashes match; the cause is not yet isolated.
+**Status:** Quest 10212 and Steam/Proton enter a match, then Omarchy reports an in-game synchronization mismatch, reproduced after reinstalling P23 and updating to 10212. Six Zero Hour gameplay-data hashes match; the cause is not yet isolated.
 **Scope:** One Quest 3 against a PC on the same LAN. The first peer is the user's Steam Zero Hour running through Proton on Omarchy; the planned Windows Steam peer remains a separate validation. If retail gameplay desynchronizes, isolate it with a same-source GeneralsX PC build. Internet services, public matchmaking, replay and reconnect are later gates.
 
 ## Decision and evidence
@@ -137,4 +137,81 @@ An immediate first-CRC failure points to a different initial simulation state
 or platform/engine determinism; it does not identify which subsystem without
 further instrumentation.
 
+## Post-reinstall desynchronization audit
+
+The user confirmed a successful P23 reinstall. APK 10212 was subsequently
+update-installed on Quest `2G0YC5ZG9609PY`; version and installed APK SHA-256
+matched the candidate above. The same Omarchy mismatch returned. The latest
+Quest stderr log (2026-09-16 15:11 local time) contains Direct Connect and
+tabletop rendering, but no detailed synchronization failure record. The release
+compile commands define `RTS_RELEASE`/`NDEBUG`; the detailed CRC comparison logs
+are guarded by `DEBUG_LOGGING`. No first divergent frame/subsystem is known.
+
+### Ranked candidates and concrete evidence
+
+1. **Cross-build numerical differences: strong candidate, not a proven cause.**
+   `build/android-vulkan/CMakeCache.txt` has
+   `SAGE_USE_DETERMINISTIC_MATH=OFF`; the actual GameLogic compile command uses
+   ARM64 Clang and `-ffp-contract=off`. FMA contraction is already disabled,
+   so enabling that flag again is not a new fix. `setFPMode()` in
+   `GameLogic.cpp` sets round-to-nearest everywhere and x87 precision only on
+   x86; it does not emulate x87 operation results on ARM. `Object::crc()` hashes
+   the transform matrix and health as raw values, so tiny numerical differences
+   can change a CRC before visibly different gameplay appears.
+2. **The advertised deterministic-math integration is incomplete.**
+   `wwmath.h` still contains TODO GameMath calls, and both preprocessor branches
+   call native math. `Trig.cpp` also creates tables with native `sin`/`acos`.
+   Merely switching the CMake option ON cannot be called a determinism fix.
+   These files are unchanged since the initial XR source snapshot `b99838b`.
+   The referenced [upstream PR #2670](https://github.com/TheSuperHackers/GeneralsGameCode/pull/2670)
+   is still open when checked; its author reports distinct legacy-x87 and
+   modern deterministic math benchmark results and explicitly questions
+   whether available replay tests contain CRC messages. Treat it as research,
+   not a proven retail-compatible drop-in patch.
+3. **Inherited simulation fixes can differ from retail.**
+   `ObjectCreationList.cpp` documents a fixed uninitialized position in spread
+   formation; `DumbProjectileBehavior.cpp` documents a fixed out-of-bounds
+   flight-path read. Both explicitly warn about mismatches with unpatched
+   retail clients. No evidence yet ties either path to this early failure;
+   they establish that compatibility defines do not guarantee parity.
+4. **Missing/incorrectly scheduled CRC messages remain a distinct candidate.**
+   `GameLogic::processCommandList()` raises the same mismatch state both when
+   connected players outnumber cached CRCs and when CRC values disagree.
+   Therefore the photographed dialog alone does not prove two fully received
+   values differed. Peer-index mapping, CRC scheduling and serialization need
+   observation. Omarchy displaying the error does not identify which endpoint
+   introduced the problem. The inspected CRC scalar and object ID paths use
+   explicit integer fields; no specific 64-bit wire-layout defect was found.
+5. **XR command/client state or effective data overrides remain possible.**
+   XR orders inspected in `XrGameBoot.cpp` use the normal message stream, and
+   the recent LAN delta does not directly change GameLogic. That is not proof
+   that all client/render callbacks are free of simulation side effects.
+   Compare an idle start before any command with one simple move; audit local
+   state writes or logic-RNG use in rendering if the first mismatch depends on
+   interaction. The matching six Zero Hour files plus map archives lower the
+   data-mismatch priority, but base archives and loose overrides remain open.
+
+### Next bounded diagnostic slice
+
+Before changing simulation behavior, log the first few normal CRC checkpoints
+(retain the negotiated interval), local logic frame, connected player IDs,
+received CRCs and an explicit `missing_crc` versus `different_crc` reason.
+At those same checkpoints, capture rolling CRCs after objects, logic RNG,
+partition manager, players and AI. Keep this opt-in and bounded; do not turn on
+unlimited object logging or reduce the gameplay CRC interval for a retail test.
+Use these traces with a same-source desktop peer or a second Quest. Retail
+replay comparison is useful only if the replay actually contains recorded
+logic CRCs; a replay that merely finishes is not proof of synchronization.
+
+### Two Quests: expected advantage, unverified
+
+Two Quest 3 devices using identical APK 10212 and matching game data avoid the
+retail-versus-port implementation gap and most CPU/compiler/math differences.
+This makes synchronization more plausible than Quest versus Steam/Proton, but
+does not eliminate command routing bugs, local-state/RNG side effects,
+uninitialized memory or missing CRC messages. Test first with Direct Connect
+and an idle match, then orders from both players and the 15-minute gate.
+Automatic discovery and sustained Quest-to-Quest play have not been verified.
+
+P23 remains the planned public offline preview; LAN 10212 stays experimental.
 Do not enable LAN tabletop by default, merge a network-eligibility expansion into a release, or claim multiplayer support while these physical gates remain open. Keep replay and internet as separate later work. Keyboard/mouse remains secondary to the controller path.

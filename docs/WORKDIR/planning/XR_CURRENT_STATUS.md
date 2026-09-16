@@ -289,6 +289,17 @@ after that before treating retail Steam
 compatibility as viable. No sustained human match has passed. Automatic LAN
 discovery remains broken.
 
+The mismatch was reproduced after the user's successful P23 reinstall and our
+verified update to 10212 (installed APK hash matches the candidate). Source
+audit finds native platform math active and the alternative GameMath wrappers
+still partly TODO; `-ffp-contract=off` is already present. Inherited retail
+simulation differences remain candidates. The same mismatch handler also
+handles missing expected CRC messages, so the next diagnostic must distinguish
+missing messages from different values and record the first divergent
+subsystem. PLAN-025 contains the ranked audit. Two identical Quest 3 peers
+should avoid several cross-build differences but remain untested. P23 remains
+the planned public offline preview, with LAN development continuing separately.
+
 ### P22 - deferred keyboard and mouse investigation
 
 Audit Quest Bluetooth/USB keyboard and mouse behavior only as a later secondary
