@@ -2,6 +2,7 @@
 // Geometry only: no engine commands, room persistence, or continuously snapping.
 #pragma once
 #include "XrPlacement.h"
+#include "XrBoardGeometry.h"
 #include <vector>
 #include <string>
 struct XrSceneFace {
@@ -62,8 +63,9 @@ inline XrQuaternionf xrSceneBoardYaw(const XrSurface &board) {
 inline XrSurface xrSceneBoard(const XrSurface &old,XrVector3f point,float width) {
 	XrSurface result=old;result.width=width;
 	result.pose.orientation=xrMul(xrSceneBoardYaw(old),xrAxisAngle({1,0,0},-1.5707963268f));
-	// P18 plinth underside is -0.036 widths, NOT the terrain's variable center.
-	result.pose.position=xrAdd(point,{0,.036f*width+.002f,0});return result;
+	// GeneralsX @tweak Codex 16/09/2026 P20.1 rests the shared thinner
+	// underside above the real surface; the terrain datum remains unchanged.
+	result.pose.position=xrAdd(point,{0,-kXrBoardUnderside*width+kXrBoardSurfaceClearance,0});return result;
 }
 inline XrSurface xrSceneSupportedBoard(const XrSceneFace &face,const XrSurface &old,XrVector3f point,float width,float aspect) {
 	auto board=xrSceneBoard(old,point,width);

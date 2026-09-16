@@ -652,8 +652,9 @@ void GX_XR_BeginStereoWorld() {
 	s_renderCamera->Set_Clip_Planes(1,20000);
 	static unsigned mappingFrames=0;
 	if((mappingFrames++%180)==0) {
-		GXLOG("P18 stable height datum=%.3f map-max=%.3f span=%.3f ceiling=%.3f plinth=-0.036 board-widths",
-			center.z,s_worldMaxHeight,s_worldSpan,gxXrBoardCeiling(s_worldMapping));
+		// GeneralsX @tweak Codex 16/09/2026 Report the shared P20.1 underside.
+		GXLOG("P18 stable height datum=%.3f map-max=%.3f span=%.3f ceiling=%.3f plinth=%.3f board-widths",
+			center.z,s_worldMaxHeight,s_worldSpan,gxXrBoardCeiling(s_worldMapping),kXrBoardUnderside);
 		GXLOG("P7.4 mapping center=(%.1f,%.1f,%.1f) span=%.1f viewport=%dx%d board=%.2fm eye=%dx%d",
 			center.x,center.y,center.z,s_worldSpan,w,h,s_worldFrame.board.width,s_worldFrame.width,s_worldFrame.height);
 		GXLOG("P7.4 pointer picks unavailable=%u outside=%u terrain-miss=%u projection=%u viewport=%u hit=%u",

@@ -66,7 +66,8 @@ int main(){
   float a=aspect;const auto board=xrEditOutline(s,a,true);
   near(board.width,width*1.024f);near(board.width*a,width*(aspect+.024f));
   const auto local=xrRotate(xrPoseInverse(s.pose).orientation,xrSub(board.pose.position,s.pose.position));
-  near(local.x,0);near(local.y,0);near(local.z,-.017f*width);
+  near(local.x,0);near(local.y,0);
+  near(local.z,(kXrBoardUnderside+kXrBoardOutlineClearance)*width);
   a=aspect;const auto panel=xrEditOutline(s,a,false);near(panel.width,width);near(a,aspect);
   near(xrLength(xrSub(panel.pose.position,s.pose.position)),.003f);
  }

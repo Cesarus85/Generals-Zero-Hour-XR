@@ -4068,6 +4068,24 @@ placement on detected/manual planes, selection/picking, terrain relief, window
 poses and saved layouts must not move. Update the board, height and scene tests
 for the new underside. This task is separate from P21's window redesign.
 
+Implementation record (2026-09-16): branch
+`codex/p20-1-thin-underbody` introduces `XrBoardGeometry.h` as the single
+geometry contract. Keep the soil datum at -0.018 board widths and move the
+underside to -0.027, halving only the dark lower trim to 0.009. Mesh, physical
+surface placement, editing outline and diagnostics consume the shared values;
+terrain height/registration, map coverage and free-standing poses are unchanged.
+Host checks pass: board 74, height 272822, scene 1280, build controls 4292, menu
+2869, menu routing 327, interaction 135 and workspace 732. Android CI run
+35055859028 passes for candidate `1.2.9-p20.1-thin-underbody` (10209), which
+stays update-installable over release 10208. Its 43,462,061-byte ARM64 APK has
+SHA-256 `ef5c544cee9fd9212b71807a62ddfbfc1a33ce7feb22f28ff5dd8a7487ad9742`;
+package/launcher metadata and APK Signature Scheme v2 pass local verification.
+The 10209 APK was update-installed with user data preserved, launched
+successfully and accepted by the user in a Quest 3 on 2026-09-16. The thinner
+edge reads correctly and no regression was reported; P20.1 is accepted for
+merge. Keep real-surface clearance and underside artifact checks in later
+tabletop regression passes.
+
 ### P21 - UI and Commands window presentation pass
 
 Rework the spatial `UI` and `Commands` windows as a coherent, polished pair of
@@ -4132,4 +4150,6 @@ investigation.
 Acceptance is a documented device matrix, a diagnostic input trace and an
 explicit go/no-go decision for a small mapping slice. Full keyboard/mouse
 parity remains below controller ergonomics, campaign polish and multiplayer
-compatibility in priority.
+compatibility in priority. On 2026-09-16 the user explicitly moved this farther
+back: it is not the follow-up to P20.1 and must not displace the next tabletop
+visual, content, campaign or controller-quality milestone.
