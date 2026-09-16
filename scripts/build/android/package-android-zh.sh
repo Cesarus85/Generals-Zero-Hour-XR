@@ -9,7 +9,7 @@
 #      in-tree SDL3 source, so Java and native SDL always match versions.
 #   3. Stage small runtime assets bundled into the APK and extracted on first
 #      launch: fonts/ (Liberation, renamed), dxvk.conf, DefaultOptions.ini.
-#   4. gradle assemble<Flavor>Debug -> app-<flavor>-debug.apk, ready for
+#   4. gradle assemble<Flavor><BuildType> -> app-<flavor>-<type>.apk, ready for
 #      adb install. Two product flavors (see android/app/build.gradle): zh
 #      (2D game) and xr (native OpenXR tabletop, own package
 #      com.generalsx.zerohour.xr so it gets its own launcher icon -- Quest
@@ -20,15 +20,18 @@
 # full game now, so both need the folder (the xr flavor redirects to Setup
 # when none is configured).
 #
-# Usage: ./scripts/build/android/package-android-zh.sh [--install]
-#   --install  adb install the APK(s) to the first connected device
+# Usage: ./scripts/build/android/package-android-zh.sh [--release] [--install]
+#   --release builds XR only, then signs it with a private key + update lineage
+#   --install  adb install the APK(s); release requires GX_ADB_SERIAL
 set -euo pipefail
 
 DO_INSTALL=0
+BUILD_TYPE=debug
 for arg in "$@"; do
     case "$arg" in
         --install) DO_INSTALL=1 ;;
-        *) echo "ERROR: unknown argument '$arg' (usage: $0 [--install])"; exit 1 ;;
+        --release) BUILD_TYPE=release ;;
+        *) echo "ERROR: unknown argument '$arg' (usage: $0 [--release] [--install])"; exit 1 ;;
     esac
 done
 
@@ -41,6 +44,19 @@ JAVA_SDL="${ANDROID_DIR}/app/src/main/java-sdl"
 ASSETS="${ANDROID_DIR}/app/src/main/assets/gamedata"
 DEFAULT_DRIVER_ASSETS="${ANDROID_DIR}/app/src/main/assets/default_driver"
 STAGING="${GX_ANDROID_STAGING:-${HOME}/GeneralsX/android-staging}"
+
+# GeneralsX @build Codex 16/09/2026 Never stage a release before checking
+# that private signing inputs exist; no debug-signed fallback is permitted.
+if [[ "${BUILD_TYPE}" == "release" ]]; then
+    if [[ "${GX_FLAVORS:-xr}" != "xr" ]]; then
+        echo "ERROR: --release currently supports GX_FLAVORS=xr only." >&2
+        exit 1
+    fi
+    if [[ -z "${GX_XR_RELEASE_KEYSTORE:-}" || -z "${GX_XR_RELEASE_KEY_ALIAS:-}" || -z "${GX_XR_RELEASE_KEYSTORE_PASSWORD:-}" ]]; then
+        echo "ERROR: private XR release signing variables are required; see docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md." >&2
+        exit 1
+    fi
+fi
 
 # --- 1. native libraries -----------------------------------------------------
 GAME_LIB="$(find "${BUILD_DIR}" -name libmain.so -not -path "*/_deps/*" 2>/dev/null | head -1)"
@@ -293,8 +309,13 @@ find "${DEFAULT_DRIVER_ASSETS}" -type f | sed "s|${DEFAULT_DRIVER_ASSETS}/|    d
 
 # --- 4. gradle ---------------------------------------------------------------
 cd "${ANDROID_DIR}"
-GRADLE_CMD=""
-if [[ -x "./gradlew" ]]; then
+GRADLE_CMD="${GX_GRADLE_CMD:-}"
+if [[ -n "${GRADLE_CMD}" ]]; then
+    if [[ ! -x "${GRADLE_CMD}" ]]; then
+        echo "ERROR: GX_GRADLE_CMD is not an executable path: ${GRADLE_CMD}" >&2
+        exit 1
+    fi
+elif [[ -x "./gradlew" ]]; then
     GRADLE_CMD="./gradlew"
 elif command -v gradle >/dev/null 2>&1; then
     GRADLE_CMD="gradle"
@@ -322,9 +343,10 @@ if [[ -n "${GX_ANDROID_VERSION_NAME:-}" ]]; then
 fi
 
 FLAVORS="${GX_FLAVORS:-zh xr}"
+if [[ "${BUILD_TYPE}" == "release" ]]; then FLAVORS=xr; fi
 TASKS=""
 for flavor in $FLAVORS; do
-    TASKS="${TASKS} assemble$(tr '[:lower:]' '[:upper:]' <<< "${flavor:0:1}")${flavor:1}Debug"
+    TASKS="${TASKS} assemble$(tr '[:lower:]' '[:upper:]' <<< "${flavor:0:1}")${flavor:1}$(tr '[:lower:]' '[:upper:]' <<< "${BUILD_TYPE:0:1}")${BUILD_TYPE:1}"
 done
 echo "==> ${GRADLE_CMD}${TASKS} ${GRADLE_VERSION_ARG}"
 # shellcheck disable=SC2086
@@ -332,14 +354,22 @@ echo "==> ${GRADLE_CMD}${TASKS} ${GRADLE_VERSION_ARG}"
 
 APKS=""
 for flavor in $FLAVORS; do
-    APK="${ANDROID_DIR}/app/build/outputs/apk/${flavor}/debug/app-${flavor}-debug.apk"
+    APK="${ANDROID_DIR}/app/build/outputs/apk/${flavor}/${BUILD_TYPE}/app-${flavor}-${BUILD_TYPE}.apk"
+    if [[ "${BUILD_TYPE}" == "release" ]]; then
+        APK="${ANDROID_DIR}/app/build/outputs/apk/${flavor}/release/app-${flavor}-release-unsigned.apk"
+    fi
     if [[ ! -f "${APK}" ]]; then
         echo "ERROR: expected APK not found at ${APK}"
         exit 1
     fi
-    echo "==> APK (${flavor}): ${APK}"
+    if [[ "${BUILD_TYPE}" == "release" ]]; then
+        SIGNED_APK="${PROJECT_ROOT}/build/apk/Generals-Zero-Hour-XR-release.apk"
+        "${PROJECT_ROOT}/scripts/build/android/sign-xr-release.sh" "${APK}" "${SIGNED_APK}"
+        APK="${SIGNED_APK}"
+    fi
+    echo "==> APK (${flavor}, ${BUILD_TYPE}): ${APK}"
     # GeneralsX @build Codex 14/09/2026 Stable, product-named XR handoff artifact.
-    if [[ "${flavor}" == "xr" ]]; then
+    if [[ "${flavor}" == "xr" && "${BUILD_TYPE}" == "debug" ]]; then
         mkdir -p "${PROJECT_ROOT}/build/apk"
         cp "${APK}" "${PROJECT_ROOT}/build/apk/Generals-Zero-Hour-XR.apk"
         echo "==> Generals: Zero Hour XR: ${PROJECT_ROOT}/build/apk/Generals-Zero-Hour-XR.apk"
@@ -349,9 +379,18 @@ done
 
 if [[ $DO_INSTALL -eq 1 ]]; then
     command -v adb >/dev/null 2>&1 || { echo "ERROR: adb not found on PATH"; exit 1; }
+    if [[ "${BUILD_TYPE}" == "release" && -z "${GX_ADB_SERIAL:-}" ]]; then
+        echo "ERROR: set GX_ADB_SERIAL to the exact Quest serial before --release --install." >&2
+        exit 1
+    fi
     for APK in $APKS; do
-        echo "==> adb install -r ${APK}"
-        adb install -r "${APK}"
+        if [[ -n "${GX_ADB_SERIAL:-}" ]]; then
+            echo "==> adb -s ${GX_ADB_SERIAL} install -r ${APK}"
+            adb -s "${GX_ADB_SERIAL}" install -r "${APK}"
+        else
+            echo "==> adb install -r ${APK}"
+            adb install -r "${APK}"
+        fi
     done
     echo "==> Installed. Game data goes to:"
     echo "    /storage/emulated/0/Android/data/com.generalsx.zerohour/files/"

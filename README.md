@@ -28,7 +28,7 @@ The **supported preview path is offline play**. Human LAN/Internet multiplayer, 
 
 ## Get the tested offline APK
 
-The current offline candidate is [P23: command and Ultra+ preview](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/xr-preview-2026-09-16-p23). Download its [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/xr-preview-2026-09-16-p23/Generals-Zero-Hour-XR.apk) asset, not a diagnostic APK from the LAN branch. This is a development preview; its signing and debuggable settings are still under review for a public release.
+The currently downloadable offline candidate is [P23: command and Ultra+ preview](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/xr-preview-2026-09-16-p23). Download its [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/xr-preview-2026-09-16-p23/Generals-Zero-Hour-XR.apk) asset, not a diagnostic APK from the LAN branch. This older asset is a debug-signed development preview. A separately signed, non-debuggable replacement is in local validation and is **not yet published**; see [release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md).
 
 - APK SHA-256: `978c627e276ab1627d014f68a8e1ad436ecaae215e8946ef900e5b999077273f`
 - Android package: `com.generalsx.zerohour.xr` (retained for update compatibility)
@@ -73,5 +73,12 @@ GX_FLAVORS=xr ./scripts/build/android/package-android-zh.sh
 ```
 
 The XR APK is emitted at `build/apk/Generals-Zero-Hour-XR.apk`. Builds do not fetch retail game data. The source tree also retains inherited Android/Apple targets, but their features and release status are not claims about this Quest edition.
+
+The command above builds a **debug** APK. For the publication build, the
+maintainer must configure a private signing key outside Git and use
+`GX_FLAVORS=xr ./scripts/build/android/package-android-zh.sh --release`.
+That path emits `build/apk/Generals-Zero-Hour-XR-release.apk` and fails if
+private signing inputs are absent; the exact signing, update-migration and
+verification procedure is in the [release-preparation audit](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md).
 
 The [XR current status](docs/WORKDIR/planning/XR_CURRENT_STATUS.md) tracks acceptance and remaining work. [Release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md) records the exact candidate, checks and publication gates.

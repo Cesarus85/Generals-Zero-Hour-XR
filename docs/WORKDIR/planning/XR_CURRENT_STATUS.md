@@ -93,6 +93,27 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Release and device baseline
 
+The first public-build preparation is on `codex/xr-release-safe-build`, based
+on `main` at `b515e75`. It preserves the offline P23 game engine and adds a
+separate, non-debuggable XR release package path. A privately signed local
+candidate is `1.2.15-xr-preview` (10215), SHA-256
+`bafff443d77e7b9e925a73fcf16b5bf7234c54f256e2cb7fa0f95d1aad008d2b`;
+certificate SHA-256
+`a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`.
+It update-installed successfully over the 10214 LAN diagnostic APK on the
+Quest 3/API 34 without uninstalling; the original first-install timestamp
+remained unchanged. The app is no longer debuggable. A clean ARM64/DXVK native
+source build passes; its packaged `libmain.so` matches the newly built file,
+and the installed APK SHA-256 matches the local final artifact above.
+Worn-headset play of this **exact final hash** is still open. The first launch
+attempt was intercepted by Quest's inactive-controller gate. The user later
+played the first signed repack, but its session was interrupted by our ADB
+installation of the final source-built candidate, not a proven app crash.
+No new GitHub Release has been published; the repository remains private.
+See the [release audit](../audit/RELEASE_PREPARATION_XR.md) for signing,
+migration, artifact and publication gates. The tracked development key remains
+for debug builds and old-signature lineage only.
+
 The newest private Quest preview is `xr-preview-2026-09-16-p23` from PR #5,
 merge `ba9169d5c81604aa9fac00508cf2e5dcbf9a4939`; its APK and hash are
 recorded in the P23 section below. The earlier 10208 release remains the latest
@@ -294,8 +315,10 @@ scene shows a regression.
 
 The first offline release preparation is documented in
 [`RELEASE_PREPARATION_XR.md`](../audit/RELEASE_PREPARATION_XR.md). The P23
-asset/tag is the candidate, not the newer experimental LAN build; publication
-and exact-artifact worn-headset confirmation remain open.
+asset/tag remains the linked, debug-signed development preview; the 10215
+privately signed candidate is local only. Neither the LAN diagnostic build nor
+the untested 10215 package is a published first release. Exact-artifact
+worn-headset confirmation and the source-rebuild gate remain open.
 
 ## P21 key implementation map
 

@@ -76,8 +76,10 @@ android {
         // number always sorts the same way as versionName (1.2.0 -> 10200).
         // GeneralsX @build Quest XR 15/09/2026 P20/P21 is the first merged
         // tabletop presentation checkpoint after the 1.2.7 device candidate.
-        versionCode (project.hasProperty('androidVersionCode') ? (project.androidVersionCode as Integer) : 10209)
-        versionName (project.hasProperty('androidVersionName') ? project.androidVersionName : '1.2.9-p20.1-thin-underbody')
+        // GeneralsX @build Codex 16/09/2026 Keep the first release-safe XR
+        // candidate above the separately tested 10214 LAN diagnostic build.
+        versionCode (project.hasProperty('androidVersionCode') ? (project.androidVersionCode as Integer) : 10215)
+        versionName (project.hasProperty('androidVersionName') ? project.androidVersionName : '1.2.15-xr-preview')
         ndk {
             abiFilters 'arm64-v8a'
         }
@@ -127,10 +129,11 @@ android {
         }
         release {
             minifyEnabled false
-            // Sideload builds sign with the same fixed debug key; Play
-            // distribution is out of scope for a GPL port of a game whose
-            // assets the user must own.
-            signingConfig signingConfigs.debug
+            // GeneralsX @build Codex 16/09/2026 Release APKs are never signed
+            // with the committed development key. The XR packaging script
+            // signs the unsigned artifact with a private key and a rotation
+            // lineage that preserves installed data from earlier previews.
+            debuggable false
         }
     }
 
