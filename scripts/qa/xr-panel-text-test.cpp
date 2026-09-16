@@ -3,8 +3,11 @@
 // the structured paint2 contract: every hittable control must carry a valid
 // label, every label index must resolve, and states (armed/pending/selected/
 // hover/toggles) must appear in the packed table for both languages.
+// GeneralsX @test Muse 16/09/2026 Match-result card payloads: localized
+// title, shared hint and per-result accent in both languages.
 #include "XrLayout.h"
 #include "XrCommands.h"
+#include "XrEndgame.h"
 #include "XrLayers.h"
 #include "XrPerformance.h"
 #include <vector>
@@ -17,6 +20,7 @@ struct XrHello {
  XrPerformance performance;
 	bool stereoVisible=false,stereoWorld=false;
 	bool recoveryVisible=false;GLuint recoveryTexture=0;
+	bool resultVisible=false;GLuint resultTexture=0;std::string resultKey;
  GLuint uiButtonTexture=0,commandButtonTexture=0,commandsTexture=0,settingsTexture=0,hoverTexture=0;
  std::string commandsKey,settingsKey,hoverCandidate,hoverKey;
  bool splitVisible=true,arranging=false,pointerVisible=false,pointerPressed=false,hoverVisible=false;
@@ -41,6 +45,8 @@ static bool XrGameBoot_CanRotatePlacement(){return building;}
 static float XrGameBoot_PlacementDegrees(){return 90;}
 static std::string nativeHover;
 static std::string XrGameBoot_HoverInfo(float,float){return nativeHover;}
+static XrEndgameResult stubResult=XrEndgameResult::None;
+static XrEndgameResult XrGameBoot_MatchResult(){return stubResult;}
 static XrGameRect surfaceRect(int){return {0,0,1,1};}
 static int XrGameBoot_GameWidth(){return 1280;}
 static int XrGameBoot_GameHeight(){return 720;}
@@ -50,6 +56,7 @@ static FILE *output=nullptr;
 static int hoverPage=-1;static std::string hoverDetail;
 static std::string smallTitle;
 static std::string recoveryTitle;
+static int resultAccent=-1;static std::string resultTitle,resultDetail;
 static std::vector<std::string> lines(const std::string &s){
  std::vector<std::string> v;size_t start=0;
  do{size_t end=s.find('\n',start);v.push_back(s.substr(start,end-start));if(end==std::string::npos)break;start=end+1;}while(start<=s.size());return v;
@@ -84,6 +91,7 @@ static bool paintPanel(XrHello &,GLuint &texture,const std::string &title,const 
  texture=1;
  if(kind==0)smallTitle=title;
  if(kind==2 && title==xrTr("Darstellung wird wiederhergestellt")){recoveryTitle=title;check(detail==xrTr("Die Spielwelt wird neu gezeichnet. Bitte die Trigger loslassen."));}
+ if(kind==2 && hover>0){resultAccent=hover;resultTitle=title;resultDetail=detail;}
  // Legacy kinds 0/2/6/7 only; the redesigned panels must use paint2.
  check(kind==0 || kind==2 || kind==6 || kind==7);
  if(output){for(const auto &s:{std::to_string(kind),title,detail,std::string()}){fwrite(s.data(),1,s.size(),output);fputc(0,output);}}
@@ -105,6 +113,16 @@ int main(int argc,char **argv){
   for(int i=0;i<3;++i)x.surfaces[i]=x.layout.relative[i];
   updateMenuTextures(x,100);
   x.recoveryVisible=true;updateMenuTextures(x,100);check(recoveryTitle==xrTr("Darstellung wird wiederhergestellt"));x.recoveryVisible=false;
+  // Match-result card: localized title, shared hint and per-result accent.
+  x.resultVisible=true;
+  stubResult=XrEndgameResult::Victory;updateMenuTextures(x,100);
+  check(resultTitle==xrTr("Sieg!") && resultAccent==1);
+  stubResult=XrEndgameResult::Defeat;updateMenuTextures(x,100);
+  check(resultTitle==xrTr("Niederlage") && resultAccent==2);
+  stubResult=XrEndgameResult::MatchOver;updateMenuTextures(x,100);
+  check(resultTitle==xrTr("Partie beendet") && resultAccent==3);
+  check(resultDetail==xrTr("Die Partie ist entschieden.\nBeliebige Taste zum Schließen."));
+  x.resultVisible=false;stubResult=XrEndgameResult::None;
   x.arranging=true;updateMenuTextures(x,100);check(smallTitle==(lang==XrLanguage::German ? "Fertig":"Done"));
   x.arranging=false;updateMenuTextures(x,100);check(smallTitle=="UI");
   // Commands compact: title, sections, group badges and context detail.

@@ -353,6 +353,14 @@ public:
 //#if defined(RTS_DEBUG)
 	void debugVictory();
 //#endif
+// GeneralsX @feature Muse 16/09/2026 Debug-only end-game triggers for short
+// XR test scenarios; same pattern as debugVictory, kept out of release
+// builds via the standard cheat gate.
+#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+	void debugDefeat();
+	void debugQuickVictory();
+	void debugLocalDefeat();
+#endif
 
 
 	static void parseScriptAction( INI* ini );

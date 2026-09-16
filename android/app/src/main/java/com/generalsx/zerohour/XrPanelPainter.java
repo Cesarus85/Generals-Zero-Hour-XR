@@ -40,12 +40,17 @@ public final class XrPanelPainter {
     public static int[] paint(String title, String detail, String labels, int hover, int kind) {
         int width = kind == 0 ? 192 : 768;
         int height = kind == 0 ? 128 : kind == 6 ? 768 : kind == 5 ? 1280 : (kind == 1 || kind == 3 || kind == 4 || kind == 7) ? 1024 : 384;
+        // GeneralsX @feature Muse 16/09/2026 Match-result card: kind 2 with a
+        // positive hover selects the accent (1 victory gold, 2 defeat red,
+        // 3 neutral). Existing kind-2 callers pass -1 and stay pixel-identical.
+        boolean result = kind == 2 && hover > 0;
+        int accent = !result ? CYAN : hover == 1 ? AMBER : hover == 2 ? Color.rgb(255, 92, 92) : CYAN;
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
         fill.setColor(Color.rgb(14, 24, 32));
         canvas.drawRoundRect(2, 2, width - 2, height - 2, 28, 28, fill);
-        fill.setColor(Color.rgb(50, 205, 192));
+        fill.setColor(accent);
         canvas.drawRoundRect(24, kind == 1 ? 12 : 22, kind == 0 ? 168 : 120, kind == 1 ? 16 : 28, 3, 3, fill);
         TextPaint text = new TextPaint(Paint.ANTI_ALIAS_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
         text.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
@@ -86,7 +91,15 @@ public final class XrPanelPainter {
         } else {
             // GeneralsX @refactor Ultron 15/09/2026 P21 kinds 1/3/4/5 moved to
             // paint2 (shared native control table). Only 0/2/6/7 remain here.
-            canvas.drawText(TextUtils.ellipsize(title, text, 704, TextUtils.TruncateAt.END).toString(), 32, 82, text);
+            if (result) {
+                text.setTextSize(64);
+                text.setColor(hover == 1 ? AMBER : hover == 2 ? Color.rgb(255, 130, 130) : Color.WHITE);
+                text.setTextAlign(Paint.Align.CENTER);
+                canvas.drawText(TextUtils.ellipsize(title, text, 704, TextUtils.TruncateAt.END).toString(), width / 2f, 100, text);
+                text.setTextAlign(Paint.Align.LEFT);
+            } else {
+                canvas.drawText(TextUtils.ellipsize(title, text, 704, TextUtils.TruncateAt.END).toString(), 32, 82, text);
+            }
             text.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
             text.setColor(Color.rgb(180, 200, 209));
             text.setTextSize(kind == 7 ? 24 : 28);
