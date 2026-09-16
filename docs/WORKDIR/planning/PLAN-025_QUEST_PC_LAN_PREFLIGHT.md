@@ -24,20 +24,22 @@ If Steam discovery/join or in-match synchronization fails, reproduce with a Wind
 
 | Gate | Evidence needed | State |
 |---|---|---|
-| Build safety | Default-off and preview-on mode tests; Android native/XR APK build | Passed locally; headset installation/open still pending |
+| Build safety | Default-off and preview-on mode tests; Android native/XR APK build | Passed locally; exact APK installed on Quest 3, launch/open still pending |
 | Lobby | Discovery and direct-IP outcomes, both endpoint IPs, host/join/leave, chat/input | Open |
 | Simulation | 15-minute Quest ↔ PC human match, orders from both players, no desync/CRC/stall | Open |
 | XR usability | Tabletop and upright shell transitions, controller menu/text entry, headset pause/resume and performance | Open |
 | Retail compatibility | Above gates against the user's unmodified Steam Zero Hour | Open |
 | Regression | Offline Skirmish/campaign retain accepted tabletop behavior | Host eligibility test passes; device regression open |
 
-The local, **not installed or published**, opt-in APK is
+The local, **not published**, opt-in APK is
 `build/apk/Generals-Zero-Hour-XR.apk`, package
 `com.generalsx.zerohour.xr`, version 10210 (`1.2.10-lan-preflight`), SHA-256
 `5cc4f84a04eb7b44bab906f8acff3414b1e5d9b808fafc04b557d8fcfb374a4b`.
 The native ARM64 target and XR APK build passed; v2 signing and staged native
 library equality were verified. Its source is the unmerged
-`codex/quest-pc-lan-preflight` branch. This candidate would update the Quest
-app in place, so preserve the current APK if a rollback may be needed.
+`codex/quest-pc-lan-preflight` branch. It was installed in place on Quest 3
+`2G0YC5ZG9609PY` using `adb install -r`, without clearing app data. The APK
+read back from the device has the same SHA-256. Launch, headset UX and LAN
+gameplay remain untested. Preserve the prior release APK for rollback.
 
 Do not enable LAN tabletop by default, merge a network-eligibility expansion into a release, or claim multiplayer support while these physical gates remain open. Keep replay and internet as separate later work. Keyboard/mouse remains secondary to the controller path.

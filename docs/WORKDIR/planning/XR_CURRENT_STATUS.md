@@ -245,9 +245,11 @@ with the flag both off and on. The local native build and XR APK package pass:
 `build/apk/Generals-Zero-Hour-XR.apk`, version 10210
 (`1.2.10-lan-preflight`), SHA-256
 `5cc4f84a04eb7b44bab906f8acff3414b1e5d9b808fafc04b557d8fcfb374a4b`.
-APK v2 signing and native staging match are verified. This test APK has not
-been installed or published; no Steam interoperability or human match has
-been verified. The accepted P23 release APK remains unchanged.
+APK v2 signing and native staging match are verified. On 2026-09-16 the test
+APK was update-installed on Quest 3 `2G0YC5ZG9609PY` with app data retained;
+the installed `base.apk` reads back with that exact SHA-256. It has not been
+published. No headset launch, Steam interoperability or human match has been
+verified. The accepted P23 release APK remains unchanged.
 
 ### P22 - deferred keyboard and mouse investigation
 
