@@ -59,6 +59,36 @@ the detailed narrative and command transcripts out of this dashboard.
 | Game-data setup | Guided Steam or installed/extracted CD/ISO folder import with validation; raw images/installers are not extracted | Host and Quest instrumentation pass; real Steam-based use confirmed |
 | Returning launch | Saved valid data is checked inside the XR Activity; setup opens only when data is missing or invalid | Device launch verified; final visual no-flash confirmation remains a physical gate |
 | Performance defaults | Balanced resolution, light shadows, Multiview preferred, redundant extra world copy omitted automatically | Reported as relatively smooth and playable; no universal FPS guarantee |
+| End-of-match result | A complete offline Skirmish win (all opponents destroyed) went directly to statistics without a perceptible “Victory” screen | User-observed on the installed 1.2.15 release; XR presentation fix is the next priority, not yet implemented |
+| Controller text entry | No general in-game virtual keyboard in the 1.2.15 offline release; a Direct Connect name/IP prototype exists only on the separate LAN branch | Separate follow-up; do not merge LAN diagnostics into the offline fix |
+
+## Next priority: visible XR victory and defeat results
+
+The maintainer completed a long, ordinary offline Skirmish, destroyed every
+opponent and saw the statistics screen immediately, with no visible win result.
+Do not ask for another full match to reproduce this. The original engine has
+`Menus/Victorious.wnd` and `Menus/Defeat.wnd` via
+`ScriptActions::doVictory`/`doDefeat`, normally followed by an end-game timer;
+`doQuickVictory` is an end-transition action that omits the native window, not
+a statement about how long the match lasted. The exact action taken in the
+reported match and whether XR cropping hid a native window are **unconfirmed**.
+
+The next PR should determine the end action with bounded diagnostics, then
+provide a clear, controller-independent XR “Victory”/“Defeat” presentation
+before the statistics become usable. It must work for both normal and quick
+end paths without altering victory conditions, simulation/network state or
+retail game data. Preserve the tabletop and the existing statistics screen.
+Cover win, loss, direct-to-score, reset/new match and campaign transitions in
+host tests or short controlled scenarios. A brief worn-headset visual check is
+still needed before acceptance, but the maintainer need not replay a full
+Skirmish. Keep any diagnostic shortcut out of the release build. Submit a PR
+with tests and remaining headset gate; do not publish or install a new APK
+while the user may be playing.
+
+General controller text entry is **not** part of that end-game PR. The LAN
+branch's Direct Connect keyboard is hard-coded to player name and IPv4; reuse
+its XR panel mechanics only in a later, independently reviewed generic
+text-field task. The native Android setup/importer input is separate.
 
 ## Current visual and interaction defaults
 
@@ -114,8 +144,10 @@ The [private GitHub release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/
 is the authoritative download: GitHub's asset digest and a fresh independent
 download match the exact Quest-installed APK. Its checksum file also verifies.
 The repository remains private; all older debug-signed assets are marked as
-historical prereleases. Key backup, passthrough-image review and an explicit
-visibility decision remain before a public release.
+historical prereleases. The maintainer reports that the signing key/password
+are backed up and has visually approved the passthrough screenshots. An
+explicit visibility decision remains before a public release, and the newly
+observed end-of-match result gap should be resolved first.
 See the [release audit](../audit/RELEASE_PREPARATION_XR.md) for signing,
 migration, artifact and publication gates. The tracked development key remains
 for debug builds and old-signature lineage only.
