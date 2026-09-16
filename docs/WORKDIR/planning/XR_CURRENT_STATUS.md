@@ -201,8 +201,15 @@ package identity, launcher and APK Signature Scheme v2 were verified locally.
 The 10209 APK was update-installed with existing app data preserved, launched
 successfully and accepted by the user in the Quest 3 on 2026-09-16. The thinner
 edge reads correctly in the headset and no regression was reported. P20.1 is
-therefore ready to merge; retain real-surface placement and underside artifact
-checks in later tabletop regressions.
+merged in PR #3 at `1b1ff6d`; retain real-surface placement and underside
+artifact checks in later tabletop regressions.
+
+Hosted CI policy was tightened after the private-account Actions allowance was
+exhausted by inherited cross-platform matrices. Linux/macOS desktop builds are
+now manual compatibility/release checks only. A pull request receives the full
+Android/Quest build only while labeled `quest-build`, or it can be started via
+`workflow_dispatch`; concurrency cancels obsolete Android work for the same PR.
+Local host checks and local Quest packaging remain the normal iteration path.
 
 ### P21 - UI and Commands window presentation
 
