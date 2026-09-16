@@ -116,6 +116,9 @@ If you have access to a Windows PC or a Windows virtual machine:
 
 ## Next Steps
 
-After placing the game files in the correct directories, follow [INSTALLATION.md](INSTALLATION.md) to download the GeneralsX release for your platform and launch the game.
+For **Generals: Zero Hour XR on Quest**, follow the
+[Quest installation and controller guide](INSTALLATION_XR.md), which uses the
+in-app game-data assistant rather than the desktop directory layout above.
+For other GeneralsX targets, follow [INSTALLATION.md](INSTALLATION.md).
 
 If you run into any issues, please [open a discussion](https://github.com/fbraz3/GeneralsX/discussions) or [report a bug](https://github.com/fbraz3/GeneralsX/issues/new/choose).

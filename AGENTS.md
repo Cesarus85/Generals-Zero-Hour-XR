@@ -67,9 +67,13 @@ Before starting work, read:
 ## Build Commands
 
 ### Android (no local toolchain needed)
-Push to a `claude/**` branch or trigger manually: **Actions tab → Build Android →
-Run workflow**. CI builds `libmain.so` + DXVK, packages a signed APK, verifies
-`DT_NEEDED`/ABI. For a local build see `docs/port/ANDROID_PORT.md §3`:
+Trigger manually via **Actions tab → Build Android → Run workflow**, or add
+the `quest-build` label to a relevant pull request. Ordinary pushes and
+unlabeled pull requests do not start the expensive hosted Android build in
+this Quest repository. CI builds `libmain.so` + DXVK, packages a debug-signed
+APK and verifies `DT_NEEDED`/ABI. This is a development artifact, not an
+approved public signing process. For a local build see
+`docs/port/ANDROID_PORT.md §3`:
 ```bash
 git submodule update --init references/fbraz3-dxvk
 export ANDROID_NDK_HOME=~/Android/Sdk/ndk/<version>
