@@ -4083,8 +4083,8 @@ package/launcher metadata and APK Signature Scheme v2 pass local verification.
 The 10209 APK was update-installed with user data preserved, launched
 successfully and accepted by the user in a Quest 3 on 2026-09-16. The thinner
 edge reads correctly and no regression was reported; P20.1 is accepted for
-merge. Keep real-surface clearance and underside artifact checks in later
-tabletop regression passes.
+merge and lands through PR #3 at `1b1ff6d`. Keep real-surface clearance and
+underside artifact checks in later tabletop regression passes.
 
 ### P21 - UI and Commands window presentation pass
 

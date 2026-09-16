@@ -29,6 +29,7 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, reopened, synchronize, labeled, unlabeled]
     paths:
       - 'GeneralsMD/**'
       - 'Core/**'
@@ -66,9 +67,17 @@ on:
         description: "Optional custom text for the top of the release description (auto-generated commit/PR notes are still appended below it)."
         default: ""
 
+# GeneralsX @tweak Codex 16/09/2026 A PR receives a full hosted Quest build
+# only while it carries the quest-build label. Manual builds remain available.
+# New commits cancel obsolete work for the same PR instead of paying for both.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-android:
     name: apk@${{ inputs.preset || 'android-vulkan' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'quest-build') }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
