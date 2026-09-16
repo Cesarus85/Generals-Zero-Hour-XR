@@ -144,6 +144,12 @@ text-field task. The native Android setup/importer input is separate.
 
 ## Release and device baseline
 
+PR #11 is merged and the maintainer accepted the 10216 headset-only result
+test. The next release candidate is `1.2.17-xr-preview` (10217), to be built
+with debug cheats disabled from the merged source. Until its signed artifact
+and update install are verified and published, 1.2.15 remains the supported
+private download; the 10216 diagnostic APK must not be published.
+
 The first release-signed offline preview is tagged `v1.2.15-xr-preview` at
 `main` merge `683997a89198ff418f0c7c2191836a2f62c25add` (PR #8). It
 preserves P23 gameplay without the experimental LAN branch and adds a separate,
@@ -167,8 +173,9 @@ download match the exact Quest-installed APK. Its checksum file also verifies.
 The repository remains private; all older debug-signed assets are marked as
 historical prereleases. The maintainer reports that the signing key/password
 are backed up and has visually approved the passthrough screenshots. An
-explicit visibility decision remains before a public release, and the newly
-observed end-of-match result gap should be resolved first.
+explicit visibility decision remains before any public release. The
+end-of-match result gap was addressed by PR #11 and its accepted Quest test;
+it is not yet part of the published 1.2.15 APK.
 See the [release audit](../audit/RELEASE_PREPARATION_XR.md) for signing,
 migration, artifact and publication gates. The tracked development key remains
 for debug builds and old-signature lineage only.
