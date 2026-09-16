@@ -53,9 +53,10 @@ directions. A direct-IP success would isolate broadcast discovery; a failure
 requires packet reachability/firewall and wire-protocol investigation. Avoid
 changing the simulation or relaxing compatibility checks on this evidence alone.
 The user subsequently tried an Omarchy laptop at `192.168.178.158` as an
-alternate peer. The Quest routes to it via `wlan0` and received all three
-ICMP replies (0% loss). This rules out total IP/subnet isolation for that
-peer, not a UDP firewall, LAN socket or game protocol failure. The laptop's
-game executable and the result of Direct Connect still need confirmation.
+alternate peer, running Steam Zero Hour through Proton (the Windows game,
+not a native GeneralsX build). The Quest routes to it via `wlan0` and
+received all three ICMP replies (0% loss). This rules out total IP/subnet
+isolation for that peer, not a UDP firewall, LAN socket or game protocol
+failure. The exact result of Direct Connect still needs confirmation.
 
 Do not enable LAN tabletop by default, merge a network-eligibility expansion into a release, or claim multiplayer support while these physical gates remain open. Keep replay and internet as separate later work. Keyboard/mouse remains secondary to the controller path.
