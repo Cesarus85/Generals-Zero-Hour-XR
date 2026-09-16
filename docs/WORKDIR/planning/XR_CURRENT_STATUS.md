@@ -258,6 +258,9 @@ not proof of a network/SKU mismatch. Quest has one active WLAN IPv4 interface
 and no saved fixed LAN IP. Direct-IP connect and Windows firewall/packet checks
 are the next diagnostic gates; do not claim Steam incompatibility or LAN support
 yet.
+An alternate Omarchy laptop (`192.168.178.158`) is reachable from Quest WLAN
+(3/3 ICMP replies). Its game build and direct-connect outcome are still
+unconfirmed; ICMP reachability does not prove the UDP lobby is open.
 
 ### P22 - deferred keyboard and mouse investigation
 
