@@ -1,6 +1,6 @@
 # PLAN-025 — Quest ↔ PC LAN preflight
 
-**Status:** Quest 10212 and Steam/Proton enter a match, then Omarchy reports an in-game synchronization mismatch. The cause is not yet isolated.
+**Status:** Quest 10212 and Steam/Proton enter a match, then Omarchy reports an in-game synchronization mismatch. Six Zero Hour gameplay-data hashes match; the cause is not yet isolated.
 **Scope:** One Quest 3 against a PC on the same LAN. The first peer is the user's Steam Zero Hour running through Proton on Omarchy; the planned Windows Steam peer remains a separate validation. If retail gameplay desynchronizes, isolate it with a same-source GeneralsX PC build. Internet services, public matchmaking, replay and reconnect are later gates.
 
 ## Decision and evidence
@@ -123,10 +123,18 @@ Data/Scripts/SkirmishScripts.scb`; also compare base Generals `INI.big` and
 | Base `INI.big` | `bff8d621088b25fd8b041c8acca020a020fabc66f972ab2bd131fc67d905a72c` |
 | Base `Patch.big` | `28dc194412f96dc1f66412430cf74f2d89ad0cdabf70d2c8d1179d8e51743494` |
 
-If any differ, align installed game data before another cross-build test. If
-all match, record the time/frame of the first mismatch and test a same-source
-Linux or Windows GeneralsX peer. An immediate first-CRC failure points to a
-different initial simulation state or platform/engine determinism; it does not
-identify which subsystem without further instrumentation.
+The user supplied Omarchy hashes for the first six Zero Hour entries; all six
+match Quest byte for byte. This rules out differences in those specific
+archives/scripts, but not base Generals `INI.big`/`Patch.big`, loose overrides,
+other assets, or simulation differences between retail and the port. Compare
+the two base archives and check for loose gameplay overrides. Then test Quest
+against native Linux GeneralsX built from Quest APK source commit `cfdbc9f`;
+use the private XR fork, **not** the upstream clone shown in the generic Linux
+build guide. If that match stays synchronized, the Steam/Proton cross-build
+compatibility path is the issue. If it also desynchronizes, investigate
+Quest/ARM versus native x86-64 determinism and game-state initialization.
+An immediate first-CRC failure points to a different initial simulation state
+or platform/engine determinism; it does not identify which subsystem without
+further instrumentation.
 
 Do not enable LAN tabletop by default, merge a network-eligibility expansion into a release, or claim multiplayer support while these physical gates remain open. Keep replay and internet as separate later work. Keyboard/mouse remains secondary to the controller path.

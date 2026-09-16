@@ -281,8 +281,11 @@ data between the players." The loaded map/base is visible behind it. This is
 a simulation synchronization failure, not the earlier map warning or an
 ordinary connection timeout. The Quest log confirms tabletop world
 presentation but no explicit local CRC-mismatch event in the inspected
-window; the cause is pending. Compare gameplay INI and
-script assets, then test a same-source PC build before treating retail Steam
+window; the cause is pending. The user-supplied Omarchy SHA-256 values for
+`INIZH.big`, `PatchINI.big`, `PatchZH.big`, `PatchData.big`, and both loose
+multiplayer/skirmish `.scb` scripts all match Quest. Base Generals INI/patch
+archives and loose overrides remain unchecked. Test a same-source PC build
+after that before treating retail Steam
 compatibility as viable. No sustained human match has passed. Automatic LAN
 discovery remains broken.
 
