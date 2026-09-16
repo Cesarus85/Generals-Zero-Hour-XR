@@ -360,13 +360,32 @@ Omarchy and redirects engine configuration, saves and diagnostics to the lab.
 Project libraries are staged beside it; `ldd -r` reports no missing libraries
 or unresolved symbols, with FFmpeg supplied by the current host. Final Android
 native regression compilation and 788 workspace checks per LAN-gate setting
-pass; the installed 10214 APK is unchanged. **No graphical PC startup or paired
-match has been tested yet.** No original Steam files or Proton settings were changed. The two remaining
+pass; the installed 10214 APK is unchanged. **Graphical PC startup and a paired
+match are now verified, but LAN still fails synchronization.** In the first
+Quest-hosted match against this native Omarchy build, the PC received both
+players' CRCs at validation frame 105 and reported `different_crc`:
+Quest/slot 0 `E2E3DF5F`, PC/slot 1 `A6E913D4`. The PC generated its own
+frame-0 CRC `3263A8D7` and frame-100 CRC `A6E913D4`; map CRC `DEA9E8E4`,
+seed `4042777`, interval 100. Quest USB ADB was reconnected and both current
+and previous XR stderr logs were preserved. The paired comparator confirms
+identical frame-0 CRC and all rolling checkpoints (`3263A8D7`). At frame 100
+the first observed difference is already in the object-list checkpoint:
+Quest `6AE75FBB`, PC `03972538`; the RNG seed checksum still agrees
+(`A82FF014`). Both sides report `different_crc` at validation frame 105.
+This localizes the first recorded divergence to object state by frame 100,
+not to a particular object, tick or root cause. Omarchy's displayed
+`100.123.209.83` was its Tailscale address;
+the isolated diagnostic profile now pins both LAN and online interface choices
+to WLAN `192.168.178.158`. The match did start, so this mismatch is not a
+Direct-Connect reachability failure. No original Steam files or Proton
+settings were changed. The two remaining
 base Generals INI/Patch archive hashes also match Quest (details in PLAN-025).
 
-**Next:** launch the staged PC diagnostic from Omarchy's graphical terminal
-(PLAN-025), physically verify 10214, then compare instrumented peers to isolate the differing CRCs
-and return to Steam retesting. The user's primary goal is Quest versus the
+**Paused by user on 2026-09-16 for the first offline release preparation.**
+Resume with bounded per-object diagnostics at the normal CRC checkpoint to
+identify the first divergent object; only then refine the timing and test the
+resulting hypothesis on a same-source pair before returning to Steam/Proton.
+The user's primary goal is Quest versus the
 unmodified Steam PC version, with Quest peers retained. The custom PC build
 is a diagnostic tool, not a replacement compatibility promise. A no-popup
 match on old 10213 is NOT proof, since both Quest peers could skip checks.

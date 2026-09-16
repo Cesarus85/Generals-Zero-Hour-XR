@@ -1,12 +1,57 @@
 # PLAN-025 — Quest ↔ PC LAN preflight
 
-**Status:** The first instrumented APK-10213 match confirms unequal received peer CRCs and an inherited Quest-side detector index-space defect that masks the mismatch locally. The detector correction is built and update-installed as APK 10214. The isolated native Linux diagnostic now builds and passes staged dependency/relocation checks on Omarchy; graphical startup and a paired match are still open. The cause of CRC divergence is not yet isolated. Zero Hour and base gameplay archive hashes match; LAN remains unsupported.
+**Status (paused 2026-09-16):** Quest APK 10214 and the isolated same-source
+native Omarchy build reach a live LAN match but both detect a real CRC mismatch
+at validation frame 105. Paired generation traces agree completely at frame 0
+and first differ in the object-list checkpoint by frame 100. The exact object,
+first divergent tick and cause remain unknown. Earlier Steam/Proton matches
+also desynchronized. LAN remains experimental and unsupported; the accepted P23
+offline prerelease is separate and must not be replaced with APK 10214.
 **Scope:** One Quest 3 against a PC on the same LAN. The first peer is the user's Steam Zero Hour running through Proton on Omarchy; the planned Windows Steam peer remains a separate validation. If retail gameplay desynchronizes, isolate it with a same-source GeneralsX PC build. Internet services, public matchmaking, replay and reconnect are later gates.
 
 **User priority:** Quest versus the unmodified Steam PC game is the primary
 compatibility goal; Quest versus Quest remains a target. A same-source PC
 executable is a diagnostic comparator, not an implicit replacement for Steam
 support. Do not relax CRC checks or claim retail support from same-source tests.
+
+## Resume here after the pause
+
+1. Keep branch `codex/quest-pc-lan-preflight` separate from release `main`.
+   The unpublished Quest diagnostic is versionCode 10214, SHA-256
+   `c13aac9a39858771cf0232d29cf396f181fb9a0d105fe43b82617c7e501e34d1`;
+   it is update-installed on Quest `2G0YC5ZG9609PY`. The native Omarchy lab is
+   `/home/stefan/generals-xr-lan-diagnostics-78207e6`, with its own user data,
+   copied legitimate game files and executable SHA-256
+   `9bad0faa0c075f4f3de71c63ab8615806818a9f39fbd70bc8558599f5cb6597f`.
+   Original Steam/Proton files and settings were not modified.
+2. Preserve the paired logs already collected privately. The match used map
+   CRC `DEA9E8E4`, seed `4042777` and CRC interval 100. Both sides generated
+   `3263A8D7` at frame 0. At frame 100, the Quest's object checkpoint is
+   `6AE75FBB` and the PC's `03972538`; the RNG seed checksum agrees at
+   `A82FF014`. At validation frame 105, both sides received Quest CRC
+   `E2E3DF5F` and PC CRC `A6E913D4` and classified `different_crc`.
+   `scripts/qa/lan-crc-compare.py` reports the first observed difference as
+   `objects` at generation frame 100. No missing CRC packet is implicated in
+   this particular failure. These rolling checkpoints cannot identify an
+   individual object or prove floating-point math is the cause.
+3. Next source task: add **opt-in, bounded, observational per-object records**
+   to the existing `GameLogic::getCRC` object traversal. Include stable object
+   ID/order and the rolling CRC after each object, plus count/truncation data.
+   Do not add a second traversal, change the production CRC cadence/content,
+   simulation commands or network packet format. Test activation, bounds and
+   zero behavioral effect, then incrementally build both Quest and the staged
+   native PC diagnostic from matching source.
+4. Repeat one fixed-map, fixed-faction, no-AI Quest-hosted match with no early
+   player orders. Compare the first unequal object (or missing/differently
+   ordered ID). Only then add a narrow field/timing probe if needed. Correct a
+   demonstrated cause, repeat same-source idle and interactive matches, then
+   retest unmodified Steam/Proton and Windows Steam. A clean 15-minute match
+   with orders from both humans and headset checks is the minimum LAN gate.
+5. Do **not** publish or merge the diagnostic APK as the offline release, turn
+   off mismatch detection, or claim that a same-source match proves retail
+   compatibility. Automatic LAN discovery is also still open; Direct Connect
+   works. Omarchy's earlier `100.123.209.83` was Tailscale, and the isolated
+   profile now pins LAN and Online IP to WLAN `192.168.178.158`.
 
 ## Decision and evidence
 
@@ -29,9 +74,9 @@ If Steam discovery/join or in-match synchronization fails, reproduce with a PC G
 
 | Gate | Evidence needed | State |
 |---|---|---|
-| Build safety | Default-off and preview-on mode tests; Android native/XR APK build | 10213 native + both APK flavors pass; observer and workspace regressions pass; installed APK hash verified |
+| Build safety | Default-off and preview-on mode tests; Android native/XR APK build | 10214 native + both APK flavors pass; observer and workspace regressions pass; installed APK hash verified |
 | Lobby | Discovery and direct-IP outcomes, both endpoint IPs, host/join/leave, chat/input | Direct Connect reaches lobby and starts match; automatic discovery still fails |
-| Simulation | 15-minute Quest ↔ PC human match, orders from both players, no desync/CRC/stall | Failed first Steam/Proton attempt: peer shows the in-game synchronization mismatch dialog shortly after map start |
+| Simulation | 15-minute Quest ↔ PC human match, orders from both players, no desync/CRC/stall | Fails against Steam/Proton and the same-source native Omarchy comparator; first observed object CRC difference by frame 100 |
 | XR usability | Tabletop and upright shell transitions, controller menu/text entry, headset pause/resume and performance | Open; controller-operated Direct Connect keyboard built in 10212, worn-headset test pending |
 | Retail compatibility | Above gates against the user's unmodified Steam Zero Hour | Open |
 | Regression | Offline Skirmish/campaign retain accepted tabletop behavior | Host eligibility test passes; device regression open |
@@ -511,6 +556,34 @@ The PC launcher prints its unique `logs/native-zh-*` path; Quest logging remains
 in the current/previous XR stderr logs. Compare only matching map CRC/seed and
 generation frames with `lan-crc-compare.py`. Initial agreement is not a sustained
 match pass; unit orders, longer play and original Steam/Proton are later gates.
+
+The first graphical Quest-hosted match against this native Omarchy diagnostic
+build started but ended with a real CRC mismatch. In its unique PC log
+`logs/native-zh-20260916-173034.PDMLqy`, the diagnostic reports map CRC
+`DEA9E8E4`, seed `4042777`, interval 100, local slot 1; generated CRCs are
+`3263A8D7` at frame 0 and `A6E913D4` at frame 100. Validation frame 105
+received slot 0/Quest `E2E3DF5F` versus slot 1/PC `A6E913D4` and classified
+`different_crc`, excluding a missing-CRC-message explanation for this failure.
+Quest USB ADB was reconnected and both current and previous XR stderr logs
+were preserved in a private temporary directory. The Quest log has the same
+map CRC, seed and interval; at frame 0 every rolling checkpoint and final CRC
+matches the PC (`3263A8D7`). At frame 100 the Quest's first object-list
+checkpoint is `6AE75FBB` while the PC's is `03972538`; their final CRCs are
+`E2E3DF5F` and `A6E913D4`. The existing paired comparator reports the first
+observed difference at generation frame 100, stage `objects`. Both sides
+record `different_crc` at validation frame 105. The RNG seed checksum at
+frame 100 matches (`A82FF014`). Later rolling checkpoints are downstream of
+the object CRC and cannot independently identify other differing subsystems.
+This does not yet identify the object, the exact first divergent tick or root
+cause. The next diagnostic should bound per-object identification at the
+normal CRC checkpoint; do not alter CRC cadence, simulation or wire format.
+
+Omarchy's Direct Connect initially displayed Tailscale `100.123.209.83`, even
+though its route to the Quest uses WLAN. The separate diagnostic profile's
+`Options.ini` now pins both `IPAddress` and `GameSpyIPAddress` to WLAN
+`192.168.178.158`; this did not modify original Steam/Proton settings. The
+subsequent match did start and reached CRC validation, so the mismatch is a
+simulation-state issue, not simply Tailscale addressing.
 
 Retail Steam/Proton retests remain the goal after localization of divergence.
 
