@@ -15,10 +15,12 @@ not interchangeable.
 1. `AGENTS.md` for repository-wide engineering rules.
 2. This file for the current XR baseline, open gates and next work.
 3. `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md` when working on P21.
-4. `PLAN-023_QUEST_TABLETOP_RECOVERY.md` for detailed architecture, decisions,
+4. `MULTIPLAYER_STATUS.md` for the paused QTR-MP evidence and exact resume
+   sequence; `../audit/RELEASE_PREPARATION_XR.md` for first-release gates.
+5. `PLAN-023_QUEST_TABLETOP_RECOVERY.md` for detailed architecture, decisions,
    dated implementation evidence and rollback boundaries.
-5. The newest entries in `docs/DEV_BLOG/2026-09-DIARY.md` for the latest delta.
-6. The actual branch, diff and test output. A document never overrides code.
+6. The newest entries in `docs/DEV_BLOG/2026-09-DIARY.md` for the latest delta.
+7. The actual branch, diff and test output. A document never overrides code.
 
 Update this file whenever an XR milestone changes state, a default changes, a
 new physical acceptance result is received, or the next priority changes. Keep
@@ -277,13 +279,23 @@ earlier hash above is the previously accepted P23 candidate, not this release.
 The user considers the important everyday commands covered. Defer the remaining
 P23 edge-command audit (formation/force-move/guard variants and faction-specific
 coverage). Extensive play has not exposed a pressing visual/readability problem,
-so do not schedule another generic graphics QA pass as the next feature. The
-recommended next substantial slice is QTR-MP preflight: verify whether the
-existing native LAN human-match path can be carried into the Quest build without
-changing simulation or wire format, document two-endpoint setup, and isolate the
-XR-specific UI/input/network lifecycle work. Do not infer human-multiplayer or
-replay compatibility from offline AI Skirmish. Keep P22 keyboard/mouse secondary;
-revisit Ultra+ performance only if a real campaign scene shows a regression.
+so do not schedule another generic graphics QA pass as the next feature.
+QTR-MP preflight ran on the separate `codex/quest-pc-lan-preflight` branch and
+is now **paused** while the first offline release is prepared. Direct Connect
+starts a Quest/PC match, but paired Quest/native-Linux diagnostic traces first
+diverge in the object CRC by generation frame 100 and both peers report a
+different-CRC error at validation frame 105. See
+[`MULTIPLAYER_STATUS.md`](MULTIPLAYER_STATUS.md) for the preserved
+evidence, the next bounded per-object diagnostic, and the remaining gates. No
+LAN diagnostic APK belongs in the P23 offline release. Do not infer human
+multiplayer or replay compatibility from offline AI Skirmish. Keep P22
+keyboard/mouse secondary; revisit Ultra+ performance only if a real campaign
+scene shows a regression.
+
+The first offline release preparation is documented in
+[`RELEASE_PREPARATION_XR.md`](../audit/RELEASE_PREPARATION_XR.md). The P23
+asset/tag is the candidate, not the newer experimental LAN build; publication
+and exact-artifact worn-headset confirmation remain open.
 
 ## P21 key implementation map
 

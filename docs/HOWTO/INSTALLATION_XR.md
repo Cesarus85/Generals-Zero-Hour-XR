@@ -31,9 +31,15 @@ outside the scope of this project; see
 
 ## Install the APK
 
-1. Download the latest
-   [`Generals-Zero-Hour-XR.apk`](../../releases/latest/download/Generals-Zero-Hour-XR.apk)
-   from GitHub Releases.
+1. Download the tested offline P23 prerelease
+   [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/xr-preview-2026-09-16-p23/Generals-Zero-Hour-XR.apk)
+   from its [explicit release page](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/xr-preview-2026-09-16-p23).
+   GitHub's “Latest” pointer still selects the older 1.2.8 release; do not use
+   that shortcut or an experimental LAN diagnostic APK for this guide. The P23
+   APK SHA-256 is
+   `978c627e276ab1627d014f68a8e1ad436ecaae215e8946ef900e5b999077273f`.
+   This is a debug-signed development preview, not yet a production-signed
+   public release.
 2. Enable Developer Mode in the Meta Quest mobile app, connect the headset over
    USB, and accept the USB debugging prompt inside the headset.
 3. Check the connection and install the APK from a computer with Android
@@ -45,8 +51,10 @@ outside the scope of this project; see
    ```
 
    The `-r` flag matters: the XR application ID deliberately remains
-   `com.generalsx.zerohour.xr`, so an update can keep existing settings and
-   window positions. Do not uninstall the previous build when updating.
+   `com.generalsx.zerohour.xr`, so an update can keep existing preferences and
+   game-folder selection. The spatial board/window arrangement deliberately
+   starts fresh in front of the player on every app process, even after an
+   update. Do not uninstall the previous build when preserving app data.
    SideQuest can install the same APK.
 4. Launch **Generals: Zero Hour XR** from the Quest app library. On first
    launch, the game-data assistant opens automatically. Grant file access when
@@ -55,7 +63,7 @@ outside the scope of this project; see
 
 ## Select game data
 
-The current release provides a three-step assistant:
+The P23 preview provides a three-step assistant:
 
 1. **Prepare your game files.** Copy your own complete installed Generals and
    Zero Hour folders to the Quest, for example `Download/GeneralsZH`.
