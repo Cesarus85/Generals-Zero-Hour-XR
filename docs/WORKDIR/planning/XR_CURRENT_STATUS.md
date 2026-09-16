@@ -273,9 +273,18 @@ APK builds, v2 signing, embedded-library verification, 3848 menu geometry,
 329 menu routing, and 22429 bilingual panel-payload checks pass. Version
 10212 (`1.2.12-lan-keyboard`), SHA-256
 `e8f05cc2c77a3d125117ed7a836e36fdcd159f59d4807d37a89006954fd166fc`,
-was update-installed on Quest 3 `2G0YC5ZG9609PY` with data retained. The
-map hypothesis and keyboard both need worn-headset/Steam-Proton validation;
-no human match has started. Automatic LAN discovery remains broken.
+was update-installed on Quest 3 `2G0YC5ZG9609PY` with data retained. The user
+now confirms Direct Connect and actual map/game start against Omarchy Steam
+Zero Hour via Proton. A photo shows Omarchy's in-game dialog: "Game has
+detected a mismatch. This means the multiplayer game has lost synchronization
+data between the players." The loaded map/base is visible behind it. This is
+a simulation synchronization failure, not the earlier map warning or an
+ordinary connection timeout. The Quest log confirms tabletop world
+presentation but no explicit local CRC-mismatch event in the inspected
+window; the cause is pending. Compare gameplay INI and
+script assets, then test a same-source PC build before treating retail Steam
+compatibility as viable. No sustained human match has passed. Automatic LAN
+discovery remains broken.
 
 ### P22 - deferred keyboard and mouse investigation
 
