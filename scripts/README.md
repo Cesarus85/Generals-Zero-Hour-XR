@@ -203,6 +203,20 @@ Utilities for large-scale code refactoring and fixes:
   cadence, message and traversal sites; these are not proof of full-engine
   CRC identity or retail multiplayer compatibility. Run with
   `bash scripts/qa/lan-crc-trace-test.sh`; no device or retail assets required.
+- `lan-crc-detector-test.sh` / `.cpp` - Exercises the same pure network-slot
+  evaluator called by the Zero Hour production validator, under UBSan. Includes
+  non-identity player/slot indices, equal/different/zero CRCs, missing peers,
+  stale disconnected entries and ambiguous mappings. Dispatcher/replay guards
+  are source-level checks, not an end-to-end network simulation.
+- `lan-crc-compare.py` - Offline comparison of two instrumented peers' generation
+  records: `python3 scripts/qa/lan-crc-compare.py quest.log pc.log`. Requires
+  matching map CRC, seed and interval; explicitly select `--match-a N` and/or
+  `--match-b N` (one-based) for multi-match logs. Reports first observed rolling
+  checkpoint difference, refuses missing/incompatible input, and does not
+  equate validation frames with generation frames. Exit codes: 0 recorded
+  samples agree, 1 difference, 2 inconclusive. Agreement is not full-match
+  acceptance or proof that the builds/data match. Run parser/comparison tests
+  with `python3 scripts/qa/lan-crc-compare-test.py`.
 - `xr-workspace-test.sh` / `.cpp` - Compiles production native-dialog detection
   and video/loadscreen split eligibility plus surface crop/placement functions
   with spies. Checks science-tree expansion, full-screen video fallback, complete dialog corner

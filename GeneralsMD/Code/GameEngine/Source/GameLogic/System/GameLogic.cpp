@@ -69,6 +69,7 @@
 #include "Common/XferCRC.h"
 #include "Common/XferDeepCRC.h"
 #include "GXLanCRCTrace.h"
+#include "GXNetworkCRCValidation.h"
 #include "Common/GameSpyMiscPreferences.h"
 
 #include "GameClient/ControlBar.h"
@@ -2742,40 +2743,28 @@ void GameLogic::processCommandList( CommandList *list )
 					++numPlayers;
 			}
 
-			if (m_cachedCRCs.size() < numPlayers)
+			// GeneralsX @bugfix Codex 16/09/2026 Resolve engine player IDs to live network slots before validation.
+			const GXNetworkCRCValidation::Reason result = GXNetworkCRCValidation::evaluate(
+				m_cachedCRCs, MAX_SLOTS,
+				[](Int slot) { return TheNetwork->isPlayerConnected(slot); },
+				[](Int playerIndex) {
+					Player *player = ThePlayerList ? ThePlayerList->getNthPlayer(playerIndex) : nullptr;
+					if (!player || player->getPlayerType() != PLAYER_HUMAN) return -1;
+					for (Int slot = 0; slot < MAX_SLOTS; ++slot)
+						if (TheNetwork->getPlayerName(slot) == player->getPlayerDisplayName()) return slot;
+					return -1;
+				});
+			if (result == GXNetworkCRCValidation::missing_crc)
 			{
 				DEBUG_CRASH(("Not enough CRCs!"));
 				sawCRCMismatch = TRUE;
 				detectorReason = GXLanCRCTrace::missing_crc;
 			}
-			else
+			else if (result == GXNetworkCRCValidation::different_crc)
 			{
-				Bool hasReferenceCRC = FALSE;
-				UnsignedInt referenceCRC = 0;
-
-				for (CachedCRCMap::const_iterator it = m_cachedCRCs.begin(); it != m_cachedCRCs.end(); ++it)
-				{
-					// TheSuperHackers @bugfix Caball009 14/06/2026 Check if player is still connected,
-					// to avoid spurious mismatches at low CRC intervals, e.g. every frame.
-					if (!TheNetwork->isPlayerConnected(it->first))
-						continue;
-
-					const UnsignedInt crc = it->second;
-
-					if (!hasReferenceCRC)
-					{
-						hasReferenceCRC = TRUE;
-						referenceCRC = crc;
-						continue;
-					}
-
-					if (referenceCRC != crc)
-					{
-						DEBUG_CRASH(("CRC mismatch!"));
-						sawCRCMismatch = TRUE;
-						detectorReason = GXLanCRCTrace::different_crc;
-					}
-				}
+				DEBUG_CRASH(("CRC mismatch!"));
+				sawCRCMismatch = TRUE;
+				detectorReason = GXLanCRCTrace::different_crc;
 			}
 			// GeneralsX @feature Codex 16/09/2026 Observe the first normal validation checkpoints and one terminal failure.
 			if (GXLanCRCTrace::state().enabled &&

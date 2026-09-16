@@ -1,7 +1,12 @@
 # PLAN-025 — Quest ↔ PC LAN preflight
 
-**Status:** The first instrumented APK-10213 match confirms unequal received peer CRCs and an inherited Quest-side detector index-space defect that masks the mismatch locally. The cause of the CRC divergence is not yet isolated. Six Zero Hour gameplay-data hashes match; LAN remains unsupported.
+**Status:** The first instrumented APK-10213 match confirms unequal received peer CRCs and an inherited Quest-side detector index-space defect that masks the mismatch locally. The detector correction is built as APK 10214 but not installed because Quest disconnected. The cause of the CRC divergence is not yet isolated. Six Zero Hour gameplay-data hashes match; LAN remains unsupported.
 **Scope:** One Quest 3 against a PC on the same LAN. The first peer is the user's Steam Zero Hour running through Proton on Omarchy; the planned Windows Steam peer remains a separate validation. If retail gameplay desynchronizes, isolate it with a same-source GeneralsX PC build. Internet services, public matchmaking, replay and reconnect are later gates.
+
+**User priority:** Quest versus the unmodified Steam PC game is the primary
+compatibility goal; Quest versus Quest remains a target. A same-source PC
+executable is a diagnostic comparator, not an implicit replacement for Steam
+support. Do not relax CRC checks or claim retail support from same-source tests.
 
 ## Decision and evidence
 
@@ -313,13 +318,70 @@ values. `git blame` traces this check to the initial XR source import
 silence; repairing it alone would detect the mismatch, NOT make the peers
 synchronize. No detector or simulation behavior was changed during capture.
 
-Next bounded implementation: unify the detector's player-to-slot handling,
+The next bounded implementation was to unify the detector's player-to-slot handling,
 including missing-connected-peer checks, with production-derived regression
 fixtures for non-identity indices, disconnected entries, equal/different CRCs
 and missing peers. Preserve wire messages, CRC contents and cadence. Then use
 a paired instrumented peer to localize divergence. Until corrected, even two
 Quests running without an error popup could be silently desynchronized.
 Whether the user issued gameplay orders before this failure is still pending.
+
+### Detector correction and paired-log comparison
+
+The Zero Hour validator now calls `GXNetworkCRCValidation::evaluate`, resolving
+cached engine player IDs through the existing name-to-network-slot mapping.
+Every connected slot must have exactly one CRC; stale disconnected cache
+entries cannot conceal a missing active peer. The shared dispatch cache remains
+keyed by engine player index, so the base Generals and replay cache semantics
+are not silently changed. The generation inputs, scheduled interval, outgoing
+messages, random-number usage and game simulation are unchanged. A true
+mismatch now reaches the existing mismatch handling on Quest as intended.
+This fixes a false-negative detector, not the unequal Quest/Steam CRCs.
+
+`bash scripts/qa/lan-crc-detector-test.sh` compiles the exact production
+evaluator under UBSan with slot/name spies; cases cover non-identity mapping,
+both endpoint arrangements, zero/equal/different CRCs, missing active peers,
+disconnected stale entries and duplicate mappings. The observer regression
+also passes. The source-level dispatcher/replay guards are not runtime proof
+of a complete live network or replay session.
+
+The companion read-only comparison tool is ready for paired instrumented logs:
+
+```sh
+python3 scripts/qa/lan-crc-compare.py quest.log pc.log
+# For logs containing several matches, explicitly select one-based indices:
+python3 scripts/qa/lan-crc-compare.py quest.log pc.log --match-a 2 --match-b 1
+```
+
+It refuses differing map CRCs, seeds or intervals, and requires actual
+generation records at common frames. It reports the first *observed* differing
+rolling checkpoint, not a root cause. Missing frame coverage is inconclusive;
+even equal samples do not prove a whole synchronized match. Source build,
+faction/slot/settings and effective data equality must be established
+separately. Stock Steam logs do not expose these generation stages; the tool
+cannot invent them. Its ten synthetic parser/comparison tests pass, and the
+captured 10213 log self-comparison correctly reads all eight samples (parser
+smoke only, not a peer result).
+
+The next useful comparison remains an identically instrumented native PC
+build against Quest, followed by Steam retests. No Linux/Windows binary or
+PC match is claimed from this implementation: this Mac has Docker/Colima
+installed but its VM is stopped and no Linux build tree is configured. SSH
+availability on Omarchy was requested before any remote access. Steam files
+and Proton settings have not been modified.
+
+#### 10214 artifact and remaining gates
+
+APK 10214 (`1.2.14-lan-crc-check`) is built locally at
+`build/apk/Generals-Zero-Hour-XR.apk`, SHA-256
+`c13aac9a39858771cf0232d29cf396f181fb9a0d105fe43b82617c7e501e34d1`.
+ARM64 native and both `zh xr` APK flavors build successfully. APK v2 signature,
+package/version/ABI and embedded `libmain.so` equality verify. Production
+detector and observer host tests, ten comparator cases, and 788 workspace
+checks for each LAN-preview gate setting pass. No GitHub Actions were used.
+ADB reported no connected Quest; installation and worn-headset detection are
+pending, and 10213 remains the last verified installed version. The previous
+10213 APK was preserved locally before packaging. No release/defaults changed.
 
 ### Two Quests: expected advantage, unverified
 
@@ -331,5 +393,5 @@ uninitialized memory or missing CRC messages. Test first with Direct Connect
 and an idle match, then orders from both players and the 15-minute gate.
 Automatic discovery and sustained Quest-to-Quest play have not been verified.
 
-P23 remains the planned public offline preview; LAN 10213 stays experimental.
+P23 remains the planned public offline preview; LAN 10214 stays experimental.
 Do not enable LAN tabletop by default, merge a network-eligibility expansion into a release, or claim multiplayer support while these physical gates remain open. Keep replay and internet as separate later work. Keyboard/mouse remains secondary to the controller path.

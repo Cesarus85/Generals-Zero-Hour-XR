@@ -300,7 +300,7 @@ checkpoints for comparison. PLAN-025 contains the ranked audit. Two identical Qu
 should avoid several cross-build differences but remain untested. P23 remains
 the planned public offline preview, with LAN development continuing separately.
 
-The current **unpublished diagnostic candidate** is 10213
+The first **unpublished diagnostic candidate** was 10213
 (`1.2.13-lan-diagnostics`) on `codex/quest-pc-lan-preflight`, at
 `build/apk/Generals-Zero-Hour-XR.apk`, SHA-256
 `bd781f6462e0f959419ade77faca32b967a6407c08659a046b4547e02e22f0a8`.
@@ -329,12 +329,35 @@ connected. This explains a missing Quest-side error, not the original differing
 CRC values. The first divergent simulation tick/subsystem remains unknown;
 an idle-before-error test has not yet been confirmed by the user.
 
-**Next:** correct and regression-test the inherited detector's slot mapping,
-then compare an identically instrumented same-source PC/Quest peer to isolate
-the differing CRCs. A no-popup Quest-to-Quest match is NOT sufficient evidence:
-both peers could silently skip checks with the current detector. Preserve
-normal CRC enforcement/cadence. Do not merge or publish LAN as supported;
-keep the P23 release separate. PLAN-025 records the sanitized trace evidence.
+The detector mapping is now corrected in source: every connected network slot
+requires exactly one CRC, regardless of internal player index; stale
+disconnected entries cannot mask missing active peers. Its production evaluator
+and the bounded observer pass UBSan tests. No simulation math, CRC inputs,
+generation cadence, message format or shared replay cache was changed.
+
+**Current local APK:** version 10214 (`1.2.14-lan-crc-check`),
+`build/apk/Generals-Zero-Hour-XR.apk`, SHA-256
+`c13aac9a39858771cf0232d29cf396f181fb9a0d105fe43b82617c7e501e34d1`.
+Native ARM64 and both Android flavors build; v2 signing, package/version/ABI
+and bundled-library equality verify. Workspace regressions pass 788 checks
+with each LAN gate setting. **Not installed:** ADB returned no connected Quest
+during this build. The last verified installed version remains 10213.
+
+A paired-log comparator (`scripts/qa/lan-crc-compare.py`) is ready and passes
+ten synthetic tests. It requires matching map CRC/seed/interval, handles
+explicit multi-match selection, compares generation rather than validation
+frames and reports only the first observed rolling-checkpoint difference.
+There is no same-source PC build or paired-PC result yet; Omarchy SSH access
+was requested, not assumed. No Steam files or Proton settings were changed.
+
+**Next:** install/physically verify 10214 when Quest reconnects, then compare
+an identically instrumented same-source PC peer to isolate the differing CRCs
+and return to Steam retesting. The user's primary goal is Quest versus the
+unmodified Steam PC version, with Quest peers retained. The custom PC build
+is a diagnostic tool, not a replacement compatibility promise. A no-popup
+match on old 10213 is NOT proof, since both Quest peers could skip checks.
+Do not merge or publish LAN as supported; keep P23 separate. PLAN-025 records
+the sanitized trace evidence and next test boundaries.
 
 ### P22 - deferred keyboard and mouse investigation
 
