@@ -4,6 +4,13 @@
 # game remains a regular executable.
 if(ANDROID)
     add_library(z_generals SHARED)
+    # Opt-in presentation experiment for Quest <-> PC LAN validation. This
+    # changes neither network messages nor game simulation and is OFF in normal
+    # XR/Android builds until a human match passes the device gates.
+    option(GX_XR_LAN_PREVIEW "Enable experimental XR tabletop in LAN matches" OFF)
+    if(GX_XR_LAN_PREVIEW)
+        target_compile_definitions(z_generals PRIVATE GX_XR_LAN_PREVIEW=1)
+    endif()
 else()
     add_executable(z_generals WIN32)
 endif()

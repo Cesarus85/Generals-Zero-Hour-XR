@@ -15,10 +15,11 @@ not interchangeable.
 1. `AGENTS.md` for repository-wide engineering rules.
 2. This file for the current XR baseline, open gates and next work.
 3. `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md` when working on P21.
-4. `PLAN-023_QUEST_TABLETOP_RECOVERY.md` for detailed architecture, decisions,
+4. `PLAN-025_QUEST_PC_LAN_PREFLIGHT.md` for the current Quest-to-PC LAN slice.
+5. `PLAN-023_QUEST_TABLETOP_RECOVERY.md` for detailed architecture, decisions,
    dated implementation evidence and rollback boundaries.
-5. The newest entries in `docs/DEV_BLOG/2026-09-DIARY.md` for the latest delta.
-6. The actual branch, diff and test output. A document never overrides code.
+6. The newest entries in `docs/DEV_BLOG/2026-09-DIARY.md` for the latest delta.
+7. The actual branch, diff and test output. A document never overrides code.
 
 Update this file whenever an XR milestone changes state, a default changes, a
 new physical acceptance result is received, or the next priority changes. Keep
@@ -233,6 +234,20 @@ human networking. LAN/internet matches, deterministic synchronization, reconnect
 chat/team chat, diplomacy/player controls, observer/replay access and their XR
 interaction need a separately authorized compatibility and headset-validation
 slice. P20-P22 must not change simulation commands or wire formats casually.
+On 2026-09-16 the user authorized beginning this slice and chose a Windows PC
+running Steam Zero Hour as the first counterpart to one Quest. Branch
+`codex/quest-pc-lan-preflight` starts from `a5cb2d0393d9778bc0fcbb013020b29d1e750325`.
+`PLAN-025_QUEST_PC_LAN_PREFLIGHT.md` records the two-endpoint procedure and
+gates. The source now has a default-OFF Android-only `GX_XR_LAN_PREVIEW` flag
+that can admit `GAME_LAN` to tabletop rendering in a deliberately built test
+candidate; internet and replay remain excluded. Host eligibility tests pass
+with the flag both off and on. The local native build and XR APK package pass:
+`build/apk/Generals-Zero-Hour-XR.apk`, version 10210
+(`1.2.10-lan-preflight`), SHA-256
+`5cc4f84a04eb7b44bab906f8acff3414b1e5d9b808fafc04b557d8fcfb374a4b`.
+APK v2 signing and native staging match are verified. This test APK has not
+been installed or published; no Steam interoperability or human match has
+been verified. The accepted P23 release APK remains unchanged.
 
 ### P22 - deferred keyboard and mouse investigation
 
@@ -278,12 +293,12 @@ The user considers the important everyday commands covered. Defer the remaining
 P23 edge-command audit (formation/force-move/guard variants and faction-specific
 coverage). Extensive play has not exposed a pressing visual/readability problem,
 so do not schedule another generic graphics QA pass as the next feature. The
-recommended next substantial slice is QTR-MP preflight: verify whether the
-existing native LAN human-match path can be carried into the Quest build without
-changing simulation or wire format, document two-endpoint setup, and isolate the
-XR-specific UI/input/network lifecycle work. Do not infer human-multiplayer or
-replay compatibility from offline AI Skirmish. Keep P22 keyboard/mouse secondary;
-revisit Ultra+ performance only if a real campaign scene shows a regression.
+active next slice is QTR-MP Quest ↔ Windows Steam LAN validation: build an
+opt-in Quest candidate, attempt lobby and sustained human match, then use a
+same-source Windows GeneralsX build only if needed to isolate retail mismatch.
+Do not infer human-multiplayer or replay compatibility from offline AI Skirmish.
+Keep P22 keyboard/mouse secondary; revisit Ultra+ performance only if a real
+campaign scene shows a regression.
 
 ## P21 key implementation map
 

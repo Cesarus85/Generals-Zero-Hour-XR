@@ -512,10 +512,17 @@ std::string XrGameBoot_PresentationStatus(bool stereoVisible,bool requested) {
 	return text;
 }
 bool GX_XR_BeginUILayer() { return GX_XR_SplitUIAllowed() && d3d8gles_BeginXRUI(s_worldFrame.elideWorldCopy); }
-// GeneralsX @feature Codex 13/09/2026 Read-only graphics prototype for offline games.
+// The LAN tabletop is an Android-only opt-in preview until a human Quest/PC
+// match proves lobby, deterministic play, leave and XR input/lifecycle safety.
+// Internet matches and replay remain outside this presentation gate.
 bool XrGameBoot_CanStereoWorld() {
 	if(!TheGameLogic || !XrGameBoot_IsInteractiveGame()) return false;
-	const auto mode=TheGameLogic->getGameMode();return mode==GAME_SKIRMISH || mode==GAME_SINGLE_PLAYER;
+	const auto mode=TheGameLogic->getGameMode();
+	if(mode==GAME_SKIRMISH || mode==GAME_SINGLE_PLAYER)return true;
+#if defined(__ANDROID__) && defined(GX_XR_LAN_PREVIEW) && GX_XR_LAN_PREVIEW
+	if(mode==GAME_LAN)return true;
+#endif
+	return false;
 }
 const char *XrGameBoot_PerformanceScene() {
 	if(!TheGameLogic)return "shell";
