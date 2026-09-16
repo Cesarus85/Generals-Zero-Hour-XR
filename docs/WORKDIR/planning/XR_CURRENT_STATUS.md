@@ -91,9 +91,11 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Release and device baseline
 
-The current authoritative private release is built from merged `main` and
-combines P21, P20/P20.3, base navigation and PR #2's reproducible DXVK/Android
-foundation:
+The newest private Quest preview is `xr-preview-2026-09-16-p23` from PR #5,
+merge `ba9169d5c81604aa9fac00508cf2e5dcbf9a4939`; its APK and hash are
+recorded in the P23 section below. The earlier 10208 release remains the latest
+non-prerelease checkpoint and combines P21, P20/P20.3, base navigation and PR
+#2's reproducible DXVK/Android foundation:
 
 ```text
 tag v1.2.8-xr-preview
@@ -111,8 +113,8 @@ Release and checksum assets are attached at
 `releases/tag/v1.2.8-xr-preview`. Installation of this final 10208 package was
 explicitly deferred to the next device session; do not claim it as installed.
 
-The newest installed and worn-headset-accepted Quest candidate is the
-content-equivalent predecessor:
+An earlier explicitly ADB-verified and worn-headset-accepted Quest candidate
+was the content-equivalent predecessor:
 
 ```text
 version 1.2.7-base-navigation (10207)
@@ -262,13 +264,15 @@ preserves v10 spatial poses during v11 preference migration, and updates the
 DE/EN help. The optional Ultra+ target is 2304 pixels wide per eye at the
 runtime aspect (bounded to 2560 per dimension); it is not the original game's
 separate "Ultra" graphics setting. The ARM64 native build, focused host checks
-and signed XR APK build pass. The untested candidate at
-`build/apk/Generals-Zero-Hour-XR.apk` is version 10209, SHA-256
+and signed XR APK build pass. PR #5 merged at
+`ba9169d5c81604aa9fac00508cf2e5dcbf9a4939`. The current APK is published
+as private prerelease `xr-preview-2026-09-16-p23`, version 10209, SHA-256
 `978c627e276ab1627d014f68a8e1ad436ecaae215e8946ef900e5b999077273f`.
-The user reports extensive play with good readability/visibility and confirms
-that waypoint plotting works. No device-side APK hash or sustained Ultra+
-busy-campaign frame-time capture has been supplied. The earlier hash above is
-the previously accepted P23 candidate, not the current file at this path.
+GitHub reports the uploaded `Generals-Zero-Hour-XR.apk` as 138,815,473 bytes
+with that same SHA-256 digest. The user reports extensive play with good
+readability/visibility and confirms waypoint plotting. No device-side APK hash
+or sustained Ultra+ busy-campaign frame-time capture has been supplied. The
+earlier hash above is the previously accepted P23 candidate, not this release.
 
 The user considers the important everyday commands covered. Defer the remaining
 P23 edge-command audit (formation/force-move/guard variants and faction-specific
