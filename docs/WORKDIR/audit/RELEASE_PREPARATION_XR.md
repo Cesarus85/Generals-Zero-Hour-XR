@@ -30,6 +30,12 @@ Campaign transitions, long-session locomotion, comfort and mission performance
 remain open. The private preview notes disclose these limits. The repository
 and release remain private; public visibility needs separate review.
 
+Release tag `v1.2.25-xr-preview` points to `6b50f747e08f5e5d0a641e5f3ef9c90752f3b3f1`.
+GitHub reports this private, non-prerelease release as `latest`, with the APK
+asset size and SHA-256 matching the local final file. An independent fresh
+download passes the uploaded `.sha256` sidecar and matches the local APK
+byte-for-byte. The earlier 125-MB candidate was never published.
+
 ## Previous private release checkpoint: 1.2.24
 
 PR #15 merged the optional offline-Skirmish Ground View and accepted board-side
