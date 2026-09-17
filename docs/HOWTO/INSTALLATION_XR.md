@@ -32,8 +32,8 @@ outside the scope of this project; see
 ## Install the APK
 
 1. Download the current offline, release-signed
-   [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.17-xr-preview/Generals-Zero-Hour-XR.apk)
-   from the [1.2.17 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.17-xr-preview).
+   [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.24-xr-preview/Generals-Zero-Hour-XR.apk)
+   from the [1.2.24 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
    Do not use an older debug-signed release or an experimental LAN diagnostic
    APK. The APK SHA-256 is
    `8913648e9c8c124367ac812a4a3e9db0d0f296ec3a2c7e83a7d22627c2182869`.
@@ -61,7 +61,7 @@ outside the scope of this project; see
 
 ## Select game data
 
-The 1.2.17 XR preview provides a three-step assistant:
+The 1.2.24 XR preview provides a three-step assistant:
 
 1. **Prepare your game files.** Copy your own complete installed Generals and
    Zero Hour folders to the Quest, for example `Download/GeneralsZH`.
@@ -164,6 +164,20 @@ The native alternate-mouse option swaps these radar actions.
 | A | Toggle the Commands window |
 | B or the system menu | Open or close the game menu |
 | Left Grip + Right Stick while placing | Rotate a building preview before placement |
+
+### Ground View (offline Skirmish only)
+
+Point at **Ground View / Bodenansicht** in the board-side shortcut column (or
+open **UI → View → Ground View**), then click a visible, clear patch of terrain
+with the pointing-hand Trigger. This opens a passive human-scale viewpoint;
+it does not possess a unit, change the game camera or issue an order. In this
+view, the physical left stick walks relative to your gaze and the physical
+right stick turns. Release the Trigger and center both sticks before walking.
+Press **B** (or **Y** in left-handed mode) to return to the saved tabletop.
+Terrain edges, shroud, steep slopes and nearby objects can block movement.
+Walking/collision and comfort remain experimental in this preview; the normal
+tabletop is the supported play view. Campaign ground entry and human-network
+matches are not included.
 
 Select units first. Then choose **Move**, **Attack move**, or **Guard** in the
 Commands window and point at a target on the table. **STOP** and **Scatter** act
