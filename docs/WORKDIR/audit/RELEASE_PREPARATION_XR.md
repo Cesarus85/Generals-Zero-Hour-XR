@@ -1,10 +1,10 @@
 # XR release preparation and checkpoints
 
-**Updated:** 2026-09-17 — private 1.2.24 release preparation
+**Updated:** 2026-09-17 — private 1.2.24 release verification
 
-**Publication state:** The non-debuggable 1.2.17 APK remains the current release in the **private** repository while the verified 1.2.24 APK is uploaded. Public visibility, especially under the retained product name, requires separate review of EA's trademark terms.
+**Publication state:** The non-debuggable 1.2.24 APK is the current release in the **private** repository. Public visibility, especially under the retained product name, requires separate review of EA's trademark terms.
 
-## 1.2.24 offline preview candidate
+## Current private release checkpoint: 1.2.24
 
 PR #15 merged the optional offline-Skirmish Ground View and accepted board-side
 shortcut layout to `main` at `9792d947`. The 1.2.23 test APK was installed over
@@ -36,8 +36,15 @@ experimental, not accepted by the button-layout report. The private offline
 preview can disclose that limit without expanding campaign or multiplayer
 support.
 
-The GitHub asset digest, fresh independent download, checksum sidecar, tag
-and latest-release link are still pending publication verification.
+The release [v1.2.24-xr-preview](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview)
+is private, non-prerelease and GitHub's current `latest`. Tag
+`v1.2.24-xr-preview` resolves to `0403c5e485d18c42021b4a81e5d332bde1a49ea2`,
+which adds verified-hash documentation only after the APK source merge
+`d72a7969`. GitHub reports the uploaded APK asset at 125,028,534 bytes with
+the exact SHA-256 above. A fresh independent download matches the local APK
+byte-for-byte and passes the downloaded `.sha256` sidecar. The README and
+installation guide point to this exact release tag and asset. The accepted
+visual layout does not close the Ground View movement/comfort gate.
 
 ## Candidate and provenance
 
@@ -97,12 +104,12 @@ The release asset is the **same bytes** as the locally built and Quest-installed
 candidate. The original app data is not in the APK or this repository. The
 repository has not been made public, and no LAN diagnostic APK was uploaded.
 
-## Current private release checkpoint: 1.2.17
+## Previous private release checkpoint: 1.2.17
 
 | Item | Verified value |
 |---|---|
 | Source | PR #11 endgame fix and PR #12 version bump merged to `main`; tag `v1.2.17-xr-preview` resolves to `af439c387f91905c5df0d8d6345c9647b8521563` |
-| Release | [Generals: Zero Hour XR — Preview 1.2.17](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.17-xr-preview), private repository, non-prerelease “Latest” |
+| Release | [Generals: Zero Hour XR — Preview 1.2.17](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.17-xr-preview), private repository, formerly “Latest” |
 | Package/version | `com.generalsx.zerohour.xr`, versionName `1.2.17-xr-preview`, versionCode `10217` |
 | APK asset | `Generals-Zero-Hour-XR.apk`, 124,999,862 bytes; GitHub asset SHA-256 `8913648e9c8c124367ac812a4a3e9db0d0f296ec3a2c7e83a7d22627c2182869` |
 | Independent download | Fresh GitHub download verifies against the separately downloaded `.sha256` asset and matches the local candidate |
@@ -145,14 +152,14 @@ are the platform basis, not a promise of universal migration.
 
 ## Release-facing content
 
-- README now centers Quest tabletop features, requirements, controls, honest limits and the exact current v1.2.17 download.
+- README now centers Quest tabletop features, requirements, controls, honest limits and the exact current v1.2.24 download.
 - Four maintainer-provided Quest captures illustrate separate maps, the build window and Commands/group UI. Original JPEG pixels and color profiles were retained; EXIF/TIFF/GPS metadata was removed from the repository copies. The maintainer reports that they visually reviewed the passthrough room content and approved it for publication.
 - [Quest installation and controls](../../HOWTO/INSTALLATION_XR.md) and [game-file sourcing](../../HOWTO/GETTING_THE_GAME_FILES.md) are the user guides. No original game files are distributed.
 - [Multiplayer status](../planning/MULTIPLAYER_STATUS.md) explicitly pauses LAN and records the paired CRC evidence and resumption plan. Experimental LAN code remains on its own branch, outside this candidate.
 
 ## Remaining public gates and validation scope
 
-1. The repository and 1.2.17 release are **private**. The maintainer reports that the four passthrough screenshots have been visually approved. Older debug-signed assets remain available but are prominently marked as historical development builds; making the repository public would expose them too. The XR win-result presentation is implemented and accepted in the 10216 test, then included in 1.2.17. Before public distribution under the retained name, review the EA license's trademark restriction; a private release is not a decision to make the repository public.
+1. The repository and 1.2.24 release are **private**. The maintainer reports that the four passthrough screenshots have been visually approved. Older debug-signed assets remain available but are prominently marked as historical development builds; making the repository public would expose them too. Before public distribution under the retained name, review the EA license's trademark restriction; a private release is not a decision to make the repository public.
 2. The maintainer reports that the release key **and** Keychain password have been backed up; the backup was not independently verified and no secret belongs in Git.
    The 10215 update was installed over 10214 without uninstalling and a
    private pre-update app-data backup was captured. The first release-signed
@@ -160,16 +167,18 @@ are the platform basis, not a promise of universal migration.
    source-built replacement was installed while the app was running. That
    interruption was caused by our ADB update, not evidence of a game crash.
    Do not install again during an active play session without asking first.
-3. The clean native source rebuild, exact-device APK hash and returning
-   worn-headset Skirmish/Campaign launch with retained settings and game data
-   pass. The maintainer did not report a fresh Commands/group/waypoint matrix
-   for this exact hash; earlier P23 play covered those controls. Separately
+3. The clean native source rebuild and exact-device 1.2.24 APK hash pass.
+   The maintainer accepted the 1.2.23 shortcut layout, but the exact 1.2.24
+   release bytes have not had a new worn-headset play session. Ground View
+   locomotion/collision and long-session comfort are experimental. Earlier
+   P23 play covered commands, groups and waypoints; this hash was not retested
+   across that full matrix. Separately
    test first-time import with legitimate Steam files on a clean profile/device
    when available; do not erase this user's saved data merely to perform that
    test. Keep all retail data outside Git.
-4. README/guide links, source tag, GitHub APK asset digest, independent download and 10216→10217 Quest update are verified for the 1.2.17 private release. Its exact bytes have not yet been worn-headset-played; do not conflate the accepted 10216 result-card test with that gate. Review screenshot presentation and release notes again before public visibility.
+4. README/guide links, source tag, GitHub APK asset digest, independent download and 10223→10224 Quest update are verified for the 1.2.24 private release. Do not conflate the accepted 10223 shortcut-layout test with an exhaustive 1.2.24 headset test. Review screenshot presentation and release notes again before public visibility.
 5. Keep the experimental LAN feature out of release claims. A fresh first-time data import and exhaustive mission/commands tests remain later validation work, not claims of this first preview.
 
-The 10217 APK is the supported **private** offline preview. The 10215 release
-remains historical; do not substitute an older debug-signed, 10216 test or LAN
+The 10224 APK is the supported **private** offline preview. Older releases and
+test builds remain historical; do not substitute a debug-signed or LAN
 diagnostic asset for the current download.

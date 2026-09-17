@@ -45,24 +45,22 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Current product baseline
 
-**Active release preparation:** [PLAN-025: ground view and stick locomotion](PLAN-025_XR_GROUND_OBSERVER.md).
-PR #15 merged the P25 source into `main` at `9792d947`. The private 1.2.24
-release candidate is being prepared from this offline-only baseline; the
-experimental LAN branch remains separate.
-PR #16 merged the version/guide update at `d72a7969`. The final signed APK
-was built from that merged source as 10224 / `1.2.24-xr-preview`, SHA-256
+**Current private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
+PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates
+at `d72a7969`. Release tag `v1.2.24-xr-preview` points to `0403c5e4`, which
+adds verified-hash documentation only. The APK was built from merged source
+`d72a7969` as 10224 / `1.2.24-xr-preview`, SHA-256
 `bb685046bcfcdcd5222b648ac3ebe3a008dbe19bfc5a863b18b4ba749c17195e`.
-It update-installed on Quest 3 `2G0YC5ZG9609PY`; device-side `base.apk`
-matches and the original first-install date is intact. GitHub publication
-and fresh-download verification remain open.
+Its GitHub asset digest, fresh download, checksum sidecar and installed Quest
+`base.apk` all match. It update-installed on Quest 3 `2G0YC5ZG9609PY` with
+the original first-install date intact. The repo remains private; the LAN
+branch remains separate.
 The first ground-view checkpoint was `d955d29`; its earlier test APK was
 **10218 / `1.2.18-xr-ground-observer`**,
 `build/apk/Generals-Zero-Hour-XR-1.2.18-ground-observer.apk`, SHA-256
 `88d8e4e87ebedd28cb01712aecd322b2c518fd87bfd0a1b5c75cdd989887ba1e`.
-The user liked that installed view. The private 1.2.17 release remains the
-authoritative download until the new candidate is verified and published;
-multiplayer remains paused. The candidate bumps committed Android defaults to
-10224 / `1.2.24-xr-preview`.
+The user liked that installed view. Multiplayer remains paused. Committed
+Android defaults are now 10224 / `1.2.24-xr-preview`.
 
 The user reports that the initial ground view looks great. P25.1 adds physical
 left-stick movement and physical right-stick smooth yaw, with terrain, shroud,
@@ -211,23 +209,34 @@ text-field task. The native Android setup/importer input is separate.
 
 ## Release and device baseline
 
-PR #11 is merged and the maintainer accepted the 10216 headset-only result
-test. The authoritative private offline download is now
+The authoritative private offline download is
+[`v1.2.24-xr-preview`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
+The non-debuggable ARM64 APK is versionCode 10224, SHA-256
+`bb685046bcfcdcd5222b648ac3ebe3a008dbe19bfc5a863b18b4ba749c17195e`.
+GitHub's `latest` endpoint selects this release; the asset digest, fresh
+download and checksum sidecar verify. The exact APK is installed on Quest 3
+with intact app data and matching device-side hash. The button layout is
+accepted; Ground View stick movement/collision/comfort remain experimental.
+GitHub Actions was skipped due to exhausted quota; local native, Android,
+host and Quest GPU checks pass. The repository remains private, and public
+distribution under the retained name needs separate EA trademark review.
+
+The previous 1.2.17 release included PR #11's result card. The maintainer
+accepted the 10216 headset-only result test. Its historical download is
 [`v1.2.17-xr-preview`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.17-xr-preview),
 tagged at `af439c387f91905c5df0d8d6345c9647b8521563` (PRs #11/#12). The
 non-debuggable ARM64 APK is versionCode 10217, SHA-256
 `8913648e9c8c124367ac812a4a3e9db0d0f296ec3a2c7e83a7d22627c2182869`.
 It was built locally with debug cheats off and signed with the established
 private release certificate. The GitHub asset digest and an independent fresh
-download match; the checksum asset verifies, and GitHub's `latest` endpoint
-selects this release. It update-installed over 10216 on Quest 3 without
+download match; the checksum asset verifies. It update-installed over 10216 on Quest 3 without
 uninstalling; `firstInstallTime` remained unchanged and device-side `base.apk`
 SHA-256 matches the release. Its exact bytes have not yet been separately
 worn-headset-played. The 10216 diagnostic APK must
 not be published. The repository remains private; public distribution under
 the retained product name needs a separate EA trademark-terms review.
 
-The previous release-signed offline preview is tagged `v1.2.15-xr-preview` at
+The older release-signed offline preview is tagged `v1.2.15-xr-preview` at
 `main` merge `683997a89198ff418f0c7c2191836a2f62c25add` (PR #8). It
 preserves P23 gameplay without the experimental LAN branch and adds a separate,
 non-debuggable XR release package path. The APK is `1.2.15-xr-preview` (10215), SHA-256
@@ -445,13 +454,13 @@ P23 edge-command audit (formation/force-move/guard variants and faction-specific
 coverage). Extensive play has not exposed a pressing visual/readability problem,
 so do not schedule another generic graphics QA pass as the next feature.
 QTR-MP preflight ran on the separate `codex/quest-pc-lan-preflight` branch and
-is now **paused** while the first offline release is prepared. Direct Connect
+is still **paused** while the private offline preview is maintained. Direct Connect
 starts a Quest/PC match, but paired Quest/native-Linux diagnostic traces first
 diverge in the object CRC by generation frame 100 and both peers report a
 different-CRC error at validation frame 105. See
 [`MULTIPLAYER_STATUS.md`](MULTIPLAYER_STATUS.md) for the preserved
 evidence, the next bounded per-object diagnostic, and the remaining gates. No
-LAN diagnostic APK belongs in the P23 offline release. Do not infer human
+LAN diagnostic APK belongs in the current offline release. Do not infer human
 multiplayer or replay compatibility from offline AI Skirmish. Keep P22
 keyboard/mouse secondary; revisit Ultra+ performance only if a real campaign
 scene shows a regression.
@@ -511,10 +520,11 @@ public-visibility/trademark review remain separate.
 - The user's room photographs are useful visual references but contain private
   surroundings. Do not add them to GitHub. Use cropped/redacted panel captures
   or synthetic Canvas fixtures for a pull request.
-- P25 ground observer is experimental on an isolated branch. Its 10 game
-  units/metre scale, 1.65 m eye height, 60 m visibility envelope and opaque
-  horizon need worn-headset review. It has no network/replay/campaign entry,
-  and no APK supersedes the 1.2.17 release until separately verified.
+- P25 Ground View is optional in the current private 1.2.24 release. Its 10
+  game units/metre scale, 1.65 m eye height, 60 m visibility envelope,
+  locomotion guards and opaque horizon need longer worn-headset review. It has
+  no network/replay/campaign entry; offline tabletop remains the supported
+  default play view.
 
 ## Minimum verification before handoff
 
