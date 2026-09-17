@@ -185,3 +185,14 @@ APK **10221 / `1.2.21-xr-button-column`**, SHA-256
 It was installed over 10220 on Quest 3 `2G0YC5ZG9609PY` without replacing
 the package identity or first-install date. Both Android debug flavors and
 host menu/ray checks pass (360).
+
+The maintainer confirmed the column's size, order and overall look in 10221,
+but requested it slightly farther from the player. Source `d7a7c5f` removes
+the former +8 cm player-facing board offset, moving the whole column back
+8 cm without changing its width or vertical spacing. Host menu/ray checks
+pass (361). Native ARM64, both Android debug flavors and signed XR packaging
+pass; APK **10222 /
+`1.2.22-xr-button-depth`**, SHA-256
+`31bf9ae30f4af5614e4a8dfc2bc6c4a674feae040507a558522a100b2a80b33f`,
+was installed in place on Quest 3 `2G0YC5ZG9609PY`. The new depth remains a
+worn-headset acceptance gate.
