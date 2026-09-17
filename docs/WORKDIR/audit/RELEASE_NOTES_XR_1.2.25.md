@@ -45,9 +45,9 @@ workspace layout and controls remain available.
 - The merged source, Android ARM64 build, both Android debug flavors and
   focused observer/loading/workspace/scene/panel/endgame regressions pass.
   Campaign-specific mission transitions, frame rate, walking/collision and
-  comfort still require a worn-headset test. The Quest was not ADB-connected
-  during packaging; this release does not claim installation or all-mission
-  acceptance.
+  comfort still require a worn-headset test. The exact release APK was
+  subsequently update-installed on Quest 3 and device-hash verified; that
+  does not constitute all-mission or worn-headset acceptance.
 - Human multiplayer, replay XR and general in-game text entry are not part of
   this offline preview. Do not substitute a separate LAN diagnostic APK.
 - This independent community port is not an Electronic Arts product or

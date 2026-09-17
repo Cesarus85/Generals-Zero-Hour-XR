@@ -56,9 +56,11 @@ The release-signed APK is versionCode 10225, SHA-256
 `dcd79e4d6be706f0ddd01d01416d321abd977a37aad768d750232bd1fc65e009`.
 Release tag `v1.2.25-xr-preview` resolves to `6b50f74`; GitHub marks it
 latest, and a fresh asset download matches the local APK and checksum sidecar.
-The Quest was not ADB-connected during packaging. The Campaign-specific
-worn-headset transition, performance and locomotion gate is open; tabletop
-remains the supported fallback. The repository remains private.
+After publication, this exact APK update-installed on Quest 3
+`2G0YC5ZG9609PY` as 10225. The original first-install time was retained;
+device-side `base.apk` SHA-256 matches the GitHub asset. The Campaign-specific
+worn-headset transition, performance and locomotion gate is still open;
+tabletop remains the supported fallback. The repository remains private.
 
 **Previous private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
 PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates
@@ -228,8 +230,9 @@ text-field task. The native Android setup/importer input is separate.
 The current [1.2.25 release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview)
 expands Ground View to live Campaign gameplay. Its signed APK SHA-256 is
 `dcd79e4d6be706f0ddd01d01416d321abd977a37aad768d750232bd1fc65e009`;
-it was built from merged source `5938257` (gameplay PR #19) and has not been
-installed or played on Quest yet.
+it was built from merged source `5938257` (gameplay PR #19), installed as an
+in-place Quest 3 update and device-hash verified. It has not been played in
+Campaign Ground View on the headset yet.
 Automated checks cannot certify campaign mission cutscenes, end transitions,
 performance or headset comfort; the 1.2.24 evidence below is historical.
 

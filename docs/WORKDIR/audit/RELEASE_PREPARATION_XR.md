@@ -25,16 +25,22 @@ Local tests pass: observer 64, loading 152, scene 1280, workspace 781,
 bilingual panel 20,765, trigger 28 and endgame 33. Native ARM64,
 `assembleXrRelease`, `assembleXrDebug` and `assembleZhDebug` pass. GitHub
 Actions was not used because the account quota is exhausted. The Quest was
-not ADB-connected during this checkpoint, so installation, worn-headset
-Campaign transitions, long-session locomotion, comfort and mission performance
-remain open. The private preview notes disclose these limits. The repository
-and release remain private; public visibility needs separate review.
+not ADB-connected during packaging. Worn-headset Campaign transitions,
+long-session locomotion, comfort and mission performance remain open. The
+private preview notes disclose these limits. The repository and release
+remain private; public visibility needs separate review.
 
 Release tag `v1.2.25-xr-preview` points to `6b50f747e08f5e5d0a641e5f3ef9c90752f3b3f1`.
 GitHub reports this private, non-prerelease release as `latest`, with the APK
 asset size and SHA-256 matching the local final file. An independent fresh
 download passes the uploaded `.sha256` sidecar and matches the local APK
 byte-for-byte. The earlier 125-MB candidate was never published.
+
+After publication, the exact 1.2.25 APK update-installed successfully over
+10224 on Quest 3 `2G0YC5ZG9609PY`. Android reports versionCode 10225 and the
+original `firstInstallTime` of 2026-09-16 14:55:36. The device-side
+`base.apk` SHA-256 exactly matches the GitHub release asset. No worn-headset
+Campaign Ground View play test was performed by this installation check.
 
 ## Previous private release checkpoint: 1.2.24
 
