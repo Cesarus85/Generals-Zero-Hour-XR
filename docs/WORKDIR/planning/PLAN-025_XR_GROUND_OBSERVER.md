@@ -1,7 +1,7 @@
 # PLAN-025: passive XR ground observer prototype
 
-**Status:** source prototype implemented on isolated branch, host validation passed;
-native build and headset acceptance pending, 2026-09-17
+**Status:** isolated prototype implemented and reviewed; host/native/package checks
+pass, installation and headset acceptance pending, 2026-09-17
 
 ## Goal and boundary
 
@@ -73,8 +73,19 @@ Skirmish for this first prototype. The official 1.2.17 release is preserved.
       tabletop workspace, console, endgame, trigger, scene, world, height,
       board, input and loading host regressions also pass. No Android build or
       worn-headset claim is implied by these checks.
-- [ ] Tabletop regressions pass and Android native/package build succeeds.
-- [ ] Test APK version/hash/signature are recorded separately from 1.2.17.
+- [x] Tabletop regressions pass and Android native/package build succeeds.
+      Final native source is `d955d29`; XR release and both Android debug
+      flavors build locally. Parent independently reran observer (38),
+      interaction (145), loading presenter (152) and bilingual panel (20,693)
+      checks successfully. Hosted CI was not requested.
+- [x] Test APK version/hash/signature are recorded separately from 1.2.17.
+      Version 10218 / `1.2.18-xr-ground-observer`, file
+      `build/apk/Generals-Zero-Hour-XR-1.2.18-ground-observer.apk`, SHA-256
+      `88d8e4e87ebedd28cb01712aecd322b2c518fd87bfd0a1b5c75cdd989887ba1e`.
+      Android v3 signature uses the established production certificate;
+      package identity, ARM64-only ABI, non-debuggable manifest, no retail
+      archives and `RTS_DEBUG_CHEATS=OFF` verified. No device connected via ADB;
+      no install or worn-headset acceptance is claimed.
 - [ ] In-headset: choose ground, enter, 360-degree look, lean, return; no orders
       or changed workspace; verify both handedness modes and loss/return cases.
 - [ ] In-headset: inspect infantry, vehicles, buildings, slopes, effects,

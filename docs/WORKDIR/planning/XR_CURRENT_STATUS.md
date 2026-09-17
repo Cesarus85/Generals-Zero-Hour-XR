@@ -47,21 +47,31 @@ the detailed narrative and command transcripts out of this dashboard.
 
 **Active experiment:** [PLAN-025: passive ground observer](PLAN-025_XR_GROUND_OBSERVER.md).
 The maintainer authorized a separate offline Skirmish prototype. Source is
-implemented on `codex/xr-ground-observer-prototype` at checkpoint `413eab1`
-(from `66cdfae`; official `main` baseline `6af7abd`). Focused host checks and
-the cached ARM64 native `libmain.so` link pass; parent-owned package verification
-and review are pending. No prototype is
-installed or headset-accepted yet. The private 1.2.17 release below remains
-the authoritative released build; multiplayer remains paused. Test version
-10218 / `1.2.18-xr-ground-observer` is reserved for separate packaging, not a
-release/version bump in source.
+implemented and reviewed on `codex/xr-ground-observer-prototype`, source
+checkpoint `d955d29` (official `main` baseline `6af7abd`). Native ARM64 build,
+signed XR release packaging, both Android debug flavors and focused host
+regressions pass. Separate test APK: **10218 / `1.2.18-xr-ground-observer`**,
+`build/apk/Generals-Zero-Hour-XR-1.2.18-ground-observer.apk`, SHA-256
+`88d8e4e87ebedd28cb01712aecd322b2c518fd87bfd0a1b5c75cdd989887ba1e`.
+Package ID, ARM64-only ABI, non-debuggable manifest, production certificate,
+absence of retail archives and disabled debug cheats verified. No prototype
+is installed or headset-accepted: ADB has no connected device. The private
+1.2.17 release remains authoritative and its preserved APK hash is unchanged;
+multiplayer remains paused. Source release defaults were not bumped.
+
+**Next:** install the test APK as an in-place update when the Quest connects.
+In offline Skirmish open UI > View > Ground view, release the trigger, then
+click visible open ground. Inspect stereo/scale/horizon, turn and lean, then
+return with B (Y left-handed). Verify unchanged table/panel positions, no
+accidental orders, handedness and focus/loading/end-of-match recovery. Do not
+merge or promote this prototype before physical acceptance.
 
 | Area | Current state | Acceptance level |
 |---|---|---|
 | Product identity | Generals: Zero Hour XR; update-compatible package ID retained | Built, installed and resource-verified |
 | Game modes | Campaign and offline AI Skirmish run in the XR tabletop presentation | Repeated user headset use; mission-specific coverage remains incremental |
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
-| View model | The released app is tabletop-only; the isolated P25 branch adds an optional passive ground observer for live offline Skirmish. Videos and full native dialogs stay upright. | P25 source/host only; Android build and headset gate open |
+| View model | The released app is tabletop-only; the isolated P25 branch adds an optional passive ground observer for live offline Skirmish. Videos and full native dialogs stay upright. | P25 source, host and Android artifact gates pass; installation/headset gate open |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
 | Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
 | Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |
