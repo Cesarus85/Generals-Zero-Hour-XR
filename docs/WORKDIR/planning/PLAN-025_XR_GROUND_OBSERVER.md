@@ -206,3 +206,9 @@ signed XR packaging pass. APK **10223 / `1.2.23-xr-button-aim`**, SHA-256
 `56788cc8549078054ab15515038d23389099d796614bd55dd3f0be09158e2c4b`,
 was installed in place on Quest 3 `2G0YC5ZG9609PY`. Headset angle/depth
 acceptance remains open.
+
+The maintainer subsequently accepted this exact button arrangement. PR #15
+merged P25 into `main` at `9792d947`. The private 1.2.24 offline preview can
+ship the accepted shortcut layout with Ground View clearly labeled as optional
+and stick locomotion as experimental; movement, collision, comfort and broader
+session recovery remain separate worn-headset validation gates.

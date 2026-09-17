@@ -1,8 +1,32 @@
 # XR release preparation and checkpoints
 
-**Updated:** 2026-09-16 — private 1.2.17 release verification
+**Updated:** 2026-09-17 — private 1.2.24 release preparation
 
-**Publication state:** The non-debuggable 1.2.17 APK is the current release in the **private** repository. Public visibility, especially under the retained product name, requires separate review of EA's trademark terms.
+**Publication state:** The non-debuggable 1.2.17 APK remains the current release in the **private** repository while 1.2.24 is prepared. Public visibility, especially under the retained product name, requires separate review of EA's trademark terms.
+
+## 1.2.24 offline preview candidate
+
+PR #15 merged the optional offline-Skirmish Ground View and accepted board-side
+shortcut layout to `main` at `9792d947`. The 1.2.23 test APK was installed over
+the previous app on Quest 3, and the maintainer accepted the final shortcut
+appearance. The release-preparation branch raises the committed Android
+defaults to versionCode `10224` / `1.2.24-xr-preview`; package ID, ARM64 ABI,
+private certificate and disabled debug cheats are retained. A signed local
+candidate hashes to
+`770a2f3aca58e1ee431e573cf7f7ee9eb1b5444544a2a44a36cff10e7f6d883d`.
+The final post-merge source build, uploaded asset and fresh download must be
+compared before this hash becomes the authoritative release hash.
+
+Local checks on the merged P25 source pass: observer 56, interaction 148,
+menu/ray 363, loading presenter 152, panel text 20,765, workspace 781,
+scene 1,280 and endgame 33. A world-copy/MRT test ran on the Quest 3 Adreno
+740 and passed 3,321 checks. The 10223 signed APK installed in place with
+the earlier `firstInstallTime`. GitHub Actions was skipped because the account
+quota is exhausted; local evidence is not represented as hosted CI. Ground
+View movement, collision, comfort and longer recovery sequences are still
+experimental, not accepted by the button-layout report. The private offline
+preview can disclose that limit without expanding campaign or multiplayer
+support.
 
 ## Candidate and provenance
 
