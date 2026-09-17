@@ -46,7 +46,7 @@ the detailed narrative and command transcripts out of this dashboard.
 ## Current product baseline
 
 **Active experiment:** [PLAN-025: ground view and stick locomotion](PLAN-025_XR_GROUND_OBSERVER.md).
-The latest prototype source is `d7a7c5f` on
+The latest prototype source is `5e421cb` on
 `codex/xr-ground-observer-prototype` (official `main` baseline `6af7abd`).
 The first ground-view checkpoint was `d955d29`; its earlier test APK was
 **10218 / `1.2.18-xr-ground-observer`**,
@@ -81,23 +81,19 @@ unequal-size presentation was rejected. The earlier APK **10220 /
 `1faa24d4ac50f82184a3ed2170b9e4df87248349c7cf54420562813bbdc3a8bc`.
 It was installed on Quest 3 `2G0YC5ZG9609PY`.
 
-**P25.3 installed refinement pending headset inspection:** UI, Commands and Ground View
-share the Commands button's 20 cm width and form a vertical column directly
-outside the right board edge. They follow the board rather than the separate
-build window. The user confirmed the column looks good in **10221**, but found
-it slightly too far toward the player. The complete column was moved 8 cm
-farther back to align in depth with the board center. The prior APK **10221 /
-`1.2.21-xr-button-column`** is
-`build/apk/Generals-Zero-Hour-XR-1.2.21-button-column.apk`, SHA-256
-`b76124f3c07675ac87a3d3bcbffb4e7176d5fada0d5b840de24c1001ec36f39b`.
-Host menu/ray checks pass (361); native ARM64, both Android debug flavors and
-signed XR packaging pass for
-the new test APK **10222 / `1.2.22-xr-button-depth`** at
-`build/apk/Generals-Zero-Hour-XR-1.2.22-button-depth.apk`, SHA-256
-`31bf9ae30f4af5614e4a8dfc2bc6c4a674feae040507a558522a100b2a80b33f`.
-It is installed as an in-place update on Quest 3 `2G0YC5ZG9609PY`, with the
-original first-install date intact. Physical inspection of the new depth
-remains open.
+**P25.3 installed refinement pending headset inspection:** UI, Commands and
+Ground View are equal-width buttons in a vertical column beside the board,
+following its movement independently of the build window. The user liked the
+column, but asked twice for it to be farther away. The current test places it
+16 cm behind its first position and yaws it 15 degrees inward toward the
+player while keeping it upright. Host menu/ray checks pass (363); native
+ARM64, both Android debug flavors and signed XR packaging pass. Test APK
+**10223 / `1.2.23-xr-button-aim`** is
+`build/apk/Generals-Zero-Hour-XR-1.2.23-button-aim.apk`, SHA-256
+`56788cc8549078054ab15515038d23389099d796614bd55dd3f0be09158e2c4b`.
+It is installed as an in-place update on Quest 3 `2G0YC5ZG9609PY`; the
+original first-install date remains intact. The new depth and inward angle
+await headset inspection.
 
 Also inspect stereo/scale/horizon, physical lean, handedness and
 focus/loading/end-of-match recovery. Verify that no gameplay orders occur.
@@ -108,7 +104,7 @@ Do not merge or promote this prototype before physical acceptance.
 | Product identity | Generals: Zero Hour XR; update-compatible package ID retained | Built, installed and resource-verified |
 | Game modes | Campaign and offline AI Skirmish run in the XR tabletop presentation | Repeated user headset use; mission-specific coverage remains incremental |
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
-| View model | The released app is tabletop-only; the isolated P25 branch adds ground view, P25.1 stick navigation and a P25.3 board-side shortcut column for offline Skirmish. Videos and full native dialogs stay upright. | P25 10218 visual impression positive; P25.2 10220 button works but layout rejected; P25.3 10221 column looks good but was too far forward; 10222 depth adjustment installed, headset and movement gates open |
+| View model | The released app is tabletop-only; the isolated P25 branch adds ground view, P25.1 stick navigation and a P25.3 board-side shortcut column for offline Skirmish. Videos and full native dialogs stay upright. | P25 10218 visual impression positive; P25.2 10220 button works; P25.3 column liked but depth needed adjustment; 10223 depth/angle test installed, headset and movement gates open |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
 | Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
 | Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |

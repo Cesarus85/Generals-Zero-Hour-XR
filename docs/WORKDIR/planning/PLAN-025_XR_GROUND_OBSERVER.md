@@ -196,3 +196,13 @@ pass; APK **10222 /
 `31bf9ae30f4af5614e4a8dfc2bc6c4a674feae040507a558522a100b2a80b33f`,
 was installed in place on Quest 3 `2G0YC5ZG9609PY`. The new depth remains a
 worn-headset acceptance gate.
+
+The maintainer requested another identical 8 cm backward shift and a slight
+inward angle. Source `5e421cb` places the column 16 cm behind the initial
+10221 position and adds a 15-degree yaw toward the board center/player,
+without pitching the buttons backward or changing width and spacing. Host
+menu/ray checks pass (363); native ARM64, both Android debug flavors and
+signed XR packaging pass. APK **10223 / `1.2.23-xr-button-aim`**, SHA-256
+`56788cc8549078054ab15515038d23389099d796614bd55dd3f0be09158e2c4b`,
+was installed in place on Quest 3 `2G0YC5ZG9609PY`. Headset angle/depth
+acceptance remains open.
