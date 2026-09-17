@@ -9,4 +9,4 @@ test_dir="$(mktemp -d "${TMPDIR:-/tmp}/generals-ground-observer.XXXXXX")"
  -IGeneralsMD/Code/Main -ICore/Libraries/Source/d3d8gles/include \
  -I"$build_dir/vcpkg_installed/arm64-android/include" \
  scripts/qa/xr-ground-observer-test.cpp -o "$test_dir/test"
-"$test_dir/test" GeneralsMD/Code/Main/XrHello.cpp
+"$test_dir/test" GeneralsMD/Code/Main/XrHello.cpp GeneralsMD/Code/Main/XrGameBoot.cpp

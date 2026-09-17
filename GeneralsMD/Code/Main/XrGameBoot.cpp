@@ -531,9 +531,11 @@ const char *XrGameBoot_PerformanceScene() {
 bool XrGameBoot_CanAdjustWorld() {
 	return XrGameBoot_CanStereoWorld() && GX_XR_SplitUIAllowed() && XrGameBoot_CanControlCamera();
 }
-// GeneralsX @feature Codex 17/09/2026 P25 is deliberately offline Skirmish only.
+// GeneralsX @feature Codex 17/09/2026 Allow observation in live offline campaign
+// and Skirmish; the shared camera/presentation guard excludes cinematics.
 bool XrGameBoot_CanObserveGround() {
-	return TheGameLogic && TheGameLogic->getGameMode()==GAME_SKIRMISH &&
+	return TheGameLogic && (TheGameLogic->getGameMode()==GAME_SKIRMISH ||
+		TheGameLogic->getGameMode()==GAME_SINGLE_PLAYER) &&
 		XrGameBoot_CanAdjustWorld() && TheInGameUI && !TheInGameUI->getPendingPlaceType() &&
 		ThePartitionManager && ThePlayerList && ThePlayerList->getLocalPlayer() &&
 		!XrGameBoot_ExpandedUI();

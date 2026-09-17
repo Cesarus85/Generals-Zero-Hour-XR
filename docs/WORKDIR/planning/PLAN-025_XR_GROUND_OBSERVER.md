@@ -3,6 +3,11 @@
 **Status:** isolated prototype implemented, reviewed and installed; host/native/package
 checks pass, headset acceptance pending, 2026-09-17
 
+**P25.4 update:** Campaign Ground View is enabled for live controllable
+gameplay in the 1.2.25 preview. The original Skirmish-only scope below records
+the first prototype boundary; it is not the current mode restriction. See
+P25.4 and the current-status handoff for the remaining campaign device gate.
+
 ## Goal and boundary
 
 Let the player choose a visible outdoor ground position on the tabletop,
@@ -212,3 +217,21 @@ merged P25 into `main` at `9792d947`. The private 1.2.24 offline preview can
 ship the accepted shortcut layout with Ground View clearly labeled as optional
 and stick locomotion as experimental; movement, collision, comfort and broader
 session recovery remain separate worn-headset validation gates.
+
+## P25.4: Campaign entry
+
+The 1.2.25 preview permits Ground View during a live single-player Campaign
+mission as well as offline Skirmish. It changes only the central XR entry gate;
+there are no mission-script, AI, simulation, save, replay or network changes.
+The existing camera and presentation guards reject intro/video, letterboxed
+or moving scripted-camera segments, loading, expanded dialogs, the shell,
+building placement and locked tactical-camera states. The same runtime checks
+cancel observation when those conditions arise, when tracking/rendering fails
+or when a match result appears. B/Y returns to the unchanged tabletop.
+
+Host observer/source guards and ARM64 native linking pass. A representative
+Campaign mission still needs a Quest test: enter Ground View after its intro,
+look/turn/walk and return, trigger a scripted camera or video, finish or leave
+the mission, and verify the tabletop, controls, result UI and frame rate.
+Until then Campaign Ground View is preview functionality, not a claimed
+mission-by-mission acceptance result.

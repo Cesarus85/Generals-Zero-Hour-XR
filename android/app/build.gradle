@@ -78,8 +78,8 @@ android {
         // tabletop presentation checkpoint after the 1.2.7 device candidate.
         // GeneralsX @build Codex 16/09/2026 The endgame fix follows the
         // private 10215 release and the 10216 headset-only diagnostic APK.
-        versionCode (project.hasProperty('androidVersionCode') ? (project.androidVersionCode as Integer) : 10224)
-        versionName (project.hasProperty('androidVersionName') ? project.androidVersionName : '1.2.24-xr-preview')
+        versionCode (project.hasProperty('androidVersionCode') ? (project.androidVersionCode as Integer) : 10225)
+        versionName (project.hasProperty('androidVersionName') ? project.androidVersionName : '1.2.25-xr-preview')
         ndk {
             abiFilters 'arm64-v8a'
         }
