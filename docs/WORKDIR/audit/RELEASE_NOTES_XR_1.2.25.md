@@ -12,7 +12,7 @@ Download `Generals-Zero-Hour-XR.apk` and
 `Generals-Zero-Hour-XR.apk.sha256` from this release. Verify the download with
 `shasum -a 256 -c Generals-Zero-Hour-XR.apk.sha256`, then update an existing
 installation without uninstalling it. APK SHA-256:
-`62f2b08fcdf1168e5f639465de7e654ca2a05270cd66a62d324c1c91ce27c089`.
+`dcd79e4d6be706f0ddd01d01416d321abd977a37aad768d750232bd1fc65e009`.
 
 ```sh
 adb devices
@@ -21,7 +21,9 @@ adb -s <quest-serial> install -r Generals-Zero-Hour-XR.apk
 
 The app remains `com.generalsx.zerohour.xr` (versionCode `10225`, versionName
 `1.2.25-xr-preview`) and uses the same private release-signing lineage. The
-APK does not contain the original game archives, maps or videos. Supply your
+57.1 MB APK omits native debug sections but retains the same game code and
+runtime dependencies. It does not contain the original game archives, maps or
+videos. Supply your
 own complete, legally obtained *Generals* and *Zero Hour* installation; see
 the [Quest installation and controller guide](../../HOWTO/INSTALLATION_XR.md).
 

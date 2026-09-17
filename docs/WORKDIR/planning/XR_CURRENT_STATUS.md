@@ -50,9 +50,10 @@ Ground View now allows entry during live Campaign as well as offline Skirmish.
 The same central gate blocks menus, cinematics, scripted camera movement,
 loading, placement and camera locks; the XR runtime cancels observation on
 mode, tracking, result or rendering transitions. The merged gameplay source
-is `652f46f`; native ARM64, both Android debug flavors and XR host checks pass.
+is `652f46f`; release packaging is merged at `5938257`. Native ARM64, both
+Android debug flavors and XR host checks pass.
 The release-signed APK is versionCode 10225, SHA-256
-`62f2b08fcdf1168e5f639465de7e654ca2a05270cd66a62d324c1c91ce27c089`.
+`dcd79e4d6be706f0ddd01d01416d321abd977a37aad768d750232bd1fc65e009`.
 The Quest was not ADB-connected during packaging. The Campaign-specific
 worn-headset transition, performance and locomotion gate is open; tabletop
 remains the supported fallback. The repository remains private.
@@ -224,9 +225,9 @@ text-field task. The native Android setup/importer input is separate.
 
 The current [1.2.25 release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview)
 expands Ground View to live Campaign gameplay. Its signed APK SHA-256 is
-`62f2b08fcdf1168e5f639465de7e654ca2a05270cd66a62d324c1c91ce27c089`;
-it was built from merged gameplay source `652f46f` and has not been installed
-or played on Quest yet.
+`dcd79e4d6be706f0ddd01d01416d321abd977a37aad768d750232bd1fc65e009`;
+it was built from merged source `5938257` (gameplay PR #19) and has not been
+installed or played on Quest yet.
 Automated checks cannot certify campaign mission cutscenes, end transitions,
 performance or headset comfort; the 1.2.24 evidence below is historical.
 

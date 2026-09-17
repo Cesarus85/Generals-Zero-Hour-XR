@@ -6,13 +6,16 @@
 
 ## Current private release checkpoint: 1.2.25
 
-PR #19 merged Campaign Ground View to `main` at `652f46f`. The release APK
+PR #19 merged Campaign Ground View to `main` at `652f46f`; PR #21 merged
+release-only native debug-section stripping at `5938257`. The release APK
 was rebuilt from that merged source without version overrides. It is
-125,028,534 bytes, versionCode `10225`, versionName `1.2.25-xr-preview`,
+57,100,470 bytes, versionCode `10225`, versionName `1.2.25-xr-preview`,
 package `com.generalsx.zerohour.xr`, SHA-256
-`62f2b08fcdf1168e5f639465de7e654ca2a05270cd66a62d324c1c91ce27c089`.
-The packaged `libmain.so` matches the ARM64 build (SHA-256
-`7f8427f52876ca1b431bd3aedf86a458f1e46fbca1ec6cfc2ad8f0bc4367e529`).
+`dcd79e4d6be706f0ddd01d01416d321abd977a37aad768d750232bd1fc65e009`.
+The packaged, debug-section-stripped `libmain.so` hashes to
+`581a9772be3cce940d68ec3393e7b201ce246ceb0def8ae1709624964b796dfe`;
+its NDK ELF build ID and `DT_NEEDED` dependencies match the unstripped native
+build. Both APK and native library hashes match the staged release artifacts.
 APK Signature Scheme v3 verifies with the existing release certificate
 `a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`.
 The manifest is non-debuggable, the ZIP is intact, only ARM64 native libraries
