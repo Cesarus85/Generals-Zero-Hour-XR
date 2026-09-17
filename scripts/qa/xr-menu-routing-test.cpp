@@ -58,7 +58,11 @@ int main(){
 	check(fabsf(groundDock.pose.position.y-commandsDock.pose.position.y+.16f)<.0001f);
 	check(fabsf(uiDock.pose.position.x-commandsDock.pose.position.x)<.0001f &&
 		fabsf(uiDock.pose.position.x-groundDock.pose.position.x)<.0001f);
-	check(fabsf(uiDock.pose.position.z-x.surfaces[1].pose.position.z)<.0001f);
+	check(fabsf(uiDock.pose.position.z-x.surfaces[1].pose.position.z+.08f)<.0001f);
+	const auto facing=xrRotate(uiDock.pose.orientation,{0,0,1});
+	check(facing.x<-.25f && facing.z>.95f && fabsf(facing.y)<.0001f);
+	check(fabsf(commandsDock.pose.orientation.w-uiDock.pose.orientation.w)<.0001f &&
+		fabsf(groundDock.pose.orientation.w-uiDock.pose.orientation.w)<.0001f);
 	const auto oldBuild=x.surfaces[2];x.surfaces[2].pose.position.x+=.5f;
 	check(xrLength(xrSub(uiButtonSurface(x).pose.position,uiDock.pose.position))<.0001f);
 	x.surfaces[2]=oldBuild;x.surfaces[1].pose.position.x+=.2f;

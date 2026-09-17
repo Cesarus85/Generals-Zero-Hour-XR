@@ -17,10 +17,13 @@ static XrSurface uiButtonSurface(const XrHello &x) {
 	const auto heading=length>1e-4f ? xrAxisAngle({0,1,0},atan2f(-right.z,right.x)):
 		XrQuaternionf{0,0,0,1};
 	XrSurface s;
-	s.width=.20f;s.pose.orientation=heading;
-	// Keep the column level with the board center in depth; the former +8 cm
-	// player-facing offset put the buttons visibly ahead of the table edge.
-	s.pose.position=xrAdd(board.pose.position,xrRotate(heading,{board.width*.5f+.135f,.40f,0}));
+	s.width=.20f;
+	// Turn 15 degrees inward toward the player at the board's center, while
+	// keeping the controls upright (no uncomfortable backward pitch).
+	s.pose.orientation=xrMul(heading,xrAxisAngle({0,1,0},-.26179939f));
+	// One more 8 cm behind the previous board-center depth, preserving the
+	// column's size and spacing. Position uses board yaw, not button yaw.
+	s.pose.position=xrAdd(board.pose.position,xrRotate(heading,{board.width*.5f+.135f,.40f,-.08f}));
 	return s;
 }
 // UI, Commands and Ground View share width, facing and 16 cm vertical pitch.
