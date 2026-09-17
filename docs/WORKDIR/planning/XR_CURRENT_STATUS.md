@@ -14,7 +14,8 @@ not interchangeable.
 
 1. `AGENTS.md` for repository-wide engineering rules.
 2. This file for the current XR baseline, open gates and next work.
-3. `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md` when working on P21.
+3. `PLAN-025_XR_GROUND_OBSERVER.md` for the current experimental P25 branch;
+   `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md` for the shipped P21 UI.
 4. `MULTIPLAYER_STATUS.md` for the paused QTR-MP evidence and exact resume
    sequence; `../audit/RELEASE_PREPARATION_XR.md` for first-release gates.
 5. `PLAN-023_QUEST_TABLETOP_RECOVERY.md` for detailed architecture, decisions,
@@ -45,18 +46,22 @@ the detailed narrative and command transcripts out of this dashboard.
 ## Current product baseline
 
 **Active experiment:** [PLAN-025: passive ground observer](PLAN-025_XR_GROUND_OBSERVER.md).
-The maintainer authorized a separate offline Skirmish prototype: choose a ground
-location, observe at human scale with head tracking, and return to the existing
-tabletop workspace. Implementation is delegated to GPT-5.6 Sol (high reasoning).
-No prototype is built or headset-accepted yet. The private 1.2.17 release below
-remains the authoritative released build; multiplayer remains paused.
+The maintainer authorized a separate offline Skirmish prototype. Source is
+implemented on `codex/xr-ground-observer-prototype` at checkpoint `413eab1`
+(from `66cdfae`; official `main` baseline `6af7abd`). Focused host checks and
+the cached ARM64 native `libmain.so` link pass; parent-owned package verification
+and review are pending. No prototype is
+installed or headset-accepted yet. The private 1.2.17 release below remains
+the authoritative released build; multiplayer remains paused. Test version
+10218 / `1.2.18-xr-ground-observer` is reserved for separate packaging, not a
+release/version bump in source.
 
 | Area | Current state | Acceptance level |
 |---|---|---|
 | Product identity | Generals: Zero Hour XR; update-compatible package ID retained | Built, installed and resource-verified |
 | Game modes | Campaign and offline AI Skirmish run in the XR tabletop presentation | Repeated user headset use; mission-specific coverage remains incremental |
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
-| View model | Gameplay is tabletop-only; videos and full native dialogs use an upright presentation | Implemented and exercised, not every campaign transition exhaustively tested |
+| View model | The released app is tabletop-only; the isolated P25 branch adds an optional passive ground observer for live offline Skirmish. Videos and full native dialogs stay upright. | P25 source/host only; Android build and headset gate open |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
 | Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
 | Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |
@@ -453,6 +458,10 @@ public-visibility/trademark review remain separate.
 - The user's room photographs are useful visual references but contain private
   surroundings. Do not add them to GitHub. Use cropped/redacted panel captures
   or synthetic Canvas fixtures for a pull request.
+- P25 ground observer is experimental on an isolated branch. Its 10 game
+  units/metre scale, 1.65 m eye height, 60 m visibility envelope and opaque
+  horizon need worn-headset review. It has no network/replay/campaign entry,
+  and no APK supersedes the 1.2.17 release until separately verified.
 
 ## Minimum verification before handoff
 

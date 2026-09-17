@@ -1196,7 +1196,7 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 		// GeneralsX @feature Muse 16/09/2026 Match-result card last: the
 		// head-yaw billboard stays readable above every other panel.
 		if(x.resultVisible && !x.loadingPresentation) panel(x.resultSurface,.5f,x.resultTexture);
-		if(x.observerFadeStart && x.lastFrameShouldRender) {
+		if(x.observerFadeStart && x.lastFrameShouldRender && !x.loadingPresentation) {
 			const float elapsed=float(x.lastFrameTime-x.observerFadeStart)*1e-9f;
 			const float alpha=std::clamp(1.0f-elapsed/.18f,0.0f,1.0f);
 			if(alpha>0) {
@@ -1270,6 +1270,7 @@ struct XrLoadingPresenter {
 		// loading callback ends observer mode and changes presentation.
 		if(x.observer.mode!=XrObserverMode::Off) {x.observer.cancel();x.controlsArmed=false;x.inputArmed=false;}
 		x.renderedObserver=false;
+		x.observerFadeStart=0;
 		// GeneralsX @performance Codex 14/09/2026 Never time a nested movie
 		// presenter as gameplay, nor leave a timer active across its XR waits.
 		x.gpuTimer.end(false);x.performance.invalidate();

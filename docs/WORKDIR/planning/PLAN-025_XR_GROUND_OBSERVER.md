@@ -1,6 +1,7 @@
 # PLAN-025: passive XR ground observer prototype
 
-**Status:** authorized for implementation, 2026-09-17
+**Status:** source prototype implemented on isolated branch, host validation passed;
+native build and headset acceptance pending, 2026-09-17
 
 ## Goal and boundary
 
@@ -64,7 +65,14 @@ Skirmish for this first prototype. The official 1.2.17 release is preserved.
 
 ## Acceptance and follow-up
 
-- [ ] Code and focused host checks pass.
+- [x] Code and focused host checks pass. Source checkpoint `413eab1` on
+      `codex/xr-ground-observer-prototype`, started from `66cdfae` (official
+      `main` baseline `6af7abd`). `xr-ground-observer-test` covers production
+      mapping/state and source-order invariants; the updated production height,
+      interaction, loading-presenter and bilingual panel tests pass. The
+      tabletop workspace, console, endgame, trigger, scene, world, height,
+      board, input and loading host regressions also pass. No Android build or
+      worn-headset claim is implied by these checks.
 - [ ] Tabletop regressions pass and Android native/package build succeeds.
 - [ ] Test APK version/hash/signature are recorded separately from 1.2.17.
 - [ ] In-headset: choose ground, enter, 360-degree look, lean, return; no orders
@@ -75,3 +83,25 @@ Skirmish for this first prototype. The official 1.2.17 release is preserved.
 Only after the above decide whether to polish this mode, broaden to campaigns,
 or add a stabilized unit-follow camera. Stock model/detail limitations and the
 existing RTS audio presentation are acknowledged prototype questions.
+
+## Implemented prototype contract and open gates
+
+The View window exposes a bilingual Ground view action only while a live
+offline Skirmish can render stereo. Arming captures all controller/game input;
+a terrain-only ray accepts visible clear ground inside map margins, with
+blocking drawable, slope and nearby-height checks. Entry fixes a world-to-room
+anchor at 10 game units per metre and a 1.65 m nominal eye height; subsequent
+tracked head motion remains physical. The observer uses the existing per-eye
+stereo render camera, a 60 m render far plane, viewer-relative CPU visibility,
+bounded terrain coverage and a shader path without the tabletop volume clip.
+It draws an opaque background and hides the board, build/command/settings
+panels and decorations. A persistent bilingual card explains the logical
+B/cancel return (Y in left-handed mode); entry and exit use a brief black
+transition veil. All mode state is session-only; no layout save is performed.
+
+The test build, signature, version/hash and installation are intentionally
+owned by the parent build/review worktree. Physical acceptance remains open:
+headset stereo and horizon quality, scale, 360-degree head movement and lean,
+layout restoration, all input gates, left-handed return, renderer recovery,
+performance/comfort and model/detail judgment. This prototype does not
+authorize release, multiplayer, campaigns or replays.

@@ -4,6 +4,7 @@
 #include "XrCommands.h"
 #include "XrBuildRotation.h"
 #include "XrScene.h"
+#include "XrWorld.h"
 #include <cstdlib>
 struct XrControllerState {
 	XrPosef aim={{0,0,0,1},{0,0,0}}, hands[2]={{{0,0,0,1},{-.3f,0,0}},{{0,0,0,1},{.3f,0,0}}};
@@ -13,6 +14,9 @@ struct XrControllerState {
 };
 struct XrHello {
 	bool roomPoseLost=false;
+	XrObserverState observer;XrTime observerFadeStart=0;
+	bool rayVisible=false,rayHit=false,hoverVisible=false;
+	XrVector3f rayStart={},rayEnd={};
 	XrScene scene;bool inputArmed=true;
 	XrMenuState menu;XrCommandState commands;
 	XrBuildRotation buildRotation;
@@ -59,6 +63,10 @@ static int XrGameBoot_DefaultCameraPreset(){return hasFavorite ? 4:1;}
 static bool XrGameBoot_SaveCameraDefault(){if(cameraLocked || saveFails)return false;hasFavorite=true;return true;}
 static bool XrGameBoot_CanStereoWorld(){return canStereo;}
 static bool XrGameBoot_CanAdjustWorld(){return canStereo && !cameraLocked;}
+static bool observerGroundValid=true;
+static bool XrGameBoot_PickObserverGround(const XrSurface &,const XrPosef &,XrVector3f &ground,XrVector3f *room){
+	if(!observerGroundValid)return false;ground={500,500,20};if(room)*room={0,0,-1};return true;
+}
 static int baseViews=0;
 static bool XrGameBoot_ViewBase(){if(!XrGameBoot_CanAdjustWorld() || expanded)return false;++baseViews;return true;}
 static void placePanel(XrHello &,const XrView *){}
@@ -255,6 +263,21 @@ int main(int argc,char **argv)
 	const auto placed=x.surfaces[1];c.recenter=true;frame(c);
 	check(x.menu.page==6 && x.menu.open && x.scene.placed);
 	check(xrLength(xrSub(placed.pose.position,x.surfaces[1].pose.position))<.0001f);
+	// P25 production router: armed/active mode swallows every game action,
+	// requires release after entry and exit, and leaves workspace untouched.
+	x=XrHello{};x.controlsArmed=true;x.stereoWorld=true;canStereo=true;
+	const auto savedSurface=x.surfaces[1];const int beforeNav=navigations,beforePreset=presets;
+	check(x.observer.arm(true));c={};c.select=true;c.pan={1,1};c.zoom={1,1};frame(c);
+	check(x.observer.mode==XrObserverMode::Armed && !lastInput.select && navigations==beforeNav);
+	c={};frame(c);check(!x.observer.requireRelease);
+	observerGroundValid=false;c.select=true;frame(c);check(!x.rayHit && x.observer.mode==XrObserverMode::Armed);
+	c={};frame(c);observerGroundValid=true;c.select=true;frame(c);
+	check(x.observer.mode==XrObserverMode::Active && !lastInput.select && presets==beforePreset);
+	c.pan={1,1};c.zoom={1,1};frame(c);check(navigations==beforeNav && !lastInput.select);
+	c={};frame(c);c.back=true;frame(c);check(x.observer.mode==XrObserverMode::Off && !lastInput.back);
+	check(xrLength(xrSub(savedSurface.pose.position,x.surfaces[1].pose.position))==0);
+	c.select=true;frame(c);check(!lastInput.select && !x.controlsArmed);
+	c={};frame(c);check(x.controlsArmed);
 	check(remove(path)==0);
 	printf("PASS %d interaction routing checks\n",checks);
 }

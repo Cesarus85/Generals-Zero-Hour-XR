@@ -116,6 +116,10 @@ Utilities for large-scale code refactoring and fixes:
   `bash scripts/qa/xr-endgame-test.sh`; CXX optional. The result-card Canvas
   payloads (localized titles, shared hint, per-result accent) are covered by
   `xr-panel-text-test.sh`, which compiles the production updateMenuTextures.
+- `xr-ground-observer-test.sh` / `.cpp` - P25 host state/mapping and production
+  frame-order contract: held-button re-arm, human-scale stereo transform,
+  map/shroud gate helper, shader clipping mode and loading-presenter ownership.
+  Run `bash scripts/qa/xr-ground-observer-test.sh [configured-android-build]`.
 - `xr-build-controls-test.sh` / `.cpp` - P18.1 actual native building-preview
   rotation adapter plus physical hand mapping and editing-outline geometry.
   Includes missing/replaced ghost, line-build, tracking ownership, modal,

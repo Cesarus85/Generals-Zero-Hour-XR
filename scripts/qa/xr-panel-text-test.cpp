@@ -61,6 +61,7 @@ static int hoverPage=-1;static std::string hoverDetail;
 static std::string smallTitle;
 static std::string recoveryTitle;
 static int resultAccent=-1;static std::string resultTitle,resultDetail;
+static std::string observerTitle,observerDetail;
 static std::vector<std::string> lines(const std::string &s){
  std::vector<std::string> v;size_t start=0;
  do{size_t end=s.find('\n',start);v.push_back(s.substr(start,end-start));if(end==std::string::npos)break;start=end+1;}while(start<=s.size());return v;
@@ -96,6 +97,7 @@ static bool paintPanel(XrHello &,GLuint &texture,const std::string &title,const 
  if(kind==0)smallTitle=title;
  if(kind==2 && title==xrTr("Darstellung wird wiederhergestellt")){recoveryTitle=title;check(detail==xrTr("Die Spielwelt wird neu gezeichnet. Bitte die Trigger loslassen."));}
  if(kind==2 && hover>0){resultAccent=hover;resultTitle=title;resultDetail=detail;}
+ if(kind==2 && title==xrTr("Bodenansicht")){observerTitle=title;observerDetail=detail;}
  // Legacy kinds 0/2/6/7 only; the redesigned panels must use paint2.
  check(kind==0 || kind==2 || kind==6 || kind==7);
  if(output){for(const auto &s:{std::to_string(kind),title,detail,std::string()}){fwrite(s.data(),1,s.size(),output);fputc(0,output);}}
@@ -127,6 +129,15 @@ int main(int argc,char **argv){
   check(resultTitle==xrTr("Partie beendet") && resultAccent==3);
   check(resultDetail==xrTr("Die Partie ist entschieden.\nBeliebige Taste zum Schließen."));
   x.resultVisible=false;stubResult=XrEndgameResult::None;
+  // P25 armed, invalid-target and active return cards stay bilingual.
+  check(x.observer.arm(true));updateMenuTextures(x,100);
+  check(observerTitle==xrTr("Bodenansicht") && observerDetail==xrTr("Sichtbaren freien Boden mit Trigger wählen. B/Y bricht ab."));
+  x.rayVisible=true;x.rayHit=false;updateMenuTextures(x,100);
+  check(observerDetail==xrTr("Hier kein sicherer, sichtbarer Boden. Anderen Ort wählen; B/Y bricht ab."));
+  x.observer.neutral(true);check(x.observer.choose({500,500,20},{0,1.6f,0},{0,0,-1}));
+  updateMenuTextures(x,100);check(observerDetail==xrTr("B: Zurück zum Tisch"));
+  x.layout.leftHanded=true;updateMenuTextures(x,100);check(observerDetail==xrTr("Y: Zurück zum Tisch"));
+  x.observer.cancel();x.layout.leftHanded=false;x.rayVisible=false;
   x.arranging=true;updateMenuTextures(x,100);check(smallTitle==(lang==XrLanguage::German ? "Fertig":"Done"));
   x.arranging=false;updateMenuTextures(x,100);check(smallTitle=="UI");
   // Commands compact: title, sections, group badges and context detail.
@@ -167,7 +178,8 @@ int main(int argc,char **argv){
    const auto &c=captures[1];check(stateOf(c,20+page)&kXrStateActive);}
   {const auto &c=captures[1];
    const std::string expected=std::string(xrTr("Sprache"))+"|"+xrTr(lang==XrLanguage::German ? "Deutsch":"English");
-   check(hasLabel(c,expected));}
+   check(hasLabel(c,expected));check(hasLabel(c,xrTr("Bodenansicht · Ort wählen")));
+   check(hasLabel(c,xrTr("Spiel: Tisch; Bodenansicht optional")));}
   for(int tier=0;tier<3;++tier){x.layout.resolutionTier=tier;updateMenuTextures(x,100);
    const char *name=tier==0 ? "Ausgewogen":tier==1 ? "Hoch":"Ultra+";
    check(hasLabel(captures[1],std::string(xrTr("Auflösung"))+"|"+xrTr(name)));}
