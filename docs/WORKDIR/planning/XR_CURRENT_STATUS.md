@@ -45,15 +45,17 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Current product baseline
 
-**Current private offline preview:** 1.2.25 (`v1.2.25-xr-preview`).
+**Current private offline preview:** [1.2.25](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview).
 Ground View now allows entry during live Campaign as well as offline Skirmish.
 The same central gate blocks menus, cinematics, scripted camera movement,
 loading, placement and camera locks; the XR runtime cancels observation on
-mode, tracking, result or rendering transitions. The native ARM64 build and
-observer host check pass. The Campaign-specific worn-headset transition,
-performance and locomotion gate is open; tabletop remains the supported
-fallback. The release APK hash and source merge are recorded in the 1.2.25
-release notes and audit once published. The repository remains private.
+mode, tracking, result or rendering transitions. The merged gameplay source
+is `652f46f`; native ARM64, both Android debug flavors and XR host checks pass.
+The release-signed APK is versionCode 10225, SHA-256
+`62f2b08fcdf1168e5f639465de7e654ca2a05270cd66a62d324c1c91ce27c089`.
+The Quest was not ADB-connected during packaging. The Campaign-specific
+worn-headset transition, performance and locomotion gate is open; tabletop
+remains the supported fallback. The repository remains private.
 
 **Previous private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
 PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates
@@ -220,7 +222,11 @@ text-field task. The native Android setup/importer input is separate.
 
 ## Release and device baseline
 
-The current 1.2.25 release expands Ground View to live Campaign gameplay.
+The current [1.2.25 release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview)
+expands Ground View to live Campaign gameplay. Its signed APK SHA-256 is
+`62f2b08fcdf1168e5f639465de7e654ca2a05270cd66a62d324c1c91ce27c089`;
+it was built from merged gameplay source `652f46f` and has not been installed
+or played on Quest yet.
 Automated checks cannot certify campaign mission cutscenes, end transitions,
 performance or headset comfort; the 1.2.24 evidence below is historical.
 
