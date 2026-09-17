@@ -138,3 +138,11 @@ languages. These are basic collision guards, not a full character controller:
 physical leaning cannot be constrained by them and some visual clutter may
 stop movement. Worn-headset comfort, speed, turning direction, terrain
 following, collision quality and performance still require direct testing.
+
+P25.1 test APK versionCode 10219 / `1.2.19-xr-ground-movement` was built from
+`ee0f497` and installed as an in-place Quest 3 update. SHA-256:
+`878dd8ef2e9ea0fd6399648049f88d6b08187d03abce7ce7301cd95c4e97527c`.
+ARM64 native and both Android debug flavors compile; signed XR packaging,
+package identity and v3 production certificate verify. Host checks: observer
+56, interaction 148, bilingual panel 20,761. Movement has not yet been worn-
+headset tested.

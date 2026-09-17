@@ -46,40 +46,44 @@ the detailed narrative and command transcripts out of this dashboard.
 ## Current product baseline
 
 **Active experiment:** [PLAN-025: ground view and stick locomotion](PLAN-025_XR_GROUND_OBSERVER.md).
-The maintainer authorized a separate offline Skirmish prototype. Source is
-implemented and reviewed on `codex/xr-ground-observer-prototype`, source
-checkpoint `d955d29` (official `main` baseline `6af7abd`). Native ARM64 build,
-signed XR release packaging, both Android debug flavors and focused host
-regressions pass. Separate test APK: **10218 / `1.2.18-xr-ground-observer`**,
+The latest prototype source is `ee0f497` on
+`codex/xr-ground-observer-prototype` (official `main` baseline `6af7abd`).
+The first ground-view checkpoint was `d955d29`; its earlier test APK was
+**10218 / `1.2.18-xr-ground-observer`**,
 `build/apk/Generals-Zero-Hour-XR-1.2.18-ground-observer.apk`, SHA-256
 `88d8e4e87ebedd28cb01712aecd322b2c518fd87bfd0a1b5c75cdd989887ba1e`.
-Package ID, ARM64-only ABI, non-debuggable manifest, production certificate,
-absence of retail archives and disabled debug cheats verified. The APK was
-installed on Quest 3 serial `2G0YC5ZG9609PY` using `adb install -r`:
-Android reports versionCode 10218 / versionName `1.2.18-xr-ground-observer`
-and the original first-install date, so app data was retained. No worn-headset
-acceptance has been reported. The private
-1.2.17 release remains authoritative and its preserved APK hash is unchanged;
-multiplayer remains paused. Source release defaults were not bumped.
+The user liked that installed view. The private 1.2.17 release remains
+authoritative; multiplayer remains paused. Source release defaults were not
+bumped for either prototype APK.
 
-The user reports that the installed ground view looks great. P25.1 adds
-physical-left-stick movement and physical-right-stick smooth yaw to the draft
-branch, with terrain, shroud, boundary and drawable guards. Its source and
-host checks pass; native packaging and a new headset test are pending. The
-installed 10218 APK above does **not** contain P25.1 movement.
+The user reports that the initial ground view looks great. P25.1 adds physical
+left-stick movement and physical right-stick smooth yaw, with terrain, shroud,
+boundary and drawable guards. Source/host tests, native ARM64, both Android
+debug flavors and signed XR packaging pass. Test APK **10219 /
+`1.2.19-xr-ground-movement`**, saved as
+`build/apk/Generals-Zero-Hour-XR-1.2.19-ground-movement.apk`, SHA-256
+`878dd8ef2e9ea0fd6399648049f88d6b08187d03abce7ce7301cd95c4e97527c`.
+It was installed over 10218 on Quest 3 `2G0YC5ZG9609PY`; Android reports
+10219 and the original first-install date. Headset movement, comfort and
+collision behavior are untested. The 10218 artifact above remains the last
+visually reported build.
 
-**Next:** in offline Skirmish open UI > View > Ground view, release the trigger, then
-click visible open ground. Inspect stereo/scale/horizon, turn and lean, then
-return with B (Y left-handed). Verify unchanged table/panel positions, no
-accidental orders, handedness and focus/loading/end-of-match recovery. Do not
-merge or promote this prototype before physical acceptance.
+**P25.1 test:** in offline Skirmish enter Bodenansicht/Ground view, release
+trigger and center sticks, then move with physical left stick and turn with
+physical right stick. B (Y for left-handed gameplay) returns to the table.
+Inspect turning direction/pivot, slope and obstacle stops, frame rate and
+comfort; verify the table and panels remain where they were.
+
+Also inspect stereo/scale/horizon, physical lean, handedness and
+focus/loading/end-of-match recovery. Verify that no gameplay orders occur.
+Do not merge or promote this prototype before physical acceptance.
 
 | Area | Current state | Acceptance level |
 |---|---|---|
 | Product identity | Generals: Zero Hour XR; update-compatible package ID retained | Built, installed and resource-verified |
 | Game modes | Campaign and offline AI Skirmish run in the XR tabletop presentation | Repeated user headset use; mission-specific coverage remains incremental |
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
-| View model | The released app is tabletop-only; the isolated P25 branch adds ground view and the P25.1 left-stick walk/right-stick turn extension for offline Skirmish. Videos and full native dialogs stay upright. | P25 10218 installed and user liked its appearance; P25.1 host verified, build and headset gate open |
+| View model | The released app is tabletop-only; the isolated P25 branch adds ground view and the P25.1 left-stick walk/right-stick turn extension for offline Skirmish. Videos and full native dialogs stay upright. | P25 10218 visual impression positive; P25.1 10219 built and installed, headset movement/comfort gate open |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
 | Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
 | Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |
