@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-17 — private 1.2.24 release preparation
 
-**Publication state:** The non-debuggable 1.2.17 APK remains the current release in the **private** repository while 1.2.24 is prepared. Public visibility, especially under the retained product name, requires separate review of EA's trademark terms.
+**Publication state:** The non-debuggable 1.2.17 APK remains the current release in the **private** repository while the verified 1.2.24 APK is uploaded. Public visibility, especially under the retained product name, requires separate review of EA's trademark terms.
 
 ## 1.2.24 offline preview candidate
 
@@ -11,22 +11,33 @@ shortcut layout to `main` at `9792d947`. The 1.2.23 test APK was installed over
 the previous app on Quest 3, and the maintainer accepted the final shortcut
 appearance. The release-preparation branch raises the committed Android
 defaults to versionCode `10224` / `1.2.24-xr-preview`; package ID, ARM64 ABI,
-private certificate and disabled debug cheats are retained. A signed local
-candidate hashes to
-`770a2f3aca58e1ee431e573cf7f7ee9eb1b5444544a2a44a36cff10e7f6d883d`.
-The final post-merge source build, uploaded asset and fresh download must be
-compared before this hash becomes the authoritative release hash.
+private certificate and disabled debug cheats are retained. The final APK was
+rebuilt from merged `main` commit `d72a7969`, with no version override. It is
+125,028,534 bytes and hashes to
+`bb685046bcfcdcd5222b648ac3ebe3a008dbe19bfc5a863b18b4ba749c17195e`.
+The APK's `libmain.so` SHA-256 is
+`a22343a882592fcbec2d2c9e37780326c9e78d46b89ff63b51d92a4b383450eb`,
+matching the native ARM64 build. Android v3 verifies with the established
+certificate `a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`;
+the package is non-debuggable, ARM64-only and contains no retail `.big`,
+`.scb`, `.map` or `.w3d` files. The earlier pre-merge candidate had a
+different APK hash and is not the release asset.
 
 Local checks on the merged P25 source pass: observer 56, interaction 148,
 menu/ray 363, loading presenter 152, panel text 20,765, workspace 781,
 scene 1,280 and endgame 33. A world-copy/MRT test ran on the Quest 3 Adreno
-740 and passed 3,321 checks. The 10223 signed APK installed in place with
-the earlier `firstInstallTime`. GitHub Actions was skipped because the account
-quota is exhausted; local evidence is not represented as hosted CI. Ground
+740 and passed 3,321 checks. The final 10224 signed APK installed in place on
+Quest 3 `2G0YC5ZG9609PY`; Android reports the earlier `firstInstallTime`, and
+its device-side `base.apk` SHA-256 exactly matches the final file. GitHub
+Actions was skipped because the account quota is exhausted; local evidence
+is not represented as hosted CI. Ground
 View movement, collision, comfort and longer recovery sequences are still
 experimental, not accepted by the button-layout report. The private offline
 preview can disclose that limit without expanding campaign or multiplayer
 support.
+
+The GitHub asset digest, fresh independent download, checksum sidecar, tag
+and latest-release link are still pending publication verification.
 
 ## Candidate and provenance
 
