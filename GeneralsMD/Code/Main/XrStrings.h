@@ -7,6 +7,17 @@ enum class XrLanguage {German,English};
 inline XrLanguage g_xrLanguage=XrLanguage::German; // XR thread only
 struct XrTranslation {const char *de,*en;};
 inline constexpr XrTranslation kXrTranslations[]={
+	// GeneralsX @feature Codex 17/09/2026 P25 bilingual observer controls.
+	{"Bodenansicht","Ground view"},
+	{"Bodenansicht · Ort wählen","Ground view · choose location"},
+	{"Nur Offline-Gefecht: Bodenansicht wählen, dann sichtbaren freien Boden anklicken. B/Y kehrt zurück.",
+	 "Offline Skirmish only: choose Ground view, then click visible open ground. B/Y returns."},
+	{"B: Zurück zum Tisch","B: Return to table"},
+	{"Y: Zurück zum Tisch","Y: Return to table"},
+	{"Sichtbaren freien Boden mit Trigger wählen. B/Y bricht ab.","Choose visible open ground with the trigger. B/Y cancels."},
+	{"Hier kein sicherer, sichtbarer Boden. Anderen Ort wählen; B/Y bricht ab.",
+	 "No safe visible ground here. Choose another spot; B/Y cancels."},
+	{"Spiel: Tisch; Bodenansicht optional","Game: table; Ground view optional"},
  {"Bearbeitung: %s · %.2f m · Karte %.1fx · P19.1","Editing: %s · %.2f m · Map %.1fx · P19.1"},
  // GeneralsX @feature Codex 14/09/2026 P19.1 optional placement wizard.
  {"Spielplatz einrichten · P19.1","Set up play space · P19.1"},

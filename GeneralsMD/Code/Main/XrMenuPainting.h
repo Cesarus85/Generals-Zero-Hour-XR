@@ -83,6 +83,17 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 	if(x.recoveryVisible && (!x.recoveryTexture || recoveryLanguage!=g_xrLanguage))
 		if(paintPanel(x,x.recoveryTexture,xrTr("Darstellung wird wiederhergestellt"),
 			xrTr("Die Spielwelt wird neu gezeichnet. Bitte die Trigger loslassen."),"",-1,2))recoveryLanguage=g_xrLanguage;
+	// GeneralsX @feature Codex 17/09/2026 Reuse the existing readable XR card.
+	if(x.observer.mode!=XrObserverMode::Off) {
+		const std::string key=std::to_string(static_cast<int>(g_xrLanguage))+
+			(x.layout.leftHanded ? "Y":"B")+std::to_string(int(x.observer.mode))+
+			(x.observer.mode==XrObserverMode::Armed && x.rayVisible && !x.rayHit ? "invalid":"valid");
+		if(key!=x.observerHintKey && paintPanel(x,x.observerHintTexture,xrTr("Bodenansicht"),
+			x.observer.mode==XrObserverMode::Active ?
+				xrTr(x.layout.leftHanded ? "Y: Zurück zum Tisch" : "B: Zurück zum Tisch"):
+				xrTr(x.rayVisible && !x.rayHit ? "Hier kein sicherer, sichtbarer Boden. Anderen Ort wählen; B/Y bricht ab.":
+					"Sichtbaren freien Boden mit Trigger wählen. B/Y bricht ab."),"",-1,2))x.observerHintKey=key;
+	}
 	// GeneralsX @feature Muse 16/09/2026 Match-result card: accent-colored
 	// kind-2 card from the read-only latch; repainted on result/language
 	// change, kept across the transition to statistics.
@@ -261,9 +272,10 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 				label(14,xrTr("Einheitenbefehle"));label(15,xrTr("Fenster einstellen"));label(17,xrTr("Schließen"));
 			} else {
 				detail=XrGameBoot_PresentationStatus(x.stereoVisible,x.stereoWorld)+"\n"+
-					(x.menu.hover==11 ? XrGameBoot_LanguageStatus():x.performance.status());
+					(x.menu.hover==11 ? XrGameBoot_LanguageStatus():x.menu.hover==16 ?
+						xrTr("Nur Offline-Gefecht: Bodenansicht wählen, dann sichtbaren freien Boden anklicken. B/Y kehrt zurück."):x.performance.status());
 				label(-10,xrTr("Darstellung"));
-				label(-20,xrTr("Spiel: immer Tabletop"));label(-21,xrTr("Videos: Bildschirm"));
+				label(-20,xrTr("Spiel: Tisch; Bodenansicht optional"));label(-21,xrTr("Videos: Bildschirm"));
 				auto toggle=[&](int id,const char *name,bool on) {
 					label(id,std::string(xrTr(name))+"|"+xrTr(on ? "AN":"AUS"));if(on)mark(id,kXrStateOn);};
 				toggle(4,"Lebenspunkte",x.layout.healthBars);
@@ -281,6 +293,8 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 				toggle(8,"Linkshändig",x.layout.leftHanded);
 				label(11,std::string(xrTr("Sprache"))+"|"+xrTr(x.layout.language==XrLanguage::German ? "Deutsch":"English"));
 				label(9,xrTr("Foto-Anordnung"));label(7,xrTr("Schließen"));
+				label(16,xrTr("Bodenansicht · Ort wählen"));
+				if(!x.stereoVisible || !XrGameBoot_CanObserveGround())mark(16,kXrStateDisabled);
 			}
 		}
 		if(x.menu.hover>=0)mark(x.menu.hover,kXrStateHover);

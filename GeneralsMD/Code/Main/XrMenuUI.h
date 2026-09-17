@@ -59,8 +59,15 @@ static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 		return;
 	}
 	if(x.menu.page==3) {
-		if(action<0 || action>15) return;
+		if(action<0 || action>16) return;
 		if(action<=3)return; // P15 reserved status/help slots; no flat mode.
+		if(action==16) {
+			if(x.stereoVisible && XrGameBoot_CanObserveGround() && x.observer.arm(true)) {
+				x.menu.open=false;x.controlsArmed=false;x.inputArmed=false;x.grab.cancel();
+				x.menu.click.cancel();x.commands.input.click.cancel();XrGameBoot_CancelTarget();
+			}
+			return;
+		}
 		// GeneralsX @performance Codex 14/09/2026 Session-only experiments,
 		// no layout save/migration and no simulation/input commands.
 		if(action>=12 && action<=15) {

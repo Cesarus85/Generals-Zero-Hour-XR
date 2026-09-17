@@ -10,6 +10,7 @@
 #include "XrEndgame.h"
 #include "XrLayers.h"
 #include "XrPerformance.h"
+#include "XrWorld.h"
 #include <vector>
 #include <map>
 #include <cstdio>
@@ -21,6 +22,8 @@ struct XrHello {
 	bool stereoVisible=false,stereoWorld=false;
 	bool recoveryVisible=false;GLuint recoveryTexture=0;
 	bool resultVisible=false;GLuint resultTexture=0;std::string resultKey;
+	XrObserverState observer;GLuint observerHintTexture=0;std::string observerHintKey;
+	bool rayVisible=false,rayHit=false;
  GLuint uiButtonTexture=0,commandButtonTexture=0,commandsTexture=0,settingsTexture=0,hoverTexture=0;
  std::string commandsKey,settingsKey,hoverCandidate,hoverKey;
  bool splitVisible=true,arranging=false,pointerVisible=false,pointerPressed=false,hoverVisible=false;
@@ -42,6 +45,7 @@ static void XrGameBoot_TacticalState(int &mode,int &group,bool &queue){mode=tact
 static std::string XrGameBoot_WorldHoverInfo(){return {};}
 static bool building=false;
 static bool XrGameBoot_CanRotatePlacement(){return building;}
+static bool XrGameBoot_CanObserveGround(){return true;}
 static float XrGameBoot_PlacementDegrees(){return 90;}
 static std::string nativeHover;
 static std::string XrGameBoot_HoverInfo(float,float){return nativeHover;}

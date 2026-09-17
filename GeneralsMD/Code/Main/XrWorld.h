@@ -15,7 +15,68 @@ struct XrWorldFrame {
 	bool multiviewStereo=true;
 	bool atlasStereo=false; // P13 opt-in: same pixels; game performance gate open.
 	bool elideWorldCopy=true; // P14 only after the current stereo visibility gate.
+	// GeneralsX @feature Codex 17/09/2026 P25 separate, non-persistent human-scale view.
+	bool observer=false;
+	XrVector3f observerGround={};
+	XrVector3f observerHead={}; // Room-space midpoint at entry, not updated by simulation.
+	XrVector3f observerForward={0,0,-1}; // Horizontal room heading at entry.
 };
+constexpr float kXrObserverUnitsPerMetre=10.0f;
+constexpr float kXrObserverEyeHeightMetres=1.65f;
+constexpr float kXrObserverFarMetres=60.0f;
+enum class XrObserverMode {Off,Armed,Active};
+struct XrObserverState {
+	XrObserverMode mode=XrObserverMode::Off;
+	bool requireRelease=false,selectHeld=false;
+	XrVector3f ground={},head={},forward={0,0,-1};
+	bool arm(bool eligible) {
+		if(!eligible || mode!=XrObserverMode::Off)return false;
+		mode=XrObserverMode::Armed;requireRelease=true;selectHeld=true;return true;
+	}
+	void neutral(bool released) {if(released){requireRelease=false;selectHeld=false;}}
+	bool canChoose(bool pressed) {
+		const bool edge=pressed && !selectHeld && !requireRelease && mode==XrObserverMode::Armed;
+		selectHeld=pressed;return edge;
+	}
+	bool choose(XrVector3f p,XrVector3f h,XrVector3f f) {
+		float m[16];if(mode!=XrObserverMode::Armed || !xrObserverValidGroundForState(p) ||
+			!xrObserverWorldToRoomForState(m,p,h,f))return false;
+		ground=p;head=h;forward=f;mode=XrObserverMode::Active;requireRelease=true;return true;
+	}
+	void cancel() {mode=XrObserverMode::Off;requireRelease=true;selectHeld=true;}
+private:
+	static bool xrObserverValidGroundForState(XrVector3f p) {return std::isfinite(xrLength(p));}
+	static bool xrObserverWorldToRoomForState(float *m,XrVector3f p,XrVector3f h,XrVector3f f);
+};
+// Game XY is horizontal, game Z is up; room Y is up. The fixed entry
+// anchor allows subsequent physical head rotation/translation at 1:1 scale.
+inline bool xrObserverWorldToRoom(float *m,XrVector3f ground,XrVector3f head,XrVector3f forward) {
+	const float length=sqrtf(forward.x*forward.x+forward.z*forward.z);
+	if(!std::isfinite(length) || length<.5f || !std::isfinite(xrLength(ground)) ||
+		!std::isfinite(xrLength(head)))return false;
+	forward={forward.x/length,0,forward.z/length};
+	const XrVector3f right={-forward.z,0,forward.x};
+	memset(m,0,16*sizeof(float));const float scale=1/kXrObserverUnitsPerMetre;
+	m[0]=right.x*scale;m[2]=right.z*scale;
+	m[4]=forward.x*scale;m[6]=forward.z*scale;m[9]=scale;
+	m[12]=head.x-m[0]*ground.x-m[4]*ground.y;
+	m[13]=head.y-kXrObserverEyeHeightMetres-scale*ground.z;
+	m[14]=head.z-m[2]*ground.x-m[6]*ground.y;m[15]=1;
+	return true;
+}
+inline bool XrObserverState::xrObserverWorldToRoomForState(float *m,XrVector3f p,XrVector3f h,XrVector3f f) {
+	return xrObserverWorldToRoom(m,p,h,f);
+}
+inline bool xrObserverContainsSphere(XrVector3f eyeWorld,XrVector3f center,float radius) {
+	if(!std::isfinite(radius) || radius<0)return false;
+	const auto d=xrSub(center,eyeWorld);const float limit=kXrObserverFarMetres*kXrObserverUnitsPerMetre+radius+40;
+	return d.x*d.x+d.y*d.y+d.z*d.z<=limit*limit;
+}
+inline bool xrObserverValidGround(XrVector3f p,XrVector3f lo,XrVector3f hi,bool clear,bool modelBlocking) {
+	constexpr float margin=24; // Stay off clipped map borders and away from model hit.
+	return clear && !modelBlocking && std::isfinite(xrLength(p)) &&
+		p.x>=lo.x+margin && p.x<=hi.x-margin && p.y>=lo.y+margin && p.y<=hi.y-margin;
+}
 
 inline float xrMapCoverage(float zoom,float tableWidth) {
 	return std::clamp(zoom,.5f,3.0f)*std::clamp(tableWidth/1.1f,.5f,3.64f);
@@ -102,6 +163,11 @@ inline bool xrWorldToBoard(float *m,XrVector3f center,XrVector3f right,float spa
 	return true;
 }
 inline void xrWorldEyeClip(float *out,const XrWorldFrame &frame,int eye,const float *worldToBoard) {
+	if(frame.observer) {
+		float view[16],proj[16];matViewFromPose(view,frame.eyes[eye]);
+		matPerspectiveFromFov(proj,frame.fov[eye],.05f,kXrObserverFarMetres);
+		float vm[16];matMultiply(vm,view,worldToBoard);matMultiply(out,proj,vm);return;
+	}
 	float board[16],view[16],proj[16],room[16],vm[16];surfaceMatrix(frame.board,board);
 	for(int i=8;i<11;++i) board[i]*=frame.board.width;
 	matMultiply(room,board,worldToBoard);matViewFromPose(view,frame.eyes[eye]);

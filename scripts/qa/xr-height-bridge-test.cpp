@@ -9,6 +9,7 @@ static XrWorldFrame s_worldFrame;
 static float s_worldMapping[16]={},s_worldAspect=0,s_worldSpan=0,s_worldMaxHeight=0;
 static bool s_mappingReady=false,active=true,split=true;
 static bool XrGameBoot_CanStereoWorld(){return active;}
+static bool XrGameBoot_CanObserveGround(){return active;}
 static bool GX_XR_SplitUIAllowed(){return split;}
 struct View {
  Coord3D position={1000,700,45};float height=500,angle=0;int w=1280,h=576;
@@ -42,6 +43,15 @@ int main(){
  check(fabsf(xrInversePoint(s_worldMapping,{}).z-80)<.001f);
  view.height=250;check(xrPrepareWorldMapping());check(fabsf(s_worldSpan*2-span)<.001f);
  s_worldFrame.coverage=2;check(xrPrepareWorldMapping());check(s_worldSpan==span);
+ // GeneralsX @test Codex 17/09/2026 The production adapter selects an
+ // independent human-scale mapping and does not reuse tactical camera state.
+ s_worldFrame.observer=true;s_worldFrame.observerGround={600,500,20};
+ s_worldFrame.observerHead={.1f,1.5f,-.2f};s_worldFrame.observerForward={0,0,-1};
+ check(xrPrepareWorldMapping());
+ const auto observerFloor=xrTransformPoint(s_worldMapping,s_worldFrame.observerGround);
+ check(fabsf(observerFloor.y-(1.5f-kXrObserverEyeHeightMetres))<.0001f);
+ check(s_worldSpan==kXrObserverFarMetres*kXrObserverUnitsPerMetre);
+ s_worldFrame.observer=false;
  view.w=0;check(!xrPrepareWorldMapping() && !s_mappingReady);view.w=1280;
  terrain.extent.lo.z=200;check(!xrPrepareWorldMapping() && !s_mappingReady);terrain.extent.lo.z=0;
  TheTerrainLogic=nullptr;check(!xrPrepareWorldMapping() && !s_mappingReady);TheTerrainLogic=&terrain;
