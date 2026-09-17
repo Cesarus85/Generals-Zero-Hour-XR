@@ -54,6 +54,8 @@ is `652f46f`; release packaging is merged at `5938257`. Native ARM64, both
 Android debug flavors and XR host checks pass.
 The release-signed APK is versionCode 10225, SHA-256
 `dcd79e4d6be706f0ddd01d01416d321abd977a37aad768d750232bd1fc65e009`.
+Release tag `v1.2.25-xr-preview` resolves to `6b50f74`; GitHub marks it
+latest, and a fresh asset download matches the local APK and checksum sidecar.
 The Quest was not ADB-connected during packaging. The Campaign-specific
 worn-headset transition, performance and locomotion gate is open; tabletop
 remains the supported fallback. The repository remains private.
