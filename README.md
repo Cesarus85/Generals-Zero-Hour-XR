@@ -32,7 +32,7 @@ The **supported preview path is offline play**. Human LAN/Internet multiplayer, 
 
 Download the release-signed [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.24-xr-preview/Generals-Zero-Hour-XR.apk) from the [1.2.24 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview). This is the current offline build, not an experimental LAN diagnostic APK or an older debug-signed preview. The repository and release remain private; the links require repository access.
 
-- APK SHA-256: `770a2f3aca58e1ee431e573cf7f7ee9eb1b5444544a2a44a36cff10e7f6d883d`
+- APK SHA-256: `bb685046bcfcdcd5222b648ac3ebe3a008dbe19bfc5a863b18b4ba749c17195e`
 - Android package: `com.generalsx.zerohour.xr` (retained for update compatibility)
 - Android versionCode: `10224`; versionName: `1.2.24-xr-preview`.
 

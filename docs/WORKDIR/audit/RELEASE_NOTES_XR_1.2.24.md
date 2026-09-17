@@ -10,7 +10,7 @@ simulation, multiplayer protocol and retail data are unchanged.
 
 Download `Generals-Zero-Hour-XR.apk` and its `.sha256` file from this release.
 The APK SHA-256 is
-`770a2f3aca58e1ee431e573cf7f7ee9eb1b5444544a2a44a36cff10e7f6d883d`.
+`bb685046bcfcdcd5222b648ac3ebe3a008dbe19bfc5a863b18b4ba749c17195e`.
 With Quest Developer Mode enabled, connect the headset and run:
 
 ```sh

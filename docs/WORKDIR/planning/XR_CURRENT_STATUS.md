@@ -49,6 +49,12 @@ the detailed narrative and command transcripts out of this dashboard.
 PR #15 merged the P25 source into `main` at `9792d947`. The private 1.2.24
 release candidate is being prepared from this offline-only baseline; the
 experimental LAN branch remains separate.
+PR #16 merged the version/guide update at `d72a7969`. The final signed APK
+was built from that merged source as 10224 / `1.2.24-xr-preview`, SHA-256
+`bb685046bcfcdcd5222b648ac3ebe3a008dbe19bfc5a863b18b4ba749c17195e`.
+It update-installed on Quest 3 `2G0YC5ZG9609PY`; device-side `base.apk`
+matches and the original first-install date is intact. GitHub publication
+and fresh-download verification remain open.
 The first ground-view checkpoint was `d955d29`; its earlier test APK was
 **10218 / `1.2.18-xr-ground-observer`**,
 `build/apk/Generals-Zero-Hour-XR-1.2.18-ground-observer.apk`, SHA-256
