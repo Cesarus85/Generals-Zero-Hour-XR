@@ -5,6 +5,7 @@
 #include "XrCommands.h"
 #include "XrLayout.h"
 #include "XrTracking.h"
+#include "XrWorld.h"
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
@@ -25,6 +26,7 @@ struct XrHello {
 	bool loadingPresentation=false,arranging=true,controlsArmed=true,inputArmed=true;
 	bool rayVisible=true,pointerVisible=true,hoverVisible=true;
 	bool recoveryVisible=false;
+	XrObserverState observer;bool renderedObserver=true;XrTime observerFadeStart=0;
 	XrMenuState menu;XrCommandState commands;XrSurfaceGrab grab;XrLayout layout;
 	XrTime previousInputTime=1;int controls=0;
 	unsigned frame=0,viewWidth=1000,viewHeight=1100;
@@ -81,9 +83,12 @@ XRAPI_ATTR XrResult XRAPI_CALL xrEndFrame(XrSession,const XrFrameEndInfo *end){
 #include "xr-loading-presenter.inc"
 int main(){
 	XrHello x;bool quit=false;
+	check(x.observer.arm(true));
 	{
 		XrLoadingPresenter presenter(x,42,quit);check(callback && !presenter.frame.consumed);
+		check(x.observer.mode==XrObserverMode::Armed && x.renderedObserver);
 		controller.select=true;callback(callbackContext);check(!keys.back());
+		check(x.observer.mode==XrObserverMode::Off && !x.renderedObserver);
 		check(ends==2 && begins==1 && draws==2 && !begun && !quit);
 		controller.select=false;callback(callbackContext);controller.select=true;callback(callbackContext);
 		check(keys.back());controller.select=false;
@@ -98,8 +103,10 @@ int main(){
 	}
 	check(!callback && !callbackContext && !keys.back() && !x.loadingPresentation);
 	// Normal game frame leaves outer frame ownership completely untouched.
+	check(x.observer.arm(true));x.renderedObserver=true;
 	begun=true;const auto oldEnds=ends;{XrLoadingPresenter unused(x,42,quit);}
 	check(begun && ends==oldEnds);
+	check(x.observer.mode==XrObserverMode::Armed && x.renderedObserver);
 	// A failed eye still balances the frame and leaves via the movie abort path.
 	drawOK=false;{XrLoadingPresenter broken(x,42,quit);callback(callbackContext);check(quit && broken.frame.failed && !begun);}
 	check(!keys.back() && !callback);

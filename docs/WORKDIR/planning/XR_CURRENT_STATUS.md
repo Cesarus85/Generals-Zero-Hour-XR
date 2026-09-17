@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-16
+**Updated:** 2026-09-17
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`
@@ -14,7 +14,8 @@ not interchangeable.
 
 1. `AGENTS.md` for repository-wide engineering rules.
 2. This file for the current XR baseline, open gates and next work.
-3. `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md` when working on P21.
+3. `PLAN-025_XR_GROUND_OBSERVER.md` for the current experimental P25 branch;
+   `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md` for the shipped P21 UI.
 4. `MULTIPLAYER_STATUS.md` for the paused QTR-MP evidence and exact resume
    sequence; `../audit/RELEASE_PREPARATION_XR.md` for first-release gates.
 5. `PLAN-023_QUEST_TABLETOP_RECOVERY.md` for detailed architecture, decisions,
@@ -44,12 +45,66 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Current product baseline
 
+**Active experiment:** [PLAN-025: ground view and stick locomotion](PLAN-025_XR_GROUND_OBSERVER.md).
+The latest prototype source is `5e421cb` on
+`codex/xr-ground-observer-prototype` (official `main` baseline `6af7abd`).
+The first ground-view checkpoint was `d955d29`; its earlier test APK was
+**10218 / `1.2.18-xr-ground-observer`**,
+`build/apk/Generals-Zero-Hour-XR-1.2.18-ground-observer.apk`, SHA-256
+`88d8e4e87ebedd28cb01712aecd322b2c518fd87bfd0a1b5c75cdd989887ba1e`.
+The user liked that installed view. The private 1.2.17 release remains
+authoritative; multiplayer remains paused. Source release defaults were not
+bumped for either prototype APK.
+
+The user reports that the initial ground view looks great. P25.1 adds physical
+left-stick movement and physical right-stick smooth yaw, with terrain, shroud,
+boundary and drawable guards. Source/host tests, native ARM64, both Android
+debug flavors and signed XR packaging pass. Test APK **10219 /
+`1.2.19-xr-ground-movement`**, saved as
+`build/apk/Generals-Zero-Hour-XR-1.2.19-ground-movement.apk`, SHA-256
+`878dd8ef2e9ea0fd6399648049f88d6b08187d03abce7ce7301cd95c4e97527c`.
+It was installed over 10218 on Quest 3 `2G0YC5ZG9609PY`; Android reports
+10219 and the original first-install date. Headset movement, comfort and
+collision behavior are not separately verified by the user's layout feedback.
+
+**P25.1 test:** in offline Skirmish enter Bodenansicht/Ground view, release
+trigger and center sticks, then move with physical left stick and turn with
+physical right stick. B (Y for left-handed gameplay) returns to the table.
+Inspect turning direction/pivot, slope and obstacle stops, frame rate and
+comfort; verify the table and panels remain where they were.
+
+**P25.2 headset feedback:** the bilingual Bodenansicht / Ground View button
+works and triggers the same ground-placement flow as UI > View. Its scattered,
+unequal-size presentation was rejected. The earlier APK **10220 /
+`1.2.20-xr-ground-button`** is
+`build/apk/Generals-Zero-Hour-XR-1.2.20-ground-button.apk`, SHA-256
+`1faa24d4ac50f82184a3ed2170b9e4df87248349c7cf54420562813bbdc3a8bc`.
+It was installed on Quest 3 `2G0YC5ZG9609PY`.
+
+**P25.3 installed refinement pending headset inspection:** UI, Commands and
+Ground View are equal-width buttons in a vertical column beside the board,
+following its movement independently of the build window. The user liked the
+column, but asked twice for it to be farther away. The current test places it
+16 cm behind its first position and yaws it 15 degrees inward toward the
+player while keeping it upright. Host menu/ray checks pass (363); native
+ARM64, both Android debug flavors and signed XR packaging pass. Test APK
+**10223 / `1.2.23-xr-button-aim`** is
+`build/apk/Generals-Zero-Hour-XR-1.2.23-button-aim.apk`, SHA-256
+`56788cc8549078054ab15515038d23389099d796614bd55dd3f0be09158e2c4b`.
+It is installed as an in-place update on Quest 3 `2G0YC5ZG9609PY`; the
+original first-install date remains intact. The new depth and inward angle
+await headset inspection.
+
+Also inspect stereo/scale/horizon, physical lean, handedness and
+focus/loading/end-of-match recovery. Verify that no gameplay orders occur.
+Do not merge or promote this prototype before physical acceptance.
+
 | Area | Current state | Acceptance level |
 |---|---|---|
 | Product identity | Generals: Zero Hour XR; update-compatible package ID retained | Built, installed and resource-verified |
 | Game modes | Campaign and offline AI Skirmish run in the XR tabletop presentation | Repeated user headset use; mission-specific coverage remains incremental |
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
-| View model | Gameplay is tabletop-only; videos and full native dialogs use an upright presentation | Implemented and exercised, not every campaign transition exhaustively tested |
+| View model | The released app is tabletop-only; the isolated P25 branch adds ground view, P25.1 stick navigation and a P25.3 board-side shortcut column for offline Skirmish. Videos and full native dialogs stay upright. | P25 10218 visual impression positive; P25.2 10220 button works; P25.3 column liked but depth needed adjustment; 10223 depth/angle test installed, headset and movement gates open |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
 | Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
 | Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |
@@ -446,6 +501,10 @@ public-visibility/trademark review remain separate.
 - The user's room photographs are useful visual references but contain private
   surroundings. Do not add them to GitHub. Use cropped/redacted panel captures
   or synthetic Canvas fixtures for a pull request.
+- P25 ground observer is experimental on an isolated branch. Its 10 game
+  units/metre scale, 1.65 m eye height, 60 m visibility envelope and opaque
+  horizon need worn-headset review. It has no network/replay/campaign entry,
+  and no APK supersedes the 1.2.17 release until separately verified.
 
 ## Minimum verification before handoff
 

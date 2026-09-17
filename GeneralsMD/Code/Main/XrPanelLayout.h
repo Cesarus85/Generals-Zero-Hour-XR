@@ -174,6 +174,8 @@ inline int xrMenuLayout(int page,XrPanelControl *out,int max) {
 		b.add(11,392,680,344,64,kXrRoleButton);
 		b.add(9,32,752,344,64,kXrRoleButton);
 		b.add(7,392,752,344,64,kXrRoleButton);
+		// GeneralsX @feature Codex 17/09/2026 P25 temporary, offline-only observer.
+		b.add(16,32,838,704,72,kXrRoleImmediate);
 	}
 	return b.count;
 }

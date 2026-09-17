@@ -4,10 +4,38 @@
 #include "XrViewMode.h"
 #include "XrWorkspacePlacement.h"
 static XrSurface uiButtonSurface(const XrHello &x) {
-	const int slot=x.splitVisible ? 2:0;
-	auto s=x.surfaces[slot];
-	s.pose.position=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{s.width*.57f,0,.025f}));
-	s.width=.11f;return s;
+	if(!x.splitVisible) {
+		auto s=x.surfaces[0];
+		s.pose.position=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{s.width*.57f,0,.025f}));
+		s.width=.20f;return s;
+	}
+	// All three workspace shortcuts form one upright column beside the board.
+	// Derive heading from its right edge: a flat board has no usable forward yaw.
+	const auto &board=x.surfaces[1];
+	auto right=xrRotate(board.pose.orientation,{1,0,0});
+	const float length=sqrtf(right.x*right.x+right.z*right.z);
+	const auto heading=length>1e-4f ? xrAxisAngle({0,1,0},atan2f(-right.z,right.x)):
+		XrQuaternionf{0,0,0,1};
+	XrSurface s;
+	s.width=.20f;
+	// Turn 15 degrees inward toward the player at the board's center, while
+	// keeping the controls upright (no uncomfortable backward pitch).
+	s.pose.orientation=xrMul(heading,xrAxisAngle({0,1,0},-.26179939f));
+	// One more 8 cm behind the previous board-center depth, preserving the
+	// column's size and spacing. Position uses board yaw, not button yaw.
+	s.pose.position=xrAdd(board.pose.position,xrRotate(heading,{board.width*.5f+.135f,.40f,-.08f}));
+	return s;
+}
+// UI, Commands and Ground View share width, facing and 16 cm vertical pitch.
+static XrSurface groundButtonSurface(const XrHello &x) {
+	auto s=uiButtonSurface(x);
+	s.pose.position=xrAdd(s.pose.position,{0,-.32f,0});
+	return s;
+}
+static bool groundButtonAvailable(const XrHello &x) {
+	return x.interactiveGame && x.splitVisible && x.stereoVisible &&
+		!x.menu.open && !x.arranging && !x.scene.placing && !x.recoveryVisible &&
+		x.observer.mode==XrObserverMode::Off && XrGameBoot_CanObserveGround();
 }
 static XrSurface hoverCardSurface(const XrHello &x) {
 	auto s=x.surfaces[2];
@@ -15,6 +43,12 @@ static XrSurface hoverCardSurface(const XrHello &x) {
 	s.width=.68f;return s;
 }
 #include "XrArrangement.h"
+static bool armGroundView(XrHello &x) {
+	if(!x.stereoVisible || !XrGameBoot_CanObserveGround() || !x.observer.arm(true))return false;
+	x.menu.open=false;x.controlsArmed=false;x.inputArmed=false;x.grab.cancel();
+	x.menu.click.cancel();x.commands.input.click.cancel();XrGameBoot_CancelTarget();
+	return true;
+}
 static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 	if(x.menu.page==6) {
 		if(action==18)requestWorkspaceRecenter(x,views,true);
@@ -59,8 +93,12 @@ static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 		return;
 	}
 	if(x.menu.page==3) {
-		if(action<0 || action>15) return;
+		if(action<0 || action>16) return;
 		if(action<=3)return; // P15 reserved status/help slots; no flat mode.
+		if(action==16) {
+			armGroundView(x);
+			return;
+		}
 		// GeneralsX @performance Codex 14/09/2026 Session-only experiments,
 		// no layout save/migration and no simulation/input commands.
 		if(action>=12 && action<=15) {
@@ -126,16 +164,17 @@ static bool updateXrMenu(XrHello &x,const XrControllerState &c,const XrView *vie
 	const bool tracked=x.state==XR_SESSION_STATE_FOCUSED && c.aimValid;
 	if(!tracked) {x.menu.click.cancel();x.grab.cancel();x.controlsArmed=false;}
 	int hit=-1;float nearest=10;XrVector3f endpoint=xrAdd(c.aim.position,xrRotate(c.aim.orientation,{0,0,-2.5f}));
-	if(tracked && x.panelLatched) for(int piece=0;piece<(x.menu.open ? 2:1);++piece) {
-		const auto s=piece==0 ? uiButtonSurface(x):x.menu.surface;
-		const float aspect=piece==0 ? 128.0f/192:float(kXrMenuHeight)/kXrMenuWidth;
+	if(tracked && x.panelLatched) for(int piece=0;piece<(x.menu.open ? 3:2);++piece) {
+		if(piece==1 && !groundButtonAvailable(x))continue;
+		const auto s=piece==0 ? uiButtonSurface(x):piece==1 ? groundButtonSurface(x):x.menu.surface;
+		const float aspect=piece<2 ? 128.0f/192:float(kXrMenuHeight)/kXrMenuWidth;
 		float m[16],u=0,v=0;surfaceMatrix(s,m);if(!panelRayUV(m,aspect,c.aim,&u,&v)) continue;
 		const auto point=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{(u-.5f)*s.width,(v-.5f)*s.width*aspect,0}));
 		const float distance=xrLength(xrSub(point,c.aim.position));
-		if(distance<nearest) {nearest=distance;endpoint=point;hit=piece==0 ? 100:
+		if(distance<nearest) {nearest=distance;endpoint=point;hit=piece==0 ? 100:piece==1 ? 101:
 			(x.menu.page==4 ? xrCommandHit(u,v,true):x.menu.page==5 ? xrSceneMenuHit(u,v):xrMenuHit(u,v,x.menu.page));}
 	}
-	const bool captured=x.menu.open || hit==100;
+	const bool captured=x.menu.open || hit==100 || hit==101;
 	const bool fire=x.menu.update(c.select,hit,tracked);x.menu.hover=hit;
 	if(!captured) return false;
 	updateControls(x,XrControllerState{},time);
@@ -153,6 +192,7 @@ static bool updateXrMenu(XrHello &x,const XrControllerState &c,const XrView *vie
 			x.menu.surface.pose.position=xrAdd(xrScale(xrAdd(views[0].pose.position,views[1].pose.position),.5f),{fx*.9f,-.16f,fz*.9f});
 			x.menu.surface.width=.64f;
 		}
-	} else if(fire && hit>=0) applyMenuAction(x,hit,views);
+	} else if(fire && hit==101) armGroundView(x);
+	else if(fire && hit>=0) applyMenuAction(x,hit,views);
 	return true;
 }

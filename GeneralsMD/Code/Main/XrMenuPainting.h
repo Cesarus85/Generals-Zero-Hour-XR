@@ -83,6 +83,18 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 	if(x.recoveryVisible && (!x.recoveryTexture || recoveryLanguage!=g_xrLanguage))
 		if(paintPanel(x,x.recoveryTexture,xrTr("Darstellung wird wiederhergestellt"),
 			xrTr("Die Spielwelt wird neu gezeichnet. Bitte die Trigger loslassen."),"",-1,2))recoveryLanguage=g_xrLanguage;
+	// GeneralsX @feature Codex 17/09/2026 Reuse the existing readable XR card.
+	if(x.observer.mode!=XrObserverMode::Off) {
+		const std::string key=std::to_string(static_cast<int>(g_xrLanguage))+
+			(x.layout.leftHanded ? "Y":"B")+std::to_string(int(x.observer.mode))+
+			(x.observer.mode==XrObserverMode::Armed && x.rayVisible && !x.rayHit ? "invalid":"valid");
+		if(key!=x.observerHintKey && paintPanel(x,x.observerHintTexture,xrTr("Bodenansicht"),
+			x.observer.mode==XrObserverMode::Active ?
+				xrTr(x.layout.leftHanded ? "Links: gehen · Rechts: drehen · Y: Tisch":
+					"Links: gehen · Rechts: drehen · B: Tisch"):
+				xrTr(x.rayVisible && !x.rayHit ? "Hier kein sicherer, sichtbarer Boden. Anderen Ort wählen; B/Y bricht ab.":
+					"Sichtbaren freien Boden mit Trigger wählen. B/Y bricht ab."),"",-1,2))x.observerHintKey=key;
+	}
 	// GeneralsX @feature Muse 16/09/2026 Match-result card: accent-colored
 	// kind-2 card from the read-only latch; repainted on result/language
 	// change, kept across the transition to statistics.
@@ -101,6 +113,10 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 	const std::string uiTitle=x.arranging ? xrTr("Fertig"):"UI";
 	if(!x.uiButtonTexture || uiButtonTitle!=uiTitle)
 		if(paintPanel(x,x.uiButtonTexture,uiTitle.c_str(),"","",-1,0))uiButtonTitle=uiTitle;
+	static XrLanguage groundButtonLanguage=XrLanguage::German;
+	if(!x.groundButtonTexture || groundButtonLanguage!=g_xrLanguage)
+		if(paintPanel(x,x.groundButtonTexture,xrTr("BODENANSICHT"),"","",-1,0))
+			groundButtonLanguage=g_xrLanguage;
 	static XrLanguage buttonLanguage=XrLanguage::German;
 	if(!x.commandButtonTexture || buttonLanguage!=g_xrLanguage)
 		if(paintPanel(x,x.commandButtonTexture,xrTr("BEFEHLE"),"","",-1,0))buttonLanguage=g_xrLanguage;
@@ -205,7 +221,8 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 				xrTr("Brett und Fenster kommen gemeinsam vor dich.");
 			label(18,xrTr("Verlassen & vor mir ausrichten"));label(19,xrTr("Abbrechen"));
 		} else if(x.menu.page==4) {
-			title=std::string(xrTr("Controller-Anleitung"))+" · "+std::to_string(x.menu.helpPage+1)+"/4";
+			title=std::string(xrTr("Controller-Anleitung"))+" · "+std::to_string(x.menu.helpPage+1)+"/"+
+				std::to_string(kXrControllerHelpPages);
 			detail=xrControllerHelp(x.menu.helpPage,x.layout.leftHanded);
 			label(33,"✕");label(34,xrTr("Zurück zu Fenstern"));label(36,xrTr("Weiter"));
 		} else {
@@ -261,9 +278,10 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 				label(14,xrTr("Einheitenbefehle"));label(15,xrTr("Fenster einstellen"));label(17,xrTr("Schließen"));
 			} else {
 				detail=XrGameBoot_PresentationStatus(x.stereoVisible,x.stereoWorld)+"\n"+
-					(x.menu.hover==11 ? XrGameBoot_LanguageStatus():x.performance.status());
+					(x.menu.hover==11 ? XrGameBoot_LanguageStatus():x.menu.hover==16 ?
+						xrTr("Nur Offline-Gefecht: Bodenansicht wählen, dann sichtbaren freien Boden anklicken. B/Y kehrt zurück."):x.performance.status());
 				label(-10,xrTr("Darstellung"));
-				label(-20,xrTr("Spiel: immer Tabletop"));label(-21,xrTr("Videos: Bildschirm"));
+				label(-20,xrTr("Spiel: Tisch; Bodenansicht optional"));label(-21,xrTr("Videos: Bildschirm"));
 				auto toggle=[&](int id,const char *name,bool on) {
 					label(id,std::string(xrTr(name))+"|"+xrTr(on ? "AN":"AUS"));if(on)mark(id,kXrStateOn);};
 				toggle(4,"Lebenspunkte",x.layout.healthBars);
@@ -281,6 +299,8 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 				toggle(8,"Linkshändig",x.layout.leftHanded);
 				label(11,std::string(xrTr("Sprache"))+"|"+xrTr(x.layout.language==XrLanguage::German ? "Deutsch":"English"));
 				label(9,xrTr("Foto-Anordnung"));label(7,xrTr("Schließen"));
+				label(16,xrTr("Bodenansicht · Ort wählen"));
+				if(!x.stereoVisible || !XrGameBoot_CanObserveGround())mark(16,kXrStateDisabled);
 			}
 		}
 		if(x.menu.hover>=0)mark(x.menu.hover,kXrStateHover);

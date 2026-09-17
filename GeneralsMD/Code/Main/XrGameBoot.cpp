@@ -69,6 +69,7 @@
 #include "GameClient/CommandXlat.h"
 #include "GameLogic/Object.h"
 #include "GameLogic/TerrainLogic.h"
+#include "GameLogic/PartitionManager.h"
 #include "GameLogic/Module/BodyModule.h"
 #include "coltest.h"
 #include "GameClient/LookAtXlat.h"
@@ -530,6 +531,13 @@ const char *XrGameBoot_PerformanceScene() {
 bool XrGameBoot_CanAdjustWorld() {
 	return XrGameBoot_CanStereoWorld() && GX_XR_SplitUIAllowed() && XrGameBoot_CanControlCamera();
 }
+// GeneralsX @feature Codex 17/09/2026 P25 is deliberately offline Skirmish only.
+bool XrGameBoot_CanObserveGround() {
+	return TheGameLogic && TheGameLogic->getGameMode()==GAME_SKIRMISH &&
+		XrGameBoot_CanAdjustWorld() && TheInGameUI && !TheInGameUI->getPendingPlaceType() &&
+		ThePartitionManager && ThePlayerList && ThePlayerList->getLocalPlayer() &&
+		!XrGameBoot_ExpandedUI();
+}
 // GeneralsX @feature Codex 15/09/2026 Reuse the original local camera command:
 // command center, otherwise most expensive owned structure; no unit orders.
 bool XrGameBoot_ViewBase() {
@@ -580,14 +588,20 @@ int GX_XR_ShadowCategory(int category) {return d3d8gles_SetDrawCategory(category
 CameraClass *GX_XR_RenderCamera() {return s_renderReady ? s_renderCamera:nullptr;}
 int GX_XR_CullSphere(const SphereClass &sphere) {
 	if(!s_renderReady) return -1;
+	if(s_worldFrame.observer) {
+		const auto tracked=xrScale(xrAdd(s_worldFrame.eyes[0].position,s_worldFrame.eyes[1].position),.5f);
+		const auto eye=xrInversePoint(s_worldMapping,tracked);
+		return xrObserverContainsSphere(eye,{sphere.Center.X,sphere.Center.Y,sphere.Center.Z},sphere.Radius) ? 0:1;
+	}
 	return xrBoardContainsSphere(s_worldMapping,s_worldAspect,{sphere.Center.X,sphere.Center.Y,sphere.Center.Z},sphere.Radius) ? 0:1;
 }
 // Conservative table coverage, independent of either eye. Quantize allocation
 // to terrain tile blocks rather than reallocating on each tiny zoom change.
 bool GX_XR_UpdateTerrainCoverage() {
 	if(!GX_XR_WorldRequested() || !s_mappingReady || !TheTerrainRenderObject || !TheTerrainRenderObject->getMap()) return false;
-	const auto center=xrInversePoint(s_worldMapping,{});
-	const float extent=s_worldSpan*(fabsf(s_worldMapping[0])+fabsf(s_worldMapping[1]))*s_worldSpan;
+	const auto center=s_worldFrame.observer ? s_worldFrame.observerGround:xrInversePoint(s_worldMapping,{});
+	const float extent=s_worldFrame.observer ? kXrObserverFarMetres*kXrObserverUnitsPerMetre:
+		s_worldSpan*(fabsf(s_worldMapping[0])+fabsf(s_worldMapping[1]))*s_worldSpan;
 	const int cells=std::clamp(1+64*int(ceilf((extent+160)/640)),129,513);
 	TheTerrainRenderObject->setTerrainDrawSize(cells,cells);
 	CameraClass coverage;Matrix3D pose(1);
@@ -622,6 +636,12 @@ bool XrGameBoot_StereoAtlas() {return d3d8gles_XRStereoAtlas();}
 static bool xrPrepareWorldMapping() {
 	s_mappingReady=false;
 	if(!s_worldFrame.enabled || !XrGameBoot_CanStereoWorld() || !GX_XR_SplitUIAllowed() || !TheTacticalView || !TheTerrainLogic) return false;
+	if(s_worldFrame.observer) {
+		if(!XrGameBoot_CanObserveGround() || !xrObserverWorldToRoom(s_worldMapping,
+			s_worldFrame.observerGround,s_worldFrame.observerHead,s_worldFrame.observerForward))return false;
+		s_worldAspect=1;s_worldSpan=kXrObserverFarMetres*kXrObserverUnitsPerMetre;
+		s_mappingReady=true;return true;
+	}
 	const int w=TheTacticalView->getWidth(),h=TheTacticalView->getHeight();
 	if(w<2 || h<2) return false;
 	// GeneralsX @bugfix Codex 14/09/2026 P18 map-wide height bounds are
@@ -648,9 +668,11 @@ void GX_XR_BeginStereoWorld() {
 	GX_XR_UpdateTerrainCoverage();
 	// Render billboards from the head midpoint. Input/UI retain the tactical
 	// camera. Each eye still gets its own projection, depth and stencil.
-	float room[16],physical[16];surfaceMatrix(s_worldFrame.board,physical);
-	for(int i=8;i<11;++i) physical[i]*=s_worldFrame.board.width;
-	matMultiply(room,physical,board);
+	float room[16],physical[16];
+	if(s_worldFrame.observer) memcpy(room,board,sizeof(room));
+	else {surfaceMatrix(s_worldFrame.board,physical);
+		for(int i=8;i<11;++i) physical[i]*=s_worldFrame.board.width;
+		matMultiply(room,physical,board);}
 	const auto head=xrScale(xrAdd(s_worldFrame.eyes[0].position,s_worldFrame.eyes[1].position),.5f);
 	const auto position=xrInversePoint(room,head);
 	float camera[16]={};camera[15]=1;
@@ -667,9 +689,9 @@ void GX_XR_BeginStereoWorld() {
 	const auto &f=s_worldFrame.fov[0],&g=s_worldFrame.fov[1];
 	s_renderCamera->Set_View_Plane(Vector2(std::min(tanf(f.angleLeft),tanf(g.angleLeft))-.05f,std::min(tanf(f.angleDown),tanf(g.angleDown))-.05f),
 		Vector2(std::max(tanf(f.angleRight),tanf(g.angleRight))+.05f,std::max(tanf(f.angleUp),tanf(g.angleUp))+.05f));
-	s_renderCamera->Set_Clip_Planes(1,20000);
+	s_renderCamera->Set_Clip_Planes(1,s_worldFrame.observer ? kXrObserverFarMetres*kXrObserverUnitsPerMetre:20000);
 	static unsigned mappingFrames=0;
-	if((mappingFrames++%180)==0) {
+	if(!s_worldFrame.observer && (mappingFrames++%180)==0) {
 		// GeneralsX @tweak Codex 16/09/2026 Report the shared P20.1 underside.
 		GXLOG("P18 stable height datum=%.3f map-max=%.3f span=%.3f ceiling=%.3f plinth=%.3f board-widths",
 			center.z,s_worldMaxHeight,s_worldSpan,gxXrBoardCeiling(s_worldMapping),kXrBoardUnderside);
@@ -694,11 +716,12 @@ void GX_XR_BeginStereoWorld() {
 		s_pickAim=oldAim;s_pickRoom=oldRoom;
 	}
 	for(int eye=0;eye<2;++eye) xrWorldEyeClip(clip[eye],s_worldFrame,eye,board);
-	s_renderReady=d3d8gles_BeginXRStereo(s_worldFrame.width,s_worldFrame.height,clip[0],clip[1],board,float(h)/w,camera,s_worldFrame.atlasStereo,s_worldFrame.multiviewStereo);
+	s_renderReady=d3d8gles_BeginXRStereo(s_worldFrame.width,s_worldFrame.height,clip[0],clip[1],board,
+		s_worldFrame.observer ? -1.0f:float(h)/w,camera,s_worldFrame.atlasStereo,s_worldFrame.multiviewStereo);
 }
 static void drawXrWorldDecorations();
 void GX_XR_EndStereoWorld() {
-	if(GX_XR_OffscreenBoot) {d3d8gles_EndXRStereo();if(s_renderReady) drawXrWorldDecorations();}
+	if(GX_XR_OffscreenBoot) {d3d8gles_EndXRStereo();if(s_renderReady && !s_worldFrame.observer) drawXrWorldDecorations();}
 	s_renderReady=false;
 }
 
@@ -738,6 +761,77 @@ bool XrGameBoot_PickWorld(const XrSurface &board,const XrPosef &aim,XrWorldHit &
 	hit.room=xrAdd(board.pose.position,xrRotate(board.pose.orientation,xrScale(local,board.width)));
 	hit.distance=xrLength(xrSub(hit.room,aim.position));hit.x=float(pixel.x);hit.y=float(pixel.y);
 	s_pickStart=a;s_pickEnd=b;s_pickPixel=pixel;s_pickAim=aim;s_pickRoom=hit.room;return result(5);
+}
+// GeneralsX @feature Codex 17/09/2026 P25 terrain-only destination; never
+// routes through native selection or issues a simulation message.
+bool XrGameBoot_PickObserverGround(const XrSurface &board,const XrPosef &aim,XrVector3f &groundPoint,XrVector3f *roomPoint) {
+	if(!XrGameBoot_CanObserveGround() || !s_mappingReady || s_worldFrame.observer || !TheTerrainLogic ||
+		!TheTerrainRenderObject || !W3DDisplay::m_3DScene)return false;
+	setFPMode();XrVector3f start,end;
+	if(!xrWorldRay(board,s_worldAspect,s_worldMapping,aim,start,end))return false;
+	const Vector3 a(start.x,start.y,start.z),b(end.x,end.y,end.z);
+	LineSegClass terrainLine;terrainLine.Set(a,b);
+	CastResultStruct result;result.ComputeContactPoint=true;
+	RayCollisionTestClass terrain(terrainLine,&result);
+	if(!TheTerrainRenderObject->Cast_Ray(terrain))return false;
+	const Vector3 p=result.ContactPoint;
+	// Reject cliff/wall triangles and large local height discontinuities.
+	// Terrain-only ray hits can otherwise place the eye inside a slope.
+	if(!std::isfinite(result.Normal.Z) || result.Normal.Z<.64f ||
+		fabsf(TheTerrainLogic->getGroundHeight(p.X,p.Y)-p.Z)>3.0f)return false;
+	Region3D extent;TheTerrainLogic->getExtent(&extent);
+	const Coord3D location={p.X,p.Y,p.Z};const int player=ThePlayerList->getLocalPlayer()->getPlayerIndex();
+	const bool clear=ThePartitionManager->getShroudStatusForPlayer(player,&location)==CELLSHROUD_CLEAR;
+	// A nearer drawable means the laser hit a unit/structure, not bare earth.
+	LineSegClass modelLine;modelLine.Set(a,p);CastResultStruct modelResult;
+	RayCollisionTestClass model(modelLine,&modelResult,COLL_TYPE_ALL,false,false);
+	const bool blocking=W3DDisplay::m_3DScene->castRay(model,false,PICK_TYPE_ALL_DRAWABLES);
+	const XrVector3f proposed={p.X,p.Y,p.Z};
+	if(!xrObserverValidGround(proposed,{extent.lo.x,extent.lo.y,extent.lo.z},
+		{extent.hi.x,extent.hi.y,extent.hi.z},clear,blocking))return false;
+	// Keep a small footprint clear and visible; avoids spawning at building
+	// edges or where a shroud boundary crosses the viewer's immediate space.
+	for(const auto offset:{XrVector3f{0,0,0},XrVector3f{18,0,0},XrVector3f{-18,0,0},XrVector3f{0,18,0},XrVector3f{0,-18,0}}) {
+		const Coord3D probe={p.X+offset.x,p.Y+offset.y,p.Z};
+		if(ThePartitionManager->getShroudStatusForPlayer(player,&probe)!=CELLSHROUD_CLEAR)return false;
+		if(fabsf(TheTerrainLogic->getGroundHeight(probe.x,probe.y)-p.Z)>8.0f)return false;
+		LineSegClass vertical;vertical.Set(Vector3(probe.x,probe.y,probe.z+45),Vector3(probe.x,probe.y,probe.z+2));
+		CastResultStruct nearbyResult;RayCollisionTestClass nearby(vertical,&nearbyResult,COLL_TYPE_ALL,false,false);
+		if(W3DDisplay::m_3DScene->castRay(nearby,false,PICK_TYPE_ALL_DRAWABLES))return false;
+	}
+	groundPoint=proposed;
+	if(roomPoint) {
+		const auto local=xrTransformPoint(s_worldMapping,proposed);
+		*roomPoint=xrAdd(board.pose.position,xrRotate(board.pose.orientation,xrScale(local,board.width)));
+	}
+	return true;
+}
+// GeneralsX @feature Codex 17/09/2026 P25.1: validate each small observer
+// step against the actual terrain and scene. This never moves a game object.
+bool XrGameBoot_ObserverStep(XrVector3f current,XrVector3f delta,XrVector3f &next) {
+	if(!XrGameBoot_CanObserveGround() || !TheTerrainLogic || !W3DDisplay::m_3DScene ||
+		!std::isfinite(delta.x) || !std::isfinite(delta.y) ||
+		fabsf(delta.x)>2 || fabsf(delta.y)>2)return false;
+	setFPMode();
+	const float x=current.x+delta.x,y=current.y+delta.y;
+	Coord3D normal={};const float z=TheTerrainLogic->getGroundHeight(x,y,&normal);
+	if(!std::isfinite(z) || !std::isfinite(normal.z) || normal.z<.64f ||
+		fabsf(z-current.z)>2.0f || TheTerrainLogic->isCliffCell(x,y))return false;
+	Region3D extent;TheTerrainLogic->getExtent(&extent);
+	const Coord3D location={x,y,z};
+	const int player=ThePlayerList->getLocalPlayer()->getPlayerIndex();
+	const bool clear=ThePartitionManager->getShroudStatusForPlayer(player,&location)==CELLSHROUD_CLEAR;
+	if(!xrObserverValidGround({x,y,z},{extent.lo.x,extent.lo.y,extent.lo.z},
+		{extent.hi.x,extent.hi.y,extent.hi.z},clear,false))return false;
+	// A short chest-height sweep and a standing-height probe keep the camera
+	// out of buildings and moving units without touching their gameplay state.
+	LineSegClass across;across.Set(Vector3(current.x,current.y,current.z+12),Vector3(x,y,z+12));
+	CastResultStruct result;RayCollisionTestClass sweep(across,&result,COLL_TYPE_ALL,false,false);
+	if(W3DDisplay::m_3DScene->castRay(sweep,false,PICK_TYPE_ALL_DRAWABLES))return false;
+	LineSegClass vertical;vertical.Set(Vector3(x,y,z+20),Vector3(x,y,z+2));
+	RayCollisionTestClass space(vertical,&result,COLL_TYPE_ALL,false,false);
+	if(W3DDisplay::m_3DScene->castRay(space,false,PICK_TYPE_ALL_DRAWABLES))return false;
+	next={x,y,z};return true;
 }
 // GeneralsX @feature Codex 14/09/2026 Adjust the actual preview, not a
 // second model. The original click translator sends this same angle.

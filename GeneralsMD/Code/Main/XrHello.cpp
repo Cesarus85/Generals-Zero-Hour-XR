@@ -321,6 +321,8 @@ static const char *kQuadFragShader =
 	"    vec3 rayColor=mix(vec3(0.55),vec3(0.15,0.95,1.0),uPointer.z);\n"
 	"    oColor=vec4(xrDisplayToLinear(mix(rayColor,vec3(1.0,0.65,0.12),uPointer.w)),1.0); return;\n"
 	"  }\n"
+	// GeneralsX @feature Codex 17/09/2026 Short opaque transition veil.
+	"  if (uLayer == 10) { oColor=vec4(0.0,0.0,0.0,uPointer.x); return; }\n"
 	"  highp vec2 texSize = uArrayEye>=0 ? vec2(textureSize(uStereoArray,0).xy):vec2(textureSize(uTex,0));\n"
 	"  vec2 size = texSize*uUVRect.zw;\n"
 	// GeneralsX @bugfix Codex 14/09/2026 Clamp each atlas eye to its own
@@ -410,12 +412,16 @@ struct XrHello {
 	JNIEnv *panelEnv=nullptr;jclass panelPainter=nullptr;
 	XrMenuState menu;XrCommandState commands;float worldZoom=1.0f;bool startViewApplied=false;
 	GLuint commandsTexture=0,commandButtonTexture=0;std::string commandsKey;
-	GLuint uiButtonTexture=0,settingsTexture=0,hoverTexture=0;
+	GLuint uiButtonTexture=0,groundButtonTexture=0,settingsTexture=0,hoverTexture=0;
 	GLuint recoveryTexture=0;
 	bool recoveryVisible=false;
 	// GeneralsX @feature Muse 16/09/2026 Match-result card: head-yaw
 	// billboard texture, refreshed from the read-only end-state latch.
 	GLuint resultTexture=0;
+	// GeneralsX @feature Codex 17/09/2026 P25 session-only observer state.
+	XrObserverState observer;GLuint observerHintTexture=0;std::string observerHintKey;
+	XrSurface observerHintSurface{};XrTime observerFadeStart=0,lastFrameTime=0;
+	bool renderedObserver=false; // Mapping actually used for this completed capture.
 	std::string resultKey;
 	XrSurface resultSurface{};
 	bool resultVisible=false,resultPressHeld=false;
@@ -806,6 +812,9 @@ static void pollEvents(XrHello &x, bool &quit)
 			if (sc->session != x.session)
 				continue;
 			x.state = sc->state;
+			if(x.state!=XR_SESSION_STATE_FOCUSED && x.observer.mode!=XrObserverMode::Off) {
+				x.observer.cancel();x.controlsArmed=false;x.inputArmed=false;
+			}
 			if(x.state!=XR_SESSION_STATE_FOCUSED && x.scene.placing) {
 				x.scene.cancel();x.menu.open=true;x.menu.page=5;x.controlsArmed=false;
 				x.scene.message="Platzierung unterbrochen; Vorschau neu starten";
@@ -985,6 +994,7 @@ static void applyWorkspaceReference(XrHello &x,const XrView *views,XrTime time) 
 	placePanel(x,views);
 	const int rebase=x.referenceChanges.apply(time,x.surfaces,x.layoutAnchor,x.menu.surface);
 	if(!rebase)return;
+	if(x.observer.mode!=XrObserverMode::Off) {x.observer.cancel();x.controlsArmed=false;x.inputArmed=false;}
 	x.grab.cancel();x.controlsArmed=false;x.inputArmed=false;x.buildRotation={};
 	x.menu.click.cancel();x.commands.input.click.cancel();XrGameBoot_CancelTarget();
 	updateControls(x,XrControllerState{},time);
@@ -1038,7 +1048,11 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 	// passthrough (opaque fallback) the background is plain black.
 	// (The Phase-0.4 blue/red per-eye tints proved eye order then; stereo
 	// is long established, transparency matters more now.)
-	xr_glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	const bool observing=x.renderedObserver && x.stereoVisible;
+	// Opaque dark horizon prevents passthrough from appearing where the bounded
+	// terrain mesh has no fragment; the ordinary tabletop remains transparent.
+	xr_glClearColor(observing ? .055f:0.0f,observing ? .085f:0.0f,
+		observing ? .11f:0.0f,observing ? 1.0f:0.0f);
 	xr_glDepthMask(GL_TRUE); xr_glClearDepthf(1);
 	xr_glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1085,6 +1099,7 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 			xr_glEnable(GL_DEPTH_TEST);xr_glDepthMask(GL_TRUE);xr_glDisable(GL_BLEND);
 		}
 		for(int slot=x.splitVisible ? 1:0;slot<=(x.splitVisible ? 3:0);++slot) {
+			if(observing)break;
 			if(hideWorkspace)break;
 			if(x.diorama) break;
 			if(x.recoveryVisible) break; // Never sample the incomplete composed frame.
@@ -1104,7 +1119,7 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 				x.pointerPressed ? 1.0f:0.0f);
 			xr_glDrawArrays(GL_TRIANGLES,0,6);
 		}
-		if(x.diorama && x.dioramaReady && !hideWorkspace) {
+		if(x.diorama && x.dioramaReady && !hideWorkspace && !observing) {
 			xrDioramaMatrix(x.surfaces[1],model);
 			matMultiply(viewModel,view,model);matMultiply(mvp,proj,viewModel);
 			xr_glDisable(GL_BLEND);xr_glUseProgram(x.dioramaProgram);
@@ -1167,22 +1182,37 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 			xr_glDisable(GL_DEPTH_TEST);xr_glDepthMask(GL_FALSE);xr_glEnable(GL_BLEND);xr_glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
 			xr_glBindTexture(GL_TEXTURE_2D,texture);xr_glDrawArrays(GL_TRIANGLES,0,6);
 		};
-		if(x.scene.placing)panel(x.menu.surface,.5f,x.sceneTexture);
-		if(x.recoveryVisible)panel(x.surfaces[0],.5f,x.recoveryTexture);
-		if(x.hoverVisible && !x.menu.open && !x.recoveryVisible && !x.scene.placing) panel(hoverCardSurface(x),1.0f,x.hoverTexture);
-		if(commandsAvailable(x) && !hideWorkspace) {
+		if(x.scene.placing && !observing)panel(x.menu.surface,.5f,x.sceneTexture);
+		if(x.recoveryVisible && !observing)panel(x.surfaces[0],.5f,x.recoveryTexture);
+		if(x.hoverVisible && !x.menu.open && !x.recoveryVisible && !x.scene.placing && !observing) panel(hoverCardSurface(x),1.0f,x.hoverTexture);
+		if(commandsAvailable(x) && !hideWorkspace && !observing) {
 			if(x.layout.commandsVisible)panel(commandSurface(x),float(xrCommandHeight(x.commands))/768,x.commandsTexture);
 			panel(commandButtonSurface(x),128.0f/192,x.commandButtonTexture);
 		}
-		if(!x.loadingPresentation && !hideWorkspace)panel(uiButtonSurface(x),128.0f/192,x.uiButtonTexture);
-		if(x.menu.open) panel(x.menu.surface,float(kXrMenuHeight)/kXrMenuWidth,x.settingsTexture);
+		if(!x.loadingPresentation && !hideWorkspace && !observing)panel(uiButtonSurface(x),128.0f/192,x.uiButtonTexture);
+		if(!x.loadingPresentation && !hideWorkspace && !observing && groundButtonAvailable(x))
+			panel(groundButtonSurface(x),128.0f/192,x.groundButtonTexture);
+		if(x.menu.open && !observing) panel(x.menu.surface,float(kXrMenuHeight)/kXrMenuWidth,x.settingsTexture);
+		if(observing || x.observer.mode==XrObserverMode::Armed)
+			panel(x.observerHintSurface,.5f,x.observerHintTexture);
 		// GeneralsX @feature Muse 16/09/2026 Match-result card last: the
 		// head-yaw billboard stays readable above every other panel.
 		if(x.resultVisible && !x.loadingPresentation) panel(x.resultSurface,.5f,x.resultTexture);
+		if(x.observerFadeStart && x.lastFrameShouldRender && !x.loadingPresentation) {
+			const float elapsed=float(x.lastFrameTime-x.observerFadeStart)*1e-9f;
+			const float alpha=std::clamp(1.0f-elapsed/.18f,0.0f,1.0f);
+			if(alpha>0) {
+				matScale(mvp,2,2/aspect,1);xr_glUniformMatrix4fv(x.qMVP,1,GL_FALSE,mvp);
+				xr_glUniform1i(x.qLayer,10);xr_glUniform4f(x.qPointer,alpha,0,0,0);
+				xr_glDisable(GL_DEPTH_TEST);xr_glDepthMask(GL_FALSE);
+				xr_glEnable(GL_BLEND);xr_glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
+				xr_glDrawArrays(GL_TRIANGLES,0,6);
+			}
+		}
 		xr_glDisable(GL_BLEND);xr_glEnable(GL_DEPTH_TEST);xr_glDepthMask(GL_TRUE);
 		// P7.4 Always show the tracked right aim, including misses. UI is an
 		// overlay, so the pointer is drawn last and stops at its selected surface.
-		if(x.rayVisible && xrRayRibbon(model,x.rayStart,x.rayEnd,pose.position,aspect)) {
+		if(x.rayVisible && !observing && xrRayRibbon(model,x.rayStart,x.rayEnd,pose.position,aspect)) {
 			xr_glDisable(GL_DEPTH_TEST);xr_glDepthMask(GL_FALSE);xr_glDisable(GL_BLEND);
 			matMultiply(viewModel,view,model);matMultiply(mvp,proj,viewModel);
 			xr_glUniformMatrix4fv(x.qMVP,1,GL_FALSE,mvp);xr_glUniform1i(x.qLayer,5);
@@ -1238,6 +1268,11 @@ struct XrLoadingPresenter {
 		if(frame.consumed)XrGameBoot_Key(XrGameKey::Back,false);
 	}
 	void present() {
+		// Registration wraps every game frame. Only the actual synchronous
+		// loading callback ends observer mode and changes presentation.
+		if(x.observer.mode!=XrObserverMode::Off) {x.observer.cancel();x.controlsArmed=false;x.inputArmed=false;}
+		x.renderedObserver=false;
+		x.observerFadeStart=0;
 		// GeneralsX @performance Codex 14/09/2026 Never time a nested movie
 		// presenter as gameplay, nor leave a timer active across its XR waits.
 		x.gpuTimer.end(false);x.performance.invalidate();
@@ -1373,7 +1408,7 @@ static void runLoop(XrHello &x)
 		};
 		uint32_t layerCount = 0;
 		uint32_t layerBase = 0;
-		if (x.passthroughActive) {
+		if (x.passthroughActive && x.observer.mode!=XrObserverMode::Active) {
 			layerCount = 1; // passthrough submits even on frames the game skips
 			layerBase = 1;
 		}
@@ -1381,7 +1416,10 @@ static void runLoop(XrHello &x)
 		x.lastViewCount = 0;
 		const XrControllerState controls = pollControls(x.controls,x.session,x.localSpace,
 			frameState.predictedDisplayTime,x.state==XR_SESSION_STATE_FOCUSED && frameState.shouldRender,x.layout.leftHanded);
+		x.lastFrameTime=frameState.predictedDisplayTime;
 		if (x.gameBooted && (!shouldRender || !frameState.shouldRender)) {
+			if(x.observer.mode!=XrObserverMode::Off)x.observer.cancel();
+			x.renderedObserver=false;
 			if(x.scene.placing) {x.scene.cancel();x.menu.open=true;x.menu.page=5;}
 			x.performance.invalidate();
 			updateControls(x,XrControllerState{},frameState.predictedDisplayTime);
@@ -1406,6 +1444,10 @@ static void runLoop(XrHello &x)
 					if(x.headTrackingLost){XR_LOG("P20.2 head tracking recovered; workspace retained");x.headTrackingLost=false;}
 				if (x.gameBooted) {
 					const bool interactiveGame = XrGameBoot_IsInteractiveGame();
+					if(x.observer.mode!=XrObserverMode::Off &&
+						(!XrGameBoot_CanObserveGround() || x.roomPoseLost || x.resultVisible)) {
+						x.observer.cancel();x.controlsArmed=false;x.inputArmed=false;
+					}
 					// Never obscure a match started by any asynchronous shell transition.
 					if(interactiveGame) x.diorama=false;
 					if(!XrGameBoot_CanStereoWorld()) x.stereoWorld=false;
@@ -1461,6 +1503,12 @@ static void runLoop(XrHello &x)
 					world.atlasStereo=x.performance.atlasStereo;
 					world.multiviewStereo=x.performance.multiviewStereo;
 					world.elideWorldCopy=x.performance.elideWorldCopy;
+					world.observer=x.observer.mode==XrObserverMode::Active;
+					x.renderedObserver=world.observer;
+					if(world.observer) {
+						world.observerGround=x.observer.ground;world.observerHead=x.observer.head;
+						world.observerForward=x.observer.forward;
+					}
 					for(int eye=0;eye<2;++eye) {world.eyes[eye]=views[eye].pose;world.fov[eye]=views[eye].fov;}
 					XrGameBoot_SetWorldFrame(world);XrGameBoot_SetSplitEnabled(!x.uprightGame);
 					// A one-frame quick end can exit during executeSingleFrame;
@@ -1493,7 +1541,12 @@ static void runLoop(XrHello &x)
 					x.recoveryVisible=xrResolveCapturedView(x,XrGameBoot_SplitReady(),
 						XrGameBoot_StereoTexture(0)!=0 && XrGameBoot_StereoTexture(1)!=0,
 						XrGameBoot_WorldTexture()!=0,XrGameBoot_GameTexture()!=0);
+					// A sky-only/failed stereo capture must never leave an active
+					// observer with neither an opaque scene nor a visible return.
+					if(x.renderedObserver && !x.stereoVisible) x.recoveryVisible=true;
 					if(x.recoveryVisible) {
+						if(x.observer.mode!=XrObserverMode::Off)x.observer.cancel();
+						x.renderedObserver=false;
 						d3d8gles_RequireXRFullWorld();x.controlsArmed=false;x.inputArmed=false;
 						x.rayVisible=x.hoverVisible=false;
 						XR_LOG("P17 late capture loss: suppress incomplete image, full world requested");
@@ -1507,6 +1560,9 @@ static void runLoop(XrHello &x)
 					XrGameBoot_PollMatchResult();
 					const bool hadResult=x.resultVisible;
 					x.resultVisible=XrGameBoot_MatchResult()!=XrEndgameResult::None;
+					if(x.resultVisible && x.observer.mode!=XrObserverMode::Off) {
+						x.observer.cancel();x.controlsArmed=false;x.inputArmed=false;
+					}
 					if(x.resultVisible) {
 						float fx=0,fz=-1;yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
 						const auto head=xrScale(xrAdd(views[0].pose.position,views[1].pose.position),.5f);
@@ -1535,7 +1591,18 @@ static void runLoop(XrHello &x)
 					if(x.frame%120==0)XR_LOG("P17 presentation: %s requested=%d upright=%d split=%d quality=%s",
 						XrGameBoot_PresentationStatus(x.stereoVisible,x.stereoWorld).c_str(),int(x.stereoWorld),int(x.uprightGame),int(x.splitVisible),x.layout.resolutionTier==2 ? "ultra+":x.layout.resolutionTier==1 ? "high":"balanced");
 					updateMenuTextures(x,frameState.predictedDisplayTime);
+					if(x.observer.mode!=XrObserverMode::Off) {
+						float fx=0,fz=-1;yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
+						const auto head=xrScale(xrAdd(views[0].pose.position,views[1].pose.position),.5f);
+						x.observerHintSurface.pose={{0,0,0,1},{head.x+fx*.85f,head.y-.32f,head.z+fz*.85f}};
+						x.observerHintSurface.pose.orientation=xrAxisAngle({0,1,0},atan2f(-fx,-fz));
+						x.observerHintSurface.width=.42f;
+					}
 				}
+				// Mode can change during the game/input frame; compositor layer
+				// bookkeeping follows the final state without altering passthrough.
+				layerBase=x.passthroughActive && !x.renderedObserver ? 1:0;
+				layerCount=layerBase;
 				bool ok = true;
 				const double perfEyeStart=xrPerfNow();
 				for (int eye = 0; eye < 2 && ok; eye++)
@@ -1567,6 +1634,8 @@ static void runLoop(XrHello &x)
 			} else if (x.gameBooted) {
 				if(!x.headTrackingLost)XR_LOG("P20.2 head tracking lost flags=%llu; input suspended",(unsigned long long)viewState.viewStateFlags);
 				x.headTrackingLost=true;XrGameBoot_CancelTarget();x.buildRotation={};
+				if(x.observer.mode!=XrObserverMode::Off)x.observer.cancel();
+				x.renderedObserver=false;
 				x.menu.click.cancel();x.commands.input.click.cancel();x.inputArmed=false;
 				x.performance.invalidate();
 				updateControls(x,XrControllerState{},frameState.predictedDisplayTime);
@@ -1579,7 +1648,7 @@ static void runLoop(XrHello &x)
 		// passthrough visibility comes from layer order and source alpha.
 		endInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 		endInfo.layerCount = layerCount;
-		endInfo.layers = layers + (x.passthroughActive ? 0 : 1);
+		endInfo.layers = layers + (layerBase ? 0 : 1);
 		if (!XR_SUCCEEDED(xrEndFrame(x.session, &endInfo)))
 			break;
 		if(perfMeasured) {
@@ -1660,11 +1729,13 @@ static void shutdownXr(XrHello &x)
 	x.scene.clear();
 	for(int i=0;i<2;++i) if(x.controls.aimSpace[i]!=XR_NULL_HANDLE) xrDestroySpace(x.controls.aimSpace[i]);
 	if (x.uiButtonTexture) xr_glDeleteTextures(1,&x.uiButtonTexture);
+	if (x.groundButtonTexture) xr_glDeleteTextures(1,&x.groundButtonTexture);
 	if (x.settingsTexture) xr_glDeleteTextures(1,&x.settingsTexture);
 	if (x.hoverTexture) xr_glDeleteTextures(1,&x.hoverTexture);
 	if (x.sceneTexture) xr_glDeleteTextures(1,&x.sceneTexture);
 	if (x.recoveryTexture) xr_glDeleteTextures(1,&x.recoveryTexture);
 	if (x.resultTexture) xr_glDeleteTextures(1,&x.resultTexture);
+	if (x.observerHintTexture) xr_glDeleteTextures(1,&x.observerHintTexture);
 	if (x.commandsTexture) xr_glDeleteTextures(1,&x.commandsTexture);
 	if (x.commandButtonTexture) xr_glDeleteTextures(1,&x.commandButtonTexture);
 	for (int i=0;i<2;++i) if(x.controls.gripSpace[i]!=XR_NULL_HANDLE) xrDestroySpace(x.controls.gripSpace[i]);
