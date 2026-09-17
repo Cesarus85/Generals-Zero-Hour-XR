@@ -14,7 +14,7 @@ not interchangeable.
 
 1. `AGENTS.md` for repository-wide engineering rules.
 2. This file for the current XR baseline, open gates and next work.
-3. `PLAN-025_XR_GROUND_OBSERVER.md` for the current experimental P25 branch;
+3. `PLAN-025_XR_GROUND_OBSERVER.md` for Ground View and campaign entry;
    `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md` for the shipped P21 UI.
 4. `MULTIPLAYER_STATUS.md` for the paused QTR-MP evidence and exact resume
    sequence; `../audit/RELEASE_PREPARATION_XR.md` for first-release gates.
@@ -45,7 +45,17 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Current product baseline
 
-**Current private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
+**Current private offline preview:** 1.2.25 (`v1.2.25-xr-preview`).
+Ground View now allows entry during live Campaign as well as offline Skirmish.
+The same central gate blocks menus, cinematics, scripted camera movement,
+loading, placement and camera locks; the XR runtime cancels observation on
+mode, tracking, result or rendering transitions. The native ARM64 build and
+observer host check pass. The Campaign-specific worn-headset transition,
+performance and locomotion gate is open; tabletop remains the supported
+fallback. The release APK hash and source merge are recorded in the 1.2.25
+release notes and audit once published. The repository remains private.
+
+**Previous private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
 PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates
 at `d72a7969`. Release tag `v1.2.24-xr-preview` points to `0403c5e4`, which
 adds verified-hash documentation only. The APK was built from merged source
@@ -60,7 +70,8 @@ The first ground-view checkpoint was `d955d29`; its earlier test APK was
 `build/apk/Generals-Zero-Hour-XR-1.2.18-ground-observer.apk`, SHA-256
 `88d8e4e87ebedd28cb01712aecd322b2c518fd87bfd0a1b5c75cdd989887ba1e`.
 The user liked that installed view. Multiplayer remains paused. Committed
-Android defaults are now 10224 / `1.2.24-xr-preview`.
+The previous Android defaults were 10224 / `1.2.24-xr-preview`; the new
+defaults are 10225 / `1.2.25-xr-preview`.
 
 The user reports that the initial ground view looks great. P25.1 adds physical
 left-stick movement and physical right-stick smooth yaw, with terrain, shroud,
@@ -112,7 +123,7 @@ layout test; keep those limits explicit in the private preview.
 | Product identity | Generals: Zero Hour XR; update-compatible package ID retained | Built, installed and resource-verified |
 | Game modes | Campaign and offline AI Skirmish run in the XR tabletop presentation | Repeated user headset use; mission-specific coverage remains incremental |
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
-| View model | The 1.2.17 release is tabletop-only; merged P25 adds optional offline-Skirmish Ground View, experimental stick navigation and the board-side shortcut column. Videos and full native dialogs stay upright. | P25 static view positive; 10223 button layout accepted; stick movement/collision/comfort gate open for 1.2.24 preview |
+| View model | Tabletop remains default; optional Ground View is available during live offline Campaign and Skirmish, with experimental stick navigation and the board-side shortcut column. Videos and full native dialogs stay upright. | Skirmish static view positive; 10223 button layout accepted; campaign transitions and stick movement/collision/comfort require headset testing |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
 | Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
 | Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |
@@ -208,6 +219,10 @@ text-field task. The native Android setup/importer input is separate.
   reserved for laser hover.
 
 ## Release and device baseline
+
+The current 1.2.25 release expands Ground View to live Campaign gameplay.
+Automated checks cannot certify campaign mission cutscenes, end transitions,
+performance or headset comfort; the 1.2.24 evidence below is historical.
 
 The authoritative private offline download is
 [`v1.2.24-xr-preview`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
@@ -520,10 +535,11 @@ public-visibility/trademark review remain separate.
 - The user's room photographs are useful visual references but contain private
   surroundings. Do not add them to GitHub. Use cropped/redacted panel captures
   or synthetic Canvas fixtures for a pull request.
-- P25 Ground View is optional in the current private 1.2.24 release. Its 10
+- P25 Ground View is optional in the current private 1.2.25 release. Its 10
   game units/metre scale, 1.65 m eye height, 60 m visibility envelope,
   locomotion guards and opaque horizon need longer worn-headset review. It has
-  no network/replay/campaign entry; offline tabletop remains the supported
+  no network/replay entry; campaign Ground View is newly enabled and still
+  needs a real mission transition test. Offline tabletop remains the supported
   default play view.
 
 ## Minimum verification before handoff

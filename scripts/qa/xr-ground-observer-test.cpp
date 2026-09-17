@@ -11,8 +11,22 @@ static int checks=0;
 static void check(bool value) {++checks;if(!value){fprintf(stderr,"observer check %d failed\n",checks);exit(1);}}
 static void near(float a,float b) {check(std::isfinite(a)&&fabsf(a-b)<.0001f);}
 int main(int argc,char **argv) {
-	check(argc==2);std::ifstream source(argv[1]);check(source.good());
+	check(argc==3);std::ifstream source(argv[1]);check(source.good());
 	const std::string code((std::istreambuf_iterator<char>(source)),std::istreambuf_iterator<char>());
+	std::ifstream bootSource(argv[2]);check(bootSource.good());
+	const std::string boot((std::istreambuf_iterator<char>(bootSource)),std::istreambuf_iterator<char>());
+	// The same central gate controls the button, placement, active rendering and
+	// walking. Campaign entry must retain the shared cinematic/camera guard.
+	const auto gate=boot.find("bool XrGameBoot_CanObserveGround()");
+	const auto gateEnd=boot.find("bool XrGameBoot_ViewBase()",gate);
+	check(gate!=std::string::npos && gateEnd!=std::string::npos);
+	const auto gateBody=boot.substr(gate,gateEnd-gate);
+	check(gateBody.find("GAME_SKIRMISH")!=std::string::npos);
+	check(gateBody.find("GAME_SINGLE_PLAYER")!=std::string::npos);
+	check(gateBody.find("XrGameBoot_CanAdjustWorld()")!=std::string::npos);
+	check(code.find("!XrGameBoot_CanObserveGround() || x.roomPoseLost || x.resultVisible")!=std::string::npos);
+	check(boot.find("TheDisplay->isMoviePlaying()")!=std::string::npos);
+	check(boot.find("TheTacticalView->isCameraMovementFinished()")!=std::string::npos);
 	// Production-order regression: registering the loading callback is done
 	// around every ordinary frame; only an invoked present() may cancel mode.
 	const auto constructor=code.find("XrLoadingPresenter(XrHello &host");

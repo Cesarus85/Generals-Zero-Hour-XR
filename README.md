@@ -21,7 +21,7 @@ These are headset captures supplied by the project maintainer. Map, faction, gra
 - Campaign and offline AI Skirmish in the tabletop presentation; cinematics and full native dialogs appear upright.
 - Touch-controller selection, drag-box multi-selection, contextual orders, map pan/rotate/zoom, radar navigation, building rotation, groups and waypoint routes.
 - Detached build window, persistent Commands window and a spatial UI panel; move, tilt, scale or recenter the workspace. Optional detected-surface or manual-height placement does not require a room scan.
-- Matching UI, Commands and Ground View shortcuts beside the board. In offline Skirmish, Ground View offers an optional human-scale, passive view of visible terrain; controller walking and turning are experimental, with B/Y returning to the unchanged tabletop.
+- Matching UI, Commands and Ground View shortcuts beside the board. During live offline Campaign and Skirmish gameplay, Ground View offers an optional human-scale, passive view of visible terrain; controller walking and turning are experimental, with B/Y returning to the unchanged tabletop. Videos and scripted camera sequences use the regular presentation.
 - English and German XR interface/help, left-handed controller mode, hover names and build costs.
 - An XR Victory/Defeat/Match over card remains visible across the transition to match statistics.
 - Quest 3 defaults: Balanced resolution, Light shadows and Multiview. Higher quality modes, including Ultra+, are optional and may cost performance.
@@ -30,13 +30,13 @@ The **supported preview path is offline play**. Human LAN/Internet multiplayer, 
 
 ## Get the current offline APK
 
-Download the release-signed [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.24-xr-preview/Generals-Zero-Hour-XR.apk) from the [1.2.24 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview). This is the current offline build, not an experimental LAN diagnostic APK or an older debug-signed preview. The repository and release remain private; the links require repository access.
+Download the release-signed [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.25-xr-preview/Generals-Zero-Hour-XR.apk) from the [1.2.25 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview). This is the current offline build, not an experimental LAN diagnostic APK or an older debug-signed preview. The repository and release remain private; the links require repository access.
 
-- APK SHA-256: `bb685046bcfcdcd5222b648ac3ebe3a008dbe19bfc5a863b18b4ba749c17195e`
+- APK SHA-256: recorded in the release's `Generals-Zero-Hour-XR.apk.sha256` asset.
 - Android package: `com.generalsx.zerohour.xr` (retained for update compatibility)
-- Android versionCode: `10224`; versionName: `1.2.24-xr-preview`.
+- Android versionCode: `10225`; versionName: `1.2.25-xr-preview`.
 
-The maintainer accepted the Ground View shortcut arrangement in the installed 1.2.23 test build. The 1.2.24 release uses the merged source and unchanged private signing lineage; long-session walking, collision and comfort in Ground View are not yet claimed as fully accepted. The earlier P23 and 1.2.8 downloads are historical debug-signed development builds. Use the exact release link above rather than an older asset or a copied APK from the LAN branch. See [release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md) for verification and remaining public-release gates.
+The maintainer accepted the Ground View shortcut arrangement in the installed 1.2.23 test build. The 1.2.25 release extends that view to live Campaign gameplay, using the same private signing lineage; Campaign Ground View transitions and long-session walking, collision and comfort still need worn-headset acceptance. The earlier P23 and 1.2.8 downloads are historical debug-signed development builds. Use the exact release link above rather than an older asset or a copied APK from the LAN branch. See [release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md) for verification and remaining public-release gates.
 
 ## Install and play
 
