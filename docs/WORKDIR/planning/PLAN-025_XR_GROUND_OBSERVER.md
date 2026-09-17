@@ -1,7 +1,7 @@
 # PLAN-025: passive XR ground observer prototype
 
-**Status:** isolated prototype implemented and reviewed; host/native/package checks
-pass, installation and headset acceptance pending, 2026-09-17
+**Status:** isolated prototype implemented, reviewed and installed; host/native/package
+checks pass, headset acceptance pending, 2026-09-17
 
 ## Goal and boundary
 
@@ -84,8 +84,9 @@ Skirmish for this first prototype. The official 1.2.17 release is preserved.
       `88d8e4e87ebedd28cb01712aecd322b2c518fd87bfd0a1b5c75cdd989887ba1e`.
       Android v3 signature uses the established production certificate;
       package identity, ARM64-only ABI, non-debuggable manifest, no retail
-      archives and `RTS_DEBUG_CHEATS=OFF` verified. No device connected via ADB;
-      no install or worn-headset acceptance is claimed.
+      archives and `RTS_DEBUG_CHEATS=OFF` verified. Installed as an in-place
+      update on Quest 3 `2G0YC5ZG9609PY`; package manager reports 10218 and
+      the earlier first-install date. Worn-headset acceptance remains open.
 - [ ] In-headset: choose ground, enter, 360-degree look, lean, return; no orders
       or changed workspace; verify both handedness modes and loss/return cases.
 - [ ] In-headset: inspect infantry, vehicles, buildings, slopes, effects,

@@ -54,13 +54,15 @@ regressions pass. Separate test APK: **10218 / `1.2.18-xr-ground-observer`**,
 `build/apk/Generals-Zero-Hour-XR-1.2.18-ground-observer.apk`, SHA-256
 `88d8e4e87ebedd28cb01712aecd322b2c518fd87bfd0a1b5c75cdd989887ba1e`.
 Package ID, ARM64-only ABI, non-debuggable manifest, production certificate,
-absence of retail archives and disabled debug cheats verified. No prototype
-is installed or headset-accepted: ADB has no connected device. The private
+absence of retail archives and disabled debug cheats verified. The APK was
+installed on Quest 3 serial `2G0YC5ZG9609PY` using `adb install -r`:
+Android reports versionCode 10218 / versionName `1.2.18-xr-ground-observer`
+and the original first-install date, so app data was retained. No worn-headset
+acceptance has been reported. The private
 1.2.17 release remains authoritative and its preserved APK hash is unchanged;
 multiplayer remains paused. Source release defaults were not bumped.
 
-**Next:** install the test APK as an in-place update when the Quest connects.
-In offline Skirmish open UI > View > Ground view, release the trigger, then
+**Next:** in offline Skirmish open UI > View > Ground view, release the trigger, then
 click visible open ground. Inspect stereo/scale/horizon, turn and lean, then
 return with B (Y left-handed). Verify unchanged table/panel positions, no
 accidental orders, handedness and focus/loading/end-of-match recovery. Do not
@@ -71,7 +73,7 @@ merge or promote this prototype before physical acceptance.
 | Product identity | Generals: Zero Hour XR; update-compatible package ID retained | Built, installed and resource-verified |
 | Game modes | Campaign and offline AI Skirmish run in the XR tabletop presentation | Repeated user headset use; mission-specific coverage remains incremental |
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
-| View model | The released app is tabletop-only; the isolated P25 branch adds an optional passive ground observer for live offline Skirmish. Videos and full native dialogs stay upright. | P25 source, host and Android artifact gates pass; installation/headset gate open |
+| View model | The released app is tabletop-only; the isolated P25 branch adds an optional passive ground observer for live offline Skirmish. Videos and full native dialogs stay upright. | P25 source, host and Android artifact gates pass; test APK installed, headset gate open |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
 | Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
 | Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |
