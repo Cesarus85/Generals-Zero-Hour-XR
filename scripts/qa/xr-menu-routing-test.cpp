@@ -58,6 +58,7 @@ int main(){
 	check(fabsf(groundDock.pose.position.y-commandsDock.pose.position.y+.16f)<.0001f);
 	check(fabsf(uiDock.pose.position.x-commandsDock.pose.position.x)<.0001f &&
 		fabsf(uiDock.pose.position.x-groundDock.pose.position.x)<.0001f);
+	check(fabsf(uiDock.pose.position.z-x.surfaces[1].pose.position.z)<.0001f);
 	const auto oldBuild=x.surfaces[2];x.surfaces[2].pose.position.x+=.5f;
 	check(xrLength(xrSub(uiButtonSurface(x).pose.position,uiDock.pose.position))<.0001f);
 	x.surfaces[2]=oldBuild;x.surfaces[1].pose.position.x+=.2f;

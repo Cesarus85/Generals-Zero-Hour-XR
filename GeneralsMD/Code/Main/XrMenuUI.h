@@ -18,7 +18,9 @@ static XrSurface uiButtonSurface(const XrHello &x) {
 		XrQuaternionf{0,0,0,1};
 	XrSurface s;
 	s.width=.20f;s.pose.orientation=heading;
-	s.pose.position=xrAdd(board.pose.position,xrRotate(heading,{board.width*.5f+.135f,.40f,.08f}));
+	// Keep the column level with the board center in depth; the former +8 cm
+	// player-facing offset put the buttons visibly ahead of the table edge.
+	s.pose.position=xrAdd(board.pose.position,xrRotate(heading,{board.width*.5f+.135f,.40f,0}));
 	return s;
 }
 // UI, Commands and Ground View share width, facing and 16 cm vertical pitch.
