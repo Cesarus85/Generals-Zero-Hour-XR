@@ -5,11 +5,13 @@
 #include "XrCommands.h"
 #include "XrPerformance.h"
 #include "XrBuildRotation.h"
+#include "XrWorld.h"
 #include <cstdio>
 #include <cstdlib>
 struct XrControllerState {XrPosef aim={{0,0,0,1},{0,0,0}};bool aimValid=true,select=false,back=false;};
 struct XrHello {
 	XrScene scene;
+	XrObserverState observer;
 	XrBuildRotation buildRotation;bool inputArmed=true,roomPoseLost=false;
 	XrMenuState menu;XrSurface surfaces[3];XrLayout layout;XrSurfaceGrab grab;
 	XrPerformance performance;
@@ -18,7 +20,7 @@ struct XrHello {
 	XrPosef layoutAnchor={{0,0,0,1},{0,0,0}};
 	XrSessionState state=XR_SESSION_STATE_FOCUSED;
 	bool splitVisible=true,panelLatched=true,arranging=false,controlsArmed=true,interactiveGame=true;
-	bool stereoWorld=false,layoutDirty=false,rayVisible=false,rayHit=false,pointerPressed=false,hoverVisible=false;
+	bool stereoWorld=false,stereoVisible=false,recoveryVisible=false,layoutDirty=false,rayVisible=false,rayHit=false,pointerPressed=false,hoverVisible=false;
 	int arrangeSlot=1;float worldZoom=1;XrVector3f rayStart={},rayEnd={};
 };
 static int checks=0,releases=0,saves=0;static bool locked=false;
@@ -27,6 +29,8 @@ static bool XrGameBoot_CanStereoWorld(){return true;}
 static bool expanded=false;
 static bool XrGameBoot_ExpandedUI(){return expanded;}
 static bool XrGameBoot_CanAdjustWorld(){return !locked;}
+static bool groundAllowed=true;
+static bool XrGameBoot_CanObserveGround(){return groundAllowed;}
 static int tactic=-1;
 static void XrGameBoot_TacticalAction(int action){tactic=action;}
 static int group=-1,operation=-1;
@@ -70,11 +74,23 @@ int main(){
 	c.select=false;check(updateXrMenu(x,c,views,5));check(x.menu.open);
 	c.back=true;check(updateXrMenu(x,c,views,6));check(!x.menu.open);c.back=false;
 	check(!updateXrMenu(x,c,views,7));
+	// Direct Ground View button shares the UI window transform, captures its
+	// own laser click and arms placement only after a release.
+	x.stereoVisible=true;
+	const auto groundButton=groundButtonSurface(x);
+	check(xrLength(xrSub(groundButton.pose.position,button.pose.position))>.12f);
+	c.aim.position={groundButton.pose.position.x,groundButton.pose.position.y,0};
+	check(updateXrMenu(x,c,views,11));c.select=true;
+	check(updateXrMenu(x,c,views,12));check(x.observer.mode==XrObserverMode::Off);
+	c.select=false;check(updateXrMenu(x,c,views,13));
+	check(x.observer.mode==XrObserverMode::Armed && !x.menu.open && !x.controlsArmed);
+	x.observer.cancel();x.stereoVisible=false;
+	check(!updateXrMenu(x,c,views,14)); // No button when mode is unavailable.
 	// P18.1 help captures input on every page and never issues an order.
 	const int priorTactic=tactic;
 	check(xrMenuHit(700.0f/768,1-36.0f/1024)==24);
 	applyMenuAction(x,24,views);check(x.menu.page==4 && x.menu.helpPage==0);
-	for(int page=1;page<=4;++page){applyMenuAction(x,36,views);check(x.menu.helpPage==page%4);}
+	for(int page=1;page<=kXrControllerHelpPages;++page){applyMenuAction(x,36,views);check(x.menu.helpPage==page%kXrControllerHelpPages);}
 	applyMenuAction(x,0,views);check(tactic==priorTactic && x.menu.page==4);
 	applyMenuAction(x,34,views);check(x.menu.page==0);
 	x.menu.open=true;check(xrEditTarget(x)==1);

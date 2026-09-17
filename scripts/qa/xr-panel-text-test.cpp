@@ -24,7 +24,7 @@ struct XrHello {
 	bool resultVisible=false;GLuint resultTexture=0;std::string resultKey;
 	XrObserverState observer;GLuint observerHintTexture=0;std::string observerHintKey;
 	bool rayVisible=false,rayHit=false;
- GLuint uiButtonTexture=0,commandButtonTexture=0,commandsTexture=0,settingsTexture=0,hoverTexture=0;
+ GLuint uiButtonTexture=0,groundButtonTexture=0,commandButtonTexture=0,commandsTexture=0,settingsTexture=0,hoverTexture=0;
  std::string commandsKey,settingsKey,hoverCandidate,hoverKey;
  bool splitVisible=true,arranging=false,pointerVisible=false,pointerPressed=false,hoverVisible=false;
  int pointerPiece=0;float pointerU=0,pointerV=0,worldZoom=1;XrTime hoverSince=0;
@@ -62,6 +62,7 @@ static std::string smallTitle;
 static std::string recoveryTitle;
 static int resultAccent=-1;static std::string resultTitle,resultDetail;
 static std::string observerTitle,observerDetail;
+static std::string groundButtonTitle;
 static std::vector<std::string> lines(const std::string &s){
  std::vector<std::string> v;size_t start=0;
  do{size_t end=s.find('\n',start);v.push_back(s.substr(start,end-start));if(end==std::string::npos)break;start=end+1;}while(start<=s.size());return v;
@@ -98,6 +99,7 @@ static bool paintPanel(XrHello &,GLuint &texture,const std::string &title,const 
  if(kind==2 && title==xrTr("Darstellung wird wiederhergestellt")){recoveryTitle=title;check(detail==xrTr("Die Spielwelt wird neu gezeichnet. Bitte die Trigger loslassen."));}
  if(kind==2 && hover>0){resultAccent=hover;resultTitle=title;resultDetail=detail;}
  if(kind==2 && title==xrTr("Bodenansicht")){observerTitle=title;observerDetail=detail;}
+ if(kind==0 && title==xrTr("BODENANSICHT"))groundButtonTitle=title;
  // Legacy kinds 0/2/6/7 only; the redesigned panels must use paint2.
  check(kind==0 || kind==2 || kind==6 || kind==7);
  if(output){for(const auto &s:{std::to_string(kind),title,detail,std::string()}){fwrite(s.data(),1,s.size(),output);fputc(0,output);}}
@@ -118,6 +120,7 @@ int main(int argc,char **argv){
   XrHello x;g_xrLanguage=lang;x.layout.language=lang;
   for(int i=0;i<3;++i)x.surfaces[i]=x.layout.relative[i];
   updateMenuTextures(x,100);
+  check(groundButtonTitle==xrTr("BODENANSICHT") && x.groundButtonTexture!=0);
   x.recoveryVisible=true;updateMenuTextures(x,100);check(recoveryTitle==xrTr("Darstellung wird wiederhergestellt"));x.recoveryVisible=false;
   // Match-result card: localized title, shared hint and per-result accent.
   x.resultVisible=true;

@@ -9,12 +9,30 @@ static XrSurface uiButtonSurface(const XrHello &x) {
 	s.pose.position=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{s.width*.57f,0,.025f}));
 	s.width=.11f;return s;
 }
+// The direct Ground View button follows the same movable window as UI.
+// Keep the small controls vertically separated even when that window tilts.
+static XrSurface groundButtonSurface(const XrHello &x) {
+	auto s=uiButtonSurface(x);
+	s.pose.position=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{0,-.145f,0}));
+	s.width=.19f;return s;
+}
+static bool groundButtonAvailable(const XrHello &x) {
+	return x.interactiveGame && x.splitVisible && x.stereoVisible &&
+		!x.menu.open && !x.arranging && !x.scene.placing && !x.recoveryVisible &&
+		x.observer.mode==XrObserverMode::Off && XrGameBoot_CanObserveGround();
+}
 static XrSurface hoverCardSurface(const XrHello &x) {
 	auto s=x.surfaces[2];
 	s.pose.position=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{0,s.width*surfaceAspect(2)*.5f+.38f,.015f}));
 	s.width=.68f;return s;
 }
 #include "XrArrangement.h"
+static bool armGroundView(XrHello &x) {
+	if(!x.stereoVisible || !XrGameBoot_CanObserveGround() || !x.observer.arm(true))return false;
+	x.menu.open=false;x.controlsArmed=false;x.inputArmed=false;x.grab.cancel();
+	x.menu.click.cancel();x.commands.input.click.cancel();XrGameBoot_CancelTarget();
+	return true;
+}
 static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 	if(x.menu.page==6) {
 		if(action==18)requestWorkspaceRecenter(x,views,true);
@@ -62,10 +80,7 @@ static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 		if(action<0 || action>16) return;
 		if(action<=3)return; // P15 reserved status/help slots; no flat mode.
 		if(action==16) {
-			if(x.stereoVisible && XrGameBoot_CanObserveGround() && x.observer.arm(true)) {
-				x.menu.open=false;x.controlsArmed=false;x.inputArmed=false;x.grab.cancel();
-				x.menu.click.cancel();x.commands.input.click.cancel();XrGameBoot_CancelTarget();
-			}
+			armGroundView(x);
 			return;
 		}
 		// GeneralsX @performance Codex 14/09/2026 Session-only experiments,
@@ -133,16 +148,17 @@ static bool updateXrMenu(XrHello &x,const XrControllerState &c,const XrView *vie
 	const bool tracked=x.state==XR_SESSION_STATE_FOCUSED && c.aimValid;
 	if(!tracked) {x.menu.click.cancel();x.grab.cancel();x.controlsArmed=false;}
 	int hit=-1;float nearest=10;XrVector3f endpoint=xrAdd(c.aim.position,xrRotate(c.aim.orientation,{0,0,-2.5f}));
-	if(tracked && x.panelLatched) for(int piece=0;piece<(x.menu.open ? 2:1);++piece) {
-		const auto s=piece==0 ? uiButtonSurface(x):x.menu.surface;
-		const float aspect=piece==0 ? 128.0f/192:float(kXrMenuHeight)/kXrMenuWidth;
+	if(tracked && x.panelLatched) for(int piece=0;piece<(x.menu.open ? 3:2);++piece) {
+		if(piece==1 && !groundButtonAvailable(x))continue;
+		const auto s=piece==0 ? uiButtonSurface(x):piece==1 ? groundButtonSurface(x):x.menu.surface;
+		const float aspect=piece<2 ? 128.0f/192:float(kXrMenuHeight)/kXrMenuWidth;
 		float m[16],u=0,v=0;surfaceMatrix(s,m);if(!panelRayUV(m,aspect,c.aim,&u,&v)) continue;
 		const auto point=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{(u-.5f)*s.width,(v-.5f)*s.width*aspect,0}));
 		const float distance=xrLength(xrSub(point,c.aim.position));
-		if(distance<nearest) {nearest=distance;endpoint=point;hit=piece==0 ? 100:
+		if(distance<nearest) {nearest=distance;endpoint=point;hit=piece==0 ? 100:piece==1 ? 101:
 			(x.menu.page==4 ? xrCommandHit(u,v,true):x.menu.page==5 ? xrSceneMenuHit(u,v):xrMenuHit(u,v,x.menu.page));}
 	}
-	const bool captured=x.menu.open || hit==100;
+	const bool captured=x.menu.open || hit==100 || hit==101;
 	const bool fire=x.menu.update(c.select,hit,tracked);x.menu.hover=hit;
 	if(!captured) return false;
 	updateControls(x,XrControllerState{},time);
@@ -160,6 +176,7 @@ static bool updateXrMenu(XrHello &x,const XrControllerState &c,const XrView *vie
 			x.menu.surface.pose.position=xrAdd(xrScale(xrAdd(views[0].pose.position,views[1].pose.position),.5f),{fx*.9f,-.16f,fz*.9f});
 			x.menu.surface.width=.64f;
 		}
-	} else if(fire && hit>=0) applyMenuAction(x,hit,views);
+	} else if(fire && hit==101) armGroundView(x);
+	else if(fire && hit>=0) applyMenuAction(x,hit,views);
 	return true;
 }

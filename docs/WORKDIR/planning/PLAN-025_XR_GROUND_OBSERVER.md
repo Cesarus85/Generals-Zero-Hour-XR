@@ -146,3 +146,16 @@ ARM64 native and both Android debug flavors compile; signed XR packaging,
 package identity and v3 production certificate verify. Host checks: observer
 56, interaction 148, bilingual panel 20,761. Movement has not yet been worn-
 headset tested.
+
+## P25.2: direct Ground View button
+
+The maintainer requested a one-click entry control beside the existing UI
+button. A second compact, bilingual Ground View / Bodenansicht button follows
+that button's movable build-window transform and sits directly below it.
+It appears only during a live offline Skirmish when stereo ground entry is
+available; it is hidden during arrangement, menus, placement, recovery and
+ground observation. Its rendered surface and ray hit surface use the same
+pose, width and aspect. Release-only click handling invokes the same arming
+path as UI > View, so both routes preserve input release, terrain selection,
+the direct B/Y return and the saved tabletop arrangement. The button title
+shrinks as needed to keep the full German or English word visible.

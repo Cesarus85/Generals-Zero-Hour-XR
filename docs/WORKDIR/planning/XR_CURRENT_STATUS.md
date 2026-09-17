@@ -74,6 +74,12 @@ physical right stick. B (Y for left-handed gameplay) returns to the table.
 Inspect turning direction/pivot, slope and obstacle stops, frame rate and
 comfort; verify the table and panels remain where they were.
 
+**P25.2 source pending build:** a direct bilingual Bodenansicht / Ground View
+button now sits below the existing UI button and follows its movable window.
+It triggers the same ground-placement flow as UI > View. Host menu routing and
+panel payload tests pass; APK build and headset appearance/interaction remain
+open. The installed 10219 APK does not contain this button.
+
 Also inspect stereo/scale/horizon, physical lean, handedness and
 focus/loading/end-of-match recovery. Verify that no gameplay orders occur.
 Do not merge or promote this prototype before physical acceptance.
@@ -83,7 +89,7 @@ Do not merge or promote this prototype before physical acceptance.
 | Product identity | Generals: Zero Hour XR; update-compatible package ID retained | Built, installed and resource-verified |
 | Game modes | Campaign and offline AI Skirmish run in the XR tabletop presentation | Repeated user headset use; mission-specific coverage remains incremental |
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
-| View model | The released app is tabletop-only; the isolated P25 branch adds ground view and the P25.1 left-stick walk/right-stick turn extension for offline Skirmish. Videos and full native dialogs stay upright. | P25 10218 visual impression positive; P25.1 10219 built and installed, headset movement/comfort gate open |
+| View model | The released app is tabletop-only; the isolated P25 branch adds ground view, P25.1 stick navigation and a P25.2 direct button beside UI for offline Skirmish. Videos and full native dialogs stay upright. | P25 10218 visual impression positive; P25.1 10219 installed; P25.2 host verified, build/headset gate open |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
 | Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
 | Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |

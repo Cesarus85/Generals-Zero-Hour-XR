@@ -113,6 +113,10 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 	const std::string uiTitle=x.arranging ? xrTr("Fertig"):"UI";
 	if(!x.uiButtonTexture || uiButtonTitle!=uiTitle)
 		if(paintPanel(x,x.uiButtonTexture,uiTitle.c_str(),"","",-1,0))uiButtonTitle=uiTitle;
+	static XrLanguage groundButtonLanguage=XrLanguage::German;
+	if(!x.groundButtonTexture || groundButtonLanguage!=g_xrLanguage)
+		if(paintPanel(x,x.groundButtonTexture,xrTr("BODENANSICHT"),"","",-1,0))
+			groundButtonLanguage=g_xrLanguage;
 	static XrLanguage buttonLanguage=XrLanguage::German;
 	if(!x.commandButtonTexture || buttonLanguage!=g_xrLanguage)
 		if(paintPanel(x,x.commandButtonTexture,xrTr("BEFEHLE"),"","",-1,0))buttonLanguage=g_xrLanguage;

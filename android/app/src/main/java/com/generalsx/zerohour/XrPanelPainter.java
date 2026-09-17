@@ -59,6 +59,10 @@ public final class XrPanelPainter {
         if (kind == 0) {
             text.setTextAlign(Paint.Align.CENTER);
             text.setTextSize(title.length() > 2 ? 28 : 46);
+            // Keep localized labels such as BODENANSICHT fully visible on the
+            // compact, room-space button without changing the hit surface.
+            float measured = text.measureText(title);
+            if (measured > width - 16) text.setTextSize(text.getTextSize() * (width - 16) / measured);
             canvas.drawText(title, width / 2f, 89, text);
         } else if (kind == 6) {
             // GeneralsX @feature Codex 14/09/2026 Full native descriptions:

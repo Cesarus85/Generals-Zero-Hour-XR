@@ -412,7 +412,7 @@ struct XrHello {
 	JNIEnv *panelEnv=nullptr;jclass panelPainter=nullptr;
 	XrMenuState menu;XrCommandState commands;float worldZoom=1.0f;bool startViewApplied=false;
 	GLuint commandsTexture=0,commandButtonTexture=0;std::string commandsKey;
-	GLuint uiButtonTexture=0,settingsTexture=0,hoverTexture=0;
+	GLuint uiButtonTexture=0,groundButtonTexture=0,settingsTexture=0,hoverTexture=0;
 	GLuint recoveryTexture=0;
 	bool recoveryVisible=false;
 	// GeneralsX @feature Muse 16/09/2026 Match-result card: head-yaw
@@ -1190,6 +1190,8 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 			panel(commandButtonSurface(x),128.0f/192,x.commandButtonTexture);
 		}
 		if(!x.loadingPresentation && !hideWorkspace && !observing)panel(uiButtonSurface(x),128.0f/192,x.uiButtonTexture);
+		if(!x.loadingPresentation && !hideWorkspace && !observing && groundButtonAvailable(x))
+			panel(groundButtonSurface(x),128.0f/192,x.groundButtonTexture);
 		if(x.menu.open && !observing) panel(x.menu.surface,float(kXrMenuHeight)/kXrMenuWidth,x.settingsTexture);
 		if(observing || x.observer.mode==XrObserverMode::Armed)
 			panel(x.observerHintSurface,.5f,x.observerHintTexture);
@@ -1727,6 +1729,7 @@ static void shutdownXr(XrHello &x)
 	x.scene.clear();
 	for(int i=0;i<2;++i) if(x.controls.aimSpace[i]!=XR_NULL_HANDLE) xrDestroySpace(x.controls.aimSpace[i]);
 	if (x.uiButtonTexture) xr_glDeleteTextures(1,&x.uiButtonTexture);
+	if (x.groundButtonTexture) xr_glDeleteTextures(1,&x.groundButtonTexture);
 	if (x.settingsTexture) xr_glDeleteTextures(1,&x.settingsTexture);
 	if (x.hoverTexture) xr_glDeleteTextures(1,&x.hoverTexture);
 	if (x.sceneTexture) xr_glDeleteTextures(1,&x.sceneTexture);

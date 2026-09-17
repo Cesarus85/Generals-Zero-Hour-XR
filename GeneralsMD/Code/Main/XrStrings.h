@@ -9,6 +9,7 @@ struct XrTranslation {const char *de,*en;};
 inline constexpr XrTranslation kXrTranslations[]={
 	// GeneralsX @feature Codex 17/09/2026 P25 bilingual observer controls.
 	{"Bodenansicht","Ground view"},
+	{"BODENANSICHT","GROUND VIEW"},
 	{"Bodenansicht · Ort wählen","Ground view · choose location"},
 	{"Nur Offline-Gefecht: Bodenansicht wählen, dann sichtbaren freien Boden anklicken. B/Y kehrt zurück.",
 	 "Offline Skirmish only: choose Ground view, then click visible open ground. B/Y returns."},
