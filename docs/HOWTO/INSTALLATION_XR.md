@@ -36,7 +36,7 @@ outside the scope of this project; see
    from the [1.2.25 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview).
    Do not use an older debug-signed release or an experimental LAN diagnostic
    APK. The APK SHA-256 is
-   `62f2b08fcdf1168e5f639465de7e654ca2a05270cd66a62d324c1c91ce27c089`,
+   `dcd79e4d6be706f0ddd01d01416d321abd977a37aad768d750232bd1fc65e009`,
    also listed in the release's `Generals-Zero-Hour-XR.apk.sha256` asset.
    The repository and release currently require private-repository access.
 2. Enable Developer Mode in the Meta Quest mobile app, connect the headset over
