@@ -159,3 +159,12 @@ pose, width and aspect. Release-only click handling invokes the same arming
 path as UI > View, so both routes preserve input release, terrain selection,
 the direct B/Y return and the saved tabletop arrangement. The button title
 shrinks as needed to keep the full German or English word visible.
+
+P25.2 source `63ae138` built and installed as test APK versionCode 10220 /
+`1.2.20-xr-ground-button`, SHA-256
+`1faa24d4ac50f82184a3ed2170b9e4df87248349c7cf54420562813bbdc3a8bc`.
+Native ARM64, both Android debug flavors and the signed XR package pass, as do
+production menu routing (340) and bilingual panel payload (20,765) host checks.
+Android reports 10220 over
+the previous installation. Worn-headset placement, legibility and laser click
+remain the decisive acceptance gate.
