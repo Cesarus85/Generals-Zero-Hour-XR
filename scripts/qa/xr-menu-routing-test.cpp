@@ -24,7 +24,8 @@ struct XrHello {
 	int arrangeSlot=1;float worldZoom=1;XrVector3f rayStart={},rayEnd={};
 };
 static int checks=0,releases=0,saves=0;static bool locked=false;
-static void check(bool b){++checks;if(!b){fprintf(stderr,"menu route check %d failed\n",checks);exit(1);}}
+static void checkAt(bool b,int line){++checks;if(!b){fprintf(stderr,"menu route check %d failed at line %d\n",checks,line);exit(1);}}
+#define check(b) checkAt((b),__LINE__)
 static bool XrGameBoot_CanStereoWorld(){return true;}
 static bool expanded=false;
 static bool XrGameBoot_ExpandedUI(){return expanded;}
@@ -51,6 +52,17 @@ static void XrGameBoot_CancelTarget(){}
 int main(){
 	XrHello x;XrView views[2]={};views[0].pose.orientation.w=views[1].pose.orientation.w=1;
 	for(int i=0;i<3;++i)x.surfaces[i]=x.layout.relative[i];
+	const auto uiDock=uiButtonSurface(x),commandsDock=commandButtonSurface(x),groundDock=groundButtonSurface(x);
+	check(uiDock.width==.20f && commandsDock.width==uiDock.width && groundDock.width==uiDock.width);
+	check(fabsf(commandsDock.pose.position.y-uiDock.pose.position.y+.16f)<.0001f);
+	check(fabsf(groundDock.pose.position.y-commandsDock.pose.position.y+.16f)<.0001f);
+	check(fabsf(uiDock.pose.position.x-commandsDock.pose.position.x)<.0001f &&
+		fabsf(uiDock.pose.position.x-groundDock.pose.position.x)<.0001f);
+	const auto oldBuild=x.surfaces[2];x.surfaces[2].pose.position.x+=.5f;
+	check(xrLength(xrSub(uiButtonSurface(x).pose.position,uiDock.pose.position))<.0001f);
+	x.surfaces[2]=oldBuild;x.surfaces[1].pose.position.x+=.2f;
+	check(fabsf(uiButtonSurface(x).pose.position.x-uiDock.pose.position.x-.2f)<.0001f);
+	x.surfaces[1].pose.position.x-=.2f;
 	const auto compact=commandSurface(x);applyCommandAction(x,37);
 	check(x.commands.tactics && xrCommandHeight(x.commands)==1280);
 	const auto expandedConsole=commandSurface(x);
@@ -64,7 +76,7 @@ int main(){
 	applyCommandAction(x,37);check(!x.commands.tactics);tactic=-1;x.stereoWorld=false;
 	for(int i=0;i<3;++i)x.surfaces[i]=x.layout.relative[i];
 	x.surfaces[2].pose={{0,0,0,1},{0,0,-1}};
-	const auto button=uiButtonSurface(x);XrControllerState c;c.aim.position={button.pose.position.x,0,0};
+	const auto button=uiButtonSurface(x);XrControllerState c;c.aim.position={button.pose.position.x,button.pose.position.y,0};
 	check(updateXrMenu(x,c,views,1));check(!x.menu.open);
 	c.select=true;check(updateXrMenu(x,c,views,2));check(!x.menu.open);
 	c.select=false;check(updateXrMenu(x,c,views,3));check(x.menu.open && !x.controlsArmed);
@@ -74,7 +86,7 @@ int main(){
 	c.select=false;check(updateXrMenu(x,c,views,5));check(x.menu.open);
 	c.back=true;check(updateXrMenu(x,c,views,6));check(!x.menu.open);c.back=false;
 	check(!updateXrMenu(x,c,views,7));
-	// Direct Ground View button shares the UI window transform, captures its
+	// Direct Ground View button shares the board-side column, captures its
 	// own laser click and arms placement only after a release.
 	x.stereoVisible=true;
 	const auto groundButton=groundButtonSurface(x);
@@ -114,7 +126,7 @@ int main(){
 	x.menu.page=0;applyMenuAction(x,14,views);check(x.arranging && !x.menu.open && !x.controlsArmed);
 	check(releases>4 && saves>7);
 	// Loss of focus cannot turn a held trigger into a fresh workspace click.
-	x.arranging=false;x.menu.open=false;c.aim.position={button.pose.position.x,0,0};c.select=true;
+	x.arranging=false;x.menu.open=false;c.aim.position={button.pose.position.x,button.pose.position.y,0};c.select=true;
 	x.state=XR_SESSION_STATE_VISIBLE;updateXrMenu(x,c,views,8);
 	x.state=XR_SESSION_STATE_FOCUSED;updateXrMenu(x,c,views,9);c.select=false;updateXrMenu(x,c,views,10);
 	check(!x.menu.open);
@@ -209,6 +221,12 @@ int main(){
 	// Nonmodal: a ray outside the panel is free; background is captured.
 	x.surfaces[2].pose={{0,0,0,1},{0,0,-1}};c={};c.aim.position={5,0,0};
 	check(!updateCommands(x,c,100));
+	const auto commandToggle=commandButtonSurface(x);
+	c.aim.position={commandToggle.pose.position.x,commandToggle.pose.position.y,0};
+	check(updateCommands(x,c,100));c.select=true;check(updateCommands(x,c,100));
+	c.select=false;check(updateCommands(x,c,100));check(!x.layout.commandsVisible);
+	check(updateCommands(x,c,100));c.select=true;check(updateCommands(x,c,100));
+	c.select=false;check(updateCommands(x,c,100));check(x.layout.commandsVisible);
 	const auto fixed=commandSurface(x);
 	// GeneralsX @test Ultron 15/09/2026 P21 the console center is a real
 	// button in the new layout; the no-dispatch contract moves to a true
@@ -231,7 +249,8 @@ int main(){
 	// P11.1: the UI button becomes Done, not another modal submenu.
 	x={};for(int i=0;i<3;++i)x.surfaces[i]=x.layout.relative[i];
 	x.surfaces[2].pose={{0,0,0,1},{0,0,-1}};c={};
-	c.aim.position={uiButtonSurface(x).pose.position.x,0,0};
+	const auto arrangeButton=uiButtonSurface(x);
+	c.aim.position={arrangeButton.pose.position.x,arrangeButton.pose.position.y,0};
 	applyMenuAction(x,14,views);check(x.arranging && !x.menu.open);
 	updateXrMenu(x,c,views,120);c.select=true;updateXrMenu(x,c,views,121);
 	check(x.arranging);c.select=false;updateXrMenu(x,c,views,122);

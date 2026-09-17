@@ -4,17 +4,28 @@
 #include "XrViewMode.h"
 #include "XrWorkspacePlacement.h"
 static XrSurface uiButtonSurface(const XrHello &x) {
-	const int slot=x.splitVisible ? 2:0;
-	auto s=x.surfaces[slot];
-	s.pose.position=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{s.width*.57f,0,.025f}));
-	s.width=.11f;return s;
+	if(!x.splitVisible) {
+		auto s=x.surfaces[0];
+		s.pose.position=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{s.width*.57f,0,.025f}));
+		s.width=.20f;return s;
+	}
+	// All three workspace shortcuts form one upright column beside the board.
+	// Derive heading from its right edge: a flat board has no usable forward yaw.
+	const auto &board=x.surfaces[1];
+	auto right=xrRotate(board.pose.orientation,{1,0,0});
+	const float length=sqrtf(right.x*right.x+right.z*right.z);
+	const auto heading=length>1e-4f ? xrAxisAngle({0,1,0},atan2f(-right.z,right.x)):
+		XrQuaternionf{0,0,0,1};
+	XrSurface s;
+	s.width=.20f;s.pose.orientation=heading;
+	s.pose.position=xrAdd(board.pose.position,xrRotate(heading,{board.width*.5f+.135f,.40f,.08f}));
+	return s;
 }
-// The direct Ground View button follows the same movable window as UI.
-// Keep the small controls vertically separated even when that window tilts.
+// UI, Commands and Ground View share width, facing and 16 cm vertical pitch.
 static XrSurface groundButtonSurface(const XrHello &x) {
 	auto s=uiButtonSurface(x);
-	s.pose.position=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{0,-.145f,0}));
-	s.width=.19f;return s;
+	s.pose.position=xrAdd(s.pose.position,{0,-.32f,0});
+	return s;
 }
 static bool groundButtonAvailable(const XrHello &x) {
 	return x.interactiveGame && x.splitVisible && x.stereoVisible &&
