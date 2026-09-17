@@ -165,6 +165,23 @@ P25.2 source `63ae138` built and installed as test APK versionCode 10220 /
 `1faa24d4ac50f82184a3ed2170b9e4df87248349c7cf54420562813bbdc3a8bc`.
 Native ARM64, both Android debug flavors and the signed XR package pass, as do
 production menu routing (340) and bilingual panel payload (20,765) host checks.
-Android reports 10220 over
-the previous installation. Worn-headset placement, legibility and laser click
-remain the decisive acceptance gate.
+Android reports 10220 over the previous installation. The maintainer confirmed
+the direct button works in the headset, but rejected its layout: unequal sizes
+and scattered positions made the controls visually incoherent.
+
+## P25.3: board-side shortcut column
+
+UI, Commands and Ground View are now the same 20 cm wide panel size with a
+16 cm center-to-center vertical pitch. The three upright buttons sit in one
+column just outside the board's right edge and follow the board when it is
+moved, tilted or resized, independently of the build window. The menu-shell
+fallback remains available outside split gameplay. Rendering and ray routing
+continue to share the exact same surfaces. Host tests assert size, spacing,
+board-following and direct ray clicks. Worn-headset appearance, reachability
+and spacing are the next acceptance gate; the official 1.2.17 release remains
+unchanged. Source `d926410` linked as native ARM64 and packaged as signed test
+APK **10221 / `1.2.21-xr-button-column`**, SHA-256
+`b76124f3c07675ac87a3d3bcbffb4e7176d5fada0d5b840de24c1001ec36f39b`.
+It was installed over 10220 on Quest 3 `2G0YC5ZG9609PY` without replacing
+the package identity or first-install date. Both Android debug flavors and
+host menu/ray checks pass (360).

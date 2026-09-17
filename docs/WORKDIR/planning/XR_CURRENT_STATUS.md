@@ -46,7 +46,7 @@ the detailed narrative and command transcripts out of this dashboard.
 ## Current product baseline
 
 **Active experiment:** [PLAN-025: ground view and stick locomotion](PLAN-025_XR_GROUND_OBSERVER.md).
-The latest prototype source is `63ae138` on
+The latest prototype source is `d926410` on
 `codex/xr-ground-observer-prototype` (official `main` baseline `6af7abd`).
 The first ground-view checkpoint was `d955d29`; its earlier test APK was
 **10218 / `1.2.18-xr-ground-observer`**,
@@ -74,18 +74,25 @@ physical right stick. B (Y for left-handed gameplay) returns to the table.
 Inspect turning direction/pivot, slope and obstacle stops, frame rate and
 comfort; verify the table and panels remain where they were.
 
-**P25.2 installed test:** a direct bilingual Bodenansicht / Ground View
-button now sits below the existing UI button and follows its movable window.
-It triggers the same ground-placement flow as UI > View. Host menu routing
-(340), bilingual panel payload (20,765), native ARM64, both Android debug
-flavors and signed XR packaging pass. Test APK **10220 /
+**P25.2 headset feedback:** the bilingual Bodenansicht / Ground View button
+works and triggers the same ground-placement flow as UI > View. Its scattered,
+unequal-size presentation was rejected. The installed APK **10220 /
 `1.2.20-xr-ground-button`** is
 `build/apk/Generals-Zero-Hour-XR-1.2.20-ground-button.apk`, SHA-256
 `1faa24d4ac50f82184a3ed2170b9e4df87248349c7cf54420562813bbdc3a8bc`.
-Installed as an in-place update on Quest 3 `2G0YC5ZG9609PY`; Android reports
-10220 and retained first-install date. The button's headset appearance and
-laser interaction remain untested. Version 10219 was the previous installed
-movement build.
+It is installed on Quest 3 `2G0YC5ZG9609PY`.
+
+**P25.3 installed test pending headset inspection:** UI, Commands and Ground View now
+share the Commands button's 20 cm width and form a vertical column directly
+outside the right board edge. They follow the board rather than the separate
+build window. Host menu/ray checks pass (360), native ARM64, both Android debug
+flavors and signed XR packaging pass. Test APK **10221 /
+`1.2.21-xr-button-column`** is
+`build/apk/Generals-Zero-Hour-XR-1.2.21-button-column.apk`, SHA-256
+`b76124f3c07675ac87a3d3bcbffb4e7176d5fada0d5b840de24c1001ec36f39b`.
+It is installed as an in-place update on Quest 3 `2G0YC5ZG9609PY`, with the
+original first-install date intact. Physical inspection of position, size,
+reachability and label fit remains open.
 
 Also inspect stereo/scale/horizon, physical lean, handedness and
 focus/loading/end-of-match recovery. Verify that no gameplay orders occur.
@@ -96,7 +103,7 @@ Do not merge or promote this prototype before physical acceptance.
 | Product identity | Generals: Zero Hour XR; update-compatible package ID retained | Built, installed and resource-verified |
 | Game modes | Campaign and offline AI Skirmish run in the XR tabletop presentation | Repeated user headset use; mission-specific coverage remains incremental |
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
-| View model | The released app is tabletop-only; the isolated P25 branch adds ground view, P25.1 stick navigation and a P25.2 direct button beside UI for offline Skirmish. Videos and full native dialogs stay upright. | P25 10218 visual impression positive; P25.1 10219 and P25.2 10220 installed; new button/headset movement gates open |
+| View model | The released app is tabletop-only; the isolated P25 branch adds ground view, P25.1 stick navigation and a P25.3 board-side shortcut column for offline Skirmish. Videos and full native dialogs stay upright. | P25 10218 visual impression positive; P25.2 10220 button works but layout rejected; P25.3 10221 installed, layout and movement gates open |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
 | Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
 | Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |
