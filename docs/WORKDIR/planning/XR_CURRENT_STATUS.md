@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-16
+**Updated:** 2026-09-17
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`
@@ -43,6 +43,13 @@ the detailed narrative and command transcripts out of this dashboard.
   tests, APK hash where applicable, and a list of physical checks still open.
 
 ## Current product baseline
+
+**Active experiment:** [PLAN-025: passive ground observer](PLAN-025_XR_GROUND_OBSERVER.md).
+The maintainer authorized a separate offline Skirmish prototype: choose a ground
+location, observe at human scale with head tracking, and return to the existing
+tabletop workspace. Implementation is delegated to GPT-5.6 Sol (high reasoning).
+No prototype is built or headset-accepted yet. The private 1.2.17 release below
+remains the authoritative released build; multiplayer remains paused.
 
 | Area | Current state | Acceptance level |
 |---|---|---|
