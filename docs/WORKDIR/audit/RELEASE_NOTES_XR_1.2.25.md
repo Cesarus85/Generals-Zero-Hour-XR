@@ -11,7 +11,8 @@ unchanged.
 Download `Generals-Zero-Hour-XR.apk` and
 `Generals-Zero-Hour-XR.apk.sha256` from this release. Verify the download with
 `shasum -a 256 -c Generals-Zero-Hour-XR.apk.sha256`, then update an existing
-installation without uninstalling it:
+installation without uninstalling it. APK SHA-256:
+`62f2b08fcdf1168e5f639465de7e654ca2a05270cd66a62d324c1c91ce27c089`.
 
 ```sh
 adb devices
@@ -39,10 +40,12 @@ workspace layout and controls remain available.
 
 ## Limits and validation
 
-- The source and Android ARM64 build and focused observer regressions pass.
+- The merged source, Android ARM64 build, both Android debug flavors and
+  focused observer/loading/workspace/scene/panel/endgame regressions pass.
   Campaign-specific mission transitions, frame rate, walking/collision and
-  comfort still require a worn-headset test. This release does not claim
-  all-mission acceptance.
+  comfort still require a worn-headset test. The Quest was not ADB-connected
+  during packaging; this release does not claim installation or all-mission
+  acceptance.
 - Human multiplayer, replay XR and general in-game text entry are not part of
   this offline preview. Do not substitute a separate LAN diagnostic APK.
 - This independent community port is not an Electronic Arts product or

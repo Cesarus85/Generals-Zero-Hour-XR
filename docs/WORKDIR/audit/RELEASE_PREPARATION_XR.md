@@ -1,10 +1,33 @@
 # XR release preparation and checkpoints
 
-**Updated:** 2026-09-17 — private 1.2.24 release verification
+**Updated:** 2026-09-17 — private 1.2.25 release verification
 
-**Publication state:** The non-debuggable 1.2.24 APK is the current release in the **private** repository. Public visibility, especially under the retained product name, requires separate review of EA's trademark terms.
+**Publication state:** The non-debuggable 1.2.25 APK is the current release in the **private** repository. Public visibility, especially under the retained product name, requires separate review of EA's trademark terms.
 
-## Current private release checkpoint: 1.2.24
+## Current private release checkpoint: 1.2.25
+
+PR #19 merged Campaign Ground View to `main` at `652f46f`. The release APK
+was rebuilt from that merged source without version overrides. It is
+125,028,534 bytes, versionCode `10225`, versionName `1.2.25-xr-preview`,
+package `com.generalsx.zerohour.xr`, SHA-256
+`62f2b08fcdf1168e5f639465de7e654ca2a05270cd66a62d324c1c91ce27c089`.
+The packaged `libmain.so` matches the ARM64 build (SHA-256
+`7f8427f52876ca1b431bd3aedf86a458f1e46fbca1ec6cfc2ad8f0bc4367e529`).
+APK Signature Scheme v3 verifies with the existing release certificate
+`a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`.
+The manifest is non-debuggable, the ZIP is intact, only ARM64 native libraries
+are packaged and no retail `.big`, `.scb`, `.map` or `.w3d` files are included.
+
+Local tests pass: observer 64, loading 152, scene 1280, workspace 781,
+bilingual panel 20,765, trigger 28 and endgame 33. Native ARM64,
+`assembleXrRelease`, `assembleXrDebug` and `assembleZhDebug` pass. GitHub
+Actions was not used because the account quota is exhausted. The Quest was
+not ADB-connected during this checkpoint, so installation, worn-headset
+Campaign transitions, long-session locomotion, comfort and mission performance
+remain open. The private preview notes disclose these limits. The repository
+and release remain private; public visibility needs separate review.
+
+## Previous private release checkpoint: 1.2.24
 
 PR #15 merged the optional offline-Skirmish Ground View and accepted board-side
 shortcut layout to `main` at `9792d947`. The 1.2.23 test APK was installed over
@@ -152,7 +175,8 @@ are the platform basis, not a promise of universal migration.
 
 ## Release-facing content
 
-- README now centers Quest tabletop features, requirements, controls, honest limits and the exact current v1.2.24 download.
+- For the previous 1.2.24 checkpoint, README centered Quest tabletop features,
+  requirements, controls, honest limits and that release's exact download.
 - Four maintainer-provided Quest captures illustrate separate maps, the build window and Commands/group UI. Original JPEG pixels and color profiles were retained; EXIF/TIFF/GPS metadata was removed from the repository copies. The maintainer reports that they visually reviewed the passthrough room content and approved it for publication.
 - [Quest installation and controls](../../HOWTO/INSTALLATION_XR.md) and [game-file sourcing](../../HOWTO/GETTING_THE_GAME_FILES.md) are the user guides. No original game files are distributed.
 - [Multiplayer status](../planning/MULTIPLAYER_STATUS.md) explicitly pauses LAN and records the paired CRC evidence and resumption plan. Experimental LAN code remains on its own branch, outside this candidate.
