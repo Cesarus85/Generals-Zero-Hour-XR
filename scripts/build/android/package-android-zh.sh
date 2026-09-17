@@ -67,7 +67,22 @@ fi
 
 rm -rf "${JNILIBS}"
 mkdir -p "${JNILIBS}"
-cp "${GAME_LIB}" "${JNILIBS}/libmain.so"
+# GeneralsX @build Codex 17/09/2026 Keep release APKs small enough for
+# reliable distribution: remove native debug sections, not runtime symbols.
+# Preserve the unmodified build artifact for inspection and debug packaging.
+if [[ "${BUILD_TYPE}" == "release" ]]; then
+    strip_tool=""
+    for candidate in "${ANDROID_NDK_HOME}"/toolchains/llvm/prebuilt/*/bin/llvm-strip; do
+        if [[ -x "${candidate}" ]]; then strip_tool="${candidate}"; break; fi
+    done
+    if [[ -z "${strip_tool}" ]]; then
+        echo "ERROR: Android NDK llvm-strip is required for XR release packaging." >&2
+        exit 1
+    fi
+    "${strip_tool}" --strip-debug -o "${JNILIBS}/libmain.so" "${GAME_LIB}"
+else
+    cp "${GAME_LIB}" "${JNILIBS}/libmain.so"
+fi
 
 # Required runtime .so set. Fail loudly on any missing file: a stale or partial
 # stage produces an APK that dies at System.loadLibrary / D3D init.
