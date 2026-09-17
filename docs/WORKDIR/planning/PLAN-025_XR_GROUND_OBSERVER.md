@@ -117,3 +117,24 @@ headset stereo and horizon quality, scale, 360-degree head movement and lean,
 layout restoration, all input gates, left-handed return, renderer recovery,
 performance/comfort and model/detail judgment. This prototype does not
 authorize release, multiplayer, campaigns or replays.
+
+## P25.1: optional stick locomotion extension
+
+The maintainer likes the initial ground view and requested simple shooter-like
+navigation. While Active, the physical left stick now moves forward/backward
+and sideways relative to horizontal head gaze, at up to 2 m/s. The physical
+right stick rotates smoothly around the current tracked head position, at up
+to 75 degrees/s; its vertical axis is unused. Physical left/right assignment
+is stable even if gameplay handedness swaps the pointing hand. An entry
+trigger press must be released and both sticks centered before movement starts.
+
+Each small movement step queries the real terrain height, slope/cliff state,
+map margins, local shroud and a short drawable sweep/probe. A blocked diagonal
+step can slide along an available axis. Controller input still sends explicit
+game-action releases; walking changes only the XR render mapping, never a
+game object or tactical camera. The workspace and B/Y return remain unchanged.
+The hint and a fifth controller-help page explain the controls in both
+languages. These are basic collision guards, not a full character controller:
+physical leaning cannot be constrained by them and some visual clutter may
+stop movement. Worn-headset comfort, speed, turning direction, terrain
+following, collision quality and performance still require direct testing.

@@ -14,6 +14,8 @@ inline constexpr XrTranslation kXrTranslations[]={
 	 "Offline Skirmish only: choose Ground view, then click visible open ground. B/Y returns."},
 	{"B: Zurück zum Tisch","B: Return to table"},
 	{"Y: Zurück zum Tisch","Y: Return to table"},
+	{"Links: gehen · Rechts: drehen · B: Tisch","Left: move · Right: turn · B: table"},
+	{"Links: gehen · Rechts: drehen · Y: Tisch","Left: move · Right: turn · Y: table"},
 	{"Sichtbaren freien Boden mit Trigger wählen. B/Y bricht ab.","Choose visible open ground with the trigger. B/Y cancels."},
 	{"Hier kein sicherer, sichtbarer Boden. Anderen Ort wählen; B/Y bricht ab.",
 	 "No safe visible ground here. Choose another spot; B/Y cancels."},

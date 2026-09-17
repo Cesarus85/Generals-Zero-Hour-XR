@@ -54,6 +54,22 @@ static void updateInteraction(XrHello &x, const XrControllerState &c, const XrVi
 			}
 		} else if(c.back && !x.observer.requireRelease) {
 			x.observer.cancel();x.observerFadeStart=time;x.controlsArmed=false;
+		} else if(x.observer.mode==XrObserverMode::Active && !x.observer.requireRelease) {
+			// Physical left/right sticks are independent of gameplay handedness.
+			// Look direction includes real head rotation; only the virtual world
+			// turns, with the current head as pivot.
+			const auto head=xrScale(xrAdd(views[0].pose.position,views[1].pose.position),.5f);
+			float fx=0,fz=-1;yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
+			x.observer.turn(xrStick(c.rightStick.x),dt,head);
+			const auto delta=x.observer.walkDelta({xrStick(c.leftStick.x),xrStick(c.leftStick.y)},
+				{fx,0,fz},dt);
+			if(fabsf(delta.x)+fabsf(delta.y)>.0001f) {
+				XrVector3f next={};
+				if(XrGameBoot_ObserverStep(x.observer.ground,delta,next) ||
+					(fabsf(delta.x)>.0001f && XrGameBoot_ObserverStep(x.observer.ground,{delta.x,0,0},next)) ||
+					(fabsf(delta.y)>.0001f && XrGameBoot_ObserverStep(x.observer.ground,{0,delta.y,0},next)))
+					x.observer.ground=next;
+			}
 		}
 		return;
 	}

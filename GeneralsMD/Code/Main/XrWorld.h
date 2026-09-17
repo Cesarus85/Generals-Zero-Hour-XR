@@ -24,6 +24,8 @@ struct XrWorldFrame {
 constexpr float kXrObserverUnitsPerMetre=10.0f;
 constexpr float kXrObserverEyeHeightMetres=1.65f;
 constexpr float kXrObserverFarMetres=60.0f;
+constexpr float kXrObserverWalkMetresPerSecond=2.0f;
+constexpr float kXrObserverTurnRadiansPerSecond=1.309f; // 75 degrees/s.
 enum class XrObserverMode {Off,Armed,Active};
 struct XrObserverState {
 	XrObserverMode mode=XrObserverMode::Off;
@@ -44,6 +46,12 @@ struct XrObserverState {
 		ground=p;head=h;forward=f;mode=XrObserverMode::Active;requireRelease=true;return true;
 	}
 	void cancel() {mode=XrObserverMode::Off;requireRelease=true;selectHeld=true;}
+	// Turn the rendered world about the current tracked head, so leaning does
+	// not turn into an unintended orbit. Physical head orientation is untouched.
+	void turn(float axis,float dt,XrVector3f currentHead);
+	// View-relative horizontal movement in game coordinates; terrain/collision
+	// approval belongs to the render-only GameBoot bridge.
+	XrVector3f walkDelta(XrVector2f stick,XrVector3f look,float dt) const;
 private:
 	static bool xrObserverValidGroundForState(XrVector3f p) {return std::isfinite(xrLength(p));}
 	static bool xrObserverWorldToRoomForState(float *m,XrVector3f p,XrVector3f h,XrVector3f f);
@@ -66,6 +74,37 @@ inline bool xrObserverWorldToRoom(float *m,XrVector3f ground,XrVector3f head,XrV
 }
 inline bool XrObserverState::xrObserverWorldToRoomForState(float *m,XrVector3f p,XrVector3f h,XrVector3f f) {
 	return xrObserverWorldToRoom(m,p,h,f);
+}
+inline XrVector3f xrTransformPoint(const float *m,XrVector3f p);
+inline XrVector3f xrInversePoint(const float *m,XrVector3f p);
+inline void XrObserverState::turn(float axis,float dt,XrVector3f currentHead) {
+	if(mode!=XrObserverMode::Active || requireRelease || !std::isfinite(axis) ||
+		!std::isfinite(dt) || dt<=0 || dt>.05f || fabsf(axis)<.001f)return;
+	float before[16];if(!xrObserverWorldToRoom(before,ground,head,forward))return;
+	const auto pivot=xrInversePoint(before,currentHead);
+	const float angle=axis*kXrObserverTurnRadiansPerSecond*dt;
+	const float co=cosf(angle),si=sinf(angle);
+	const XrVector3f newForward={forward.x*co+forward.z*si,0,-forward.x*si+forward.z*co};
+	float after[16];if(!xrObserverWorldToRoom(after,ground,head,newForward))return;
+	const auto moved=xrTransformPoint(after,pivot);
+	forward=newForward;head.x+=currentHead.x-moved.x;head.z+=currentHead.z-moved.z;
+}
+inline XrVector3f XrObserverState::walkDelta(XrVector2f stick,XrVector3f look,float dt) const {
+	if(mode!=XrObserverMode::Active || requireRelease || !std::isfinite(dt) || dt<=0 || dt>.05f ||
+		!std::isfinite(stick.x) || !std::isfinite(stick.y))return {};
+	float sx=stick.x,sy=stick.y;
+	const float size=sqrtf(sx*sx+sy*sy);
+	if(size<.001f)return {};
+	if(size>1) {sx/=size;sy/=size;}
+	const float lookLength=sqrtf(look.x*look.x+look.z*look.z);
+	const float axisLength=sqrtf(forward.x*forward.x+forward.z*forward.z);
+	if(!std::isfinite(lookLength) || lookLength<.5f || !std::isfinite(axisLength) || axisLength<.5f)return {};
+	const XrVector3f view={look.x/lookLength,0,look.z/lookLength};
+	const XrVector3f room={-view.z*sx+view.x*sy,0,view.x*sx+view.z*sy};
+	const XrVector3f right={-forward.z/axisLength,0,forward.x/axisLength};
+	const float distance=kXrObserverWalkMetresPerSecond*kXrObserverUnitsPerMetre*dt;
+	return {distance*(room.x*right.x+room.z*right.z),
+		distance*(room.x*forward.x+room.z*forward.z)/axisLength,0};
 }
 inline bool xrObserverContainsSphere(XrVector3f eyeWorld,XrVector3f center,float radius) {
 	if(!std::isfinite(radius) || radius<0)return false;

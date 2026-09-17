@@ -90,7 +90,8 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 			(x.observer.mode==XrObserverMode::Armed && x.rayVisible && !x.rayHit ? "invalid":"valid");
 		if(key!=x.observerHintKey && paintPanel(x,x.observerHintTexture,xrTr("Bodenansicht"),
 			x.observer.mode==XrObserverMode::Active ?
-				xrTr(x.layout.leftHanded ? "Y: Zurück zum Tisch" : "B: Zurück zum Tisch"):
+				xrTr(x.layout.leftHanded ? "Links: gehen · Rechts: drehen · Y: Tisch":
+					"Links: gehen · Rechts: drehen · B: Tisch"):
 				xrTr(x.rayVisible && !x.rayHit ? "Hier kein sicherer, sichtbarer Boden. Anderen Ort wählen; B/Y bricht ab.":
 					"Sichtbaren freien Boden mit Trigger wählen. B/Y bricht ab."),"",-1,2))x.observerHintKey=key;
 	}
@@ -216,7 +217,8 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 				xrTr("Brett und Fenster kommen gemeinsam vor dich.");
 			label(18,xrTr("Verlassen & vor mir ausrichten"));label(19,xrTr("Abbrechen"));
 		} else if(x.menu.page==4) {
-			title=std::string(xrTr("Controller-Anleitung"))+" · "+std::to_string(x.menu.helpPage+1)+"/4";
+			title=std::string(xrTr("Controller-Anleitung"))+" · "+std::to_string(x.menu.helpPage+1)+"/"+
+				std::to_string(kXrControllerHelpPages);
 			detail=xrControllerHelp(x.menu.helpPage,x.layout.leftHanded);
 			label(33,"✕");label(34,xrTr("Zurück zu Fenstern"));label(36,xrTr("Weiter"));
 		} else {

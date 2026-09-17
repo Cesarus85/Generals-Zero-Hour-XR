@@ -45,7 +45,7 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Current product baseline
 
-**Active experiment:** [PLAN-025: passive ground observer](PLAN-025_XR_GROUND_OBSERVER.md).
+**Active experiment:** [PLAN-025: ground view and stick locomotion](PLAN-025_XR_GROUND_OBSERVER.md).
 The maintainer authorized a separate offline Skirmish prototype. Source is
 implemented and reviewed on `codex/xr-ground-observer-prototype`, source
 checkpoint `d955d29` (official `main` baseline `6af7abd`). Native ARM64 build,
@@ -62,6 +62,12 @@ acceptance has been reported. The private
 1.2.17 release remains authoritative and its preserved APK hash is unchanged;
 multiplayer remains paused. Source release defaults were not bumped.
 
+The user reports that the installed ground view looks great. P25.1 adds
+physical-left-stick movement and physical-right-stick smooth yaw to the draft
+branch, with terrain, shroud, boundary and drawable guards. Its source and
+host checks pass; native packaging and a new headset test are pending. The
+installed 10218 APK above does **not** contain P25.1 movement.
+
 **Next:** in offline Skirmish open UI > View > Ground view, release the trigger, then
 click visible open ground. Inspect stereo/scale/horizon, turn and lean, then
 return with B (Y left-handed). Verify unchanged table/panel positions, no
@@ -73,7 +79,7 @@ merge or promote this prototype before physical acceptance.
 | Product identity | Generals: Zero Hour XR; update-compatible package ID retained | Built, installed and resource-verified |
 | Game modes | Campaign and offline AI Skirmish run in the XR tabletop presentation | Repeated user headset use; mission-specific coverage remains incremental |
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
-| View model | The released app is tabletop-only; the isolated P25 branch adds an optional passive ground observer for live offline Skirmish. Videos and full native dialogs stay upright. | P25 source, host and Android artifact gates pass; test APK installed, headset gate open |
+| View model | The released app is tabletop-only; the isolated P25 branch adds ground view and the P25.1 left-stick walk/right-stick turn extension for offline Skirmish. Videos and full native dialogs stay upright. | P25 10218 installed and user liked its appearance; P25.1 host verified, build and headset gate open |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
 | Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
 | Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |

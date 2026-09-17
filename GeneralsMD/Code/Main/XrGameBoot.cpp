@@ -589,7 +589,8 @@ CameraClass *GX_XR_RenderCamera() {return s_renderReady ? s_renderCamera:nullptr
 int GX_XR_CullSphere(const SphereClass &sphere) {
 	if(!s_renderReady) return -1;
 	if(s_worldFrame.observer) {
-		const auto eye=xrInversePoint(s_worldMapping,s_worldFrame.observerHead);
+		const auto tracked=xrScale(xrAdd(s_worldFrame.eyes[0].position,s_worldFrame.eyes[1].position),.5f);
+		const auto eye=xrInversePoint(s_worldMapping,tracked);
 		return xrObserverContainsSphere(eye,{sphere.Center.X,sphere.Center.Y,sphere.Center.Z},sphere.Radius) ? 0:1;
 	}
 	return xrBoardContainsSphere(s_worldMapping,s_worldAspect,{sphere.Center.X,sphere.Center.Y,sphere.Center.Z},sphere.Radius) ? 0:1;
@@ -804,6 +805,33 @@ bool XrGameBoot_PickObserverGround(const XrSurface &board,const XrPosef &aim,XrV
 		*roomPoint=xrAdd(board.pose.position,xrRotate(board.pose.orientation,xrScale(local,board.width)));
 	}
 	return true;
+}
+// GeneralsX @feature Codex 17/09/2026 P25.1: validate each small observer
+// step against the actual terrain and scene. This never moves a game object.
+bool XrGameBoot_ObserverStep(XrVector3f current,XrVector3f delta,XrVector3f &next) {
+	if(!XrGameBoot_CanObserveGround() || !TheTerrainLogic || !W3DDisplay::m_3DScene ||
+		!std::isfinite(delta.x) || !std::isfinite(delta.y) ||
+		fabsf(delta.x)>2 || fabsf(delta.y)>2)return false;
+	setFPMode();
+	const float x=current.x+delta.x,y=current.y+delta.y;
+	Coord3D normal={};const float z=TheTerrainLogic->getGroundHeight(x,y,&normal);
+	if(!std::isfinite(z) || !std::isfinite(normal.z) || normal.z<.64f ||
+		fabsf(z-current.z)>2.0f || TheTerrainLogic->isCliffCell(x,y))return false;
+	Region3D extent;TheTerrainLogic->getExtent(&extent);
+	const Coord3D location={x,y,z};
+	const int player=ThePlayerList->getLocalPlayer()->getPlayerIndex();
+	const bool clear=ThePartitionManager->getShroudStatusForPlayer(player,&location)==CELLSHROUD_CLEAR;
+	if(!xrObserverValidGround({x,y,z},{extent.lo.x,extent.lo.y,extent.lo.z},
+		{extent.hi.x,extent.hi.y,extent.hi.z},clear,false))return false;
+	// A short chest-height sweep and a standing-height probe keep the camera
+	// out of buildings and moving units without touching their gameplay state.
+	LineSegClass across;across.Set(Vector3(current.x,current.y,current.z+12),Vector3(x,y,z+12));
+	CastResultStruct result;RayCollisionTestClass sweep(across,&result,COLL_TYPE_ALL,false,false);
+	if(W3DDisplay::m_3DScene->castRay(sweep,false,PICK_TYPE_ALL_DRAWABLES))return false;
+	LineSegClass vertical;vertical.Set(Vector3(x,y,z+20),Vector3(x,y,z+2));
+	RayCollisionTestClass space(vertical,&result,COLL_TYPE_ALL,false,false);
+	if(W3DDisplay::m_3DScene->castRay(space,false,PICK_TYPE_ALL_DRAWABLES))return false;
+	next={x,y,z};return true;
 }
 // GeneralsX @feature Codex 14/09/2026 Adjust the actual preview, not a
 // second model. The original click translator sends this same angle.

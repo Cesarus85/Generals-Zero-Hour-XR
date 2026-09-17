@@ -135,8 +135,8 @@ int main(int argc,char **argv){
   x.rayVisible=true;x.rayHit=false;updateMenuTextures(x,100);
   check(observerDetail==xrTr("Hier kein sicherer, sichtbarer Boden. Anderen Ort wählen; B/Y bricht ab."));
   x.observer.neutral(true);check(x.observer.choose({500,500,20},{0,1.6f,0},{0,0,-1}));
-  updateMenuTextures(x,100);check(observerDetail==xrTr("B: Zurück zum Tisch"));
-  x.layout.leftHanded=true;updateMenuTextures(x,100);check(observerDetail==xrTr("Y: Zurück zum Tisch"));
+  updateMenuTextures(x,100);check(observerDetail==xrTr("Links: gehen · Rechts: drehen · B: Tisch"));
+  x.layout.leftHanded=true;updateMenuTextures(x,100);check(observerDetail==xrTr("Links: gehen · Rechts: drehen · Y: Tisch"));
   x.observer.cancel();x.layout.leftHanded=false;x.rayVisible=false;
   x.arranging=true;updateMenuTextures(x,100);check(smallTitle==(lang==XrLanguage::German ? "Fertig":"Done"));
   x.arranging=false;updateMenuTextures(x,100);check(smallTitle=="UI");

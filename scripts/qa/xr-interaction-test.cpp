@@ -11,6 +11,7 @@ struct XrControllerState {
 	bool aimValid=true,select=false,secondary=false,back=false,recenter=false,upright=false;
 	bool arrange=false,preset=false,homeBase=false,tilt=false,buttonsHeld=false,grip[2]={},handValid[2]={true,true};
 	XrVector2f pan={},zoom={};
+	XrVector2f leftStick={},rightStick={};
 };
 struct XrHello {
 	bool roomPoseLost=false;
@@ -66,6 +67,10 @@ static bool XrGameBoot_CanAdjustWorld(){return canStereo && !cameraLocked;}
 static bool observerGroundValid=true;
 static bool XrGameBoot_PickObserverGround(const XrSurface &,const XrPosef &,XrVector3f &ground,XrVector3f *room){
 	if(!observerGroundValid)return false;ground={500,500,20};if(room)*room={0,0,-1};return true;
+}
+static int observerSteps=0;
+static bool XrGameBoot_ObserverStep(XrVector3f current,XrVector3f delta,XrVector3f &next) {
+	++observerSteps;next=xrAdd(current,delta);return true;
 }
 static int baseViews=0;
 static bool XrGameBoot_ViewBase(){if(!XrGameBoot_CanAdjustWorld() || expanded)return false;++baseViews;return true;}
@@ -273,7 +278,12 @@ int main(int argc,char **argv)
 	observerGroundValid=false;c.select=true;frame(c);check(!x.rayHit && x.observer.mode==XrObserverMode::Armed);
 	c={};frame(c);observerGroundValid=true;c.select=true;frame(c);
 	check(x.observer.mode==XrObserverMode::Active && !lastInput.select && presets==beforePreset);
-	c.pan={1,1};c.zoom={1,1};frame(c);check(navigations==beforeNav && !lastInput.select);
+	c.pan={1,1};c.zoom={1,1};c.leftStick={0,1};c.rightStick={1,0};frame(c);
+	check(observerSteps==0 && x.observer.ground.y==500); // Entry must release first.
+	c={};frame(c);check(!x.observer.requireRelease);
+	c.leftStick={0,1};c.rightStick={1,0};frame(c);
+	check(observerSteps==1 && x.observer.ground.y>500 && x.observer.forward.x<0);
+	check(navigations==beforeNav && !lastInput.select);
 	c={};frame(c);c.back=true;frame(c);check(x.observer.mode==XrObserverMode::Off && !lastInput.back);
 	check(xrLength(xrSub(savedSurface.pose.position,x.surfaces[1].pose.position))==0);
 	c.select=true;frame(c);check(!lastInput.select && !x.controlsArmed);

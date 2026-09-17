@@ -1,5 +1,6 @@
 // GeneralsX @test Codex 17/09/2026 Production P25 state, mapping and guards.
 #include "XrWorld.h"
+#include "XrHandedness.h"
 #include "XRStereoShader.h"
 #include <cstdio>
 #include <cstdlib>
@@ -31,6 +32,28 @@ int main(int argc,char **argv) {
 	const XrVector3f ground={1000,700,20},head={.2f,1.5f,-.3f};
 	check(state.choose(ground,head,{0,0,-1}));
 	check(state.mode==XrObserverMode::Active && state.requireRelease);
+	check(xrLength(state.walkDelta({0,1},{0,0,-1},.05f))==0);
+	XrObserverState moving=state;moving.neutral(true);
+	const XrVector3f tracked={head.x+.25f,head.y,head.z-.15f};
+	float preTurn[16];check(xrObserverWorldToRoom(preTurn,moving.ground,moving.head,moving.forward));
+	const auto pivot=xrInversePoint(preTurn,tracked);
+	moving.turn(1,.05f,tracked);
+	float postTurn[16];check(xrObserverWorldToRoom(postTurn,moving.ground,moving.head,moving.forward));
+	const auto pivotAfter=xrInversePoint(postTurn,tracked);
+	near(pivot.x,pivotAfter.x);near(pivot.y,pivotAfter.y);near(pivot.z,pivotAfter.z);
+	check(moving.forward.x<0); // Right turn rotates the world to the left.
+	const auto forwardStep=moving.walkDelta({0,1},{0,0,-1},.05f);
+	check(forwardStep.y>.9f && xrLength(forwardStep)<1.01f);
+	const auto strafe=moving.walkDelta({1,0},{0,0,-1},.05f);
+	check(strafe.x>.9f && xrLength(strafe)<1.01f);
+	const auto diagonal=moving.walkDelta({1,1},{0,0,-1},.05f);
+	check(xrLength(diagonal)<=1.01f);
+	XrPhysicalHand physical[2];physical[0].stick={.4f,.8f};physical[1].stick={-.6f,.3f};
+	for(bool leftHanded:{false,true}) {
+		const auto mapped=xrMapHands(physical,leftHanded,false);
+		near(mapped.leftStick.x,.4f);near(mapped.leftStick.y,.8f);
+		near(mapped.rightStick.x,-.6f);near(mapped.rightStick.y,.3f);
+	}
 	float m[16];check(xrObserverWorldToRoom(m,state.ground,state.head,state.forward));
 	const auto floor=xrTransformPoint(m,ground);
 	near(floor.x,head.x);near(floor.y,head.y-kXrObserverEyeHeightMetres);near(floor.z,head.z);
