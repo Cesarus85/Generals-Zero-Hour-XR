@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR — 1.2.25 preview
 
-This is a **private, offline Meta Quest 3 preview**. It extends the optional
+This is a **public, offline Meta Quest 3 preview**. It extends the optional
 human-scale Ground View to live Campaign gameplay as well as offline Skirmish.
 The normal stereoscopic tabletop remains the default and supported play view.
 The game simulation, multiplayer protocol, save format and retail data are
@@ -20,12 +20,12 @@ adb -s <quest-serial> install -r Generals-Zero-Hour-XR.apk
 ```
 
 The app remains `com.generalsx.zerohour.xr` (versionCode `10225`, versionName
-`1.2.25-xr-preview`) and uses the same private release-signing lineage. The
+`1.2.25-xr-preview`) and uses the established release-signing lineage. The
 57.1 MB APK omits native debug sections but retains the same game code and
 runtime dependencies. It does not contain the original game archives, maps or
 videos. Supply your
 own complete, legally obtained *Generals* and *Zero Hour* installation; see
-the [Quest installation and controller guide](../../HOWTO/INSTALLATION_XR.md).
+the [Quest installation and controller guide](https://github.com/Cesarus85/Generals-Zero-Hour-XR/blob/main/docs/HOWTO/INSTALLATION_XR.md).
 
 ## Campaign Ground View
 
@@ -52,5 +52,4 @@ workspace layout and controls remain available.
   this offline preview. Do not substitute a separate LAN diagnostic APK.
 - This independent community port is not an Electronic Arts product or
   endorsement. Source licensing and EA's additional conditions are in
-  [LICENSE.md](../../../LICENSE.md); retail game data is user-supplied. The
-  repository and release remain private.
+  [LICENSE.md](https://github.com/Cesarus85/Generals-Zero-Hour-XR/blob/main/LICENSE.md); retail game data is user-supplied. The source license does not grant EA trademark rights.

@@ -30,13 +30,13 @@ The **supported preview path is offline play**. Human LAN/Internet multiplayer, 
 
 ## Get the current offline APK
 
-Download the release-signed [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.25-xr-preview/Generals-Zero-Hour-XR.apk) from the [1.2.25 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview). This is the current offline build, not an experimental LAN diagnostic APK or an older debug-signed preview. The repository and release remain private; the links require repository access.
+Download the release-signed [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.25-xr-preview/Generals-Zero-Hour-XR.apk) from the [1.2.25 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview). This is the public offline preview build, not an experimental LAN diagnostic APK. Older development releases are retained privately as drafts; use the linked release for new installations.
 
 - APK SHA-256: `dcd79e4d6be706f0ddd01d01416d321abd977a37aad768d750232bd1fc65e009` (also in the release's `.sha256` asset).
 - Android package: `com.generalsx.zerohour.xr` (retained for update compatibility)
 - Android versionCode: `10225`; versionName: `1.2.25-xr-preview`.
 
-The maintainer accepted the Ground View shortcut arrangement in the installed 1.2.23 test build. The 1.2.25 release extends that view to live Campaign gameplay, using the same private signing lineage; Campaign Ground View transitions and long-session walking, collision and comfort still need worn-headset acceptance. The earlier P23 and 1.2.8 downloads are historical debug-signed development builds. Use the exact release link above rather than an older asset or a copied APK from the LAN branch. See [release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md) for verification and remaining public-release gates.
+The maintainer accepted the Ground View shortcut arrangement in the installed 1.2.23 test build. The 1.2.25 release extends that view to live Campaign gameplay, using the established release-signing lineage; Campaign Ground View transitions and long-session walking, collision and comfort still need worn-headset acceptance. Use the exact release link above rather than an older APK or a copied APK from the LAN branch. See [release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md) for verification and open validation work.
 
 ## Install and play
 
@@ -64,7 +64,7 @@ The Commands window also has an in-game help guide. In left-handed mode, the log
 
 ## Source, lineage and licensing
 
-This repository contains the Quest-focused extension of the community [GeneralsZH-Android](https://github.com/tarek369/GeneralsZH-Android) work, through the developer's [Android fork](https://github.com/Cesarus85/GeneralsZH-Android), together with the [GeneralsX](https://github.com/fbraz3/GeneralsX), [Fighter19](https://github.com/Fighter19/CnC_Generals_Zero_Hour) and [TheSuperHackers](https://github.com/TheSuperHackers/GeneralsGameCode) lineage. The Android foundation and XR work are distinct contributions; the original game and assets remain EA's. Engine source is released under GPLv3 with EA's additional terms; see [LICENSE.md](LICENSE.md) and the source history for conditions and attribution. No affiliation with EA, Westwood Studios or any other rights holder is implied. The existing product name is retained for this private preview; EA's additional trademark condition requires separate review before any public distribution.
+This repository contains the Quest-focused extension of the community [GeneralsZH-Android](https://github.com/tarek369/GeneralsZH-Android) work, through the developer's [Android fork](https://github.com/Cesarus85/GeneralsZH-Android), together with the [GeneralsX](https://github.com/fbraz3/GeneralsX), [Fighter19](https://github.com/Fighter19/CnC_Generals_Zero_Hour) and [TheSuperHackers](https://github.com/TheSuperHackers/GeneralsGameCode) lineage. The Android foundation and XR work are distinct contributions; the original game and assets remain EA's. Engine source is released under GPLv3 with EA's additional terms; see [LICENSE.md](LICENSE.md) and the source history for conditions and attribution. This is an independent community port, not an EA, Westwood Studios or rights-holder product or endorsement. The source license does not grant rights to EA trademarks.
 
 To build from source, initialize submodules and follow the [Android port guide](docs/port/ANDROID_PORT.md). With its SDK/NDK and vcpkg prerequisites installed:
 

@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-17
+**Updated:** 2026-09-18
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`
@@ -29,7 +29,7 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Repository and handoff contract
 
-- Canonical collaboration repository: private
+- Canonical collaboration repository: public
   `Cesarus85/Generals-Zero-Hour-XR`, branch `main`.
 - Start delegated work from a clean, pushed checkpoint and record the starting
   commit in the task or pull request. Do not work from an uncommitted shared
@@ -45,7 +45,7 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Current product baseline
 
-**Current private offline preview:** [1.2.25](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview).
+**Current public offline preview:** [1.2.25](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview).
 Ground View now allows entry during live Campaign as well as offline Skirmish.
 The same central gate blocks menus, cinematics, scripted camera movement,
 loading, placement and camera locks; the XR runtime cancels observation on
@@ -60,7 +60,10 @@ After publication, this exact APK update-installed on Quest 3
 `2G0YC5ZG9609PY` as 10225. The original first-install time was retained;
 device-side `base.apk` SHA-256 matches the GitHub asset. The Campaign-specific
 worn-headset transition, performance and locomotion gate is still open;
-tabletop remains the supported fallback. The repository remains private.
+tabletop remains the supported fallback. Older GitHub releases are retained as
+maintainer-only drafts so the public release page offers the current APK alone.
+Historical release links below are accessible only to repository maintainers;
+`v1.2.25-xr-preview` is the sole public download.
 
 **Previous private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
 PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates
@@ -236,17 +239,18 @@ Campaign Ground View on the headset yet.
 Automated checks cannot certify campaign mission cutscenes, end transitions,
 performance or headset comfort; the 1.2.24 evidence below is historical.
 
-The authoritative private offline download is
+The historical 1.2.24 offline download was
 [`v1.2.24-xr-preview`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
 The non-debuggable ARM64 APK is versionCode 10224, SHA-256
 `bb685046bcfcdcd5222b648ac3ebe3a008dbe19bfc5a863b18b4ba749c17195e`.
-GitHub's `latest` endpoint selects this release; the asset digest, fresh
+At that time GitHub's `latest` endpoint selected this release; the asset digest, fresh
 download and checksum sidecar verify. The exact APK is installed on Quest 3
 with intact app data and matching device-side hash. The button layout is
 accepted; Ground View stick movement/collision/comfort remain experimental.
 GitHub Actions was skipped due to exhausted quota; local native, Android,
-host and Quest GPU checks pass. The repository remains private, and public
-distribution under the retained name needs separate EA trademark review.
+host and Quest GPU checks passed. This older release is now a maintainer-only
+draft, not the public download. EA's source license does not grant trademark
+rights; the maintainer elected to retain the product name for the public preview.
 
 The previous 1.2.17 release included PR #11's result card. The maintainer
 accepted the 10216 headset-only result test. Its historical download is

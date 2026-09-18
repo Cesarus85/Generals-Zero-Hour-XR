@@ -1,10 +1,10 @@
 # XR release preparation and checkpoints
 
-**Updated:** 2026-09-17 — private 1.2.25 release verification
+**Updated:** 2026-09-18 — public 1.2.25 preview preparation
 
-**Publication state:** The non-debuggable 1.2.25 APK is the current release in the **private** repository. Public visibility, especially under the retained product name, requires separate review of EA's trademark terms.
+**Publication state:** The non-debuggable 1.2.25 APK is the current public offline preview. Seven older releases, including the debug-signed APKs, are retained as maintainer-only drafts. This leaves one public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
 
-## Current private release checkpoint: 1.2.25
+## Current public release checkpoint: 1.2.25
 
 PR #19 merged Campaign Ground View to `main` at `652f46f`; PR #21 merged
 release-only native debug-section stripping at `5938257`. The release APK
@@ -27,8 +27,8 @@ bilingual panel 20,765, trigger 28 and endgame 33. Native ARM64,
 Actions was not used because the account quota is exhausted. The Quest was
 not ADB-connected during packaging. Worn-headset Campaign transitions,
 long-session locomotion, comfort and mission performance remain open. The
-private preview notes disclose these limits. The repository and release
-remain private; public visibility needs separate review.
+public preview notes disclose these limits. Public access does not change the
+open worn-headset Campaign Ground View or multiplayer validation gates.
 
 Release tag `v1.2.25-xr-preview` points to `6b50f747e08f5e5d0a641e5f3ef9c90752f3b3f1`.
 GitHub reports this private, non-prerelease release as `latest`, with the APK
@@ -42,7 +42,13 @@ original `firstInstallTime` of 2026-09-16 14:55:36. The device-side
 `base.apk` SHA-256 exactly matches the GitHub release asset. No worn-headset
 Campaign Ground View play test was performed by this installation check.
 
-## Previous private release checkpoint: 1.2.24
+## Historical private release checkpoints
+
+The sections below record the state at the time of each older private release.
+Their APK releases are now maintainer-only drafts; older references to private
+visibility, `latest` or publication gates are historical, not current advice.
+
+### Previous private release checkpoint: 1.2.24
 
 PR #15 merged the optional offline-Skirmish Ground View and accepted board-side
 shortcut layout to `main` at `9792d947`. The 1.2.23 test APK was installed over
@@ -84,7 +90,7 @@ byte-for-byte and passes the downloaded `.sha256` sidecar. The README and
 installation guide point to this exact release tag and asset. The accepted
 visual layout does not close the Ground View movement/comfort gate.
 
-## Candidate and provenance
+### Candidate and provenance
 
 | Item | Verified value |
 |---|---|
@@ -114,7 +120,7 @@ without it, Quest installation fails with `INSTALL_FAILED_DUPLICATE_PERMISSION`.
 The development CI workflow can no longer publish a debug artifact as a
 GitHub Release.
 
-## Release-signed candidate
+### Release-signed candidate
 
 | Item | Verified value |
 |---|---|
@@ -128,7 +134,7 @@ GitHub Release.
 | Device-side artifact | Installed `/data/app/.../base.apk` SHA-256 `bafff443d77e7b9e925a73fcf16b5bf7234c54f256e2cb7fa0f95d1aad008d2b`, matching the local file |
 | Worn-headset acceptance | The maintainer confirmed that this installed final build starts Skirmish and Campaign and retains existing settings and game data. This is not a clean-profile first-import or all-missions test. |
 
-## Previous private release checkpoint: 1.2.15
+### Previous private release checkpoint: 1.2.15
 
 | Item | Verified value |
 |---|---|
@@ -142,7 +148,7 @@ The release asset is the **same bytes** as the locally built and Quest-installed
 candidate. The original app data is not in the APK or this repository. The
 repository has not been made public, and no LAN diagnostic APK was uploaded.
 
-## Previous private release checkpoint: 1.2.17
+### Previous private release checkpoint: 1.2.17
 
 | Item | Verified value |
 |---|---|
@@ -188,7 +194,7 @@ lineages have not been device-tested. [Android's update requirements](https://de
 and [v3 rotation behavior](https://source.android.com/docs/security/features/apksigning/v3)
 are the platform basis, not a promise of universal migration.
 
-## Release-facing content
+### Release-facing content
 
 - For the previous 1.2.24 checkpoint, README centered Quest tabletop features,
   requirements, controls, honest limits and that release's exact download.
@@ -196,7 +202,7 @@ are the platform basis, not a promise of universal migration.
 - [Quest installation and controls](../../HOWTO/INSTALLATION_XR.md) and [game-file sourcing](../../HOWTO/GETTING_THE_GAME_FILES.md) are the user guides. No original game files are distributed.
 - [Multiplayer status](../planning/MULTIPLAYER_STATUS.md) explicitly pauses LAN and records the paired CRC evidence and resumption plan. Experimental LAN code remains on its own branch, outside this candidate.
 
-## Remaining public gates and validation scope
+### Pre-publication gates and validation scope (historical)
 
 1. The repository and 1.2.24 release are **private**. The maintainer reports that the four passthrough screenshots have been visually approved. Older debug-signed assets remain available but are prominently marked as historical development builds; making the repository public would expose them too. Before public distribution under the retained name, review the EA license's trademark restriction; a private release is not a decision to make the repository public.
 2. The maintainer reports that the release key **and** Keychain password have been backed up; the backup was not independently verified and no secret belongs in Git.
