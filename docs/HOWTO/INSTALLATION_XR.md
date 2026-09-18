@@ -38,7 +38,7 @@ outside the scope of this project; see
    APK. The APK SHA-256 is
    `dcd79e4d6be706f0ddd01d01416d321abd977a37aad768d750232bd1fc65e009`,
    also listed in the release's `Generals-Zero-Hour-XR.apk.sha256` asset.
-   The repository and release currently require private-repository access.
+   This public release can be downloaded without repository access.
 2. Enable Developer Mode in the Meta Quest mobile app, connect the headset over
    USB, and accept the USB debugging prompt inside the headset.
 3. Check the connection and install the APK from a computer with Android
