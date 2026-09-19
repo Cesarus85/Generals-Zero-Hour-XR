@@ -1173,7 +1173,12 @@ std::string XrGameBoot_WorldHoverInfo() {
 // the live game. Terrain samples close its cut faces; no replacement map.
 static void drawXrWorldDecorations() {
 	if(!d3d8gles_XRStereoTexture(0) || !s_mappingReady || !TheTerrainLogic || !TheGameClient) return;
-	XrBoardMesh mesh;
+	// GeneralsX @perf XR 19/09/2026 Reuse the mesh storage across frames: the
+	// board copy alone can be ~43k vertices (~1.2 MB), previously malloc/free
+	// per frame. Single-threaded XR render path; cleared on every call, and
+	// the decoration draw uploads synchronously, so no stale data survives.
+	static XrBoardMesh mesh;
+	mesh.vertices.clear();
 	if(s_worldFrame.boardFrame) {
 		static XrBoardMesh cached;static float previous[16]={};static float aspect=0;static unsigned frame=0;
 		if(cached.vertices.empty() || memcmp(previous,s_worldMapping,sizeof(previous)) || aspect!=s_worldAspect || (++frame%30)==0) {
@@ -1182,11 +1187,11 @@ static void drawXrWorldDecorations() {
 				return xrTransformPoint(s_worldMapping,{p.x,p.y,TheTerrainLogic->getGroundHeight(p.x,p.y)}).z;
 			},gxXrBoardCeiling(s_worldMapping));
 			for(auto &v:cached.vertices) v.position=xrInversePoint(s_worldMapping,v.position);
+			xrMarkBoardVertices(cached);
 			memcpy(previous,s_worldMapping,sizeof(previous));aspect=s_worldAspect;
 		}
 		mesh.vertices=cached.vertices;
 	}
-	const auto feedbackStart=mesh.vertices.size();
 	Drawable *hover=s_spatialActive ? TheTacticalView->pickDrawable(&s_activePixel,FALSE,PICK_TYPE_SELECTABLE):nullptr;
 	unsigned marked=0;
 	for(auto *d=TheGameClient->getDrawableList();d && marked<192;d=d->getNextDrawable()) {
@@ -1239,7 +1244,9 @@ static void drawXrWorldDecorations() {
 			}
 		}
 	}
-	for(size_t i=0;i<mesh.vertices.size();++i) mesh.vertices[i].a=i>=feedbackStart ? 1:0;
+	// Board vertices were marked alpha 0 at rebuild time; all feedback above
+	// was appended via quad()/ring() with alpha 1, so the uploaded stream
+	// matches the old per-frame alpha loop exactly without rewalking it.
 	if(!mesh.vertices.empty()) d3d8gles_DrawXRDecorations(reinterpret_cast<const float *>(mesh.vertices.data()),int(mesh.vertices.size()));
 }
 void XrGameBoot_SetSplitEnabled(bool enabled) { s_splitEnabled=enabled; }
