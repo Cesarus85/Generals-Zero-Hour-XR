@@ -542,6 +542,9 @@ private:
 	unsigned m_xrStereoProbeWait=0;
 	GLuint m_xrStereoFBO[2]={},m_xrStereoTex[2]={},m_xrStereoDepth[2]={};
 	GLuint m_xrDecorProgram=0,m_xrDecorVAO=0,m_xrDecorVBO=0;
+	// GeneralsX @perf XR 19/09/2026 Cached at decoration program link time so
+	// the per-frame draw below needs no string-based location lookups.
+	GLint m_xrDecorEyeLoc=-1,m_xrDecorBoardLoc=-1,m_xrDecorAspectLoc=-1;
 	int m_xrStereoW=0,m_xrStereoH=0;
 	unsigned m_xrStereoDraws=0;
 	// GeneralsX @performance Codex 14/09/2026 Bounded restore-cost counters.

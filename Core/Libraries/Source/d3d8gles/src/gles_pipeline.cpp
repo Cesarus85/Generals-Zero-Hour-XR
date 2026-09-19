@@ -2809,6 +2809,7 @@ void WebGLPipeline::destroyXRStereo()
 	if(m_xrDecorVAO) glDeleteVertexArrays(1,&m_xrDecorVAO);
 	if(m_xrDecorVBO) glDeleteBuffers(1,&m_xrDecorVBO);
 	m_xrDecorProgram=m_xrDecorVAO=m_xrDecorVBO=0;
+	m_xrDecorEyeLoc=m_xrDecorBoardLoc=m_xrDecorAspectLoc=-1;
 	if(m_xrMultiviewFBO)glDeleteFramebuffers(1,&m_xrMultiviewFBO);
 	if(m_xrMultiviewDepth)glDeleteTextures(1,&m_xrMultiviewDepth);
 	m_xrMultiviewFBO=m_xrMultiviewDepth=0;
@@ -2951,6 +2952,9 @@ void WebGLPipeline::drawXRDecorations(const float *vertices,int count) {
 		glDeleteShader(vs);glDeleteShader(fs);GLint linked=0;glGetProgramiv(m_xrDecorProgram,GL_LINK_STATUS,&linked);
 		if(!linked) {fprintf(stderr,"[d3d8gles] P9 decoration program link failed\n");glDeleteProgram(m_xrDecorProgram);m_xrDecorProgram=0;return;}
 		glGenVertexArrays(1,&m_xrDecorVAO);glGenBuffers(1,&m_xrDecorVBO);
+		m_xrDecorEyeLoc=glGetUniformLocation(m_xrDecorProgram,"eye");
+		m_xrDecorBoardLoc=glGetUniformLocation(m_xrDecorProgram,"board");
+		m_xrDecorAspectLoc=glGetUniformLocation(m_xrDecorProgram,"aspect");
 	}
 	glUseProgram(m_xrDecorProgram);glBindVertexArray(m_xrDecorVAO);glBindBuffer(GL_ARRAY_BUFFER,m_xrDecorVBO);
 	// Fully refill orphaned storage; both eyes consume it before the next update.
@@ -2959,9 +2963,9 @@ void WebGLPipeline::drawXRDecorations(const float *vertices,int count) {
 	glEnableVertexAttribArray(1);glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,7*sizeof(float),(void*)(3*sizeof(float)));
 	glDisable(GL_BLEND);glDisable(GL_STENCIL_TEST);glDisable(GL_SCISSOR_TEST);glDisable(GL_CULL_FACE);glDisable(GL_POLYGON_OFFSET_FILL);
 	glEnable(GL_DEPTH_TEST);glDepthFunc(GL_LEQUAL);glDepthMask(GL_TRUE);glDepthRangef(0,1);glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-	const GLint eyeUniform=glGetUniformLocation(m_xrDecorProgram,"eye");
-	glUniformMatrix4fv(glGetUniformLocation(m_xrDecorProgram,"board"),1,GL_FALSE,m_xrBoard);
-	glUniform1f(glGetUniformLocation(m_xrDecorProgram,"aspect"),m_xrStereoAspect);
+	const GLint eyeUniform=m_xrDecorEyeLoc;
+	glUniformMatrix4fv(m_xrDecorBoardLoc,1,GL_FALSE,m_xrBoard);
+	glUniform1f(m_xrDecorAspectLoc,m_xrStereoAspect);
 	if(m_xrStereoAtlas) {glBindFramebuffer(GL_FRAMEBUFFER,m_xrStereoFBO[0]);glEnable(GL_SCISSOR_TEST);}
 	for(int eye=0;eye<2;++eye) {
 		if(!m_xrStereoAtlas)glBindFramebuffer(GL_FRAMEBUFFER,m_xrStereoFBO[eye]);
@@ -3298,7 +3302,20 @@ void WebGLPipeline::present()
 		setOffscreenCapture(mk != nullptr);
 	}
 
-	GLenum err = glGetError();
+	// GeneralsX @perf XR 19/09/2026 Poll the sticky GL error flag periodically
+	// in release builds instead of every frame: on tile-based mobile GPUs each
+	// glGetError drains the queued command stream. The flag stays set until it
+	// is read, so a 30-frame cadence only delays detection of an already
+	// persistent error; the XR elision fallback below keeps working, just up
+	// to 30 frames later. Debug builds keep the every-frame check for tighter
+	// diagnosis. The cadence aligns with the %60==1 log gate below.
+	GLenum err = GL_NO_ERROR;
+#if defined(NDEBUG)
+	const bool pollGlError = (m_frame % 30) == 1;
+#else
+	const bool pollGlError = true;
+#endif
+	if (pollGlError) err = glGetError();
 	if(m_xrMode && err!=GL_NO_ERROR && m_xrElision.pendingMissing) {
 		m_xrStereoReady=false;m_xrElision.requireFullWorld();
 	}

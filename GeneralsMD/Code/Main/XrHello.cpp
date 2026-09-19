@@ -388,6 +388,10 @@ struct XrHello {
 	int64_t swapchainFormat = 0;
 	GLuint fbo = 0;
 	GLuint panelDepth = 0;
+	// GeneralsX @perf XR 19/09/2026 renderEye validates each swapchain image
+	// once instead of every eye of every frame; panelDepth is fixed for the
+	// session, so the per-eye color attachment is the only varying input.
+	GLuint eyeValidatedTex[2] = {0, 0};
 	GLuint program = 0;
 	GLuint vbo = 0;
 	GLint uMVP = -1;
@@ -1035,10 +1039,13 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 	xr_glBindFramebuffer(GL_FRAMEBUFFER, x.fbo);
 	xr_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
 	xr_glFramebufferRenderbuffer(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_RENDERBUFFER,x.panelDepth);
-	if (xr_glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+	// A failed image is deliberately NOT cached, so it is retried next frame.
+	if (tex != x.eyeValidatedTex[eye] &&
+		xr_glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		XR_LOGE("eye %d FBO incomplete (glerr 0x%x)", eye, xr_glGetError());
 		return false;
 	}
+	x.eyeValidatedTex[eye] = tex;
 	xr_glViewport(0, 0, (GLsizei)x.viewWidth, (GLsizei)x.viewHeight);
 	// Clear must ignore the game's scissor and color-write mask too.
 	xr_glDisable(GL_SCISSOR_TEST);
