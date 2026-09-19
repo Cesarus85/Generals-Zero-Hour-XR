@@ -350,6 +350,11 @@ void TextureLoader::Deinit()
 }
 
 
+bool TextureLoader::Is_Background_Thread_Running()
+{
+	return _TextureLoadThread.Is_Running();
+}
+
 bool TextureLoader::Is_DX8_Thread()
 {
 	return (ThreadClass::_Get_Current_Thread_ID() == DX8Wrapper::_Get_Main_Thread_ID());

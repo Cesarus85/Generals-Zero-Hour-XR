@@ -31,8 +31,15 @@
 #include "Lib/BaseType.h"
 #include "Common/AsciiString.h"
 #include "Common/ArchiveFileSystem.h"
+#include "Common/CriticalSection.h"
 
 class File;
+
+// GeneralsX @fix 19/09/2026 Each archive keeps a single shared on-disk handle
+// (ArchiveFile::m_file) positioned by seek+read pairs. With the background
+// texture thread alive, those pairs must be atomic: hold this recursive,
+// blocking lock across every seek+read sequence on an archive handle.
+inline CriticalSection &GX_ArchiveReadLock() { static CriticalSection l; return l; }
 
 /**
   *	An archive file is itself a collection of sub files. Each file inside the archive file
