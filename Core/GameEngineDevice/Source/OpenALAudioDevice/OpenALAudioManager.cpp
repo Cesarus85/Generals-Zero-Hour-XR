@@ -840,9 +840,20 @@ void OpenALAudioManager::playAudioEvent(AudioEventRTS* event)
 				});
 			
 			// When we receive a frame from FFmpeg, send it to OpenAL.
-			ffmpegFile->setFrameCallback([stream](AVFrame* frame, int stream_idx, int stream_type, void* user_data) {
+			ffmpegFile->setFrameCallback([stream, loggedGeometry = false](AVFrame* frame, int stream_idx, int stream_type, void* user_data) mutable {
 				if (stream_type != AVMEDIA_TYPE_AUDIO) {
 					return;
+				}
+
+				// GeneralsX @perf 19/09/2026 Queue-depth telemetry (audit
+				// measurement 2): one line per stream open; buffer count *
+				// frameMs is the entire underrun budget.
+				if (!loggedGeometry && frame->sample_rate > 0) {
+					loggedGeometry = true;
+					GX_PERF_TRACE("[GX-AUDIO] stream geometry: nb_samples=%d rate=%d ch=%d frameMs=%.2f\n",
+							(int)frame->nb_samples, (int)frame->sample_rate,
+							(int)frame->ch_layout.nb_channels,
+							1000.0 * (double)frame->nb_samples / (double)frame->sample_rate);
 				}
 
 				DEBUG_LOG(("Received audio frame\n"));
