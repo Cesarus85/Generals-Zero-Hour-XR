@@ -41,6 +41,7 @@
 #include <vector>
 
 #if defined(__ANDROID__)
+#include <android/log.h>
 #include <android/native_window.h>
 #endif
 
@@ -3336,15 +3337,27 @@ void WebGLPipeline::present()
 			// averaged over the same window as draws/frame above.
 			{
 				const float f = m_perfFrameCount > 0 ? (float)m_perfFrameCount : 1.0f;
+				const float models = s_gxDrawsByCategory[GX_DRAWCAT_MODELS] / f;
+				const float sorted = s_gxDrawsByCategory[GX_DRAWCAT_SORTED] / f;
+				const float ui = s_gxDrawsByCategory[GX_DRAWCAT_2D] / f;
+				const float terrain = s_gxDrawsByCategory[GX_DRAWCAT_TERRAIN] / f;
+				const float shadows = s_gxDrawsByCategory[GX_DRAWCAT_SHADOWS] / f;
+				const float skin = s_gxDrawsByCategory[GX_DRAWCAT_SKIN] / f;
+				const float other = s_gxDrawsByCategory[GX_DRAWCAT_OTHER] / f;
 				fprintf(stderr, "[d3d8gles] perf-draws/frame by source: models=%.1f sorted(particles)=%.1f "
 					"2d-ui=%.1f terrain=%.1f shadows=%.1f skin=%.1f other=%.1f\n",
-					s_gxDrawsByCategory[GX_DRAWCAT_MODELS] / f,
-					s_gxDrawsByCategory[GX_DRAWCAT_SORTED] / f,
-					s_gxDrawsByCategory[GX_DRAWCAT_2D] / f,
-					s_gxDrawsByCategory[GX_DRAWCAT_TERRAIN] / f,
-					s_gxDrawsByCategory[GX_DRAWCAT_SHADOWS] / f,
-					s_gxDrawsByCategory[GX_DRAWCAT_SKIN] / f,
-					s_gxDrawsByCategory[GX_DRAWCAT_OTHER] / f);
+					models, sorted, ui, terrain, shadows, skin, other);
+#if defined(__ANDROID__)
+				// Release APKs do not route native stderr into adb logcat. Mirror
+				// the already-computed two-second XR draw split so P26 can choose
+				// between model culling and terrain batching from device evidence.
+				// This is diagnostic only: counters and rendering remain unchanged.
+				if (m_xrMode) {
+					__android_log_print(ANDROID_LOG_INFO, "gx-perf-draws",
+						"models=%.1f sorted=%.1f ui=%.1f terrain=%.1f shadows=%.1f skin=%.1f other=%.1f total=%.1f",
+						models, sorted, ui, terrain, shadows, skin, other, drawsPerFrame);
+				}
+#endif
 				fprintf(stderr, "[d3d8gles] perf-ui ms/frame: text-raster=%.2f text-texture=%.2f 2d-submit=%.2f\n",
 					s_gxUiTimeUs[0] / 1000.0 / f,
 					s_gxUiTimeUs[1] / 1000.0 / f,

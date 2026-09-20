@@ -75,6 +75,23 @@ error polling could lose the current-frame world-elision recovery correlation,
 and its FBO cache tracked only the most recently seen texture rather than every
 swapchain image.
 
+**P26 far-zoom baseline:** the release-signed test APK `10226 /
+1.2.26-xr-board-mesh-test` is installed on Quest 3 over the public preview.
+In one live Campaign scene at Balanced/Multiview/Light, a controlled 60-second
+comparison measured normal coverage 1.5508 at 21.71 ms/frame (46.1 derived FPS,
+20.73 ms engine CPU) versus maximum coverage 4.5000 at 42.00 ms/frame (23.8
+derived FPS, 40.96 ms engine CPU). Eye CPU, XR wait and 1536x1609 eye extent
+remained stable. This makes engine work the next target; do not start with
+dynamic resolution or claim PR #28 as the fix. Native stderr hid the existing
+draw-source split from ADB, so `codex/p26-draw-breakdown-logcat` temporarily
+mirrors the already-computed two-second category averages to logcat. The
+release-signed `10227 / 1.2.27-p26-drawlog-test` worn-headset repeat measured
+normal versus maximum zoom at 418.0 versus 842.1 total draws/frame. Terrain
+rose 56.0 -> 311.3, models 275.5 -> 404.3 and sorted draws 54.8 -> 91.3.
+P26-2 terrain batching is therefore the selected first implementation slice;
+P26-1 model/cosmetic visibility remains a measured follow-up. The diagnostic
+branch changes logging only and is not a release candidate.
+
 **Previous private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
 PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates
 at `d72a7969`. Release tag `v1.2.24-xr-preview` points to `0403c5e4`, which

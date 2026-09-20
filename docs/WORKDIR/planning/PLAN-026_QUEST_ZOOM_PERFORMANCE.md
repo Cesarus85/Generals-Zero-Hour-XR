@@ -1,6 +1,7 @@
 # PLAN-026: Quest far-zoom performance
 
-**Status:** measurement gate defined; no P26 runtime code has been accepted.
+**Status:** measurement gate passed; P26-2 terrain batching is the selected
+first implementation slice. No rendering optimization has been accepted yet.
 
 **Current base:** `main` includes PR #27, which removes XR board-mesh allocation
 and alpha-loop churn. The installed `1.2.26-xr-board-mesh-test` build is the
@@ -37,9 +38,12 @@ own acceptance criteria, but they are not prerequisites for the far-zoom work.
    LOD preparation remains disabled.
 3. World eye resolution is fixed by quality tier. There is no dynamic governor.
 4. Particle capacity is not coverage-aware.
-5. Existing diagnostics already report FPS and draws/frame split into models,
-   particles, UI, terrain, shadows, skin and other. No speculative renderer
-   patch is needed before the first measurement.
+5. Existing diagnostics already calculate FPS and draws/frame split into
+   models, particles, UI, terrain, shadows, skin and other. The release APK
+   routes the XR timing report to logcat, but the draw split was emitted only
+   through native stderr and was not observable over ADB. The temporary
+   `codex/p26-draw-breakdown-logcat` branch mirrors that existing two-second
+   split to the `gx-perf-draws` log tag without changing the counters.
 
 ## Gate 0: reproducible device baseline
 
@@ -55,9 +59,38 @@ on Quest 3 using the PR #27 test build:
 The comparison, device build hash and settings belong in the first
 implementation PR. A subjective improvement alone is not an acceptance result.
 
+### Gate 0 result, 2026-09-20
+
+Quest 3 test build `10226 / 1.2.26-xr-board-mesh-test`, Balanced resolution,
+Multiview, Light shadows and automatic world copy was measured for 60 seconds
+in the same live Campaign scene at each zoom level:
+
+| View | Coverage | Samples | Engine CPU | Frame | Derived rate | Peak frame |
+|---|---:|---:|---:|---:|---:|---:|
+| Normal tabletop | 1.5508 | 30 | 20.73 ms | 21.71 ms | 46.1 FPS | 45.52 ms |
+| Maximum zoom-out | 4.5000 | 27 | 40.96 ms | 42.00 ms | 23.8 FPS | 183.85 ms |
+
+Eye CPU stayed near 0.2 ms, XR wait near 0.05 ms and the eye extent stayed
+1536x1609. The immediate 93% frame-time increase is therefore in engine work,
+not XR composition or an increased render resolution.
+
+The follow-up `10227 / 1.2.27-p26-drawlog-test` capture used the same scene and
+settings. Steady two-second category averages were:
+
+| View | Samples | Models | Sorted | UI | Terrain | Shadows | Other | Total |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Normal tabletop | 15 | 275.5 | 54.8 | 22.3 | 56.0 | 4.4 | 5.0 | 418.0 |
+| Maximum zoom-out | 14 | 404.3 | 91.3 | 22.2 | 311.3 | 8.1 | 5.0 | 842.1 |
+
+Terrain is the dominant absolute increase: +255.3 draws/frame, versus +128.8
+models and +36.5 sorted draws. Gate 0 therefore selects P26-2 first. P26-1
+remains a measured follow-up because model work also rises, but broad cosmetic
+culling must not precede the terrain fix. Dynamic resolution and PR #28 are not
+the first P26 action.
+
 ## Decided implementation order
 
-### P26-1: safe far-zoom cosmetic visibility budget
+### P26-1: safe far-zoom cosmetic visibility budget (measured follow-up)
 
 Create this branch only if `models=` rises materially at far zoom.
 
@@ -79,10 +112,10 @@ Acceptance:
 - no missing units, buildings, projectiles, selection feedback or commands;
 - Skirmish and Campaign worn-headset sweeps pass at every zoom step.
 
-### P26-2: terrain draw/state batching
+### P26-2: terrain draw/state batching (selected first)
 
-Create this branch only if `terrain=` is the dominant far-zoom increase after
-P26-1, or if Gate 0 already shows models are not the problem.
+Gate 0 selected this branch first: terrain rises from 56.0 to 311.3 draws/frame
+and accounts for the largest part of the measured far-zoom increase.
 
 Batch adjacent static terrain tiles that share render state without changing
 coverage, texture selection, fog, shroud or geometry. This is preferred over
