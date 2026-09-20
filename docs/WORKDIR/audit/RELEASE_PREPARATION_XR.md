@@ -24,9 +24,11 @@ Archive inspection found no retail `.big`, `.scb`, `.map` or `.w3d` files.
 The exact release bytes update-installed on Quest 3 `2G0YC5ZG9609PY`, retained
 the original `2026-09-16 14:55:36` first-install time and report the expected
 version. A pulled device `base.apk` matches the local release APK byte-for-byte.
-The public tag, uploaded digest, checksum sidecar and fresh independent GitHub
-download are verified after publication; until then this section records the
-fully verified local/device candidate.
+Release tag `v1.2.28-xr-preview` points to merged source
+`2b5150335c4f240253e61039b8bdfeac9322a9c8`. GitHub marks it as the public
+non-prerelease Latest release. The uploaded APK digest, checksum sidecar and a
+fresh independent GitHub download all match the local and device APK hash.
+The former 1.2.25 public release is retained as a maintainer-only draft.
 
 ## Previous public release checkpoint: 1.2.25
 

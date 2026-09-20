@@ -57,7 +57,10 @@ test build on Quest 3, retained the 2026-09-16 first-install time and matched
 the pulled device `base.apk` byte-for-byte. The maintainer accepted image
 correctness and reported the measured build as much smoother. The focused
 maximum-coverage result is 34.30 ms/frame (29.2 derived FPS), versus 42.00 ms
-(23.8 FPS) before batching. Results remain map- and battle-dependent.
+(23.8 FPS) before batching. Release tag `v1.2.28-xr-preview` points to merged
+source `2b51503`; GitHub marks it Latest, and its uploaded digest, checksum
+sidecar and a fresh independent download match the verified APK. Results
+remain map- and battle-dependent.
 
 **Previous public offline preview:** [1.2.25](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview).
 Ground View now allows entry during live Campaign as well as offline Skirmish.
