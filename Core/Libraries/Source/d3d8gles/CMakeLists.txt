@@ -46,6 +46,6 @@ target_include_directories(d3d8gles PRIVATE
 # library -- Android's linker namespace reserves that name for the system
 # library -- so an explicit dispatch table is the only way to route these
 # calls through an app-bundled, differently-named implementation.
-target_link_libraries(d3d8gles PRIVATE d3d8lib sdl3lib)
+target_link_libraries(d3d8gles PRIVATE d3d8lib sdl3lib log)
 
 target_compile_features(d3d8gles PRIVATE cxx_std_20)
