@@ -1,157 +1,141 @@
-# PLAN-026: Quest zoom-out performance PR series
+# PLAN-026: Quest far-zoom performance
 
-**Status:** proposal only; no code changed; written 2026-09-20 from a
-code-verified analysis of `main` at `2a19603`.
+**Status:** measurement gate defined; no P26 runtime code has been accepted.
 
-**Scope boundary:** this document proposes and stages future pull requests.
-It changes no renderer, engine, XR runtime or settings behavior. Sibling
-milestones (placement P19, multiplayer, ground-observer campaign gates) stay
-out of every staged PR below.
+**Current base:** `main` includes PR #27, which removes XR board-mesh allocation
+and alpha-loop churn. The installed `1.2.26-xr-board-mesh-test` build is the
+device baseline for the next capture. PR #27 does not address the extra terrain
+and model work exposed by a far-zoomed tabletop.
 
-## Symptom and measurement base
+This milestone is deliberately limited to sustained tabletop frame cost when
+the player zooms far out. Loading hitches, audio starvation and general POSIX
+thread support are separate work and must not be presented as P26 FPS fixes.
 
-The maintainer reports that tabletop performance degrades specifically when
-zoomed far out. Every staged PR must be judged on device numbers, not feel.
-The required instrumentation already exists and needs no new counter for the
-first gate:
+## Existing branches and pull requests
 
-- `[d3d8gles] perf: <fps> fps, <n> draws/frame, ...`
-  (`Core/Libraries/Source/d3d8gles/src/gles_pipeline.cpp:3360`).
-- `[d3d8gles] perf-draws/frame by source: models= sorted(particles)= 2d-ui=
-  terrain= shadows= skin= other=`
-  (`Core/Libraries/Source/d3d8gles/src/gles_pipeline.cpp:3339`).
-- CPU frame/wait/engine/eye means in `XrPerformance`
-  (`GeneralsMD/Code/Main/XrPerformance.h`). GPU timer queries stay disabled
-  under requested multiview because OVR defines their results as undefined.
+- PR #28 (`muse/perf-xr-72hz-foveation`) is an independent Quest GPU/thermal
+  experiment. It currently combines a 72 Hz request with HIGH fixed foveated
+  rendering. It must not be merged as proof of a far-zoom fix: 72 Hz changes the
+  frame budget rather than reducing engine draw work, and both features need
+  independent A/B controls and a worn-headset gate.
+- PR #29 revives POSIX `ThreadClass`; its own null hypothesis is no FPS change.
+- PR #30 restores background texture streaming and targets first-use loading
+  hitches. It depends on #29 and carries archive/threading risk.
+- PR #31 adds audio-underrun telemetry and intentionally changes no audio or
+  rendering behavior.
 
-**Baseline gate (before any PR):** one logcat capture on the same busy map,
-same save, once near-zoomed and once at maximum zoom-out, 60 s each, on the
-current Balanced/Multiview defaults. Record fps, draws/frame and the
-per-source split for both poses in the first PR body.
+PRs #29-#31 therefore remain outside P26. They may be reviewed later on their
+own acceptance criteria, but they are not prerequisites for the far-zoom work.
 
 ## Verified current-state findings
 
-F1. **Terrain coverage grows to the whole map.** Zooming out enlarges the
-board span, and `GX_XR_UpdateTerrainCoverage`
-(`GeneralsMD/Code/Main/XrGameBoot.cpp:602`) raises the visible terrain area
-via `TheTerrainRenderObject->setTerrainDrawSize(cells, cells)` up to the
-513x513 clamp. Terrain draws from static vertex-buffer tiles
-(`Core/GameEngineDevice/Source/W3DDevice/GameClient/HeightMap.cpp:1365`,
-`USAGE_DEFAULT`), but each tile is its own draw with its own shader/texture
-state setup (`HeightMapRenderObjClass::Render`, `HeightMap.cpp:1902`), with
-cloud and macro-texture passes on top. At full coverage this is the dominant
-fixed per-frame draw block.
+1. `GX_XR_UpdateTerrainCoverage` grows visible terrain coverage up to the
+   513x513 clamp as board coverage increases. Terrain uses static VBO tiles,
+   but each visible tile still incurs draw and state work.
+2. XR visibility uses the normal frustum test plus a board-volume sphere test.
+   There is no projected-size budget for distant cosmetic objects, and engine
+   LOD preparation remains disabled.
+3. World eye resolution is fixed by quality tier. There is no dynamic governor.
+4. Particle capacity is not coverage-aware.
+5. Existing diagnostics already report FPS and draws/frame split into models,
+   particles, UI, terrain, shadows, skin and other. No speculative renderer
+   patch is needed before the first measurement.
 
-F2. **No screen-size culling exists.** Visibility is decided only by the
-frustum test plus the XR board-coverage sphere hook
-(`GeneralsMD/Code/GameEngineDevice/Source/W3DDevice/GameClient/W3DScene.cpp:446,466`
-calling `GX_XR_CullSphere`, `XrGameBoot.cpp:591`). At far zoom every object
-passes: trees, props, debris and single infantry are drawn regardless of
-their on-screen size. Engine LOD preparation is explicitly disabled in
-`RTS3DScene` (`W3DScene.cpp:533`, "We're not using LOD yet").
+## Gate 0: reproducible device baseline
 
-F3. **Fixed per-tier eye resolution, no governor.** `xrStereoExtent`
-(`GeneralsMD/Code/Main/XrWorld.h:133`) pins the world eye texture to
-1536/1920/2304 target width per tier. Nothing reacts to sustained frame-time
-overruns.
+Before creating another P26 implementation branch, capture the same busy save
+on Quest 3 using the PR #27 test build:
 
-F4. **No fixed foveated rendering.** `XR_FB_foveation` is not referenced
-anywhere in the tree. PLAN-023 already reserves the UI swapchain as
-unfoveated; the world swapchain was left open.
+- Balanced resolution, Multiview, Light shadows and automatic/off world copy;
+- 60 seconds at the normal useful tabletop zoom;
+- 60 seconds at maximum zoom-out without changing map or camera direction;
+- record FPS/frame time and the complete `perf-draws/frame by source` split;
+- note whether the slowdown appears immediately or only after sustained play.
 
-F5. **Particle cap is not zoom-aware.** The global particle cap does not
-scale with camera coverage, so far zoom renders the same particle count into
-far fewer pixels (overdraw in the sorted pass).
+The comparison, device build hash and settings belong in the first
+implementation PR. A subjective improvement alone is not an acceptance result.
 
-F6. **Shadow cost at far zoom is unmeasured**, not known. The `shadows=`
-field of the perf-draws log decides whether shadow work belongs in this
-series at all.
+## Decided implementation order
 
-## Staged pull requests
+### P26-1: safe far-zoom cosmetic visibility budget
 
-Order is A+B first (small, directly aimed at the reported symptom), C next,
-D folded into A or shipped alone, E and F only with baseline numbers.
+Create this branch only if `models=` rises materially at far zoom.
 
-### PR-A: zoom-aware screen-size culling
+Implement the threshold where `W3DScene` still has access to `Drawable` and
+kind-of data, not inside the sphere-only `GX_XR_CullSphere` hook. Only a strict
+whitelist of cosmetic objects may be skipped at tiny projected size, initially
+`KINDOF_PROP` and `KINDOF_SHRUBBERY`. Never cull selectable objects, infantry,
+vehicles, structures, projectiles, force-visible objects, command feedback,
+health bars or tactical markers. Rendering may be skipped; simulation, picking,
+shroud and lockstep state must remain untouched.
 
-Extend `GX_XR_CullSphere` (`XrGameBoot.cpp:591`) with a conservative
-minimum-radius gate derived from the current coverage span: bounding spheres
-below the threshold cull as outside the board volume. The hook only feeds
-`RenderObjClass::Set_Visible`, so picking, game logic and mirror passes are
-untouched. Threshold must keep combat units visible at every zoom; target
-trees, props, debris and small decorations only. Ship behind a session-only
-A/B toggle like the shadow A/B in `XrPerformance.h`, default off for the
-first device build, then flip default after acceptance.
+Ship the first device build behind a session-only A/B toggle, default Off. Use
+hysteresis between cull and restore thresholds to prevent visible popping.
 
-Acceptance: at maximum zoom-out on the baseline map, `models=` draws/frame
-drops measurably with no visible pop-in of units at any zoom step; near-zoom
-draw counts unchanged; host regressions plus the stereo/compositor fixtures
-pass.
+Acceptance:
 
-### PR-B: dynamic world-resolution governor
+- measurable reduction in `models=` and frame time at maximum zoom-out;
+- no change to near-zoom counts;
+- no missing units, buildings, projectiles, selection feedback or commands;
+- Skirmish and Campaign worn-headset sweeps pass at every zoom step.
 
-Drive the world eye texture size from the existing `XrPerformance` CPU
-frame/wait means: on sustained budget overrun, step the world target width
-down from the tier value toward a 0.75 floor; restore with hysteresis after
-sustained headroom. Resize only the engine world FBO, never the XR
-swapchain; UI and panel surfaces stay at full resolution. Session setting
-`Dynamic resolution: Auto/Off`, default Auto on Balanced only.
+### P26-2: terrain draw/state batching
 
-Acceptance: repeatable zoom-out frame-time dip on the baseline map no longer
-drops below the device refresh budget for longer than the governor reaction
-window; no resolution oscillation (logged steps only); static near-zoom
-image unchanged.
+Create this branch only if `terrain=` is the dominant far-zoom increase after
+P26-1, or if Gate 0 already shows models are not the problem.
 
-### PR-C: fixed foveated rendering on the world swapchain
+Batch adjacent static terrain tiles that share render state without changing
+coverage, texture selection, fog, shroud or geometry. This is preferred over
+reducing terrain detail because it targets CPU/draw overhead without a visual
+quality reduction.
 
-Plumb `XR_FB_foveation`/`XR_FB_foveation_configuration` into
-`XrHello.cpp` swapchain creation for the world swapchain only, with
-capability check and explicit fallback. UI swapchain remains unfoveated per
-PLAN-023.
+Acceptance:
 
-Acceptance: compositor-reported foveation active on Quest 3; world GPU load
-drops at identical scene; no visible edge artifacts on UI or board borders.
+- materially fewer `terrain=` draws and lower far-zoom frame time;
+- per-eye image comparison shows no terrain, shroud or border change;
+- map edges, large campaign maps and all tabletop zoom steps remain correct.
 
-### PR-D: zoom-scaled particle caps
+### P26-3: Quest GPU headroom controls (amend PR #28)
 
-Scale the global particle budget by current terrain coverage (full cap near
-zoom, reduced cap at far coverage). Fold into PR-A if trivially adjacent;
-otherwise standalone.
+Do not create a duplicate foveation PR. Amend #28 so refresh rate and fixed
+foveation can be enabled and measured independently. Keep the current refresh
+behavior and foveation Off by default in the first test build. Apply foveation
+only to the world eye swapchains; full-resolution UI and panels must remain
+unaffected. Test Medium before HIGH.
 
-Acceptance: `sorted(particles)=` draws/frame at far zoom drops; battle
-readability at near zoom unchanged.
+This stage is useful only when changing eye resolution or foveation improves
+frame time while draw counts remain similar. A 72 Hz request can improve frame
+pacing and thermal headroom, but must not be reported as an FPS optimization by
+itself.
 
-### PR-E: terrain tile draw batching (requires baseline first)
+Acceptance:
 
-Merge adjacent static terrain tiles into fewer draws at high coverage (e.g.
-index-buffer offset batching over groups of tiles, sharing one state setup).
-Do not start before the baseline shows `terrain=` dominating draws at far
-zoom after A+D have landed.
+- extension and active-state logs verified on Quest 3;
+- separate Off/Medium/High and runtime-default/72 Hz comparisons;
+- no UI blur, board-edge shimmer, comfort regression or lifecycle failure;
+- sustained Skirmish and Campaign session, including Ground View.
 
-Acceptance: `terrain=` draws/frame at full coverage reduced by a measurable
-factor; identical rendered image (per-eye PPM capture comparison).
+## Deferred unless measurements justify them
 
-### PR-F: shadow update throttle (requires baseline first)
+- Dynamic resolution: only for a demonstrated GPU/fill-rate limit. It requires
+  hysteresis, an Auto/Off option and a conservative floor; it is not the first
+  response to CPU or draw-call load.
+- Zoom-scaled particle caps: only if `sorted(particles)=` dominates. This trades
+  battle presentation for performance and is not a default optimization.
+- Shadow update throttling: only if `shadows=` dominates and a visual cadence
+  can pass the headset gate.
+- General threading and texture streaming: track under their own hitch/loading
+  milestone, not P26.
 
-Only if the baseline `shadows=` split justifies it: throttle projected
-shadow texture updates at high coverage. Not scoped further until measured.
+## Decision rule
 
-## Test plan (applies to every staged PR)
+The next implementation branch is selected from Gate 0, not preference:
 
-1. Baseline and post-change logcat captures per the measurement base above.
-2. Host regression suite plus focused `scripts/qa/xr-*` tests per the
-   milestone skill procedure; both Android debug flavors build.
-3. Physical Quest 3 gate per PR: busy-map zoom sweep with draws/fps notes,
-   plus a worn-headset visual check for pop-in (A/D), resolution steps (B)
-   and edge artifacts (C). Physical gates are listed explicitly in each PR
-   body when not yet performed; nothing is silently omitted.
+1. `models=` increase -> P26-1.
+2. `terrain=` increase -> P26-2.
+3. Stable draw counts but resolution/foveation changes help -> amend and test
+   PR #28 as P26-3.
+4. Particle or shadow fields dominate -> open only the matching deferred slice.
 
-## Open decisions
-
-- [D1] PR order: A+B first as recommended above, or C pulled forward.
-  Recommendation: A+B first; C is independent and can follow immediately.
-- [D2] Cull threshold basis: bounding-radius heuristic over coverage span
-  (recommended; cheap, robust) versus exact projected pixel size (precise,
-  more math in the cull hot path).
-- [D3] PR-A default: ship behind session toggle (recommended) versus
-  default-on with rollback.
+This keeps every optimization attributable, reversible and testable, while
+protecting the currently working controls, visual readability and simulation.
