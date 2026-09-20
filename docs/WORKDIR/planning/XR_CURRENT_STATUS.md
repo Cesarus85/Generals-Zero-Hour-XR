@@ -45,7 +45,21 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Current product baseline
 
-**Current public offline preview:** [1.2.25](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview).
+**Current public offline preview:** [1.2.28](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.28-xr-preview).
+This release promotes the accepted P26-2 Android terrain batching and the
+post-1.2.25 board-mesh churn reduction without lowering terrain detail. The
+release-signed APK is versionCode 10228 / versionName
+`1.2.28-xr-preview`, 57,100,470 bytes, SHA-256
+`fc04349550027cab90964261e6eb221e4f4947c41ec57ff6def03529ca88ca20`.
+It verifies with the established v3 certificate, contains ARM64 only and no
+retail game data. The exact bytes update-installed over the accepted 10228
+test build on Quest 3, retained the 2026-09-16 first-install time and matched
+the pulled device `base.apk` byte-for-byte. The maintainer accepted image
+correctness and reported the measured build as much smoother. The focused
+maximum-coverage result is 34.30 ms/frame (29.2 derived FPS), versus 42.00 ms
+(23.8 FPS) before batching. Results remain map- and battle-dependent.
+
+**Previous public offline preview:** [1.2.25](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview).
 Ground View now allows entry during live Campaign as well as offline Skirmish.
 The same central gate blocks menus, cinematics, scripted camera movement,
 loading, placement and camera locks; the XR runtime cancels observation on
@@ -65,12 +79,10 @@ maintainer-only drafts so the public release page offers the current APK alone.
 Historical release links below are accessible only to repository maintainers;
 `v1.2.25-xr-preview` is the sole public download.
 
-**Post-1.2.25 source optimization:** PR #27 removes per-frame allocation and
+**Included post-1.2.25 source optimization:** PR #27 removes per-frame allocation and
 redundant alpha traversal from the XR board-decoration mesh while preserving
 the uploaded vertex stream. The Android/Quest CI build passes and the focused
-board test passes 77 checks. This is merged source work, not part of the public
-1.2.25 APK; visual identity and hitch reduction still need a worn-headset A/B
-test before a new release. PR #26's GL polling/FBO proposal was rejected: its
+board test passes 77 checks. It is included in 1.2.28. PR #26's GL polling/FBO proposal was rejected: its
 error polling could lose the current-frame world-elision recovery correlation,
 and its FBO cache tracked only the most recently seen texture rather than every
 swapchain image.
