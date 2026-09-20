@@ -142,6 +142,21 @@ The installed revision includes the visible/hittable page-3 control beside
 Measurement. A new bilingual panel assertion covers both its Off label and On
 state after the first package revealed the missing layout-table entry.
 
+#### P26-1 first device measurement
+
+The maintainer ran the corrected build in a Campaign scene at maximum coverage
+with Measurement enabled. Every `scenery=culled` sample reported
+`cosmeticChecked=0 cosmeticCulled=0`; the Off series likewise reported zero.
+The strict `KINDOF_PROP` whitelist therefore matched no drawable in this scene
+and produced no possible draw saving. The On samples used 1920x2011 eyes while
+the later Off series used 1536x1609, so frame-time values are not a valid A/B;
+the zero eligibility count is resolution-independent.
+
+P26-1 fails its efficacy gate in its present form and must not merge. Do not
+broaden the whitelist speculatively. The next safe step is a read-only model
+visibility histogram at far zoom, grouped by gameplay kind and projected-size
+bucket, followed by an explicit safe-class review before another culling build.
+
 ### P26-2: terrain draw/state batching (selected first)
 
 Gate 0 selected this branch first: terrain rises from 56.0 to 311.3 draws/frame

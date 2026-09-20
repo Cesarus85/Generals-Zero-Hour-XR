@@ -144,6 +144,14 @@ zoom before merge.
 The installed revision fixes the first package's missing page-3 control-table
 entry; `Far scenery` is now painted and hittable beside `Measurement`.
 
+The first worn-headset Campaign measurement found zero eligible and zero
+culled drawables in every On sample. P26-1 therefore has no demonstrated
+benefit and is blocked from merge. The On/Off series also used different eye
+tiers (1920x2011 versus 1536x1609), so their frame times must not be compared.
+Next: add read-only far-zoom model classification counters; do not widen the
+render-culling whitelist until those counters identify a demonstrably cosmetic
+class. Public 1.2.28 remains the accepted baseline.
+
 **Previous private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
 PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates
 at `d72a7969`. Release tag `v1.2.24-xr-preview` points to `0403c5e4`, which
