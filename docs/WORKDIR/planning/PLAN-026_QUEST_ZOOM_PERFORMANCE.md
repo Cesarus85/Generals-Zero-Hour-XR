@@ -1,12 +1,13 @@
 # PLAN-026: Quest far-zoom performance
 
-**Status:** measurement gate passed; P26-2 terrain batching is the selected
-first implementation slice. No rendering optimization has been accepted yet.
+**Status:** P26-2 terrain batching implemented and visually accepted on Quest
+3. The measured maximum-zoom frame time improved; source review and merge are
+the remaining gates.
 
 **Current base:** `main` includes PR #27, which removes XR board-mesh allocation
-and alpha-loop churn. The installed `1.2.26-xr-board-mesh-test` build is the
-device baseline for the next capture. PR #27 does not address the extra terrain
-and model work exposed by a far-zoomed tabletop.
+and alpha-loop churn. P26-2 is stacked on the draw-breakdown diagnostic branch
+so its effect can be measured over ADB. PR #27 does not address the extra
+terrain and model work exposed by a far-zoomed tabletop.
 
 This milestone is deliberately limited to sustained tabletop frame cost when
 the player zooms far out. Loading hitches, audio starvation and general POSIX
@@ -127,6 +128,40 @@ Acceptance:
 - materially fewer `terrain=` draws and lower far-zoom frame time;
 - per-eye image comparison shows no terrain, shroud or border change;
 - map edges, large campaign maps and all tabletop zoom steps remain correct.
+
+#### P26-2 implementation and Quest result, 2026-09-20
+
+Android now stores up to ten unchanged 32x32 terrain patches in one static
+vertex buffer and addresses them through one expanded 16-bit index buffer.
+Ten patches remain below the legacy limits (40,960 vertices and 61,440
+indices). Updates and dynamic-light writes retain per-patch offsets; coverage,
+geometry, textures, fog, shroud and non-Android rendering remain unchanged.
+
+Release-signed test APK `10228 / 1.2.28-p26-terrain-batch-test`, SHA-256
+`78ff8ed5abfc3b1f5b2ac608961dad4289f95fa715c289bf43e3f02a1791fbeb`,
+was update-installed on Quest 3. Native ARM64 packaging passed and the
+maintainer confirmed the image was correct across the tested zoom range.
+
+The immediate normal/max draw capture on that build measured:
+
+| View | Samples | Models | Sorted | UI | Terrain | Shadows | Other | Total |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Normal tabletop | 15 | 212.0 | 60.6 | 21.2 | 24.0 | 3.6 | 5.0 | 326.4 |
+| Maximum zoom-out | 12 | 387.0 | 55.5 | 21.6 | 45.0 | 8.1 | 5.0 | 522.2 |
+
+Against the diagnostic maximum-zoom capture, terrain fell from 311.3 to 45.0
+draws/frame (-85.5%) and total draws fell from 842.1 to 522.2 (-38.0%). A
+separate 26-sample maximum-coverage timing capture during continued Campaign
+play measured 33.17 ms engine CPU and 34.30 ms/frame, or 29.2 derived FPS.
+Compared with the 10226 baseline at the same 4.5000 coverage, that is 19.0%
+less engine CPU, 18.3% lower frame time and 22.7% higher derived FPS (23.8 to
+29.2). Terrain remained at 60 draws/frame in that later scene; model and sorted
+effect variation is now the main remaining source of frame-time swings.
+
+This passes the P26-2 device/visual gate without a detail reduction. It does
+not prove every map edge or long-session Campaign path; those stay part of
+release regression testing. P26-1 is the next measured candidate, but must
+remain a conservative cosmetic-only A/B slice.
 
 ### P26-3: Quest GPU headroom controls (amend PR #28)
 
