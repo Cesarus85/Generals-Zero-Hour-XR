@@ -1,8 +1,8 @@
 # PLAN-026: Quest far-zoom performance
 
-**Status:** P26-2 terrain batching implemented, visually accepted on Quest 3
-and merged to `main` in PR #34 (`3e895fa`). The measured maximum-zoom frame
-time improved; broader map/Campaign regression remains a release gate.
+**Status:** P26-2 terrain batching is released in 1.2.28. P26-1 failed its
+Quest efficacy gate and PR #38 is closed unmerged. Further cosmetic culling is
+deferred unless new classification evidence justifies it.
 
 **Current base:** `main` includes PR #27's XR board-mesh churn reduction, PR
 #33's Quest draw-breakdown logging and PR #34's accepted P26-2 terrain
@@ -112,6 +112,20 @@ Acceptance:
 - no change to near-zoom counts;
 - no missing units, buildings, projectiles, selection feedback or commands;
 - Skirmish and Campaign worn-headset sweeps pass at every zoom step.
+
+#### P26-1 measured outcome, 2026-09-20
+
+The release-signed candidate exposed a session-only Far scenery toggle and
+restricted culling to non-selectable, non-force-attackable `KINDOF_PROP`
+drawables below a hysteretic projected-size threshold. The corrected control
+was visible and usable, but every enabled Campaign sample at coverage 4.5
+reported zero eligible and zero culled objects. It therefore could not reduce
+draw work. On and Off samples used different eye tiers, so their frame times
+were intentionally discarded.
+
+PR #38 is closed unmerged. Do not widen the filter to units, structures,
+projectiles or gameplay-addressable vegetation. A future attempt requires a
+read-only kind/projected-size histogram first; it is not a current priority.
 
 ### P26-2: terrain draw/state batching (selected first)
 
