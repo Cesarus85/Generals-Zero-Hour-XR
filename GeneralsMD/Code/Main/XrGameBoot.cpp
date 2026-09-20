@@ -585,6 +585,8 @@ static unsigned s_pickCounts[6]={}; // unavailable, outside board, terrain miss,
 static bool s_renderReady=false;
 static CameraClass *s_renderCamera=nullptr;
 static float s_worldSpan=619;
+static unsigned s_cosmeticCullChecked=0;
+static unsigned s_cosmeticCullHits=0;
 bool GX_XR_WorldRequested() {return s_worldFrame.enabled && XrGameBoot_CanStereoWorld() && GX_XR_SplitUIAllowed();}
 int GX_XR_ShadowCategory(int category) {return d3d8gles_SetDrawCategory(category);}
 CameraClass *GX_XR_RenderCamera() {return s_renderReady ? s_renderCamera:nullptr;}
@@ -596,6 +598,25 @@ int GX_XR_CullSphere(const SphereClass &sphere) {
 		return xrObserverContainsSphere(eye,{sphere.Center.X,sphere.Center.Y,sphere.Center.Z},sphere.Radius) ? 0:1;
 	}
 	return xrBoardContainsSphere(s_worldMapping,s_worldAspect,{sphere.Center.X,sphere.Center.Y,sphere.Center.Z},sphere.Radius) ? 0:1;
+}
+bool GX_XR_ShouldCullCosmetic(const SphereClass &sphere,bool wasVisible) {
+	// This must never affect observer/ground view, close views, simulation or
+	// picking. W3DScene owns the semantic whitelist; this bridge owns only the
+	// stereo-aware projected-size budget.
+	if(!s_renderReady || !s_worldFrame.cosmeticCulling || s_worldFrame.observer ||
+		s_worldFrame.coverage<2.5f || !std::isfinite(sphere.Radius) || sphere.Radius<=0) return false;
+	++s_cosmeticCullChecked;
+	const float boardRadius=sphere.Radius*sqrtf(s_worldMapping[0]*s_worldMapping[0]+s_worldMapping[1]*s_worldMapping[1]);
+	const float diameterPixels=2*boardRadius*s_worldFrame.width;
+	// Keep a visible prop until it shrinks below 3 px. Once hidden, require
+	// 4.5 px before restoring it so tiny zoom changes cannot make it flicker.
+	const bool culled=xrCullCosmeticDiameter(diameterPixels,wasVisible);
+	if(culled)++s_cosmeticCullHits;
+	return culled;
+}
+void GX_XR_TakeCosmeticCullStats(unsigned &checked,unsigned &culled) {
+	checked=s_cosmeticCullChecked;culled=s_cosmeticCullHits;
+	s_cosmeticCullChecked=0;s_cosmeticCullHits=0;
 }
 // Conservative table coverage, independent of either eye. Quantize allocation
 // to terrain tile blocks rather than reallocating on each tiny zoom change.

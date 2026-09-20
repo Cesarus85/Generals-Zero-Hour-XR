@@ -94,6 +94,10 @@ static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 	}
 	if(x.menu.page==3) {
 		if(action<0 || action>16) return;
+		if(action==0) {
+			x.performance.cosmeticCulling=!x.performance.cosmeticCulling;
+			x.performance.invalidate();return;
+		}
 		if(action<=3)return; // P15 reserved status/help slots; no flat mode.
 		if(action==16) {
 			armGroundView(x);

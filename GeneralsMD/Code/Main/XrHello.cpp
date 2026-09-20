@@ -1503,6 +1503,7 @@ static void runLoop(XrHello &x)
 					world.atlasStereo=x.performance.atlasStereo;
 					world.multiviewStereo=x.performance.multiviewStereo;
 					world.elideWorldCopy=x.performance.elideWorldCopy;
+					world.cosmeticCulling=x.performance.cosmeticCulling;
 					world.observer=x.observer.mode==XrObserverMode::Active;
 					x.renderedObserver=world.observer;
 					if(world.observer) {
@@ -1516,8 +1517,8 @@ static void runLoop(XrHello &x)
 					XrGameBoot_PollMatchResult();
 					// GeneralsX @performance Codex 14/09/2026 Settings changes,
 					// focus loss and movies start a fresh, warmed-up measurement epoch.
-					char perfKey[192];snprintf(perfKey,sizeof(perfKey),"scene=%s shadows=%s eye=%dx%d coverage=%.4f board=%.4f stereo=%s copy=%s",
-						XrGameBoot_PerformanceScene(),world.volumeShadows ? "A-original":"B-light",world.width,world.height,world.coverage,world.board.width,world.multiviewStereo ? "multiview":world.atlasStereo ? "atlas":"reference",world.elideWorldCopy ? "auto":"always");
+					char perfKey[224];snprintf(perfKey,sizeof(perfKey),"scene=%s shadows=%s eye=%dx%d coverage=%.4f board=%.4f stereo=%s copy=%s scenery=%s",
+						XrGameBoot_PerformanceScene(),world.volumeShadows ? "A-original":"B-light",world.width,world.height,world.coverage,world.board.width,world.multiviewStereo ? "multiview":world.atlasStereo ? "atlas":"reference",world.elideWorldCopy ? "auto":"always",world.cosmeticCulling ? "culled":"full");
 					perfMeasured=x.performance.prepare(perfKey,x.stereoWorld && x.stereoVisible &&
 						x.state==XR_SESSION_STATE_FOCUSED && !x.arranging && XrGameBoot_CanAdjustWorld());
 					const auto gpu=x.gpuTimer.poll(x.performance.epoch,x.performance.enabled && !world.multiviewStereo);
@@ -1660,9 +1661,12 @@ static void runLoop(XrHello &x)
 				if(p.gpu.count)snprintf(gpu,sizeof(gpu),"GPU %.1f ms",p.gpu.mean());
 				else snprintf(gpu,sizeof(gpu),"%s",xrTr(x.performance.multiviewStereo ? "GPU-Zeit: bei Multiview gesperrt":x.gpuTimer.supported ? "GPU wartet / verworfen":"GPU nicht verfügbar"));
 				char report[192];snprintf(report,sizeof(report),"%s · CPU %.1f ms · %s",p.volumeShadows ? "A":"B",p.engine.mean(),gpu);p.report=report;
-				XR_LOG("P12 perf %s n=%u engineCPU=%.2f eyeCPU=%.2f xrWait=%.2f frame=%.2f maxFrame=%.2f GPUengine=%.2f gpuN=%u gpuSupported=%d disjoint=%u dropped=%u",
+				unsigned cosmeticChecked=0,cosmeticCulled=0;
+				GX_XR_TakeCosmeticCullStats(cosmeticChecked,cosmeticCulled);
+				XR_LOG("P12 perf %s n=%u engineCPU=%.2f eyeCPU=%.2f xrWait=%.2f frame=%.2f maxFrame=%.2f GPUengine=%.2f gpuN=%u gpuSupported=%d disjoint=%u dropped=%u cosmeticChecked=%u cosmeticCulled=%u",
 					p.key.c_str(),p.frame.count,p.engine.mean(),p.eyes.mean(),p.wait.mean(),p.frame.mean(),p.frame.maximum,
-					p.gpu.count ? p.gpu.mean():-1.0,p.gpu.count,int(x.gpuTimer.supported),x.gpuTimer.disjoints,x.gpuTimer.dropped);
+					p.gpu.count ? p.gpu.mean():-1.0,p.gpu.count,int(x.gpuTimer.supported),x.gpuTimer.disjoints,x.gpuTimer.dropped,
+					cosmeticChecked,cosmeticCulled);
 				p.engine={};p.eyes={};p.wait={};p.frame={};p.gpu={};p.started=now;
 			}
 		}

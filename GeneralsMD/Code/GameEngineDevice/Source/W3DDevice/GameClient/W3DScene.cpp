@@ -468,6 +468,7 @@ void RTS3DScene::Visibility_Check(CameraClass * camera)
 				// GeneralsX @feature Codex 13/09/2026 Table volume covers both
 				// eyes. Keep the existing fog/hidden checks below unchanged.
 				extern int GX_XR_CullSphere(const SphereClass &);
+				extern bool GX_XR_ShouldCullCosmetic(const SphereClass &,bool);
 				const int xrCull=GX_XR_CullSphere(robj->Get_Bounding_Sphere());
 				if(xrCull>=0) isVisible=xrCull==0;
 #endif
@@ -478,6 +479,18 @@ void RTS3DScene::Visibility_Check(CameraClass * camera)
 					drawInfo = (DrawableInfo *)robj->Get_User_Data();
 					if (drawInfo && (draw=drawInfo->m_drawable) != nullptr)
 					{
+#ifdef __ANDROID__
+						// GeneralsX @performance Codex 20/09/2026 P26-1. Skip only
+						// unambiguously cosmetic, non-interactive props at sub-pixel
+						// far-zoom size. Visibility is render-only: never remove the
+						// Drawable, object, shroud, picking or simulation state.
+						if(draw->isKindOf(KINDOF_PROP) && !draw->isSelectable() && !draw->isSelected() &&
+							!draw->isKindOf(KINDOF_FORCEATTACKABLE) &&
+							GX_XR_ShouldCullCosmetic(robj->Get_Bounding_Sphere(),robj->Is_Visible())) {
+							isVisible=FALSE;
+							robj->Set_Visible(false);
+						}
+#endif
 						if (draw->isDrawableEffectivelyHidden() || draw->getFullyObscuredByShroud())
 						{
 							isVisible = FALSE;

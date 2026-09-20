@@ -18,6 +18,7 @@
 #include "XrLayers.h"
 #include "XrWorld.h"
 #include <string>
+class SphereClass;
 std::string XrGameBoot_HoverInfo(float x,float y);
 bool XrGameBoot_CanAdjustWorld();
 // GeneralsX @feature Codex 14/09/2026 Native building preview orientation.
@@ -109,6 +110,10 @@ bool XrGameBoot_CanObserveGround();
 bool XrGameBoot_PickObserverGround(const XrSurface &board,const XrPosef &aim,XrVector3f &ground,XrVector3f *roomPoint=nullptr);
 bool XrGameBoot_ObserverStep(XrVector3f current,XrVector3f delta,XrVector3f &next);
 const char *XrGameBoot_PerformanceScene();
+// P26-1 render-only diagnostics. The scene calls the first function only for
+// a strict cosmetic whitelist; the XR host drains the counters for A/B logs.
+bool GX_XR_ShouldCullCosmetic(const SphereClass &sphere,bool wasVisible);
+void GX_XR_TakeCosmeticCullStats(unsigned &checked,unsigned &culled);
 std::string XrGameBoot_PresentationStatus(bool stereoVisible,bool requested);
 void XrGameBoot_SetWorldFrame(const XrWorldFrame &frame);
 unsigned int XrGameBoot_StereoTexture(int eye);

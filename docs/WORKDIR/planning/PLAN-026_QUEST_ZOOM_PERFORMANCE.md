@@ -1,13 +1,13 @@
 # PLAN-026: Quest far-zoom performance
 
-**Status:** P26-2 terrain batching implemented, visually accepted on Quest 3
-and merged to `main` in PR #34 (`3e895fa`). The measured maximum-zoom frame
-time improved; broader map/Campaign regression remains a release gate.
+**Status:** P26-2 terrain batching is released in 1.2.28. P26-1 now has an
+opt-in, release-signed Quest test build; visual and measured A/B acceptance is
+open and the branch must not merge before that gate passes.
 
 **Current base:** `main` includes PR #27's XR board-mesh churn reduction, PR
 #33's Quest draw-breakdown logging and PR #34's accepted P26-2 terrain
-batching. The public 1.2.25 release APK is unchanged; 10228 is the installed
-measurement build rather than a published release.
+batching. Public release 1.2.28 remains the accepted baseline; P26-1 test build
+10229 is installed separately from `codex/p26-cosmetic-culling`.
 
 This milestone is deliberately limited to sustained tabletop frame cost when
 the player zooms far out. Loading hitches, audio starvation and general POSIX
@@ -97,8 +97,9 @@ Create this branch only if `models=` rises materially at far zoom.
 
 Implement the threshold where `W3DScene` still has access to `Drawable` and
 kind-of data, not inside the sphere-only `GX_XR_CullSphere` hook. Only a strict
-whitelist of cosmetic objects may be skipped at tiny projected size, initially
-`KINDOF_PROP` and `KINDOF_SHRUBBERY`. Never cull selectable objects, infantry,
+whitelist of cosmetic objects may be skipped at tiny projected size. The first
+test deliberately admits only `KINDOF_PROP`; `KINDOF_SHRUBBERY` is deferred
+because some shrubs are destroyable or force-attackable. Never cull selectable objects, infantry,
 vehicles, structures, projectiles, force-visible objects, command feedback,
 health bars or tactical markers. Rendering may be skipped; simulation, picking,
 shroud and lockstep state must remain untouched.
@@ -112,6 +113,30 @@ Acceptance:
 - no change to near-zoom counts;
 - no missing units, buildings, projectiles, selection feedback or commands;
 - Skirmish and Campaign worn-headset sweeps pass at every zoom step.
+
+#### P26-1 implementation candidate, 2026-09-20
+
+The Android scene now applies a render-only visibility budget after ordinary
+board-volume culling, while `Drawable` kind data is still available. It admits
+only `KINDOF_PROP` drawables that are not selectable, selected or
+`KINDOF_FORCEATTACKABLE`. It never removes a drawable or object and never
+changes simulation, shroud, picking or lockstep state. Ground View, coverage
+below 2.5, all non-Android builds and the default-Off path bypass it.
+
+Projected diameter uses the current world-to-board scale and stereo target
+width. A previously visible prop hides only below 3.0 pixels; a hidden prop
+must reach 4.5 pixels before restoring. This hysteresis is intended to prevent
+flicker around the threshold. The session-only `UI > Graphics > Far scenery`
+toggle exposes the A/B without changing saved defaults. The P12 log adds
+`scenery=full|culled`, `cosmeticChecked` and `cosmeticCulled`; the existing
+renderer split remains the source for actual `models=` savings.
+
+Release-signed APK `10229 / 1.2.29-p26-cosmetic-cull-test`, SHA-256
+`86d5bc6e3b450f674180ac706c105e5d3c7cdbaae6168b3d5684881da0f6cecf`,
+is installed on Quest 3. It is ARM64-only and uses the pinned v3 release
+certificate. Host text/layout/performance checks and the native Android build
+pass. Physical Skirmish/Campaign image and normal/maximum-zoom A/B measurements
+remain open; this is not a release candidate.
 
 ### P26-2: terrain draw/state batching (selected first)
 

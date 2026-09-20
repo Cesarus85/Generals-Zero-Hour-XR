@@ -15,6 +15,7 @@ struct XrWorldFrame {
 	bool multiviewStereo=true;
 	bool atlasStereo=false; // P13 opt-in: same pixels; game performance gate open.
 	bool elideWorldCopy=true; // P14 only after the current stereo visibility gate.
+	bool cosmeticCulling=false; // P26-1 render-only far-scenery A/B.
 	// GeneralsX @feature Codex 17/09/2026 P25 separate, non-persistent human-scale view.
 	bool observer=false;
 	XrVector3f observerGround={};
@@ -26,6 +27,12 @@ constexpr float kXrObserverEyeHeightMetres=1.65f;
 constexpr float kXrObserverFarMetres=60.0f;
 constexpr float kXrObserverWalkMetresPerSecond=2.0f;
 constexpr float kXrObserverTurnRadiansPerSecond=1.309f; // 75 degrees/s.
+constexpr float kXrCosmeticCullPixels=3.0f;
+constexpr float kXrCosmeticRestorePixels=4.5f;
+inline bool xrCullCosmeticDiameter(float diameterPixels,bool wasVisible) {
+	return std::isfinite(diameterPixels) && diameterPixels>=0 &&
+		diameterPixels<(wasVisible ? kXrCosmeticCullPixels:kXrCosmeticRestorePixels);
+}
 enum class XrObserverMode {Off,Armed,Active};
 struct XrObserverState {
 	XrObserverMode mode=XrObserverMode::Off;

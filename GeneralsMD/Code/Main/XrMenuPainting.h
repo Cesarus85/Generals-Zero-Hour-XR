@@ -279,7 +279,8 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 			} else {
 				detail=XrGameBoot_PresentationStatus(x.stereoVisible,x.stereoWorld)+"\n"+
 					(x.menu.hover==11 ? XrGameBoot_LanguageStatus():x.menu.hover==16 ?
-						xrTr("Nur Offline-Gefecht: Bodenansicht wählen, dann sichtbaren freien Boden anklicken. B/Y kehrt zurück."):x.performance.status());
+						xrTr("Nur Offline-Gefecht: Bodenansicht wählen, dann sichtbaren freien Boden anklicken. B/Y kehrt zurück."):
+						x.menu.hover==0 ? xrTr("Nur diese Sitzung: blendet winzige, nicht interaktive Dekoration bei weiter Tischansicht aus."):x.performance.status());
 				label(-10,xrTr("Darstellung"));
 				label(-20,xrTr("Spiel: Tisch; Bodenansicht optional"));label(-21,xrTr("Videos: Bildschirm"));
 				auto toggle=[&](int id,const char *name,bool on) {
@@ -294,6 +295,7 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 				if(x.performance.volumeShadows)mark(12,kXrStateOn);
 				label(14,std::string(xrTr("Stereo"))+"|"+xrTr(x.performance.multiviewStereo ? "Multiview":x.performance.atlasStereo ? "Kompakt":"Referenz"));
 				label(15,std::string(xrTr("Zusatzwelt"))+"|"+xrTr(x.performance.elideWorldCopy ? "Auto":"Immer"));
+				toggle(0,"Fernkulisse",x.performance.cosmeticCulling);
 				toggle(13,"Messung",x.performance.enabled);
 				label(-12,xrTr("Steuerung & Sprache"));
 				toggle(8,"Linkshändig",x.layout.leftHanded);

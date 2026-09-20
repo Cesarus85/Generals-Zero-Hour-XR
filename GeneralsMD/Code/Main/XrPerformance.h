@@ -20,6 +20,9 @@ struct XrPerformance {
 	// GeneralsX @feature Codex 14/09/2026 P16 preferred Quest path; native capability/shader fallback retained.
 	bool multiviewStereo=true;
 	bool elideWorldCopy=true;
+	// P26-1 is deliberately session-only and opt-in until its visual and
+	// performance gates pass on a physical Quest.
+	bool cosmeticCulling=false;
 	unsigned epoch=1;int settle=30;
 	std::string key,report;
 	double started=0;

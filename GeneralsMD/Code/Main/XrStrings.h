@@ -234,6 +234,8 @@ inline constexpr XrTranslation kXrTranslations[]={
  {"Aktionen","Actions"},
  {"Darstellung","Presentation"},
  {"Grafik","Graphics"},
+ {"Fernkulisse","Far scenery"},
+ {"Nur diese Sitzung: blendet winzige, nicht interaktive Dekoration bei weiter Tischansicht aus.","This session only: hides tiny, non-interactive scenery in wide tabletop views."},
  {"Steuerung & Sprache","Controls & language"},
  {"Auswahl","Selection"},
  {"Sofort","Instant"},

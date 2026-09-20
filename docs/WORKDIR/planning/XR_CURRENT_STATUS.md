@@ -125,6 +125,23 @@ map/Campaign regression remains open. Models and sorted effects are now the
 measured far-zoom follow-up, so any P26-1 work must be a reversible
 cosmetic-only A/B test.
 
+**Active P26-1 device candidate:** branch `codex/p26-cosmetic-culling` adds a
+default-Off, session-only `UI > Graphics > Far scenery` comparison. The first
+candidate culls rendering only for non-selectable, non-force-attackable
+`KINDOF_PROP` objects below a 3.0-pixel projected diameter at coverage 2.5 or
+higher; 4.5-pixel restore hysteresis prevents threshold flicker. It never runs
+in Ground View and does not change object lifetime, picking, shroud, simulation
+or lockstep state. Shrubbery is intentionally deferred because it can be
+gameplay-addressable. Counters are included in P12 timing logs.
+
+Release-signed test APK `10229 / 1.2.29-p26-cosmetic-cull-test`, SHA-256
+`86d5bc6e3b450f674180ac706c105e5d3c7cdbaae6168b3d5684881da0f6cecf`,
+is installed on Quest 3 `2G0YC5ZG9609PY`. Native ARM64 and host panel,
+workspace, performance and menu checks pass. The public 1.2.28 APK remains the
+authoritative accepted release. P26-1 still requires Skirmish and Campaign
+visual sweeps plus measured Far scenery Off/On captures at normal and maximum
+zoom before merge.
+
 **Previous private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
 PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates
 at `d72a7969`. Release tag `v1.2.24-xr-preview` points to `0403c5e4`, which

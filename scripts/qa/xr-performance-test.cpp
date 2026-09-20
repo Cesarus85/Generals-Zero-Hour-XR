@@ -36,7 +36,12 @@ int main(){
 		e.configure(false);check(!e.blocked && !e.requested);
 		e.configure(true);check(e.canOmit(true,true,true,true));
 	}
-	XrPerformance p;check(!p.volumeShadows && !p.enabled && !XrWorldFrame{}.volumeShadows && p.multiviewStereo && XrWorldFrame{}.multiviewStereo);
+	XrPerformance p;check(!p.volumeShadows && !p.enabled && !p.cosmeticCulling &&
+		!XrWorldFrame{}.volumeShadows && !XrWorldFrame{}.cosmeticCulling &&
+		p.multiviewStereo && XrWorldFrame{}.multiviewStereo);
+	check(xrCullCosmeticDiameter(2.99f,true));check(!xrCullCosmeticDiameter(3.0f,true));
+	check(xrCullCosmeticDiameter(4.49f,false));check(!xrCullCosmeticDiameter(4.5f,false));
+	check(!xrCullCosmeticDiameter(-1,false));
 	check(!p.prepare("A",true));p.enabled=true;
 	for(int i=0;i<30;++i)check(!p.prepare("A",true));check(p.prepare("A",true));
 	p.report="old";p.engine.add(20);const auto old=p.epoch;
