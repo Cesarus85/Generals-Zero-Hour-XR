@@ -92,6 +92,23 @@ P26-2 terrain batching is therefore the selected first implementation slice;
 P26-1 model/cosmetic visibility remains a measured follow-up. The diagnostic
 branch changes logging only and is not a release candidate.
 
+**P26-2 terrain batching result:** Android groups up to ten unchanged terrain
+patches per static vertex/index-buffer submission; non-Android behavior and
+terrain detail are unchanged. Release-signed test APK `10228 /
+1.2.28-p26-terrain-batch-test`, SHA-256
+`78ff8ed5abfc3b1f5b2ac608961dad4289f95fa715c289bf43e3f02a1791fbeb`,
+is installed on Quest 3. Native ARM64/package verification passed and the
+maintainer accepted the rendered image. In the immediate normal/max capture,
+maximum-zoom terrain draws fell from the diagnostic 311.3 to 45.0 per frame
+(-85.5%) and total draws from 842.1 to 522.2 (-38.0%). A later 26-sample
+maximum-coverage timing capture measured 33.17 ms engine CPU and 34.30
+ms/frame (29.2 derived FPS), versus the 10226 baseline's 40.96/42.00 ms and
+23.8 FPS. P26-2 therefore passes its focused headset gate. The branch is still
+stacked on the draw-log diagnostic and is not a public release; source review,
+merge and broader map/Campaign regression remain open. Models and sorted
+effects are now the measured far-zoom follow-up, so any P26-1 work must be a
+reversible cosmetic-only A/B test.
+
 **Previous private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
 PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates
 at `d72a7969`. Release tag `v1.2.24-xr-preview` points to `0403c5e4`, which

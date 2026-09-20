@@ -120,6 +120,16 @@ static ShaderClass detailOpaqueShader(SC_DETAIL_BLEND);
 #define DEFAULT_MAX_BATCH_SHORELINE_TILES		512	//maximum number of terrain tiles rendered per call (must fit in one VB)
 #define DEFAULT_MAX_MAP_SHORELINE_TILES		4096	//default size of array allocated to hold all map shoreline tiles.
 
+// GeneralsX @performance Codex 20/09/2026 P26-2 keeps the retail terrain
+// geometry intact while grouping ten 32x32 patches into one Android draw.
+// Ten is the largest safe batch for the legacy 16-bit WW3D buffers:
+// 10 * 6144 indices = 61440 and 10 * 4096 vertices = 40960.
+#if defined(__ANDROID__)
+static constexpr Int TERRAIN_TILES_PER_VERTEX_BUFFER = 10;
+#else
+static constexpr Int TERRAIN_TILES_PER_VERTEX_BUFFER = 1;
+#endif
+
 #define ADJUST_FROM_INDEX_TO_REAL(k) ((k-m_map->getBorderSizeInline())*MAP_XY_FACTOR)
 inline Int IABS(Int x) {	if (x>=0) return x; return -x;};
 
@@ -137,7 +147,7 @@ void HeightMapRenderObjClass::freeIndexVertexBuffers()
 	REF_PTR_RELEASE(m_indexBuffer);
 
 	if (m_vertexBufferTiles) {
-		for (int i=0; i<m_numVertexBufferTiles; i++)
+		for (int i=0; i<m_numVertexBufferBatches; i++)
 			REF_PTR_RELEASE(m_vertexBufferTiles[i]);
 		delete[] m_vertexBufferTiles;
 		m_vertexBufferTiles = nullptr;
@@ -147,6 +157,7 @@ void HeightMapRenderObjClass::freeIndexVertexBuffers()
 	m_vertexBufferBackup = nullptr;
 
 	m_numVertexBufferTiles = 0;
+	m_numVertexBufferBatches = 0;
 }
 
 //=============================================================================
@@ -166,7 +177,14 @@ Int HeightMapRenderObjClass::freeMapResources()
 
 DX8VertexBufferClass *HeightMapRenderObjClass::getVertexBufferTile(Int x, Int y)
 {
-	return m_vertexBufferTiles[y*m_numVBTilesX+x];
+	const Int tile = y*m_numVBTilesX+x;
+	return m_vertexBufferTiles[tile/TERRAIN_TILES_PER_VERTEX_BUFFER];
+}
+
+Int HeightMapRenderObjClass::getVertexBufferTileOffset(Int x, Int y) const
+{
+	const Int tile = y*m_numVBTilesX+x;
+	return (tile%TERRAIN_TILES_PER_VERTEX_BUFFER)*HEIGHTMAP_VERTEX_NUM;
 }
 
 //=============================================================================
@@ -312,7 +330,7 @@ data is expected to be an array same dimensions as current heightmap
 mapped into this VB.
 */
 //=============================================================================
-Int HeightMapRenderObjClass::updateVB(DX8VertexBufferClass	*pVB, VERTEX_FORMAT *data, Int x0, Int y0, Int x1, Int y1, Int originX, Int originY, WorldHeightMap *pMap, RefRenderObjListIterator *pLightsIterator)
+Int HeightMapRenderObjClass::updateVB(DX8VertexBufferClass	*pVB, Int vertexOffset, VERTEX_FORMAT *data, Int x0, Int y0, Int x1, Int y1, Int originX, Int originY, WorldHeightMap *pMap, RefRenderObjListIterator *pLightsIterator)
 {
 	Int i,j;
 	Vector3 lightRay[MAX_GLOBAL_LIGHTS];
@@ -330,7 +348,7 @@ Int HeightMapRenderObjClass::updateVB(DX8VertexBufferClass	*pVB, VERTEX_FORMAT *
 		assert(x0 >= originX && y0 >= originY && x1>x0 && y1>y0 && x1<=originX+VERTEX_BUFFER_TILE_LENGTH && y1<=originY+VERTEX_BUFFER_TILE_LENGTH);
 #endif
 
-		DX8VertexBufferClass::WriteLockClass lockVtxBuffer(pVB);
+		VertexBufferClass::AppendLockClass lockVtxBuffer(pVB, vertexOffset, HEIGHTMAP_VERTEX_NUM);
 		VERTEX_FORMAT *vbHardware = (VERTEX_FORMAT*)lockVtxBuffer.Get_Vertex_Array();
 		VERTEX_FORMAT *vBase = data;
 		// Note that we are building the vertex buffer data in the memory buffer, data.
@@ -557,11 +575,11 @@ Int HeightMapRenderObjClass::updateVB(DX8VertexBufferClass	*pVB, VERTEX_FORMAT *
 /** Update the dynamic lighting values only in a rectangular block of the given Vertex Buffer.
 The vertex locations and texture coords are unchanged.
 */
-Int HeightMapRenderObjClass::updateVBForLight(DX8VertexBufferClass	*pVB, VERTEX_FORMAT *data, Int x0, Int y0, Int x1, Int y1, Int originX, Int originY, W3DDynamicLight *pLights[], Int numLights)
+Int HeightMapRenderObjClass::updateVBForLight(DX8VertexBufferClass	*pVB, Int vertexOffset, VERTEX_FORMAT *data, Int x0, Int y0, Int x1, Int y1, Int originX, Int originY, W3DDynamicLight *pLights[], Int numLights)
 {
 
 #if (OPTIMIZED_HEIGHTMAP_LIGHTING)	// (gth) if optimizations are enabled, jump over to the "optimized" version of this function.
-	return updateVBForLightOptimized( pVB, data, x0, y0, x1, y1, originX, originY, pLights, numLights );
+	return updateVBForLightOptimized( pVB, vertexOffset, data, x0, y0, x1, y1, originX, originY, pLights, numLights );
 #endif
 
 	Int i,j,k;
@@ -575,7 +593,7 @@ Int HeightMapRenderObjClass::updateVBForLight(DX8VertexBufferClass	*pVB, VERTEX_
 		assert(x0 >= originX && y0 >= originY && x1>x0 && y1>y0 && x1<=originX+VERTEX_BUFFER_TILE_LENGTH && y1<=originY+VERTEX_BUFFER_TILE_LENGTH);
 #endif
 
-		DX8VertexBufferClass::WriteLockClass lockVtxBuffer(pVB);
+		VertexBufferClass::AppendLockClass lockVtxBuffer(pVB, vertexOffset, HEIGHTMAP_VERTEX_NUM);
 		VERTEX_FORMAT *vBase = (VERTEX_FORMAT*)lockVtxBuffer.Get_Vertex_Array();
 		VERTEX_FORMAT *vb;
 
@@ -702,7 +720,7 @@ Int HeightMapRenderObjClass::updateVBForLight(DX8VertexBufferClass	*pVB, VERTEX_
 }
 
 
-Int HeightMapRenderObjClass::updateVBForLightOptimized(DX8VertexBufferClass	*pVB, VERTEX_FORMAT *data, Int x0, Int y0, Int x1, Int y1, Int originX, Int originY, W3DDynamicLight *pLights[], Int numLights)
+Int HeightMapRenderObjClass::updateVBForLightOptimized(DX8VertexBufferClass	*pVB, Int vertexOffset, VERTEX_FORMAT *data, Int x0, Int y0, Int x1, Int y1, Int originX, Int originY, W3DDynamicLight *pLights[], Int numLights)
 {
 	Int i,j,k;
 	Int vn0,un0,vp1,up1;
@@ -715,7 +733,7 @@ Int HeightMapRenderObjClass::updateVBForLightOptimized(DX8VertexBufferClass	*pVB
 		assert(x0 >= originX && y0 >= originY && x1>x0 && y1>y0 && x1<=originX+VERTEX_BUFFER_TILE_LENGTH && y1<=originY+VERTEX_BUFFER_TILE_LENGTH);
 #endif
 
-		DX8VertexBufferClass::WriteLockClass lockVtxBuffer(pVB);
+		VertexBufferClass::AppendLockClass lockVtxBuffer(pVB, vertexOffset, HEIGHTMAP_VERTEX_NUM);
 		VERTEX_FORMAT *vBase = (VERTEX_FORMAT*)lockVtxBuffer.Get_Vertex_Array();
 		VERTEX_FORMAT *vb;
 
@@ -1019,7 +1037,7 @@ Int HeightMapRenderObjClass::updateBlock(Int x0, Int y0, Int x1, Int y1,  WorldH
 			}
 			DX8VertexBufferClass *pVB = getVertexBufferTile(i, j);
 			VERTEX_FORMAT *pData = getVertexBufferBackup(i, j);
-			updateVB(pVB, pData, xMin, yMin, xMax, yMax, originX, originY, pMap, pLightsIterator);
+			updateVB(pVB, getVertexBufferTileOffset(i, j), pData, xMin, yMin, xMax, yMax, originX, originY, pMap, pLightsIterator);
 		}
 	}
 
@@ -1064,6 +1082,7 @@ m_indexBuffer(nullptr),
 m_numVBTilesX(0),
 m_numVBTilesY(0),
 m_numVertexBufferTiles(0),
+m_numVertexBufferBatches(0),
 m_numBlockColumnsInLastVB(0),
 m_numBlockRowsInLastVB(0)
 {
@@ -1315,25 +1334,29 @@ Int HeightMapRenderObjClass::initHeightData(Int x, Int y, WorldHeightMap *pMap, 
 	{	//requested heightmap different from old one.
 		freeIndexVertexBuffers();
 		//Create static index buffers.  These will index the vertex buffers holding the map.
-		m_indexBuffer=NEW_REF(DX8IndexBufferClass,(VERTEX_BUFFER_TILE_LENGTH*VERTEX_BUFFER_TILE_LENGTH*2*3));
+		m_indexBuffer=NEW_REF(DX8IndexBufferClass,(VERTEX_BUFFER_TILE_LENGTH*VERTEX_BUFFER_TILE_LENGTH*2*3*TERRAIN_TILES_PER_VERTEX_BUFFER));
 
 		// Fill up the IB
 		DX8IndexBufferClass::WriteLockClass lockIdxBuffer(m_indexBuffer);
 		UnsignedShort *ib=lockIdxBuffer.Get_Index_Array();
 
-		for (j=0; j<(VERTEX_BUFFER_TILE_LENGTH*VERTEX_BUFFER_TILE_LENGTH*4); j+=VERTEX_BUFFER_TILE_LENGTH*4)
+		for (Int tile=0; tile<TERRAIN_TILES_PER_VERTEX_BUFFER; ++tile)
 		{
-			for (i=j; i<(j+VERTEX_BUFFER_TILE_LENGTH*4); i+=4)	//4 vertices per 2x2 block
+			const Int vertexBase = tile*HEIGHTMAP_VERTEX_NUM;
+			for (j=0; j<(VERTEX_BUFFER_TILE_LENGTH*VERTEX_BUFFER_TILE_LENGTH*4); j+=VERTEX_BUFFER_TILE_LENGTH*4)
 			{
-				ib[0]=i;
-				ib[1]=i+2;
-				ib[2]=i+3;
+				for (i=j; i<(j+VERTEX_BUFFER_TILE_LENGTH*4); i+=4)	//4 vertices per 2x2 block
+				{
+					ib[0]=vertexBase+i;
+					ib[1]=vertexBase+i+2;
+					ib[2]=vertexBase+i+3;
 
-				ib[3]=i;
-				ib[4]=i+1;
-				ib[5]=i+2;
+					ib[3]=vertexBase+i;
+					ib[4]=vertexBase+i+1;
+					ib[5]=vertexBase+i+2;
 
-				ib+=6;	//skip the 6 indices we just filled
+					ib+=6;	//skip the 6 indices we just filled
+				}
 			}
 		}
 
@@ -1354,17 +1377,21 @@ Int HeightMapRenderObjClass::initHeightData(Int x, Int y, WorldHeightMap *pMap, 
 		m_numBlockRowsInLastVB=(y-1)%VERTEX_BUFFER_TILE_LENGTH;	//bottom border within last VB
 
 		m_numVertexBufferTiles=m_numVBTilesX*m_numVBTilesY;
+		m_numVertexBufferBatches=(m_numVertexBufferTiles+TERRAIN_TILES_PER_VERTEX_BUFFER-1)/TERRAIN_TILES_PER_VERTEX_BUFFER;
 		m_x=x;
 		m_y=y;
 
-		m_vertexBufferTiles = NEW DX8VertexBufferClass*[m_numVertexBufferTiles];
+		m_vertexBufferTiles = NEW DX8VertexBufferClass*[m_numVertexBufferBatches];
 		m_vertexBufferBackup = NEW VERTEX_FORMAT [m_numVertexBufferTiles * HEIGHTMAP_VERTEX_NUM];
 
-		for (i=0; i<m_numVertexBufferTiles; i++) {
+		for (i=0; i<m_numVertexBufferBatches; i++) {
+			const Int firstTile=i*TERRAIN_TILES_PER_VERTEX_BUFFER;
+			const Int tilesInBatch=std::min(TERRAIN_TILES_PER_VERTEX_BUFFER,m_numVertexBufferTiles-firstTile);
+			const UnsignedShort vertexCount=static_cast<UnsignedShort>(tilesInBatch*HEIGHTMAP_VERTEX_NUM);
 #ifdef USE_NORMALS
-			m_vertexBufferTiles[i] = NEW_REF(DX8VertexBufferClass,(DX8_FVF_XYZNUV2,HEIGHTMAP_VERTEX_NUM,DX8VertexBufferClass::USAGE_DEFAULT));
+			m_vertexBufferTiles[i] = NEW_REF(DX8VertexBufferClass,(DX8_FVF_XYZNUV2,vertexCount,DX8VertexBufferClass::USAGE_DEFAULT));
 #else
-			m_vertexBufferTiles[i] = NEW_REF(DX8VertexBufferClass,(DX8_VERTEX_FORMAT,HEIGHTMAP_VERTEX_NUM,DX8VertexBufferClass::USAGE_DEFAULT));
+			m_vertexBufferTiles[i] = NEW_REF(DX8VertexBufferClass,(DX8_VERTEX_FORMAT,vertexCount,DX8VertexBufferClass::USAGE_DEFAULT));
 #endif
 		}
 
@@ -1559,7 +1586,7 @@ void HeightMapRenderObjClass::On_Frame_Update()
 				}
 				DX8VertexBufferClass *pVB = getVertexBufferTile(i, j);
 				VERTEX_FORMAT *pData = getVertexBufferBackup(i, j);
-				updateVBForLight(pVB, pData, xMin, yMin, xMax, yMax, originX,originY, enabledLights, numDynaLights);
+				updateVBForLight(pVB, getVertexBufferTileOffset(i, j), pData, xMin, yMin, xMax, yMax, originX,originY, enabledLights, numDynaLights);
 			}
 		}
 	}
@@ -2062,6 +2089,22 @@ void HeightMapRenderObjClass::Render(RenderInfoClass & rinfo)
 			}
 		}
 
+#if defined(__ANDROID__)
+		// GeneralsX @performance Codex 20/09/2026 P26-2 submits each shared
+		// terrain buffer once. The expanded 16-bit index buffer addresses every
+		// unchanged patch in the batch, eliminating up to nine calls/state binds.
+		for (Int batch=0; batch<m_numVertexBufferBatches; ++batch)
+		{
+			const Int firstTile=batch*TERRAIN_TILES_PER_VERTEX_BUFFER;
+			const Int tilesInBatch=std::min(TERRAIN_TILES_PER_VERTEX_BUFFER,m_numVertexBufferTiles-firstTile);
+			DX8Wrapper::Set_Vertex_Buffer(m_vertexBufferTiles[batch]);
+			if (Is_Hidden() == 0) {
+				DX8Wrapper::Draw_Triangles(0,
+					static_cast<UnsignedShort>(HEIGHTMAP_POLYGON_NUM*tilesInBatch), 0,
+					static_cast<UnsignedShort>(HEIGHTMAP_VERTEX_NUM*tilesInBatch));
+			}
+		}
+#else
 		for (j=0; j<m_numVBTilesY; j++)
 			for (i=0; i<m_numVBTilesX; i++)
 			{
@@ -2088,6 +2131,7 @@ void HeightMapRenderObjClass::Render(RenderInfoClass & rinfo)
 				}
 
 			}
+#endif
 	}
 
 	if (!doMultiPassWireFrame)
@@ -2192,6 +2236,19 @@ void HeightMapRenderObjClass::renderTerrainPass(CameraClass *pCamera)
 
 	DX8Wrapper::Set_Index_Buffer(m_indexBuffer,0);
 
+#if defined(__ANDROID__)
+	for (Int batch=0; batch<m_numVertexBufferBatches; ++batch)
+	{
+		const Int firstTile=batch*TERRAIN_TILES_PER_VERTEX_BUFFER;
+		const Int tilesInBatch=std::min(TERRAIN_TILES_PER_VERTEX_BUFFER,m_numVertexBufferTiles-firstTile);
+		DX8Wrapper::Set_Vertex_Buffer(m_vertexBufferTiles[batch]);
+		if (Is_Hidden() == 0) {
+			DX8Wrapper::Draw_Triangles(0,
+				static_cast<UnsignedShort>(HEIGHTMAP_POLYGON_NUM*tilesInBatch), 0,
+				static_cast<UnsignedShort>(HEIGHTMAP_VERTEX_NUM*tilesInBatch));
+		}
+	}
+#else
 	for (Int j=0; j<m_numVBTilesY; j++)
 		for (Int i=0; i<m_numVBTilesX; i++)
 		{
@@ -2217,6 +2274,7 @@ void HeightMapRenderObjClass::renderTerrainPass(CameraClass *pCamera)
 				DX8Wrapper::Draw_Triangles(0, HEIGHTMAP_POLYGON_NUM, 0, HEIGHTMAP_VERTEX_NUM);
 			}
 		}
+#endif
 }
 
 //=============================================================================
