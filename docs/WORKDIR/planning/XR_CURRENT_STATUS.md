@@ -103,11 +103,12 @@ maximum-zoom terrain draws fell from the diagnostic 311.3 to 45.0 per frame
 (-85.5%) and total draws from 842.1 to 522.2 (-38.0%). A later 26-sample
 maximum-coverage timing capture measured 33.17 ms engine CPU and 34.30
 ms/frame (29.2 derived FPS), versus the 10226 baseline's 40.96/42.00 ms and
-23.8 FPS. P26-2 therefore passes its focused headset gate. The branch is still
-stacked on the draw-log diagnostic and is not a public release; source review,
-merge and broader map/Campaign regression remain open. Models and sorted
-effects are now the measured far-zoom follow-up, so any P26-1 work must be a
-reversible cosmetic-only A/B test.
+23.8 FPS. P26-2 therefore passes its focused headset gate. Diagnostic PR #33
+merged at `6954206`; accepted terrain PR #34 is the current `main` head at
+`3e895fa`. This is merged source, not a new public release; broader
+map/Campaign regression remains open. Models and sorted effects are now the
+measured far-zoom follow-up, so any P26-1 work must be a reversible
+cosmetic-only A/B test.
 
 **Previous private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
 PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates

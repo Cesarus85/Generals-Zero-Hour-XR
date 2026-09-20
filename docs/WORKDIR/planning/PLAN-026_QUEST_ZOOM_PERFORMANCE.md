@@ -1,13 +1,13 @@
 # PLAN-026: Quest far-zoom performance
 
-**Status:** P26-2 terrain batching implemented and visually accepted on Quest
-3. The measured maximum-zoom frame time improved; source review and merge are
-the remaining gates.
+**Status:** P26-2 terrain batching implemented, visually accepted on Quest 3
+and merged to `main` in PR #34 (`3e895fa`). The measured maximum-zoom frame
+time improved; broader map/Campaign regression remains a release gate.
 
-**Current base:** `main` includes PR #27, which removes XR board-mesh allocation
-and alpha-loop churn. P26-2 is stacked on the draw-breakdown diagnostic branch
-so its effect can be measured over ADB. PR #27 does not address the extra
-terrain and model work exposed by a far-zoomed tabletop.
+**Current base:** `main` includes PR #27's XR board-mesh churn reduction, PR
+#33's Quest draw-breakdown logging and PR #34's accepted P26-2 terrain
+batching. The public 1.2.25 release APK is unchanged; 10228 is the installed
+measurement build rather than a published release.
 
 This milestone is deliberately limited to sustained tabletop frame cost when
 the player zooms far out. Loading hitches, audio starvation and general POSIX
