@@ -125,6 +125,23 @@ map/Campaign regression remains open. Models and sorted effects are now the
 measured far-zoom follow-up, so any P26-1 work must be a reversible
 cosmetic-only A/B test.
 
+**P26-1 closed result:** PR #38 tested a default-Off, session-only far-scenery
+filter restricted to non-interactive `KINDOF_PROP` drawables. In the physical
+Campaign maximum-zoom run, every enabled sample reported
+`cosmeticChecked=0 cosmeticCulled=0`; it therefore demonstrated no possible
+draw saving. Its On/Off samples also used different eye tiers and are not a
+valid timing comparison. The maintainer accepted the recommendation to stop;
+PR #38 is closed unmerged and must not be revived by broadening the whitelist
+without new evidence.
+
+Quest 3 is restored to source commit `2b51503`, the exact public 1.2.28 game
+source. Android rejected a direct 10229 -> 10228 downgrade, so the
+data-preserving local restore uses versionCode 10230 with versionName
+`1.2.28-xr-preview`. Installed and local APK SHA-256 both equal
+`e81090f88bb72d92cb224153bfa46e31ec57aecdcf2c070d5ef3db08cb2ca9dc`.
+This local re-versioned restore is not a release asset; the public 10228 APK
+remains the authoritative distributable.
+
 **Previous private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
 PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates
 at `d72a7969`. Release tag `v1.2.24-xr-preview` points to `0403c5e4`, which
