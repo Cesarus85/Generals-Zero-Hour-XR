@@ -1,10 +1,34 @@
 # XR release preparation and checkpoints
 
-**Updated:** 2026-09-18 — public 1.2.25 preview preparation
+**Updated:** 2026-09-20 — public 1.2.28 performance preview
 
-**Publication state:** The non-debuggable 1.2.25 APK is the current public offline preview. Seven older releases, including the debug-signed APKs, are retained as maintainer-only drafts. This leaves one public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
+**Publication state:** The non-debuggable 1.2.28 APK is the current public offline preview. Older releases, including debug-signed APKs, are retained as maintainer-only drafts. This leaves one public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
 
-## Current public release checkpoint: 1.2.25
+## Current public release checkpoint: 1.2.28
+
+PR #27 reduces XR board-mesh allocation churn; PR #33 exposes the existing
+draw-source diagnostic over ADB; PR #34 batches up to ten unchanged Android
+terrain patches per draw submission. The maintainer accepted the image and
+reported the P26-2 build as much smoother. Maximum-coverage frame time improved
+from 42.00 to 34.30 ms in the controlled Campaign measurement without reducing
+terrain detail.
+
+The release-signed APK is 57,100,470 bytes, versionCode `10228`, versionName
+`1.2.28-xr-preview`, package `com.generalsx.zerohour.xr`, ARM64 only and
+non-debuggable. SHA-256 is
+`fc04349550027cab90964261e6eb221e4f4947c41ec57ff6def03529ca88ca20`.
+APK Signature Scheme v3 verifies with certificate SHA-256
+`a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`.
+Archive inspection found no retail `.big`, `.scb`, `.map` or `.w3d` files.
+
+The exact release bytes update-installed on Quest 3 `2G0YC5ZG9609PY`, retained
+the original `2026-09-16 14:55:36` first-install time and report the expected
+version. A pulled device `base.apk` matches the local release APK byte-for-byte.
+The public tag, uploaded digest, checksum sidecar and fresh independent GitHub
+download are verified after publication; until then this section records the
+fully verified local/device candidate.
+
+## Previous public release checkpoint: 1.2.25
 
 PR #19 merged Campaign Ground View to `main` at `652f46f`; PR #21 merged
 release-only native debug-section stripping at `5938257`. The release APK

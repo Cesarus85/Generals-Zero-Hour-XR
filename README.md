@@ -30,13 +30,13 @@ The **supported preview path is offline play**. Human LAN/Internet multiplayer, 
 
 ## Get the current offline APK
 
-Download the release-signed [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.25-xr-preview/Generals-Zero-Hour-XR.apk) from the [1.2.25 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview). This is the public offline preview build, not an experimental LAN diagnostic APK. Older development releases are retained privately as drafts; use the linked release for new installations.
+Download the release-signed [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.28-xr-preview/Generals-Zero-Hour-XR.apk) from the [1.2.28 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.28-xr-preview). This is the public offline preview build, not an experimental LAN diagnostic APK. Older development releases are retained privately as drafts; use the linked release for new installations.
 
-- APK SHA-256: `dcd79e4d6be706f0ddd01d01416d321abd977a37aad768d750232bd1fc65e009` (also in the release's `.sha256` asset).
+- APK SHA-256: `fc04349550027cab90964261e6eb221e4f4947c41ec57ff6def03529ca88ca20` (also in the release's `.sha256` asset).
 - Android package: `com.generalsx.zerohour.xr` (retained for update compatibility)
-- Android versionCode: `10225`; versionName: `1.2.25-xr-preview`.
+- Android versionCode: `10228`; versionName: `1.2.28-xr-preview`.
 
-The maintainer accepted the Ground View shortcut arrangement in the installed 1.2.23 test build. The 1.2.25 release extends that view to live Campaign gameplay, using the established release-signing lineage; Campaign Ground View transitions and long-session walking, collision and comfort still need worn-headset acceptance. Use the exact release link above rather than an older APK or a copied APK from the LAN branch. See [release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md) for verification and open validation work.
+The 1.2.28 release adds the accepted Android terrain batching from P26-2. On the measured maximum-zoom Campaign scene it reduced frame time from 42.00 to 34.30 ms without lowering terrain detail; results vary by map and battle load. It also includes the post-1.2.25 board-mesh churn reduction. Campaign Ground View transitions and long-session walking, collision and comfort remain incremental validation areas. Use the exact release link above rather than an older APK or a copied APK from the LAN branch. See [release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md) for verification and open validation work.
 
 ## Install and play
 
