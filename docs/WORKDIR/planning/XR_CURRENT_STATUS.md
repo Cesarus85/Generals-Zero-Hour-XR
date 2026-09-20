@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-18
+**Updated:** 2026-09-20
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`
@@ -64,6 +64,16 @@ tabletop remains the supported fallback. Older GitHub releases are retained as
 maintainer-only drafts so the public release page offers the current APK alone.
 Historical release links below are accessible only to repository maintainers;
 `v1.2.25-xr-preview` is the sole public download.
+
+**Post-1.2.25 source optimization:** PR #27 removes per-frame allocation and
+redundant alpha traversal from the XR board-decoration mesh while preserving
+the uploaded vertex stream. The Android/Quest CI build passes and the focused
+board test passes 77 checks. This is merged source work, not part of the public
+1.2.25 APK; visual identity and hitch reduction still need a worn-headset A/B
+test before a new release. PR #26's GL polling/FBO proposal was rejected: its
+error polling could lose the current-frame world-elision recovery correlation,
+and its FBO cache tracked only the most recently seen texture rather than every
+swapchain image.
 
 **Previous private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
 PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates

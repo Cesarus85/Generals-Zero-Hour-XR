@@ -21,6 +21,10 @@ struct XrBoardMesh {
 template<class Height> XrBoardMesh xrBuildBoard(float aspect,int segments,Height height,float ceiling=.5f) {
 	XrBoardMesh m;segments=std::clamp(segments,16,1024);
 	if(!std::isfinite(aspect) || aspect<=0 || !std::isfinite(ceiling) || ceiling<0) return m;
+	// GeneralsX @perf XR 19/09/2026 Pre-size: 4 sides x segments x 3 quads x
+	// 6 vertices plus the underside quad; avoids repeated realloc passes on
+	// big boards (up to ~43k vertices at full map span).
+	m.vertices.reserve(size_t(segments)*4*18+6);
 	const auto sample=[&](float x,float y) {const float z=height(x,y);return std::isfinite(z) ? z:0.0f;};
 	// GeneralsX @tweak Codex 16/09/2026 P20.1 keeps P18's fixed soil datum
 	// while halving only the visible lower plinth thickness.
@@ -43,4 +47,12 @@ template<class Height> XrBoardMesh xrBuildBoard(float aspect,int segments,Height
 	}
 	m.quad(outer(corners[0]),outer(corners[3]),outer(corners[2]),outer(corners[1]),{.08f,.12f,.14f});
 	return m;
+}
+// GeneralsX @perf XR 19/09/2026 Marks cached board vertices as non-feedback
+// (alpha 0) for the decoration shader. Runs only when the cached board is
+// rebuilt; per-frame feedback appended later via quad()/ring() already
+// carries alpha 1, so no per-frame alpha pass is needed. Covered by
+// scripts/qa/xr-board-test.cpp.
+inline void xrMarkBoardVertices(XrBoardMesh &m) {
+	for(auto &v:m.vertices) v.a=0;
 }
