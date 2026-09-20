@@ -135,12 +135,14 @@ or lockstep state. Shrubbery is intentionally deferred because it can be
 gameplay-addressable. Counters are included in P12 timing logs.
 
 Release-signed test APK `10229 / 1.2.29-p26-cosmetic-cull-test`, SHA-256
-`86d5bc6e3b450f674180ac706c105e5d3c7cdbaae6168b3d5684881da0f6cecf`,
+`3e49c8c70adfba5399028900b4647be56d7cc16caccbb978c33f8f0cc13c982a`,
 is installed on Quest 3 `2G0YC5ZG9609PY`. Native ARM64 and host panel,
 workspace, performance and menu checks pass. The public 1.2.28 APK remains the
 authoritative accepted release. P26-1 still requires Skirmish and Campaign
 visual sweeps plus measured Far scenery Off/On captures at normal and maximum
 zoom before merge.
+The installed revision fixes the first package's missing page-3 control-table
+entry; `Far scenery` is now painted and hittable beside `Measurement`.
 
 **Previous private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
 PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates

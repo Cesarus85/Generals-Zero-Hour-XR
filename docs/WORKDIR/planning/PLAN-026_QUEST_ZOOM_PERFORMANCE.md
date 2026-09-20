@@ -132,11 +132,15 @@ toggle exposes the A/B without changing saved defaults. The P12 log adds
 renderer split remains the source for actual `models=` savings.
 
 Release-signed APK `10229 / 1.2.29-p26-cosmetic-cull-test`, SHA-256
-`86d5bc6e3b450f674180ac706c105e5d3c7cdbaae6168b3d5684881da0f6cecf`,
+`3e49c8c70adfba5399028900b4647be56d7cc16caccbb978c33f8f0cc13c982a`,
 is installed on Quest 3. It is ARM64-only and uses the pinned v3 release
 certificate. Host text/layout/performance checks and the native Android build
 pass. Physical Skirmish/Campaign image and normal/maximum-zoom A/B measurements
 remain open; this is not a release candidate.
+
+The installed revision includes the visible/hittable page-3 control beside
+Measurement. A new bilingual panel assertion covers both its Off label and On
+state after the first package revealed the missing layout-table entry.
 
 ### P26-2: terrain draw/state batching (selected first)
 

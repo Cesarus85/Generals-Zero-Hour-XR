@@ -182,12 +182,14 @@ int main(int argc,char **argv){
   {const auto &c=captures[1];
    const std::string expected=std::string(xrTr("Sprache"))+"|"+xrTr(lang==XrLanguage::German ? "Deutsch":"English");
    check(hasLabel(c,expected));check(hasLabel(c,xrTr("Bodenansicht · Ort wählen")));
+   check(hasLabel(c,std::string(xrTr("Fernkulisse"))+"|"+xrTr("AUS")));
    check(hasLabel(c,xrTr("Spiel: Tisch; Bodenansicht optional")));}
   for(int tier=0;tier<3;++tier){x.layout.resolutionTier=tier;updateMenuTextures(x,100);
    const char *name=tier==0 ? "Ausgewogen":tier==1 ? "Hoch":"Ultra+";
    check(hasLabel(captures[1],std::string(xrTr("Auflösung"))+"|"+xrTr(name)));}
-  x.performance.volumeShadows=true;x.performance.enabled=true;updateMenuTextures(x,100);
-  {const auto &c=captures[1];check(hasLabelPrefix(c,std::string(xrTr("Schatten"))+"|"));check(stateOf(c,13)&kXrStateOn);}
+  x.performance.volumeShadows=true;x.performance.enabled=true;x.performance.cosmeticCulling=true;updateMenuTextures(x,100);
+  {const auto &c=captures[1];check(hasLabelPrefix(c,std::string(xrTr("Schatten"))+"|"));
+   check(stateOf(c,13)&kXrStateOn);check(stateOf(c,0)&kXrStateOn);}
   x.performance.report="B · CPU 15.1 ms · GPU 21.8 ms";updateMenuTextures(x,100);
   x.menu.page=0;x.menu.target=2;updateMenuTextures(x,100);
   check(hasLabel(captures[1],xrTr("Alles vor mir ausrichten")));

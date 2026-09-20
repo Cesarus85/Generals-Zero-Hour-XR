@@ -169,6 +169,7 @@ inline int xrMenuLayout(int page,XrPanelControl *out,int max) {
 		b.add(14,32,490,344,64,kXrRoleButton);
 		b.add(15,392,490,344,64,kXrRoleButton);
 		b.add(13,32,562,344,64,kXrRoleButton);
+		b.add(0,392,562,344,64,kXrRoleButton);
 		b.add(-12,32,654,704,20,kXrRoleSection); // controls & language
 		b.add(8,32,680,344,64,kXrRoleButton);
 		b.add(11,392,680,344,64,kXrRoleButton);
