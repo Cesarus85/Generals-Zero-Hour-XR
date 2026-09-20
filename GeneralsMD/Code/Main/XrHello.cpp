@@ -462,6 +462,9 @@ struct XrHello {
 	bool passthroughActive = false;
 	XrPassthroughFB passthrough = XR_NULL_HANDLE;
 	XrPassthroughLayerFB passthroughLayer = XR_NULL_HANDLE;
+	// GeneralsX @perf XR 19/09/2026 Optional fixed foveated rendering profile
+	// (XR_FB_foveation); XR_NULL_HANDLE when unsupported or creation failed.
+	XrFoveationProfileFB foveationProfile = XR_NULL_HANDLE;
 	// Head-relative panel placement (one-time latch): LOCAL-space origin
 	// and head height vary per session (sitting/standing, recenter,
 	// launch-while-on-table), so a fixed panel lands ~1m off for some
@@ -578,7 +581,24 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 	if(wantScene)for(const char *name:sceneExts)allExts.push_back(name);
 	const bool wantCapture=wantScene && hasExtension(XR_FB_SCENE_CAPTURE_EXTENSION_NAME);
 	if(wantCapture)allExts.push_back(XR_FB_SCENE_CAPTURE_EXTENSION_NAME);
+	// GeneralsX @perf XR 19/09/2026 Optional Quest performance extensions,
+	// gated independently: fixed foveated rendering needs all three FB
+	// foveation extensions, the 72 Hz request only the refresh-rate one.
+	// Missing extensions only disable the feature, never the session.
+	const bool wantFoveation=hasExtension(XR_FB_FOVEATION_EXTENSION_NAME) &&
+		hasExtension(XR_FB_FOVEATION_CONFIGURATION_EXTENSION_NAME) &&
+		hasExtension(XR_FB_SWAPCHAIN_UPDATE_STATE_EXTENSION_NAME);
+	const bool wantRefreshRate=hasExtension(XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME);
+	if(wantFoveation) {
+		allExts.push_back(XR_FB_FOVEATION_EXTENSION_NAME);
+		allExts.push_back(XR_FB_FOVEATION_CONFIGURATION_EXTENSION_NAME);
+		allExts.push_back(XR_FB_SWAPCHAIN_UPDATE_STATE_EXTENSION_NAME);
+	}
+	if(wantRefreshRate)allExts.push_back(XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME);
 	XR_LOG("passthrough extension: %s", wantPassthrough ? "present" : "MISSING (opaque fallback)");
+	XR_LOG("perf extensions: foveation=%s refresh-rate=%s",
+		wantFoveation ? "present":"MISSING (full-rate shading)",
+		wantRefreshRate ? "present":"MISSING (runtime default rate)");
 
 	XrInstanceCreateInfoAndroidKHR androidInfo = { XR_TYPE_INSTANCE_CREATE_INFO_ANDROID_KHR, nullptr };
 	androidInfo.applicationVM = vm;
@@ -666,6 +686,34 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 	sci.systemId = systemId;
 	XR_CHECK(xrCreateSession(x.instance, &sci, &x.session), "xrCreateSession");
 
+	// GeneralsX @perf XR 19/09/2026 Prefer 72 Hz for the heavy stereo RTS
+	// scene: 13.9 ms/frame instead of 11.1 ms at 90 Hz, which also lowers
+	// sustained power and thermal throttling. Best effort only; any failure
+	// keeps the runtime default rate.
+	if (wantRefreshRate) {
+		PFN_xrEnumerateDisplayRefreshRatesFB pEnumRates = nullptr;
+		PFN_xrRequestDisplayRefreshRateFB pRequestRate = nullptr;
+		xrGetInstanceProcAddr(x.instance, "xrEnumerateDisplayRefreshRatesFB",
+			reinterpret_cast<PFN_xrVoidFunction *>(&pEnumRates));
+		xrGetInstanceProcAddr(x.instance, "xrRequestDisplayRefreshRateFB",
+			reinterpret_cast<PFN_xrVoidFunction *>(&pRequestRate));
+		uint32_t rateCount = 0;
+		bool has72 = false;
+		if (pEnumRates && pRequestRate &&
+			XR_SUCCEEDED(pEnumRates(x.session, 0, &rateCount, nullptr)) && rateCount > 0) {
+			std::vector<float> rates(rateCount);
+			if (XR_SUCCEEDED(pEnumRates(x.session, rateCount, &rateCount, rates.data()))) {
+				for (uint32_t i = 0; i < rateCount; i++)
+					has72 = has72 || fabsf(rates[i] - 72.0f) < 0.5f;
+			}
+		}
+		if (has72 && XR_SUCCEEDED(pRequestRate(x.session, 72.0f)))
+			XR_LOG("display refresh rate: 72 Hz requested (%u rates offered)", rateCount);
+		else
+			XR_LOG("display refresh rate: keeping runtime default (72 Hz %s)",
+				(pEnumRates && pRequestRate) ? "not offered" : "entry points missing");
+	}
+
 	XrReferenceSpaceCreateInfo rsci = { XR_TYPE_REFERENCE_SPACE_CREATE_INFO, nullptr };
 	rsci.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
 	rsci.poseInReferenceSpace.orientation.w = 1.0f;
@@ -739,8 +787,45 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 	}
 	XR_LOG("swapchain format: 0x%llx", (unsigned long long)x.swapchainFormat);
 
+	// GeneralsX @perf XR 19/09/2026 Fixed foveated rendering, HIGH static
+	// profile: full shading rate in the center where the tabletop sits,
+	// reduced rate toward the edges. Typically saves 20-30% fragment cost
+	// with no visible change to central UI text. Every step is optional;
+	// any failure leaves the swapchains unfoveated and the session running.
+	PFN_xrCreateFoveationProfileFB pCreateProfile = nullptr;
+	PFN_xrUpdateSwapchainFB pUpdateSwapchain = nullptr;
+	XrSwapchainCreateInfoFoveationFB foveationNext = { XR_TYPE_SWAPCHAIN_CREATE_INFO_FOVEATION_FB, nullptr };
+	foveationNext.flags = 0;
+	bool foveationReady = false;
+	if (wantFoveation) {
+		xrGetInstanceProcAddr(x.instance, "xrCreateFoveationProfileFB",
+			reinterpret_cast<PFN_xrVoidFunction *>(&pCreateProfile));
+		xrGetInstanceProcAddr(x.instance, "xrUpdateSwapchainFB",
+			reinterpret_cast<PFN_xrVoidFunction *>(&pUpdateSwapchain));
+		if (pCreateProfile && pUpdateSwapchain) {
+			XrFoveationLevelProfileCreateInfoFB level =
+				{ XR_TYPE_FOVEATION_LEVEL_PROFILE_CREATE_INFO_FB, nullptr };
+			level.level = XR_FOVEATION_LEVEL_HIGH_FB;
+			level.verticalOffset = 0;
+			level.dynamic = XR_FOVEATION_DYNAMIC_DISABLED_FB;
+			XrFoveationProfileCreateInfoFB info =
+				{ XR_TYPE_FOVEATION_PROFILE_CREATE_INFO_FB, &level };
+			if (XR_SUCCEEDED(pCreateProfile(x.session, &info, &x.foveationProfile)) &&
+				x.foveationProfile != XR_NULL_HANDLE) {
+				foveationReady = true;
+				XR_LOG("foveation profile created (HIGH, static)");
+			} else {
+				x.foveationProfile = XR_NULL_HANDLE;
+				XR_LOG("xrCreateFoveationProfileFB failed, foveation off");
+			}
+		} else {
+			XR_LOG("foveation entry points missing, foveation off");
+		}
+	}
+
 	for (int eye = 0; eye < 2; eye++) {
 		XrSwapchainCreateInfo swci = { XR_TYPE_SWAPCHAIN_CREATE_INFO, nullptr };
+		if (foveationReady) swci.next = &foveationNext;
 		swci.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
 		swci.format = x.swapchainFormat;
 		swci.sampleCount = 1;
@@ -759,7 +844,18 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 		XR_CHECK(xrEnumerateSwapchainImages(x.swapchains[eye].handle, imgCount, &imgCount,
 			reinterpret_cast<XrSwapchainImageBaseHeader *>(x.swapchains[eye].images.data())),
 			"xrEnumerateSwapchainImages");
-		XR_LOG("eye %d: %u swapchain images", eye, imgCount);
+		if (foveationReady) {
+			XrSwapchainStateFoveationFB state = { XR_TYPE_SWAPCHAIN_STATE_FOVEATION_FB, nullptr };
+			state.flags = 0;
+			state.profile = x.foveationProfile;
+			if (XR_SUCCEEDED(pUpdateSwapchain(x.swapchains[eye].handle,
+				reinterpret_cast<const XrSwapchainStateBaseHeaderFB *>(&state))))
+				XR_LOG("eye %d: %u swapchain images, foveated", eye, imgCount);
+			else
+				XR_LOG("eye %d: %u swapchain images, foveation update failed (unfoveated)", eye, imgCount);
+		} else {
+			XR_LOG("eye %d: %u swapchain images", eye, imgCount);
+		}
 	}
 
 	// Render target FBO (reused per eye), triangle program + VBO.
@@ -1721,6 +1817,15 @@ static void shutdownXr(XrHello &x)
 			xrDestroySwapchain(x.swapchains[eye].handle);
 			x.swapchains[eye].handle = XR_NULL_HANDLE;
 		}
+	}
+	// GeneralsX @perf XR 19/09/2026 Destroy the foveation profile after its
+	// swapchains; XR_NULL_HANDLE when foveation was never enabled.
+	if (x.foveationProfile != XR_NULL_HANDLE) {
+		PFN_xrDestroyFoveationProfileFB pDestroyProfile = nullptr;
+		xrGetInstanceProcAddr(x.instance, "xrDestroyFoveationProfileFB",
+			reinterpret_cast<PFN_xrVoidFunction *>(&pDestroyProfile));
+		if (pDestroyProfile) pDestroyProfile(x.foveationProfile);
+		x.foveationProfile = XR_NULL_HANDLE;
 	}
 	if (x.localSpace != XR_NULL_HANDLE) {
 		xrDestroySpace(x.localSpace);
