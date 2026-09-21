@@ -1,14 +1,15 @@
 # PLAN-025 — Quest ↔ PC LAN preflight
 
-**Status (active 2026-09-21):** Quest APK 10232 and the isolated same-source
-native Omarchy build now include a narrow field-boundary trace for the first
-object in the existing CRC traversal. APK 10231 proved that generation agrees
-completely at frame 0 and first differs at frame 100 inside the same first
-object: ID `000000DF`, order 0. Object counts/order and RNG seed checksum agree.
-The next fixed-map, no-AI idle match will identify the first unequal field and
-the object's template. Earlier Steam/Proton matches also desynchronized. LAN
-remains experimental and unsupported; public offline release 1.2.28 is separate
-and has not been replaced on GitHub.
+**Status (active 2026-09-21):** The paired Quest 10232/native Omarchy run
+localizes the first recorded mismatch to the transform of neutral map object
+`TrainCabUngarrisonable`, ID `000000DF`, at frame 100. Both peers are identical
+through that object's private status and enter it with the same rolling CRC;
+object order/count and RNG seed checksum also agree. The next bounded diagnostic
+will name the first unequal raw matrix word before any simulation correction is
+attempted. Quest 10233 and its matching Omarchy executable are installed/staged
+for that run. Earlier Steam/Proton matches also desynchronized. LAN remains
+experimental and unsupported; public offline release 1.2.28 is separate and has
+not been replaced on GitHub.
 **Scope:** One Quest 3 against a PC on the same LAN. The first peer is the user's Steam Zero Hour running through Proton on Omarchy; the planned Windows Steam peer remains a separate validation. If retail gameplay desynchronizes, isolate it with a same-source GeneralsX PC build. Internet services, public matchmaking, replay and reconnect are later gates.
 
 **User priority:** Quest versus the unmodified Steam PC game is the primary
@@ -19,16 +20,16 @@ support. Do not relax CRC checks or claim retail support from same-source tests.
 ## Current handoff
 
 1. Keep branch `codex/lan-object-crc-trace` separate from release `main`.
-   The unpublished Quest diagnostic is versionCode 10232
-   (`1.2.32-lan-field-trace`), SHA-256
-   `8f9c348a9c20a4327d07922fcc4d80c0d62c360d139fcd0182e46b344a0a09e9`;
+   The unpublished Quest diagnostic is versionCode 10233
+   (`1.2.33-lan-transform-trace`), SHA-256
+   `795cb998be8e6a8530581f36fa882468d0022742ee5a8de372683be7c63bc036`;
    it is update-installed on Quest `2G0YC5ZG9609PY` with app data retained. The
    native Omarchy lab is
    `/home/stefan/generals-xr-lan-diagnostics-78207e6`, with its own user data,
    copied legitimate game files and executable SHA-256
-   `6e9d715019674f5d0b837fbd16c24f6cade6278d4a65283ff538499abf4d68a8`.
-   The previous PC executable remains recoverable as
-   `runtime/GeneralsXZH.pre-object-trace`.
+   `5f8ce7ec91812bae805fe0ad27bf9c4ae87bb3d53546d074ff702a5fb247f9e1`.
+   The 10232 PC executable remains recoverable as
+   `runtime/GeneralsXZH.pre-transform-trace`.
    Original Steam/Proton files and settings were not modified.
 2. Preserve the paired logs already collected privately. The match used map
    CRC `DEA9E8E4`, seed `4042777` and CRC interval 100. Both sides generated
@@ -52,12 +53,13 @@ support. Do not relax CRC checks or claim retail support from same-source tests.
    weapon bonus, damage scalar and the three weapon slots. It also records the
    object template. It reads the same `XferCRC` after existing writes and does
    not serialize additional data or call an object's CRC a second time.
-4. Repeat one fixed-map, fixed-faction, no-AI Quest-hosted match with no early
-   player orders. Compare the first unequal object (or missing/differently
-   ordered ID). Only then add a narrow field/timing probe if needed. Correct a
-   demonstrated cause, repeat same-source idle and interactive matches, then
-   retest unmodified Steam/Proton and Windows Steam. A clean 15-minute match
-   with orders from both humans and headset checks is the minimum LAN gate.
+4. The second fixed-map, no-AI run has completed. Add only the raw 12-word
+   transform observation for the already-selected object and repeat once to
+   distinguish rotation, X/Y translation and height. Then instrument the
+   corresponding railroad calculation or correct a demonstrated cause. Repeat
+   same-source idle and interactive matches before retesting unmodified
+   Steam/Proton and Windows Steam. A clean 15-minute match with orders from both
+   humans and headset checks is the minimum LAN gate.
 5. Do **not** publish or merge the diagnostic APK as the offline release, turn
    off mismatch detection, or claim that a same-source match proves retail
    compatibility. Automatic LAN discovery is also still open; Direct Connect
@@ -686,3 +688,34 @@ link and `ldd -r` pass on both targets as applicable. Observer/detector tests,
 17 comparator fixtures and 788 workspace checks for both LAN gate settings pass.
 Repeat the same idle match once more; the comparator will then name the template
 and first unequal CRC field boundary.
+
+#### 2026-09-21 field-boundary result
+
+The second Quest-hosted pair used the same stock map CRC `DEA9E8E4`, game seed
+`25608428` and interval 100. Frame 0 is completely equal: 211 objects, final
+CRC `DEDCC358`, and all recorded fields of the first object agree. At frame 100
+both peers enter object ID `000000DF`, template `TrainCabUngarrisonable`, with
+the same rolling CRC `D0B92844`; its private-status boundary also agrees at
+`A0735188`. The first difference is the object's transform boundary: Quest
+`E46FFD73`, Omarchy `2770FDF3`. Its completed rolling CRC is Quest `AA85737D`
+versus Omarchy `2AC9737D`; final frame CRCs are `D480E116` and `F7033FDF`.
+Both sides classify `different_crc` at validation frame 105. The same transform
+is unequal at frame 200.
+
+This is evidence of divergent train position/orientation state, not proof of
+which math operation caused it. It excludes LAN transport, missing CRC packets,
+object traversal/order, private status and a later subsystem as the immediate
+recorded boundary. Do not omit the train from CRC or freeze/remove map content:
+either would hide the lockstep error and change gameplay. The next observer
+prints the 12 raw `Matrix3D` words for only this already-selected order-0 object;
+it remains read-only and uses no extra traversal, CRC write or network field.
+
+Quest diagnostic 10233 is installed in place without clearing imported data;
+its device APK hash matches the release-signed local artifact and the original
+`firstInstallTime` is unchanged. Its embedded `libmain.so` SHA-256 is
+`90931bb53a89306ff49078ace566d950bb5b90d9d78ec95680f32e9e23d71dbf`.
+The signing certificate remains the established private XR certificate
+`a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`;
+the rejected development-signed package was never installed. Omarchy's matching
+executable links cleanly, with 10232 preserved for rollback. The trace marker
+remains in the selected legitimate game-data directory.

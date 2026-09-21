@@ -29,7 +29,7 @@ class Match:
 def parse(lines):
     matches = []
     for line in lines:
-        marker = re.search(r"\[GX-LAN-CRC\] (begin|generated|object-summary|object-detail|object-field|object) (.*)", line)
+        marker = re.search(r"\[GX-LAN-CRC\] (begin|generated|object-summary|object-detail|object-field|object-transform-word|object) (.*)", line)
         if not marker:
             continue
         fields = dict(re.findall(r"(\w+)=([^\s]+)", marker[2]))
@@ -88,12 +88,28 @@ def parse(lines):
                 "template": fields["template"],
                 "start_crc": int(fields["start_crc"], 16),
                 "fields": [],
+                "transform_words": [],
             }
             if (frame < 0 or frame in matches[-1].object_details or detail["order"] < 0 or
                     detail["id"] < 0 or detail["id"] > 0xFFFFFFFF or
                     detail["start_crc"] < 0 or detail["start_crc"] > 0xFFFFFFFF):
                 raise ValueError("Invalid or duplicate object detail")
             matches[-1].object_details[frame] = detail
+        elif marker[1] == "object-transform-word":
+            if not matches:
+                raise ValueError("Transform word without match header; log may be truncated")
+            frame = int(fields["frame"])
+            detail = matches[-1].object_details.get(frame)
+            if detail is None:
+                raise ValueError("Transform word has no detail header")
+            order = int(fields["order"])
+            object_id = int(fields["id"], 16)
+            index = int(fields["index"])
+            bits = int(fields["bits"], 16)
+            if (order != detail["order"] or object_id != detail["id"] or
+                    index != len(detail["transform_words"]) or bits < 0 or bits > 0xFFFFFFFF):
+                raise ValueError("Invalid or non-sequential transform word")
+            detail["transform_words"].append(bits)
         else:
             if not matches:
                 raise ValueError("Object field without match header; log may be truncated")
@@ -123,6 +139,8 @@ def parse(lines):
             if (detail["order"] >= len(records) or records[detail["order"]][0] != detail["id"] or
                     not detail["fields"]):
                 raise ValueError("Object detail does not match object records")
+            if detail["transform_words"] and len(detail["transform_words"]) != 12:
+                raise ValueError("Transform word trace is incomplete")
     return matches
 
 
@@ -188,13 +206,32 @@ def describe_field_difference(a, b, frame, order, object_id):
                     f"A={field_a[0]}, B={field_b[0]}.")
         if field_a[1] != field_b[1]:
             previous = "object start" if index == 0 else f"field {left['fields'][index - 1][0]}"
+            matrix_detail = ""
+            if field_a[0] == "transform":
+                matrix_detail = describe_transform_difference(left, right)
             return (f"First field boundary difference in template {left['template']}: {field_a[0]} "
-                    f"A={field_a[1]:08X}, B={field_b[1]:08X}; equal through {previous}.")
+                    f"A={field_a[1]:08X}, B={field_b[1]:08X}; equal through {previous}.{matrix_detail}")
     if len(left["fields"]) != len(right["fields"]):
         return (f"Field trace coverage differs for template {left['template']}: "
                 f"A={len(left['fields'])}, B={len(right['fields'])}.")
     return (f"All recorded field boundaries agree for template {left['template']}; "
             "a narrower probe is required.")
+
+
+def describe_transform_difference(left, right):
+    words_a = left["transform_words"]
+    words_b = right["transform_words"]
+    if not words_a or not words_b:
+        return " Raw transform words are unavailable for one or both peers."
+    labels = ("m00", "m01", "m02", "x", "m10", "m11", "m12", "y", "m20", "m21", "m22", "z")
+    for index, (word_a, word_b) in enumerate(zip(words_a, words_b)):
+        if word_a != word_b:
+            label = labels[index] if index < len(labels) else f"word{index}"
+            return (f" First raw transform difference: {label} (word {index}) "
+                    f"A={word_a:08X}, B={word_b:08X}.")
+    if len(words_a) != len(words_b):
+        return f" Raw transform coverage differs: A={len(words_a)}, B={len(words_b)}."
+    return " Raw transform words agree despite the transform CRC difference."
 
 
 def compare(a, b):

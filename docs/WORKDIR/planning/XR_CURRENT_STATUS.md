@@ -411,11 +411,31 @@ call or simulation/network write. Omarchy executable SHA-256 is
 the 10231 executable is preserved. Seventeen comparator fixtures and all focused
 and workspace tests pass. Public release 1.2.28 and `main` remain unchanged.
 
-The immediate physical gate is one more Quest-hosted fixed-map, fixed-faction,
-no-AI match with no player orders for the first 30 seconds. Compare the paired
-10232 logs to identify the object's template and first unequal field boundary;
-only then test the resulting narrow hypothesis on the same-source pair before
-returning to Steam/Proton.
+The 10232 physical pair is complete. Frame 0 agrees fully. At frame 100, both
+peers enter the same first object (ID `000000DF`, template
+`TrainCabUngarrisonable`) with the same CRC and remain equal through private
+status, then first differ at its transform: Quest `E46FFD73`, Omarchy
+`2770FDF3`. Counts/order and RNG seed CRC agree, and both peers detect the
+resulting mismatch at validation frame 105. This points to train
+position/orientation calculation, not LAN delivery, but does not yet identify
+the responsible matrix component or arithmetic operation.
+
+The immediate physical gate is one more same-source idle match using a bounded
+raw 12-word transform observer for that already-selected first object. Use the
+result to isolate railroad translation, rotation or height math; do not disable
+CRC checking or remove/freeze the train. Only a demonstrated deterministic fix
+followed by idle and interactive same-source passes allows returning to
+Steam/Proton. Public 1.2.28 and `main` remain unchanged.
+
+That observer is deployed as private Quest 10233
+(`1.2.33-lan-transform-trace`), APK SHA-256
+`795cb998be8e6a8530581f36fa882468d0022742ee5a8de372683be7c63bc036`.
+It update-installed with retained app data and matching device hash. Omarchy's
+matching staged executable SHA-256 is
+`5f8ce7ec91812bae805fe0ad27bf9c4ae87bb3d53546d074ff702a5fb247f9e1`;
+10232 is preserved as `runtime/GeneralsXZH.pre-transform-trace` and `ldd -r`
+is clean. Run the same stock-map, no-AI, no-order match once; no settings or
+assets need to be reimported.
 The user's primary goal is Quest versus the
 unmodified Steam PC version, with Quest peers retained. The custom PC build
 is a diagnostic tool, not a replacement compatibility promise. A no-popup

@@ -48,6 +48,8 @@ int main()
 	beginObjectDetail(0, 0, 0x10u, "TestObject", 0x01u);
 	assert(objectDetailActive());
 	objectField("private_status", 0x02u);
+	const unsigned int transformWords[] = { 0x3F800000u, 0u, 0u, 0x41200000u };
+	objectTransform(transformWords, sizeof(transformWords));
 	endObjectDetail();
 	assert(!objectDetailActive());
 	int scheduled = 0;

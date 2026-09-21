@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 namespace GXLanCRCTrace
 {
@@ -141,6 +142,22 @@ inline void objectField(const char *field, unsigned int crc)
 	if (!s.objectDetailActive) return;
 	fprintf(stderr, "[GX-LAN-CRC] object-field frame=%d order=%d id=%08X field=%s crc=%08X\n",
 		s.objectDetailFrame, s.objectDetailOrder, s.objectDetailID, field ? field : "unknown", crc);
+}
+
+// GeneralsX @feature Codex 21/09/2026 Expose the raw transform words for the already-selected diagnostic object.
+inline void objectTransform(const void *matrix, int byteCount)
+{
+	const State &s = state();
+	if (!s.objectDetailActive || !matrix || byteCount <= 0 || byteCount % 4 != 0) return;
+	const unsigned char *bytes = static_cast<const unsigned char *>(matrix);
+	for (int index = 0; index < byteCount / 4; ++index)
+	{
+		unsigned int bits = 0;
+		memcpy(&bits, bytes + index * 4, 4);
+		fprintf(stderr,
+			"[GX-LAN-CRC] object-transform-word frame=%d order=%d id=%08X index=%d bits=%08X\n",
+			s.objectDetailFrame, s.objectDetailOrder, s.objectDetailID, index, bits);
+	}
 }
 
 inline void endObjectDetail()
