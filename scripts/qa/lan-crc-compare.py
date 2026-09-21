@@ -23,12 +23,13 @@ class Match:
     frames: dict = field(default_factory=dict)
     object_records: dict = field(default_factory=dict)
     object_summaries: dict = field(default_factory=dict)
+    object_details: dict = field(default_factory=dict)
 
 
 def parse(lines):
     matches = []
     for line in lines:
-        marker = re.search(r"\[GX-LAN-CRC\] (begin|generated|object-summary|object) (.*)", line)
+        marker = re.search(r"\[GX-LAN-CRC\] (begin|generated|object-summary|object-detail|object-field|object) (.*)", line)
         if not marker:
             continue
         fields = dict(re.findall(r"(\w+)=([^\s]+)", marker[2]))
@@ -66,7 +67,7 @@ def parse(lines):
                     summary["truncated"] != int(summary["total"] > summary["captured"])):
                 raise ValueError("Invalid object summary")
             matches[-1].object_summaries[frame] = summary
-        else:
+        elif marker[1] == "object":
             if not matches:
                 raise ValueError("Object record without match header; log may be truncated")
             frame = int(fields["frame"])
@@ -77,6 +78,36 @@ def parse(lines):
             if frame < 0 or order != len(records) or object_id < 0 or object_id > 0xFFFFFFFF or crc < 0 or crc > 0xFFFFFFFF:
                 raise ValueError("Invalid or non-sequential object record")
             records.append((object_id, crc))
+        elif marker[1] == "object-detail":
+            if not matches:
+                raise ValueError("Object detail without match header; log may be truncated")
+            frame = int(fields["frame"])
+            detail = {
+                "order": int(fields["order"]),
+                "id": int(fields["id"], 16),
+                "template": fields["template"],
+                "start_crc": int(fields["start_crc"], 16),
+                "fields": [],
+            }
+            if (frame < 0 or frame in matches[-1].object_details or detail["order"] < 0 or
+                    detail["id"] < 0 or detail["id"] > 0xFFFFFFFF or
+                    detail["start_crc"] < 0 or detail["start_crc"] > 0xFFFFFFFF):
+                raise ValueError("Invalid or duplicate object detail")
+            matches[-1].object_details[frame] = detail
+        else:
+            if not matches:
+                raise ValueError("Object field without match header; log may be truncated")
+            frame = int(fields["frame"])
+            detail = matches[-1].object_details.get(frame)
+            if detail is None:
+                raise ValueError("Object field has no detail header")
+            order = int(fields["order"])
+            object_id = int(fields["id"], 16)
+            crc = int(fields["crc"], 16)
+            if (order != detail["order"] or object_id != detail["id"] or
+                    not fields["field"] or crc < 0 or crc > 0xFFFFFFFF):
+                raise ValueError("Invalid object field")
+            detail["fields"].append((fields["field"], crc))
     for match in matches:
         for frame, summary in match.object_summaries.items():
             if frame not in match.frames:
@@ -85,6 +116,13 @@ def parse(lines):
                 raise ValueError("Object record count does not match summary")
         if any(frame not in match.object_summaries for frame in match.object_records):
             raise ValueError("Object records have no summary")
+        for frame, detail in match.object_details.items():
+            if frame not in match.frames:
+                raise ValueError("Object detail has no generation checkpoint")
+            records = match.object_records.get(frame, ())
+            if (detail["order"] >= len(records) or records[detail["order"]][0] != detail["id"] or
+                    not detail["fields"]):
+                raise ValueError("Object detail does not match object records")
     return matches
 
 
@@ -113,8 +151,9 @@ def describe_object_difference(a, b, frame):
                     f"A id={left[0]:08X}, B id={right[0]:08X}; traversal order differs.")
         if left[1] != right[1]:
             previous = "start of object traversal" if order == 0 else f"equal through order {order - 1}"
+            field_detail = describe_field_difference(a, b, frame, order, left[0])
             return (f"First per-object difference after id={left[0]:08X} at order {order}: "
-                    f"A={left[1]:08X}, B={right[1]:08X}; {previous}.")
+                    f"A={left[1]:08X}, B={right[1]:08X}; {previous}.\n{field_detail}")
     if len(records_a) != len(records_b):
         order = min(len(records_a), len(records_b))
         next_a = f"{records_a[order][0]:08X}" if order < len(records_a) else "missing"
@@ -129,6 +168,33 @@ def describe_object_difference(a, b, frame):
                 f"(A total={summary_a['total']}, B total={summary_b['total']}).")
     return ("All complete per-object records agree despite the object-stage CRC difference; "
             "the trace is internally inconsistent and should be repeated.")
+
+
+def describe_field_difference(a, b, frame, order, object_id):
+    left = a.object_details.get(frame)
+    right = b.object_details.get(frame)
+    if left is None or right is None or left["order"] != order or right["order"] != order:
+        return "Per-field observations are unavailable for this object on one or both peers."
+    if left["id"] != object_id or right["id"] != object_id:
+        return "Per-field observation IDs do not match the differing object."
+    if left["template"] != right["template"]:
+        return (f"Object template differs: A={left['template']}, B={right['template']}.")
+    if left["start_crc"] != right["start_crc"]:
+        return (f"CRC already differs before template {left['template']}: "
+                f"A={left['start_crc']:08X}, B={right['start_crc']:08X}.")
+    for index, (field_a, field_b) in enumerate(zip(left["fields"], right["fields"])):
+        if field_a[0] != field_b[0]:
+            return (f"Field trace order differs at index {index}: "
+                    f"A={field_a[0]}, B={field_b[0]}.")
+        if field_a[1] != field_b[1]:
+            previous = "object start" if index == 0 else f"field {left['fields'][index - 1][0]}"
+            return (f"First field boundary difference in template {left['template']}: {field_a[0]} "
+                    f"A={field_a[1]:08X}, B={field_b[1]:08X}; equal through {previous}.")
+    if len(left["fields"]) != len(right["fields"]):
+        return (f"Field trace coverage differs for template {left['template']}: "
+                f"A={len(left['fields'])}, B={len(right['fields'])}.")
+    return (f"All recorded field boundaries agree for template {left['template']}; "
+            "a narrower probe is required.")
 
 
 def compare(a, b):

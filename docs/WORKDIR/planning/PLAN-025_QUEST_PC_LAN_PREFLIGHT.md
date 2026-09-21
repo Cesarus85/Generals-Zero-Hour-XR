@@ -1,13 +1,14 @@
 # PLAN-025 — Quest ↔ PC LAN preflight
 
-**Status (resumed 2026-09-21):** Quest APK 10231 and the isolated same-source
-native Omarchy build now include bounded per-object observations in the existing
-CRC traversal. The preceding paired match detected a real CRC mismatch at
-validation frame 105: generation agreed completely at frame 0 and first differed
-in the object-list checkpoint by frame 100. The next fixed-map, no-AI idle match
-will identify the first differing object or traversal order. Earlier Steam/Proton
-matches also desynchronized. LAN remains experimental and unsupported; public
-offline release 1.2.28 is separate and has not been replaced on GitHub.
+**Status (active 2026-09-21):** Quest APK 10232 and the isolated same-source
+native Omarchy build now include a narrow field-boundary trace for the first
+object in the existing CRC traversal. APK 10231 proved that generation agrees
+completely at frame 0 and first differs at frame 100 inside the same first
+object: ID `000000DF`, order 0. Object counts/order and RNG seed checksum agree.
+The next fixed-map, no-AI idle match will identify the first unequal field and
+the object's template. Earlier Steam/Proton matches also desynchronized. LAN
+remains experimental and unsupported; public offline release 1.2.28 is separate
+and has not been replaced on GitHub.
 **Scope:** One Quest 3 against a PC on the same LAN. The first peer is the user's Steam Zero Hour running through Proton on Omarchy; the planned Windows Steam peer remains a separate validation. If retail gameplay desynchronizes, isolate it with a same-source GeneralsX PC build. Internet services, public matchmaking, replay and reconnect are later gates.
 
 **User priority:** Quest versus the unmodified Steam PC game is the primary
@@ -18,14 +19,14 @@ support. Do not relax CRC checks or claim retail support from same-source tests.
 ## Current handoff
 
 1. Keep branch `codex/lan-object-crc-trace` separate from release `main`.
-   The unpublished Quest diagnostic is versionCode 10231
-   (`1.2.31-lan-object-trace`), SHA-256
-   `41b24487ef54540d6890f34285d72752adc8b9357657eca24863f989caddcea2`;
+   The unpublished Quest diagnostic is versionCode 10232
+   (`1.2.32-lan-field-trace`), SHA-256
+   `8f9c348a9c20a4327d07922fcc4d80c0d62c360d139fcd0182e46b344a0a09e9`;
    it is update-installed on Quest `2G0YC5ZG9609PY` with app data retained. The
    native Omarchy lab is
    `/home/stefan/generals-xr-lan-diagnostics-78207e6`, with its own user data,
    copied legitimate game files and executable SHA-256
-   `a403f82f9ddf7e8a5e9de6bb3b05699c2098df5736ad886299139f57e01bf48f`.
+   `6e9d715019674f5d0b837fbd16c24f6cade6278d4a65283ff538499abf4d68a8`.
    The previous PC executable remains recoverable as
    `runtime/GeneralsXZH.pre-object-trace`.
    Original Steam/Proton files and settings were not modified.
@@ -46,6 +47,11 @@ support. Do not relax CRC checks or claim retail support from same-source tests.
    of the existing first eight checkpoints. It adds no traversal, CRC write,
    random draw, network field or cadence change. The comparator validates trace
    completeness and reports the first unequal CRC, ID/order or coverage point.
+   The follow-up records the starting CRC and existing field boundaries for
+   only order 0: private status, transform, ID, upgrades, experience, health,
+   weapon bonus, damage scalar and the three weapon slots. It also records the
+   object template. It reads the same `XferCRC` after existing writes and does
+   not serialize additional data or call an object's CRC a second time.
 4. Repeat one fixed-map, fixed-faction, no-AI Quest-hosted match with no early
    player orders. Compare the first unequal object (or missing/differently
    ordered ID). Only then add a narrow field/timing probe if needed. Correct a
@@ -602,7 +608,7 @@ uninitialized memory or missing CRC messages. Test first with Direct Connect
 and an idle match, then orders from both players and the 15-minute gate.
 Automatic discovery and sustained Quest-to-Quest play have not been verified.
 
-Public offline release 1.2.28 remains the supported baseline; LAN 10231 stays experimental.
+Public offline release 1.2.28 remains the supported baseline; LAN 10232 stays experimental.
 Do not enable LAN tabletop by default, merge a network-eligibility expansion into a release, or claim multiplayer support while these physical gates remain open. Keep replay and internet as separate later work. Keyboard/mouse remains secondary to the controller path.
 
 #### 2026-09-21 per-object diagnostic pair
@@ -651,3 +657,32 @@ Do not interpret the diagnostic install as multiplayer acceptance. After the
 first object/timing cause is demonstrated and corrected, repeat same-source idle
 and interactive matches before returning to unmodified Steam/Proton and the
 separate Windows Steam gate.
+
+#### 2026-09-21 first per-object result and field-boundary pair
+
+The Quest-hosted 10231 match produced one directly comparable pair on stock map
+CRC `DEA9E8E4`, seed `24456948`, interval 100. Both peers have 211 objects and
+CRC `2CC18B43` at frame 0 with every object record equal. At frame 100 both have
+223 objects in the same order and the same RNG seed checksum `39578301`, but the
+very first object differs: ID `000000DF`, order 0, Quest rolling CRC `AA85737D`,
+Omarchy `2AC9737D`. Final frame-100 CRCs are Quest `0602409A` and Omarchy
+`55929D3A`; both detectors classify `different_crc` at validation frame 105.
+The first object also differs at frame 200. This excludes missing CRC messages,
+object count/order, map/seed selection and a later subsystem as the immediate
+frame-100 cause, but 10231 cannot identify the object's type or internal field.
+
+The next narrow trace is installed as Quest 10232:
+
+```text
+build/apk/Generals-Zero-Hour-XR-1.2.32-lan-field-trace.apk
+SHA-256 8f9c348a9c20a4327d07922fcc4d80c0d62c360d139fcd0182e46b344a0a09e9
+libmain.so 7b1a227089f16e3929fd416d36c29a22c4658ca33e3c083c1a52f33fc5406a84
+```
+
+The on-device APK hash matches. The corresponding staged Omarchy executable is
+`6e9d715019674f5d0b837fbd16c24f6cade6278d4a65283ff538499abf4d68a8`;
+10231 is preserved as `runtime/GeneralsXZH.pre-field-trace`. Native compilation,
+link and `ldd -r` pass on both targets as applicable. Observer/detector tests,
+17 comparator fixtures and 788 workspace checks for both LAN gate settings pass.
+Repeat the same idle match once more; the comparator will then name the template
+and first unequal CRC field boundary.

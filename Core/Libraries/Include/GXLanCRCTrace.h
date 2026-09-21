@@ -36,10 +36,15 @@ struct State
 {
 	bool enabled;
 	bool armed;
+	bool objectDetailActive;
+	int objectDetailFrame;
+	int objectDetailOrder;
+	unsigned int objectDetailID;
 	unsigned int generated;
 	unsigned int validated;
 	bool failureWritten;
-	State() : enabled(false), armed(false), generated(0), validated(0), failureWritten(false) {}
+	State() : enabled(false), armed(false), objectDetailActive(false), objectDetailFrame(-1),
+		objectDetailOrder(-1), objectDetailID(0), generated(0), validated(0), failureWritten(false) {}
 };
 
 inline State &state()
@@ -109,6 +114,40 @@ inline void observeObject(ObjectCRC *records, int capacity, int &captured, int &
 	records[captured].id = id;
 	records[captured].crc = crc;
 	++captured;
+}
+
+// GeneralsX @feature Codex 21/09/2026 Narrow the first unequal object to an existing CRC field boundary.
+inline void beginObjectDetail(int frame, int order, unsigned int id, const char *templateName, unsigned int crc)
+{
+	State &s = state();
+	s.objectDetailActive = captureGeneration() && order == 0;
+	if (!s.objectDetailActive) return;
+	s.objectDetailFrame = frame;
+	s.objectDetailOrder = order;
+	s.objectDetailID = id;
+	fprintf(stderr,
+		"[GX-LAN-CRC] object-detail frame=%d order=%d id=%08X template=%s start_crc=%08X\n",
+		frame, order, id, templateName ? templateName : "unknown", crc);
+}
+
+inline bool objectDetailActive()
+{
+	return state().objectDetailActive;
+}
+
+inline void objectField(const char *field, unsigned int crc)
+{
+	const State &s = state();
+	if (!s.objectDetailActive) return;
+	fprintf(stderr, "[GX-LAN-CRC] object-field frame=%d order=%d id=%08X field=%s crc=%08X\n",
+		s.objectDetailFrame, s.objectDetailOrder, s.objectDetailID, field ? field : "unknown", crc);
+}
+
+inline void endObjectDetail()
+{
+	State &s = state();
+	if (s.objectDetailActive) fflush(stderr);
+	s.objectDetailActive = false;
 }
 
 inline void generated(int frame, int localSlot, unsigned int crc, unsigned int rngSeedCRC, const Stages &stages,

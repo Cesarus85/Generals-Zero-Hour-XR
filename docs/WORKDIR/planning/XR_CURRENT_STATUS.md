@@ -394,13 +394,28 @@ Omarchy lab has the matching observer over its required Linux build-compatibilit
 delta; staged executable SHA-256 is
 `a403f82f9ddf7e8a5e9de6bb3b05699c2098df5736ad886299139f57e01bf48f`,
 with its previous executable preserved. Native link and `ldd -r` checks pass.
-Public release 1.2.28 and `main` remain unchanged.
+The first 10231 physical capture is conclusive at object granularity. On stock
+map CRC `DEA9E8E4`, seed `24456948`, both peers match fully at frame 0. At frame
+100 each has 223 objects in the same order and matching RNG seed checksum, but
+the first object (ID `000000DF`, order 0) ends with Quest CRC `AA85737D` versus
+Omarchy `2AC9737D`; final CRCs are `0602409A` versus `55929D3A`. Both detectors
+report `different_crc` at validation frame 105. A missing CRC message, differing
+object count/order or later-only subsystem is not the immediate cause.
 
-The immediate physical gate is one Quest-hosted fixed-map, fixed-faction,
+The installed follow-up is Quest 10232 (`1.2.32-lan-field-trace`), SHA-256
+`8f9c348a9c20a4327d07922fcc4d80c0d62c360d139fcd0182e46b344a0a09e9`;
+the on-device hash matches. It reads the starting and existing major field CRC
+boundaries for only order 0 and names its template, without a second object CRC
+call or simulation/network write. Omarchy executable SHA-256 is
+`6e9d715019674f5d0b837fbd16c24f6cade6278d4a65283ff538499abf4d68a8`;
+the 10231 executable is preserved. Seventeen comparator fixtures and all focused
+and workspace tests pass. Public release 1.2.28 and `main` remain unchanged.
+
+The immediate physical gate is one more Quest-hosted fixed-map, fixed-faction,
 no-AI match with no player orders for the first 30 seconds. Compare the paired
-logs to identify the first unequal object CRC, traversal ID/order or coverage;
-only then refine timing/fields and test the resulting hypothesis on the
-same-source pair before returning to Steam/Proton.
+10232 logs to identify the object's template and first unequal field boundary;
+only then test the resulting narrow hypothesis on the same-source pair before
+returning to Steam/Proton.
 The user's primary goal is Quest versus the
 unmodified Steam PC version, with Quest peers retained. The custom PC build
 is a diagnostic tool, not a replacement compatibility promise. A no-popup

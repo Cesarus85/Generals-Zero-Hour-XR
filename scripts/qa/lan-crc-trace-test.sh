@@ -15,12 +15,16 @@ test "$(rg -c '^\[GX-LAN-CRC\] begin' "$test_dir/trace.log")" -eq 2
 test "$(rg -c '^\[GX-LAN-CRC\] generated' "$test_dir/trace.log")" -eq 8
 test "$(rg -c '^\[GX-LAN-CRC\] object-summary' "$test_dir/trace.log")" -eq 8
 test "$(rg -c '^\[GX-LAN-CRC\] object ' "$test_dir/trace.log")" -eq 16
+test "$(rg -c '^\[GX-LAN-CRC\] object-detail' "$test_dir/trace.log")" -eq 1
+test "$(rg -c '^\[GX-LAN-CRC\] object-field' "$test_dir/trace.log")" -eq 1
 test "$(rg -c '^\[GX-LAN-CRC\] checkpoint' "$test_dir/trace.log")" -eq 8
 test "$(rg -c '^\[GX-LAN-CRC\] failure' "$test_dir/trace.log")" -eq 2
 rg -q 'reason=missing_crc detector_reason=missing_crc' "$test_dir/trace.log"
 rg -q 'reason=different_crc detector_reason=different_crc' "$test_dir/trace.log"
 rg -q 'object-summary frame=0 total=3 captured=2 truncated=1 limit=2048' "$test_dir/trace.log"
 rg -q 'object frame=0 order=0 id=00000010 crc=00000100' "$test_dir/trace.log"
+rg -q 'object-detail frame=0 order=0 id=00000010 template=TestObject start_crc=00000001' "$test_dir/trace.log"
+rg -q 'object-field frame=0 order=0 id=00000010 field=private_status crc=00000002' "$test_dir/trace.log"
 
 # Source-level guards only: they catch accidental edits to cadence, message,
 # and traversal sites; a full engine/headset run is needed for runtime proof.

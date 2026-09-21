@@ -50,6 +50,7 @@
 #include "Common/Xfer.h"
 #include "Common/XferCRC.h"
 #include "Common/PerfTimer.h"
+#include "GXLanCRCTrace.h"
 
 #include "GameClient/Anim2D.h"
 #include "GameClient/ControlBar.h"
@@ -3993,6 +3994,8 @@ void Object::crc( Xfer *xfer )
 #endif // DEBUG_CRC
 
 	xfer->xferUnsignedByte(&m_privateStatus);
+	if (GXLanCRCTrace::objectDetailActive())
+		GXLanCRCTrace::objectField("private_status", static_cast<XferCRC *>(xfer)->getCRC());
 #ifdef DEBUG_CRC
 	if (doLogging)
 	{
@@ -4005,6 +4008,8 @@ void Object::crc( Xfer *xfer )
 	// the same interface as the XferLoad class for save game restore.  This only works because
 	// XferCRC does not modify its data.
 	xfer->xferUser((Matrix3D *)getTransformMatrix(),	sizeof(Matrix3D));
+	if (GXLanCRCTrace::objectDetailActive())
+		GXLanCRCTrace::objectField("transform", static_cast<XferCRC *>(xfer)->getCRC());
 #ifdef DEBUG_CRC
 	if (doLogging)
 	{
@@ -4019,6 +4024,8 @@ void Object::crc( Xfer *xfer )
 
 
 	xfer->xferUser(&m_id,															sizeof(m_id));
+	if (GXLanCRCTrace::objectDetailActive())
+		GXLanCRCTrace::objectField("id", static_cast<XferCRC *>(xfer)->getCRC());
 #ifdef DEBUG_CRC
 	if (doLogging)
 	{
@@ -4031,6 +4038,8 @@ void Object::crc( Xfer *xfer )
 #else
 	xfer->xferUser(&m_objectUpgradesCompleted, sizeof(m_objectUpgradesCompleted));
 #endif
+	if (GXLanCRCTrace::objectDetailActive())
+		GXLanCRCTrace::objectField("upgrades", static_cast<XferCRC *>(xfer)->getCRC());
 #ifdef DEBUG_CRC
 	if (doLogging)
 	{
@@ -4044,6 +4053,8 @@ void Object::crc( Xfer *xfer )
 #endif // DEBUG_CRC
 	if (m_experienceTracker)
 		xfer->xferSnapshot( m_experienceTracker );
+	if (GXLanCRCTrace::objectDetailActive())
+		GXLanCRCTrace::objectField("experience", static_cast<XferCRC *>(xfer)->getCRC());
 #ifdef DEBUG_CRC
 	if (doLogging)
 	{
@@ -4058,6 +4069,8 @@ void Object::crc( Xfer *xfer )
 
 	Real health = getBodyModule()->getHealth();
 	xfer->xferUser(&health,														sizeof(health));
+	if (GXLanCRCTrace::objectDetailActive())
+		GXLanCRCTrace::objectField("health", static_cast<XferCRC *>(xfer)->getCRC());
 #ifdef DEBUG_CRC
 	if (doLogging)
 	{
@@ -4067,6 +4080,8 @@ void Object::crc( Xfer *xfer )
 #endif // DEBUG_CRC
 
 	xfer->xferUnsignedInt(&m_weaponBonusCondition);
+	if (GXLanCRCTrace::objectDetailActive())
+		GXLanCRCTrace::objectField("weapon_bonus", static_cast<XferCRC *>(xfer)->getCRC());
 #ifdef DEBUG_CRC
 	if (doLogging)
 	{
@@ -4077,6 +4092,8 @@ void Object::crc( Xfer *xfer )
 
 	Real scalar = getBodyModule()->getDamageScalar();
 	xfer->xferUser(&scalar,														sizeof(scalar));
+	if (GXLanCRCTrace::objectDetailActive())
+		GXLanCRCTrace::objectField("damage_scalar", static_cast<XferCRC *>(xfer)->getCRC());
 #ifdef DEBUG_CRC
 	if (doLogging)
 	{
@@ -4093,6 +4110,11 @@ void Object::crc( Xfer *xfer )
 		if (thisWeapon)
 		{
 			xfer->xferSnapshot( thisWeapon );
+		}
+		if (GXLanCRCTrace::objectDetailActive())
+		{
+			const char *field = i == 0 ? "weapon_0" : i == 1 ? "weapon_1" : "weapon_2";
+			GXLanCRCTrace::objectField(field, static_cast<XferCRC *>(xfer)->getCRC());
 		}
 	}
 

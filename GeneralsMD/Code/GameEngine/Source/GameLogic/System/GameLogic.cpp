@@ -4306,10 +4306,16 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 	xferCRC->xferAsciiString(&marker);
 	for( obj = m_objList; obj; obj=obj->getNextObject() )
 	{
+		if (traceCRC)
+		{
+			GXLanCRCTrace::beginObjectDetail(m_frame, traceObjectTotal,
+				static_cast<UnsignedInt>(obj->getID()), obj->getTemplate()->getName().str(), xferCRC->getCRC());
+		}
 		xferCRC->xferSnapshot( obj );
 		// GeneralsX @feature Codex 21/09/2026 Observe object order and rolling CRC without a second scan or CRC write.
 		if (traceCRC)
 		{
+			GXLanCRCTrace::endObjectDetail();
 			GXLanCRCTrace::observeObject(traceObjects, GXLanCRCTrace::kMaxObjectRecords,
 				traceObjectCount, traceObjectTotal, static_cast<UnsignedInt>(obj->getID()), xferCRC->getCRC());
 		}

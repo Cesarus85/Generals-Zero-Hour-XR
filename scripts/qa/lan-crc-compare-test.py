@@ -16,6 +16,9 @@ FRAME = "[GX-LAN-CRC] generated frame=100 local_slot=0 objects=01 rng=02 partiti
 SUMMARY = "[GX-LAN-CRC] object-summary frame=100 total=2 captured=2 truncated=0 limit=2048\n"
 OBJECT_A = "[GX-LAN-CRC] object frame=100 order=0 id=00000010 crc=00000011\n"
 OBJECT_B = "[GX-LAN-CRC] object frame=100 order=1 id=00000020 crc=00000021\n"
+DETAIL = "[GX-LAN-CRC] object-detail frame=100 order=0 id=00000010 template=TestObject start_crc=00000001\n"
+FIELD_A = "[GX-LAN-CRC] object-field frame=100 order=0 id=00000010 field=private_status crc=00000002\n"
+FIELD_B = "[GX-LAN-CRC] object-field frame=100 order=0 id=00000010 field=transform crc=00000011\n"
 
 
 class CompareTest(unittest.TestCase):
@@ -104,6 +107,25 @@ class CompareTest(unittest.TestCase):
             self.sample(HEADER + FRAME + SUMMARY + OBJECT_A)
         with self.assertRaises(ValueError):
             self.sample(HEADER + FRAME + OBJECT_A)
+
+    def test_first_field_boundary_difference(self):
+        left = self.sample(HEADER + DETAIL + FIELD_A + FIELD_B +
+                           FRAME + SUMMARY + OBJECT_A + OBJECT_B)
+        right_text = (HEADER + DETAIL + FIELD_A + FIELD_B.replace("crc=00000011", "crc=00000019") +
+                      FRAME.replace("objects=01", "objects=09") + SUMMARY +
+                      OBJECT_A.replace("crc=00000011", "crc=00000019") + OBJECT_B)
+        code, report = module.compare(left, self.sample(right_text))
+        self.assertEqual(code, 1)
+        self.assertIn("template TestObject: transform", report)
+        self.assertIn("equal through field private_status", report)
+
+    def test_rejects_field_without_detail_header(self):
+        with self.assertRaises(ValueError):
+            self.sample(HEADER + FIELD_A + FRAME + SUMMARY + OBJECT_A + OBJECT_B)
+
+    def test_rejects_detail_without_fields(self):
+        with self.assertRaises(ValueError):
+            self.sample(HEADER + DETAIL + FRAME + SUMMARY + OBJECT_A + OBJECT_B)
 
 
 if __name__ == "__main__":

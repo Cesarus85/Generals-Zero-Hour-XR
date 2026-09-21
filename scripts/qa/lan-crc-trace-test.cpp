@@ -44,6 +44,12 @@ int main()
 	assert(capturedObjects == 2 && totalObjects == 3);
 	assert(objects[0].id == 0x10u && objects[0].crc == 0x100u);
 	assert(objects[1].id == 0x20u && objects[1].crc == 0x200u);
+	armGeneration();
+	beginObjectDetail(0, 0, 0x10u, "TestObject", 0x01u);
+	assert(objectDetailActive());
+	objectField("private_status", 0x02u);
+	endObjectDetail();
+	assert(!objectDetailActive());
 	int scheduled = 0;
 	for (int frame = 0; frame < 100; ++frame) {
 		if (frame % 5 != 0) continue; // The existing caller owns this interval.
