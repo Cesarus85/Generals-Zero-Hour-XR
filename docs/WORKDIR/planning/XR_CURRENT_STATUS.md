@@ -381,10 +381,26 @@ Direct-Connect reachability failure. No original Steam files or Proton
 settings were changed. The two remaining
 base Generals INI/Patch archive hashes also match Quest (details in PLAN-025).
 
-**Paused by user on 2026-09-16 for the first offline release preparation.**
-Resume with bounded per-object diagnostics at the normal CRC checkpoint to
-identify the first divergent object; only then refine the timing and test the
-resulting hypothesis on a same-source pair before returning to Steam/Proton.
+**Resumed on 2026-09-21 with a bounded per-object diagnostic pair.** Branch
+`codex/lan-object-crc-trace` records object traversal order, stable ID and the
+rolling production CRC after each object at the existing first eight normal
+checkpoints, capped at 2048 objects with explicit count/truncation metadata. It
+adds no second scan, CRC input, cadence, random draw or network field. The
+paired comparator validates complete records and now passes 14 fixtures.
+Signed Quest diagnostic 10231 (`1.2.31-lan-object-trace`), SHA-256
+`41b24487ef54540d6890f34285d72752adc8b9357657eca24863f989caddcea2`,
+is update-installed with retained data and its device APK hash matches. The
+Omarchy lab has the matching observer over its required Linux build-compatibility
+delta; staged executable SHA-256 is
+`a403f82f9ddf7e8a5e9de6bb3b05699c2098df5736ad886299139f57e01bf48f`,
+with its previous executable preserved. Native link and `ldd -r` checks pass.
+Public release 1.2.28 and `main` remain unchanged.
+
+The immediate physical gate is one Quest-hosted fixed-map, fixed-faction,
+no-AI match with no player orders for the first 30 seconds. Compare the paired
+logs to identify the first unequal object CRC, traversal ID/order or coverage;
+only then refine timing/fields and test the resulting hypothesis on the
+same-source pair before returning to Steam/Proton.
 The user's primary goal is Quest versus the
 unmodified Steam PC version, with Quest peers retained. The custom PC build
 is a diagnostic tool, not a replacement compatibility promise. A no-popup

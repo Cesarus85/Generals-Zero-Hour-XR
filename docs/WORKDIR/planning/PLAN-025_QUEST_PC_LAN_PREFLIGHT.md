@@ -1,12 +1,13 @@
 # PLAN-025 — Quest ↔ PC LAN preflight
 
-**Status (paused 2026-09-16):** Quest APK 10214 and the isolated same-source
-native Omarchy build reach a live LAN match but both detect a real CRC mismatch
-at validation frame 105. Paired generation traces agree completely at frame 0
-and first differ in the object-list checkpoint by frame 100. The exact object,
-first divergent tick and cause remain unknown. Earlier Steam/Proton matches
-also desynchronized. LAN remains experimental and unsupported; the accepted P23
-offline prerelease is separate and must not be replaced with APK 10214.
+**Status (resumed 2026-09-21):** Quest APK 10231 and the isolated same-source
+native Omarchy build now include bounded per-object observations in the existing
+CRC traversal. The preceding paired match detected a real CRC mismatch at
+validation frame 105: generation agreed completely at frame 0 and first differed
+in the object-list checkpoint by frame 100. The next fixed-map, no-AI idle match
+will identify the first differing object or traversal order. Earlier Steam/Proton
+matches also desynchronized. LAN remains experimental and unsupported; public
+offline release 1.2.28 is separate and has not been replaced on GitHub.
 **Scope:** One Quest 3 against a PC on the same LAN. The first peer is the user's Steam Zero Hour running through Proton on Omarchy; the planned Windows Steam peer remains a separate validation. If retail gameplay desynchronizes, isolate it with a same-source GeneralsX PC build. Internet services, public matchmaking, replay and reconnect are later gates.
 
 **User priority:** Quest versus the unmodified Steam PC game is the primary
@@ -14,15 +15,19 @@ compatibility goal; Quest versus Quest remains a target. A same-source PC
 executable is a diagnostic comparator, not an implicit replacement for Steam
 support. Do not relax CRC checks or claim retail support from same-source tests.
 
-## Resume here after the pause
+## Current handoff
 
-1. Keep branch `codex/quest-pc-lan-preflight` separate from release `main`.
-   The unpublished Quest diagnostic is versionCode 10214, SHA-256
-   `c13aac9a39858771cf0232d29cf396f181fb9a0d105fe43b82617c7e501e34d1`;
-   it is update-installed on Quest `2G0YC5ZG9609PY`. The native Omarchy lab is
+1. Keep branch `codex/lan-object-crc-trace` separate from release `main`.
+   The unpublished Quest diagnostic is versionCode 10231
+   (`1.2.31-lan-object-trace`), SHA-256
+   `41b24487ef54540d6890f34285d72752adc8b9357657eca24863f989caddcea2`;
+   it is update-installed on Quest `2G0YC5ZG9609PY` with app data retained. The
+   native Omarchy lab is
    `/home/stefan/generals-xr-lan-diagnostics-78207e6`, with its own user data,
    copied legitimate game files and executable SHA-256
-   `9bad0faa0c075f4f3de71c63ab8615806818a9f39fbd70bc8558599f5cb6597f`.
+   `a403f82f9ddf7e8a5e9de6bb3b05699c2098df5736ad886299139f57e01bf48f`.
+   The previous PC executable remains recoverable as
+   `runtime/GeneralsXZH.pre-object-trace`.
    Original Steam/Proton files and settings were not modified.
 2. Preserve the paired logs already collected privately. The match used map
    CRC `DEA9E8E4`, seed `4042777` and CRC interval 100. Both sides generated
@@ -34,13 +39,13 @@ support. Do not relax CRC checks or claim retail support from same-source tests.
    `objects` at generation frame 100. No missing CRC packet is implicated in
    this particular failure. These rolling checkpoints cannot identify an
    individual object or prove floating-point math is the cause.
-3. Next source task: add **opt-in, bounded, observational per-object records**
-   to the existing `GameLogic::getCRC` object traversal. Include stable object
-   ID/order and the rolling CRC after each object, plus count/truncation data.
-   Do not add a second traversal, change the production CRC cadence/content,
-   simulation commands or network packet format. Test activation, bounds and
-   zero behavioral effect, then incrementally build both Quest and the staged
-   native PC diagnostic from matching source.
+3. The bounded observer is implemented in the existing
+   `GameLogic::getCRC` traversal. It records order, stable object ID and the
+   rolling production CRC immediately after each object snapshot, followed by
+   total/captured/truncation metadata. It captures at most 2048 records for each
+   of the existing first eight checkpoints. It adds no traversal, CRC write,
+   random draw, network field or cadence change. The comparator validates trace
+   completeness and reports the first unequal CRC, ID/order or coverage point.
 4. Repeat one fixed-map, fixed-faction, no-AI Quest-hosted match with no early
    player orders. Compare the first unequal object (or missing/differently
    ordered ID). Only then add a narrow field/timing probe if needed. Correct a
@@ -74,7 +79,7 @@ If Steam discovery/join or in-match synchronization fails, reproduce with a PC G
 
 | Gate | Evidence needed | State |
 |---|---|---|
-| Build safety | Default-off and preview-on mode tests; Android native/XR APK build | 10214 native + both APK flavors pass; observer and workspace regressions pass; installed APK hash verified |
+| Build safety | Default-off and preview-on mode tests; Android native/XR APK build | 10231 Android native/XR package, focused observer/comparator/detector tests and 788 workspace checks per LAN-gate setting pass; installed APK hash verified |
 | Lobby | Discovery and direct-IP outcomes, both endpoint IPs, host/join/leave, chat/input | Direct Connect reaches lobby and starts match; automatic discovery still fails |
 | Simulation | 15-minute Quest ↔ PC human match, orders from both players, no desync/CRC/stall | Fails against Steam/Proton and the same-source native Omarchy comparator; first observed object CRC difference by frame 100 |
 | XR usability | Tabletop and upright shell transitions, controller menu/text entry, headset pause/resume and performance | Open; controller-operated Direct Connect keyboard built in 10212, worn-headset test pending |
@@ -597,5 +602,52 @@ uninitialized memory or missing CRC messages. Test first with Direct Connect
 and an idle match, then orders from both players and the 15-minute gate.
 Automatic discovery and sustained Quest-to-Quest play have not been verified.
 
-P23 remains the planned public offline preview; LAN 10214 stays experimental.
+Public offline release 1.2.28 remains the supported baseline; LAN 10231 stays experimental.
 Do not enable LAN tabletop by default, merge a network-eligibility expansion into a release, or claim multiplayer support while these physical gates remain open. Keep replay and internet as separate later work. Keyboard/mouse remains secondary to the controller path.
+
+#### 2026-09-21 per-object diagnostic pair
+
+The resumed branch `codex/lan-object-crc-trace` implements the next bounded
+observer without altering production simulation or the wire protocol. Android
+ARM64 and the XR release package build successfully. The signed Quest artifact
+is:
+
+```text
+build/apk/Generals-Zero-Hour-XR-1.2.31-lan-object-trace.apk
+SHA-256 41b24487ef54540d6890f34285d72752adc8b9357657eca24863f989caddcea2
+libmain.so e5c4871698427e4a44a084de021dd9284011e00ddb3f13928381436f4fdeddcd
+```
+
+Package/version, release signing certificate, non-debuggable manifest, ABI and
+embedded native-library equality verify. It is update-installed on Quest
+`2G0YC5ZG9609PY`; the on-device base APK has the same SHA-256. Existing app data
+and imported retail data were retained. The marker `gx_lan_crc.txt` remains in
+the game's writable data directory.
+
+The same six source/test changes were applied over the Omarchy lab's required
+Linux compatibility delta. Its incremental native build/link succeeds and
+`ldd -r` reports no missing library or unresolved symbol. The staged executable
+SHA-256 is
+`a403f82f9ddf7e8a5e9de6bb3b05699c2098df5736ad886299139f57e01bf48f`;
+the prior executable is preserved as `runtime/GeneralsXZH.pre-object-trace`.
+The launcher continues to isolate configuration and data, pins WLAN
+`192.168.178.158`, enables `GX_LAN_CRC=1` and leaves Steam/Proton untouched.
+
+Focused observer/detector tests pass. The paired comparator now passes 14
+synthetic tests covering CRC differences, traversal-order differences,
+truncation and incomplete records. Workspace validation passes all 788 checks
+with the LAN presentation gate disabled and enabled. The physical test remains:
+
+1. On Omarchy's graphical desktop, run
+   `bash "$HOME/generals-xr-lan-diagnostics-78207e6/start.sh"`.
+2. Let Quest host through Direct Connect on the same stock map and fixed
+   factions used for the paired trace; use no AI and issue no orders for at
+   least the first 30 seconds.
+3. Stop after the mismatch or after enough checkpoints, preserve the unique
+   Omarchy `logs/native-zh-*` file and the Quest current/previous XR stderr
+   logs, then run `scripts/qa/lan-crc-compare.py` on that matching pair.
+
+Do not interpret the diagnostic install as multiplayer acceptance. After the
+first object/timing cause is demonstrated and corrected, repeat same-source idle
+and interactive matches before returning to unmodified Steam/Proton and the
+separate Windows Steam gate.

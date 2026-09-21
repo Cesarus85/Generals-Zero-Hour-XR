@@ -4290,6 +4290,9 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 	}
 	const bool traceCRC = isInGameLogicUpdate() && GXLanCRCTrace::captureGeneration() &&
 		xferCRC->getXferMode() == XFER_CRC;
+	GXLanCRCTrace::ObjectCRC traceObjects[GXLanCRCTrace::kMaxObjectRecords];
+	Int traceObjectCount = 0;
+	Int traceObjectTotal = 0;
 
 	// calculate CRCs
 	Object *obj;
@@ -4304,6 +4307,12 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 	for( obj = m_objList; obj; obj=obj->getNextObject() )
 	{
 		xferCRC->xferSnapshot( obj );
+		// GeneralsX @feature Codex 21/09/2026 Observe object order and rolling CRC without a second scan or CRC write.
+		if (traceCRC)
+		{
+			GXLanCRCTrace::observeObject(traceObjects, GXLanCRCTrace::kMaxObjectRecords,
+				traceObjectCount, traceObjectTotal, static_cast<UnsignedInt>(obj->getID()), xferCRC->getCRC());
+		}
 	}
 	UnsignedInt seed = GetGameLogicRandomSeedCRC();
 	if (traceCRC) { traceStages.objects = xferCRC->getCRC(); traceSeed = seed; }
@@ -4375,7 +4384,7 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 	if (traceCRC)
 	{
 		GXLanCRCTrace::generated(m_frame, TheGameInfo ? TheGameInfo->getLocalSlotNum() : -1,
-			theCRC, traceSeed, traceStages);
+			theCRC, traceSeed, traceStages, traceObjects, traceObjectCount, traceObjectTotal);
 	}
 
 	delete xferCRC;

@@ -6,7 +6,7 @@
 
 namespace GXLanCRCTrace
 {
-enum { kFirstCheckpoints = 8, kMaxSlots = 16 };
+enum { kFirstCheckpoints = 8, kMaxSlots = 16, kMaxObjectRecords = 2048 };
 
 enum Reason { no_mismatch, missing_crc, different_crc };
 
@@ -24,6 +24,12 @@ struct Stages
 	unsigned int partition;
 	unsigned int players;
 	unsigned int ai;
+};
+
+struct ObjectCRC
+{
+	unsigned int id;
+	unsigned int crc;
 };
 
 struct State
@@ -94,7 +100,19 @@ inline void armGeneration()
 	state().armed = state().enabled && state().generated < kFirstCheckpoints;
 }
 
-inline void generated(int frame, int localSlot, unsigned int crc, unsigned int rngSeedCRC, const Stages &stages)
+// GeneralsX @feature Codex 21/09/2026 Capture bounded per-object CRC observations in the production traversal.
+inline void observeObject(ObjectCRC *records, int capacity, int &captured, int &total,
+	unsigned int id, unsigned int crc)
+{
+	++total;
+	if (!records || capacity <= 0 || captured < 0 || captured >= capacity) return;
+	records[captured].id = id;
+	records[captured].crc = crc;
+	++captured;
+}
+
+inline void generated(int frame, int localSlot, unsigned int crc, unsigned int rngSeedCRC, const Stages &stages,
+	const ObjectCRC *objects, int capturedObjects, int totalObjects)
 {
 	State &s = state();
 	if (!captureGeneration()) return;
@@ -103,6 +121,17 @@ inline void generated(int frame, int localSlot, unsigned int crc, unsigned int r
 	fprintf(stderr,
 		"[GX-LAN-CRC] generated frame=%d local_slot=%d crc=%08X objects=%08X rng=%08X partition=%08X players=%08X ai=%08X rng_seed_crc=%08X\n",
 		frame, localSlot, crc, stages.objects, stages.rng, stages.partition, stages.players, stages.ai, rngSeedCRC);
+	if (capturedObjects < 0) capturedObjects = 0;
+	if (capturedObjects > kMaxObjectRecords) capturedObjects = kMaxObjectRecords;
+	if (totalObjects < capturedObjects) totalObjects = capturedObjects;
+	fprintf(stderr,
+		"[GX-LAN-CRC] object-summary frame=%d total=%d captured=%d truncated=%d limit=%d\n",
+		frame, totalObjects, capturedObjects, totalObjects > capturedObjects ? 1 : 0, kMaxObjectRecords);
+	for (int i = 0; objects && i < capturedObjects; ++i)
+	{
+		fprintf(stderr, "[GX-LAN-CRC] object frame=%d order=%d id=%08X crc=%08X\n",
+			frame, i, objects[i].id, objects[i].crc);
+	}
 	fflush(stderr);
 }
 

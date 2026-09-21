@@ -21,12 +21,14 @@ STAGES = ("objects", "rng", "partition", "players", "ai", "crc")
 class Match:
     metadata: dict
     frames: dict = field(default_factory=dict)
+    object_records: dict = field(default_factory=dict)
+    object_summaries: dict = field(default_factory=dict)
 
 
 def parse(lines):
     matches = []
     for line in lines:
-        marker = re.search(r"\[GX-LAN-CRC\] (begin|generated) (.*)", line)
+        marker = re.search(r"\[GX-LAN-CRC\] (begin|generated|object-summary|object) (.*)", line)
         if not marker:
             continue
         fields = dict(re.findall(r"(\w+)=([^\s]+)", marker[2]))
@@ -41,7 +43,7 @@ def parse(lines):
             if metadata["crc_interval"] <= 0:
                 raise ValueError("Invalid CRC interval")
             matches.append(Match(metadata))
-        else:
+        elif marker[1] == "generated":
             if not matches:
                 raise ValueError("Generation without match header; log may be truncated")
             frame = int(fields["frame"])
@@ -51,6 +53,38 @@ def parse(lines):
             if any(value < 0 or value > 0xFFFFFFFF for value in values.values()):
                 raise ValueError("CRC outside unsigned 32-bit range")
             matches[-1].frames[frame] = values
+        elif marker[1] == "object-summary":
+            if not matches:
+                raise ValueError("Object summary without match header; log may be truncated")
+            frame = int(fields["frame"])
+            if frame < 0 or frame in matches[-1].object_summaries:
+                raise ValueError("Invalid or duplicate object summary frame")
+            summary = {key: int(fields[key]) for key in ("total", "captured", "truncated", "limit")}
+            if (summary["total"] < 0 or summary["captured"] < 0 or summary["limit"] <= 0 or
+                    summary["captured"] > summary["total"] or summary["captured"] > summary["limit"] or
+                    summary["truncated"] not in (0, 1) or
+                    summary["truncated"] != int(summary["total"] > summary["captured"])):
+                raise ValueError("Invalid object summary")
+            matches[-1].object_summaries[frame] = summary
+        else:
+            if not matches:
+                raise ValueError("Object record without match header; log may be truncated")
+            frame = int(fields["frame"])
+            order = int(fields["order"])
+            object_id = int(fields["id"], 16)
+            crc = int(fields["crc"], 16)
+            records = matches[-1].object_records.setdefault(frame, [])
+            if frame < 0 or order != len(records) or object_id < 0 or object_id > 0xFFFFFFFF or crc < 0 or crc > 0xFFFFFFFF:
+                raise ValueError("Invalid or non-sequential object record")
+            records.append((object_id, crc))
+    for match in matches:
+        for frame, summary in match.object_summaries.items():
+            if frame not in match.frames:
+                raise ValueError("Object summary has no generation checkpoint")
+            if len(match.object_records.get(frame, ())) != summary["captured"]:
+                raise ValueError("Object record count does not match summary")
+        if any(frame not in match.object_summaries for frame in match.object_records):
+            raise ValueError("Object records have no summary")
     return matches
 
 
@@ -66,6 +100,37 @@ def select(matches, number):
     return matches[number - 1]
 
 
+def describe_object_difference(a, b, frame):
+    summary_a = a.object_summaries.get(frame)
+    summary_b = b.object_summaries.get(frame)
+    if summary_a is None or summary_b is None:
+        return "Per-object observations are unavailable for one or both peers."
+    records_a = a.object_records.get(frame, ())
+    records_b = b.object_records.get(frame, ())
+    for order, (left, right) in enumerate(zip(records_a, records_b)):
+        if left[0] != right[0]:
+            return (f"First per-object difference at order {order}: "
+                    f"A id={left[0]:08X}, B id={right[0]:08X}; traversal order differs.")
+        if left[1] != right[1]:
+            previous = "start of object traversal" if order == 0 else f"equal through order {order - 1}"
+            return (f"First per-object difference after id={left[0]:08X} at order {order}: "
+                    f"A={left[1]:08X}, B={right[1]:08X}; {previous}.")
+    if len(records_a) != len(records_b):
+        order = min(len(records_a), len(records_b))
+        next_a = f"{records_a[order][0]:08X}" if order < len(records_a) else "missing"
+        next_b = f"{records_b[order][0]:08X}" if order < len(records_b) else "missing"
+        return (f"First per-object coverage difference at order {order}: "
+                f"A id={next_a}, B id={next_b}.")
+    if summary_a["total"] != summary_b["total"]:
+        return (f"Object totals differ after {len(records_a)} matching bounded records: "
+                f"A={summary_a['total']}, B={summary_b['total']}.")
+    if summary_a["truncated"] or summary_b["truncated"]:
+        return (f"The first {len(records_a)} object records agree, but the bounded trace was truncated "
+                f"(A total={summary_a['total']}, B total={summary_b['total']}).")
+    return ("All complete per-object records agree despite the object-stage CRC difference; "
+            "the trace is internally inconsistent and should be repeated.")
+
+
 def compare(a, b):
     if a.metadata != b.metadata:
         raise ValueError("Map CRC, seed or CRC interval differ; these traces are not comparable")
@@ -77,10 +142,11 @@ def compare(a, b):
         differing = [stage for stage in STAGES if left[stage] != right[stage]]
         if differing or left["rng_seed_crc"] != right["rng_seed_crc"]:
             stage = differing[0] if differing else "rng_seed_crc"
+            object_detail = f"\n{describe_object_difference(a, b, frame)}" if stage == "objects" else ""
             return 1, (
                 f"First observed difference at generation frame {frame}: {stage}\n"
                 f"A={left[stage]:08X} B={right[stage]:08X}; "
-                f"final CRC A={left['crc']:08X} B={right['crc']:08X}\n"
+                f"final CRC A={left['crc']:08X} B={right['crc']:08X}{object_detail}\n"
                 "Stages are rolling CRC checkpoints, not independent subsystem hashes. "
                 "This identifies a recorded difference, not its root cause or exact first tick."
             )

@@ -35,12 +35,22 @@ int main()
 
 	const unsigned int engineCRC = 0xABCDu;
 	const Stages stages = { 1u, 2u, 3u, 4u, 5u };
+	ObjectCRC objects[2] = {};
+	int capturedObjects = 0;
+	int totalObjects = 0;
+	observeObject(objects, 2, capturedObjects, totalObjects, 0x10u, 0x100u);
+	observeObject(objects, 2, capturedObjects, totalObjects, 0x20u, 0x200u);
+	observeObject(objects, 2, capturedObjects, totalObjects, 0x30u, 0x300u);
+	assert(capturedObjects == 2 && totalObjects == 3);
+	assert(objects[0].id == 0x10u && objects[0].crc == 0x100u);
+	assert(objects[1].id == 0x20u && objects[1].crc == 0x200u);
 	int scheduled = 0;
 	for (int frame = 0; frame < 100; ++frame) {
 		if (frame % 5 != 0) continue; // The existing caller owns this interval.
 		++scheduled;
 		armGeneration();
-		if (captureGeneration()) generated(frame, 0, engineCRC, 42u, stages);
+		if (captureGeneration()) generated(frame, 0, engineCRC, 42u, stages,
+			objects, capturedObjects, totalObjects);
 		checkpoint(frame + 1, 0, connected, 2, matching, 2, no_mismatch);
 	}
 	assert(scheduled == 20 && state().generated == kFirstCheckpoints && state().validated == kFirstCheckpoints);

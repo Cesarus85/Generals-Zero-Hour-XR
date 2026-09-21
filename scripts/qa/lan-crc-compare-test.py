@@ -13,6 +13,9 @@ spec.loader.exec_module(module)
 
 HEADER = "[GX-LAN-CRC] begin game=ZeroHour mode=LAN map_crc=ABCDEF00 game_seed=42 crc_interval=100\n"
 FRAME = "[GX-LAN-CRC] generated frame=100 local_slot=0 objects=01 rng=02 partition=03 players=04 ai=05 crc=05 rng_seed_crc=06\n"
+SUMMARY = "[GX-LAN-CRC] object-summary frame=100 total=2 captured=2 truncated=0 limit=2048\n"
+OBJECT_A = "[GX-LAN-CRC] object frame=100 order=0 id=00000010 crc=00000011\n"
+OBJECT_B = "[GX-LAN-CRC] object frame=100 order=1 id=00000020 crc=00000021\n"
 
 
 class CompareTest(unittest.TestCase):
@@ -69,6 +72,38 @@ class CompareTest(unittest.TestCase):
         code, report = module.compare(self.sample(), self.sample((HEADER + FRAME).replace("rng_seed_crc=06", "rng_seed_crc=07")))
         self.assertEqual(code, 1)
         self.assertIn("rng_seed_crc", report)
+
+    def test_first_object_crc_difference(self):
+        left = self.sample(HEADER + FRAME + SUMMARY + OBJECT_A + OBJECT_B)
+        right_text = (HEADER + FRAME.replace("objects=01", "objects=09") + SUMMARY + OBJECT_A +
+                      OBJECT_B.replace("crc=00000021", "crc=00000029"))
+        code, report = module.compare(left, self.sample(right_text))
+        self.assertEqual(code, 1)
+        self.assertIn("after id=00000020 at order 1", report)
+        self.assertIn("equal through order 0", report)
+
+    def test_object_order_difference(self):
+        left = self.sample(HEADER + FRAME + SUMMARY + OBJECT_A + OBJECT_B)
+        right_text = (HEADER + FRAME.replace("objects=01", "objects=09") + SUMMARY +
+                      OBJECT_A.replace("id=00000010", "id=00000030") + OBJECT_B)
+        code, report = module.compare(left, self.sample(right_text))
+        self.assertEqual(code, 1)
+        self.assertIn("order 0", report)
+        self.assertIn("traversal order differs", report)
+
+    def test_bounded_object_trace_reports_truncation(self):
+        summary = SUMMARY.replace("total=2 captured=2 truncated=0", "total=3 captured=2 truncated=1")
+        left = self.sample(HEADER + FRAME + summary + OBJECT_A + OBJECT_B)
+        right_frame = FRAME.replace("objects=01", "objects=09")
+        code, report = module.compare(left, self.sample(HEADER + right_frame + summary + OBJECT_A + OBJECT_B))
+        self.assertEqual(code, 1)
+        self.assertIn("bounded trace was truncated", report)
+
+    def test_rejects_incomplete_object_trace(self):
+        with self.assertRaises(ValueError):
+            self.sample(HEADER + FRAME + SUMMARY + OBJECT_A)
+        with self.assertRaises(ValueError):
+            self.sample(HEADER + FRAME + OBJECT_A)
 
 
 if __name__ == "__main__":
