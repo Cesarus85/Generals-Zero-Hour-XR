@@ -485,7 +485,14 @@ embedded `libmain.so`
 `ab0a695ddad20efefee39248ee007af76eb13d81dcbf615b783ecc9224a5ac0d`,
 and Omarchy executable
 `25da958cae8ad18a8065a6ca840f41f7284f95da03a48764b7726e4c3338833a`.
-Immediate gate: repeat only the interactive one-building-per-player case.
+Multiplayer work is paused at the user's request. Do not ask for the pending
+10236 single-object repetition on resume. First implement the universal,
+bounded desync snapshot described in PLAN-025 so one representative match can
+diagnose all captured objects/field boundaries and synchronized command
+context without per-event rebuilds. Quest-to-Quest with two copies of the
+public 1.2.28 APK is plausible because architecture, binary and game-data basis
+can be identical, but it remains untested and unsupported; the public build
+also predates the corrected CRC-slot validation and deterministic-math work.
 
 The user's primary goal is Quest versus the
 unmodified Steam PC version, with Quest peers retained. The custom PC build

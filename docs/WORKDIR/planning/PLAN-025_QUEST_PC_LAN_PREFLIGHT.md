@@ -833,3 +833,26 @@ The matching staged Omarchy executable SHA-256 is
 `25da958cae8ad18a8065a6ca840f41f7284f95da03a48764b7726e4c3338833a`;
 10235 is retained as `runtime/GeneralsXZH.pre-object-d3-trace`. Repeat only the
 interactive one-building-per-player case; another idle run is unnecessary.
+
+#### 2026-09-21 pause and diagnostic-strategy change
+
+The user paused multiplayer work before running the 10236 target-object test.
+Do not resume with one rebuild per newly observed object or gameplay action;
+10236 may remain installed as evidence tooling, but its pending test is no
+longer the preferred next step.
+
+Resume by replacing the single-object observer with one bounded, opt-in desync
+snapshot that records the template and existing CRC field boundaries for every
+captured object, global rolling stages, RNG-seed checksum and the synchronized
+command/frame stream. On mismatch, both peers must emit a compact snapshot that
+the offline comparator can reduce to the first unequal object, field and
+command context without a target-specific rebuild. Keep this diagnostic out of
+normal/offline and public builds.
+
+Validate that tool with one representative same-source scenario covering
+construction, production, movement, combat and one ability. Fix only evidenced
+root causes, then repeat the broader scenario, a 15-minute Quest session and
+finally the unmodified Steam/Proton and Windows Steam gates. Quest-to-Quest is
+an independent and promising earlier test because identical release APKs use
+the same ARM64 Android simulation binary, but it is not yet verified and must
+not be presented as supported multiplayer.
