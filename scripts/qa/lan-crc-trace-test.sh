@@ -39,6 +39,10 @@ rg -Fq 'msg->appendIntegerArgument(m_CRC);' "$logic"
 rg -Fq 'xferCRC->xferSnapshot( obj );' "$logic"
 rg -Fq 'GXLanCRCTrace::observeObject(traceObjects' "$logic"
 rg -Fq 'GXLanCRCTrace::railroadStep(' "$repo_root/GeneralsMD/Code/GameEngine/Source/GameLogic/Object/Update/AIUpdate/RailroadGuideAIUpdate.cpp"
+rg -Fq 'Real desiredAngle = WWMath::Atan2(dy, dx);' "$repo_root/GeneralsMD/Code/GameEngine/Source/GameLogic/Object/Update/AIUpdate/RailroadGuideAIUpdate.cpp"
+matrix="$repo_root/Core/Libraries/Source/WWVegas/WWMath/matrix3d.h"
+sed -n '/Matrix3D::In_Place_Pre_Rotate_Z(float theta)/,/^}/p' "$matrix" | rg -Fq 'c = WWMath::Cos(theta);'
+sed -n '/Matrix3D::In_Place_Pre_Rotate_Z(float theta)/,/^}/p' "$matrix" | rg -Fq 's = WWMath::Sin(theta);'
 rg -Fq 'xferCRC->xferSnapshot( ThePartitionManager );' "$logic"
 rg -Fq 'xferCRC->xferSnapshot( ThePlayerList );' "$logic"
 rg -Fq 'xferCRC->xferSnapshot( TheAI );' "$logic"

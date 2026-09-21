@@ -1302,7 +1302,9 @@ void RailroadBehavior::updatePositionTrackDistance( PullInfo *pullerInfo, PullIn
 	trackPosDelta.z = 0;
 	Real dx = pullerInfo->towHitchPosition.x - turnPos.x;
 	Real dy = pullerInfo->towHitchPosition.y - turnPos.y;
-	Real desiredAngle = atan2(dy, dx);
+	// GeneralsX @bugfix Codex 21/09/2026 Use the shared math gateway: the native
+	// Android and glibc atan2 results differ by one ULP on identical train inputs.
+	Real desiredAngle = WWMath::Atan2(dy, dx);
 
 
 	Real currentAngle = obj->getTransformMatrix()->Get_Z_Rotation();
@@ -1655,6 +1657,5 @@ void RailroadBehavior::loadPostProcess()
 	m_clicketyClackSound.setObjectID( getObject()->getID() ) ;
 
 }
-
 
 

@@ -903,8 +903,10 @@ WWINLINE void Matrix3D::Rotate_Z(float theta)
 	float tmp1,tmp2;
 	float c,s;
 
-	c = cosf(theta);
-	s = sinf(theta);
+	// GeneralsX @bugfix Codex 21/09/2026 Route simulation rotation through the
+	// opt-in deterministic backend for cross-architecture lockstep builds.
+	c = WWMath::Cos(theta);
+	s = WWMath::Sin(theta);
 
 	tmp1 = Row[0][0]; tmp2 = Row[0][1];
 	Row[0][0] = (float)( c*tmp1 + s*tmp2);
@@ -1342,8 +1344,10 @@ WWINLINE void Matrix3D::In_Place_Pre_Rotate_Z(float theta)
 	float tmp1,tmp2;
 	float c,s;
 
-	c = cosf(theta);
-	s = sinf(theta);
+	// GeneralsX @bugfix Codex 21/09/2026 This is the exact railroad transform
+	// path; route it through the opt-in cross-architecture math backend too.
+	c = WWMath::Cos(theta);
+	s = WWMath::Sin(theta);
 
 	tmp1 = Row[0][0]; tmp2 = Row[1][0];
 	Row[0][0] = (float)(c*tmp1 - s*tmp2);

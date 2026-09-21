@@ -91,5 +91,12 @@ target_link_libraries(core_wwmath PRIVATE
     core_wwsaveload
 )
 
+# GeneralsX @bugfix Codex 21/09/2026 Carry the pinned deterministic backend to
+# every consumer when the opt-in LAN build enables it; normal builds do not
+# configure or link this dependency.
+if(SAGE_USE_DETERMINISTIC_MATH)
+    target_link_libraries(core_wwmath PUBLIC gamemath::gamemath)
+endif()
+
 # @todo Test its impact and see what to do with the legacy functions.
 #add_compile_definitions(core_wwmath PUBLIC ALLOW_TEMPORARIES) # Enables legacy math with "temporaries"

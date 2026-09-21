@@ -453,6 +453,28 @@ frames 0-105. Omarchy's matching executable SHA-256 is
 10233 is preserved as `runtime/GeneralsXZH.pre-railroad-trace`. Run the same
 stock-map, no-AI, no-order match once; no settings or assets need to be
 reimported.
+The 10234 result identifies the initiating operation. At frame 1, object
+`0000000D` enters the railroad angle calculation with every logged input
+bit-identical on Quest and Omarchy. Native `atan2` alone returns Quest
+`BF5788E6` versus Omarchy `BF5788E7`; the difference propagates from frame 2.
+The experimental branch is therefore wiring the pinned GameMath software path
+behind the existing opt-in `SAGE_USE_DETERMINISTIC_MATH` switch and routing the
+railroad angle/matrix rotation through it. This must first pass another paired
+same-source run. It is not yet a Steam retail compatibility result, and public
+1.2.28 remains unchanged.
+That pair is now deployed as private Quest build 10235
+(`1.2.35-lan-deterministic-math`) and the matching staged Omarchy executable.
+Quest APK SHA-256 is
+`f871b075ea9ffe2e5cd2c6e78fc4f4cbcb1cc069a0f8bd1601b1639b3a023454`;
+embedded `libmain.so` SHA-256 is
+`f160d56d268398e7de4c9f62d2d9ac55e8d81d852cbb174844597a15bf5e6259`;
+Omarchy executable SHA-256 is
+`d11817b4be3207dfe5c73629694311605ddbbc8270885d44ea6aa8db67a0e38c`.
+App data and the 10234 Omarchy rollback binary are retained. Immediate gate:
+Quest hosts the same stock map against native Omarchy with no AI and no orders
+for at least two to three minutes. Only if it stays synchronized, repeat once
+with ordinary commands. Public 1.2.28 and `main` are still untouched.
+
 The user's primary goal is Quest versus the
 unmodified Steam PC version, with Quest peers retained. The custom PC build
 is a diagnostic tool, not a replacement compatibility promise. A no-popup

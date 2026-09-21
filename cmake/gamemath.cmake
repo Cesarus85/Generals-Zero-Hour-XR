@@ -11,7 +11,7 @@
 # https://github.com/TheSuperHackers/GeneralsGameCode/pull/2670
 #
 # Note: GameMath source location is configurable via SAGE_GAMEMATH_GIT_REPO
-# Default: TheSuperHackers fork with deterministic math integration
+# Default: pinned GameMath release used by the upstream deterministic-math work
 #
 # Upstream reference: fdlibm (Berkeley math library) provides platform-independent
 # implementations of standard math functions (sin, cos, sqrt, atan2, etc.) that produce
@@ -32,30 +32,36 @@ if(SAGE_USE_DETERMINISTIC_MATH)
     include(FetchContent)
 
     # FetchContent declaration for GameMath library
-    # Source: TheSuperHackers fork with deterministic math support
+    # GeneralsX @bugfix Codex 21/09/2026 Fetch the actual GameMath project rather than
+    # recursively fetching GeneralsGameCode, whose placeholder SOURCE_SUBDIR never
+    # provided a gamemath target.
     # Can be overridden via cmake -DSAGE_GAMEMATH_GIT_REPO=<url> -DSAGE_GAMEMATH_GIT_TAG=<tag>
     if(NOT SAGE_GAMEMATH_GIT_REPO)
-        set(SAGE_GAMEMATH_GIT_REPO "https://github.com/TheSuperHackers/GeneralsGameCode.git")
+        set(SAGE_GAMEMATH_GIT_REPO "https://github.com/TheSuperHackers/GameMath.git")
     endif()
     
     if(NOT SAGE_GAMEMATH_GIT_TAG)
         # Pinned SHA: tracking "main" let the deterministic-math source drift silently.
-        set(SAGE_GAMEMATH_GIT_TAG "838f9d0fd1c658ec795d3903a4f3f7e265b6e6d5")
+        set(SAGE_GAMEMATH_GIT_TAG "59f7ccd494f7e7c916a784ac26ef266f9f09d78d")
     endif()
 
     FetchContent_Declare(
         gamemath
         GIT_REPOSITORY ${SAGE_GAMEMATH_GIT_REPO}
         GIT_TAG ${SAGE_GAMEMATH_GIT_TAG}
-        SOURCE_SUBDIR "Core/GameMath"  # Adjust if GameMath moves
     )
 
     # Minimal GameMath configuration
-    set(GAMEMATH_ENABLE_TESTS OFF CACHE BOOL "Disable GameMath tests" FORCE)
-    set(GAMEMATH_ENABLE_EXAMPLES OFF CACHE BOOL "Disable GameMath examples" FORCE)
+    set(GM_ENABLE_TESTS OFF CACHE BOOL "Disable GameMath tests" FORCE)
+    set(GM_ENABLE_INTRINSICS OFF CACHE BOOL "Use the same software path on every architecture" FORCE)
+    set(gamemath_SHARED_LIBS OFF CACHE BOOL "Link deterministic math into the game binary" FORCE)
 
     # Make GameMath available (FetchContent_MakeAvailable is idempotent)
     FetchContent_MakeAvailable(gamemath)
+
+    # wwmath.h is included by simulation targets outside core_wwmath. Keep the
+    # deterministic API visible wherever the globally selected wrapper is used.
+    include_directories(${gamemath_SOURCE_DIR}/include)
 
     # Add USE_DETERMINISTIC_MATH to all compile definitions for this project
     # This enables conditional compilation in wwmath.h and trig wrappers

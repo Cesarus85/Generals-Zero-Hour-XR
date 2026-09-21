@@ -756,3 +756,46 @@ and the 10233 executable is retained as
 `runtime/GeneralsXZH.pre-railroad-trace`. The observer writes only raw float
 words for railroad inputs and intermediate angles through frame 105; it does
 not alter simulation or network state.
+
+#### 2026-09-21 railroad-intermediate result
+
+The paired 10234 run used map CRC `DEA9E8E4` and seed `28234553`. Both peers
+produced 1,365 railroad records. The first record, frame 1 object `0000000D`,
+has bit-identical track distance, hitch radius, positions, direction, turn/tow
+points and final `dx`/`dy`. The first and only difference at that point is the
+angle returned for those identical inputs: Quest `BF5788E6`, Omarchy
+`BF5788E7`; the relative angle immediately inherits the same one-ULP split.
+By frame 2 it has propagated into the object's position/direction and then into
+the train chain. This proves that object order, input state and path arithmetic
+do not initiate this mismatch: platform-native `atan2` does.
+
+The next experimental pair must use one pinned software math implementation on
+both ARM64 and x86-64 for the railroad angle, current matrix angle and the
+matrix sine/cosine rotation. The normal/public configuration remains native
+math because this compatibility change has not passed paired LAN validation
+and is not automatically compatible with the unmodified retail executable.
+First validate a custom same-source Quest/Omarchy pair; only then measure the
+remaining gap to Steam/Proton rather than claiming retail compatibility.
+
+#### 2026-09-21 deterministic-math deployment
+
+Private Quest build 10235 (`1.2.35-lan-deterministic-math`) is release-signed,
+non-debuggable and update-installed with retained game data. Its APK SHA-256 is
+`f871b075ea9ffe2e5cd2c6e78fc4f4cbcb1cc069a0f8bd1601b1639b3a023454`;
+the embedded `libmain.so` SHA-256 is
+`f160d56d268398e7de4c9f62d2d9ac55e8d81d852cbb174844597a15bf5e6259`.
+The matching Omarchy executable is staged with SHA-256
+`d11817b4be3207dfe5c73629694311605ddbbc8270885d44ea6aa8db67a0e38c`;
+10234 is retained as `runtime/GeneralsXZH.pre-deterministic-math`. Both binaries
+contain the pinned GameMath functions statically and have no `libgm.so`
+runtime dependency.
+
+This build changes simulation arithmetic only when
+`SAGE_USE_DETERMINISTIC_MATH=ON`. It uses GameMath commit
+`59f7ccd494f7e7c916a784ac26ef266f9f09d78d`, disables architecture-specific
+intrinsics and routes the demonstrated railroad `atan2` plus the invoked
+in-place Z rotation through the common gateway. The normal/public option
+remains OFF. The required physical gate is a Quest-hosted stock-map match with
+the staged native Omarchy build, no AI and no orders, held for at least two to
+three minutes or until a mismatch. A clean idle run permits one interactive
+same-source match; it does not yet establish Steam retail compatibility.

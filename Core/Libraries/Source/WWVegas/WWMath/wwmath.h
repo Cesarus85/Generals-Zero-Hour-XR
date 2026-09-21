@@ -41,6 +41,10 @@
 #include <float.h>
 #include <assert.h>
 
+#ifdef USE_DETERMINISTIC_MATH
+#include "gmath.h"
+#endif
+
 /*
 ** Some global constants.
 */
@@ -139,19 +143,10 @@ static WWINLINE float Asin(float val);
 // Upstream reference: Okladnoj, PR #2670
 // https://github.com/TheSuperHackers/GeneralsGameCode/pull/2670
 
-// Include GameMath headers when deterministic math is enabled
-// Note: GameMath integration is pending. This header will be populated when
-// GameMath submodule or library is available. For now, wrappers fallback to CRT.
-#ifdef USE_DETERMINISTIC_MATH
-// TODO: Uncomment when GameMath library is integrated as submodule
-// #include "GameMath/deterministic_math.h"
-#endif
-
 static WWINLINE float		Atan(float x) 
 { 
 #ifdef USE_DETERMINISTIC_MATH
-	// TODO: return GameMath::Atan(x);
-	return static_cast<float>(atan(x)); 
+	return gm_atanf(x);
 #else
 	return static_cast<float>(atan(x)); 
 #endif
@@ -160,8 +155,7 @@ static WWINLINE float		Atan(float x)
 static WWINLINE float		Atan2(float y, float x) 
 { 
 #ifdef USE_DETERMINISTIC_MATH
-	// TODO: return GameMath::Atan2(y, x);
-	return static_cast<float>(atan2(y, x)); 
+	return gm_atan2f(y, x);
 #else
 	return static_cast<float>(atan2(y, x)); 
 #endif
@@ -172,8 +166,7 @@ static WWINLINE float		Atan2(float y, float x)
 static WWINLINE float SinTrig(float x) 
 { 
 #ifdef USE_DETERMINISTIC_MATH
-	// TODO: return GameMath::Sin(x);
-	return Sin(x); 
+	return gm_sinf(x);
 #else
 	return Sin(x); 
 #endif
@@ -182,8 +175,7 @@ static WWINLINE float SinTrig(float x)
 static WWINLINE float CosTrig(float x) 
 { 
 #ifdef USE_DETERMINISTIC_MATH
-	// TODO: return GameMath::Cos(x);
-	return Cos(x); 
+	return gm_cosf(x);
 #else
 	return Cos(x); 
 #endif
@@ -192,8 +184,7 @@ static WWINLINE float CosTrig(float x)
 static WWINLINE float TanTrig(float x) 
 { 
 #ifdef USE_DETERMINISTIC_MATH
-	// TODO: return GameMath::Tan(x);
-	return tanf(x); 
+	return gm_tanf(x);
 #else
 	return tanf(x); 
 #endif
@@ -202,8 +193,7 @@ static WWINLINE float TanTrig(float x)
 static WWINLINE float ACosTrig(float x) 
 { 
 #ifdef USE_DETERMINISTIC_MATH
-	// TODO: return GameMath::Acos(x);
-	return Acos(x); 
+	return gm_acosf(x);
 #else
 	return Acos(x); 
 #endif
@@ -212,8 +202,7 @@ static WWINLINE float ACosTrig(float x)
 static WWINLINE float ASinTrig(float x) 
 { 
 #ifdef USE_DETERMINISTIC_MATH
-	// TODO: return GameMath::Asin(x);
-	return Asin(x); 
+	return gm_asinf(x);
 #else
 	return Asin(x); 
 #endif
@@ -224,8 +213,7 @@ static WWINLINE float ASinTrig(float x)
 static WWINLINE double SqrtOrigin(double x) 
 { 
 #ifdef USE_DETERMINISTIC_MATH
-	// TODO: return GameMath::Sqrt(x);
-	return sqrt(x); 
+	return gm_sqrt(x);
 #else
 	return sqrt(x); 
 #endif
@@ -473,7 +461,11 @@ WWINLINE float WWMath::Cos(float val)
 #else
 WWINLINE float WWMath::Cos(float val)
 {
+#ifdef USE_DETERMINISTIC_MATH
+	return gm_cosf(val);
+#else
 	return cosf(val);
+#endif
 }
 #endif
 
@@ -495,7 +487,11 @@ WWINLINE float WWMath::Sin(float val)
 #else
 WWINLINE float WWMath::Sin(float val)
 {
+#ifdef USE_DETERMINISTIC_MATH
+	return gm_sinf(val);
+#else
 	return sinf(val);
+#endif
 }
 #endif
 
