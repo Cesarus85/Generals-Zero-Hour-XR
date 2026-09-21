@@ -7,7 +7,7 @@
 
 namespace GXLanCRCTrace
 {
-enum { kFirstCheckpoints = 8, kMaxSlots = 16, kMaxObjectRecords = 2048 };
+enum { kFirstCheckpoints = 8, kMaxSlots = 16, kMaxObjectRecords = 2048, kDetailObjectID = 0x000000D3 };
 
 enum Reason { no_mismatch, missing_crc, different_crc };
 
@@ -139,11 +139,12 @@ inline void observeObject(ObjectCRC *records, int capacity, int &captured, int &
 	++captured;
 }
 
-// GeneralsX @feature Codex 21/09/2026 Narrow the first unequal object to an existing CRC field boundary.
+// GeneralsX @feature Codex 21/09/2026 Follow the first unequal object from the
+// interactive deterministic-math match through its existing CRC boundaries.
 inline void beginObjectDetail(int frame, int order, unsigned int id, const char *templateName, unsigned int crc)
 {
 	State &s = state();
-	s.objectDetailActive = captureGeneration() && order == 0;
+	s.objectDetailActive = captureGeneration() && id == kDetailObjectID;
 	if (!s.objectDetailActive) return;
 	s.objectDetailFrame = frame;
 	s.objectDetailOrder = order;

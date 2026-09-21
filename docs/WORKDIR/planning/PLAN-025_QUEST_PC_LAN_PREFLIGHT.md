@@ -799,3 +799,37 @@ remains OFF. The required physical gate is a Quest-hosted stock-map match with
 the staged native Omarchy build, no AI and no orders, held for at least two to
 three minutes or until a mismatch. A clean idle run permits one interactive
 same-source match; it does not yet establish Steam retail compatibility.
+
+#### 2026-09-21 deterministic-math result and action target
+
+The first 10235 idle match used map CRC `DEA9E8E4`, seed `30684803` and
+completed all eight recorded checkpoints without any difference or disconnect.
+This closes the demonstrated railroad/native-`atan2` divergence for the custom
+same-source pair. It does not by itself prove a long match, combat, a second
+Quest or unmodified Steam compatibility.
+
+The following interactive match used the same map with seed `30853446`; both
+players constructed one building. Frames 0, 100, 200 and 300 agree. Frame 400
+is the first sampled difference: Quest final CRC `8C7D869C`, Omarchy
+`701BA840`; object-stage CRCs are `5412453D` and `7227E9F1`. Both peers contain
+225 objects in the same order and have matching RNG-seed CRC `9A7F6AD1`. The
+first unequal rolling object is existing ID `000000D3`, order 14, after orders
+0-13 agree. The prior detail observer still targeted order 0, so it cannot yet
+name the template or field boundary for `D3`.
+
+The next private diagnostic targets only ID `000000D3` in the existing object
+CRC traversal. Repeat the same one-building-per-player interaction. Compare
+its template, private status, transform words, upgrades, experience, health,
+weapon bonus, damage scalar and weapon boundaries at frame 400. This remains
+read-only instrumentation; do not infer or apply a gameplay fix until that
+field evidence identifies the responsible state.
+
+Private Quest build 10236 (`1.2.36-lan-object-d3-trace`) is installed in place
+with retained data. APK SHA-256 is
+`44ae069a4957b5f000d5b67e5ba566a0bb7b113ce0ff6432b5f50f94a71382b3`;
+embedded `libmain.so` SHA-256 is
+`ab0a695ddad20efefee39248ee007af76eb13d81dcbf615b783ecc9224a5ac0d`.
+The matching staged Omarchy executable SHA-256 is
+`25da958cae8ad18a8065a6ca840f41f7284f95da03a48764b7726e4c3338833a`;
+10235 is retained as `runtime/GeneralsXZH.pre-object-d3-trace`. Repeat only the
+interactive one-building-per-player case; another idle run is unnecessary.

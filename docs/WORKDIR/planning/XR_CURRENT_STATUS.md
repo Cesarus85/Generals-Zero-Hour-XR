@@ -470,10 +470,22 @@ embedded `libmain.so` SHA-256 is
 `f160d56d268398e7de4c9f62d2d9ac55e8d81d852cbb174844597a15bf5e6259`;
 Omarchy executable SHA-256 is
 `d11817b4be3207dfe5c73629694311605ddbbc8270885d44ea6aa8db67a0e38c`.
-App data and the 10234 Omarchy rollback binary are retained. Immediate gate:
-Quest hosts the same stock map against native Omarchy with no AI and no orders
-for at least two to three minutes. Only if it stays synchronized, repeat once
-with ordinary commands. Public 1.2.28 and `main` are still untouched.
+App data and the 10234 Omarchy rollback binary are retained. The idle gate has
+now passed all eight sampled checkpoints without mismatch. In the follow-up,
+both players built one building: both peers still agree through frame 300 but
+first differ in the object stage at frame 400. Object count/order and RNG seed
+agree; the first unequal rolling object is existing ID `000000D3`, order 14.
+The next private build retargets the bounded per-field observer to that object
+for one repeat of the same construction action. Public 1.2.28 and `main` remain
+untouched; LAN is still experimental and unsupported.
+That diagnostic is now installed/staged as 10236
+(`1.2.36-lan-object-d3-trace`): Quest APK SHA-256
+`44ae069a4957b5f000d5b67e5ba566a0bb7b113ce0ff6432b5f50f94a71382b3`,
+embedded `libmain.so`
+`ab0a695ddad20efefee39248ee007af76eb13d81dcbf615b783ecc9224a5ac0d`,
+and Omarchy executable
+`25da958cae8ad18a8065a6ca840f41f7284f95da03a48764b7726e4c3338833a`.
+Immediate gate: repeat only the interactive one-building-per-player case.
 
 The user's primary goal is Quest versus the
 unmodified Steam PC version, with Quest peers retained. The custom PC build

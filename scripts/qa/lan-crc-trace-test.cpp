@@ -45,7 +45,7 @@ int main()
 	assert(objects[0].id == 0x10u && objects[0].crc == 0x100u);
 	assert(objects[1].id == 0x20u && objects[1].crc == 0x200u);
 	armGeneration();
-	beginObjectDetail(0, 0, 0x10u, "TestObject", 0x01u);
+	beginObjectDetail(0, 14, kDetailObjectID, "TestObject", 0x01u);
 	assert(objectDetailActive());
 	objectField("private_status", 0x02u);
 	const unsigned int transformWords[] = { 0x3F800000u, 0u, 0u, 0x41200000u };
