@@ -18,6 +18,7 @@ test "$(rg -c '^\[GX-LAN-CRC\] object ' "$test_dir/trace.log")" -eq 16
 test "$(rg -c '^\[GX-LAN-CRC\] object-detail' "$test_dir/trace.log")" -eq 1
 test "$(rg -c '^\[GX-LAN-CRC\] object-field' "$test_dir/trace.log")" -eq 1
 test "$(rg -c '^\[GX-LAN-CRC\] object-transform-word' "$test_dir/trace.log")" -eq 4
+test "$(rg -c '^\[GX-LAN-CRC\] railroad-step' "$test_dir/trace.log")" -eq 1
 test "$(rg -c '^\[GX-LAN-CRC\] checkpoint' "$test_dir/trace.log")" -eq 8
 test "$(rg -c '^\[GX-LAN-CRC\] failure' "$test_dir/trace.log")" -eq 2
 rg -q 'reason=missing_crc detector_reason=missing_crc' "$test_dir/trace.log"
@@ -27,6 +28,7 @@ rg -q 'object frame=0 order=0 id=00000010 crc=00000100' "$test_dir/trace.log"
 rg -q 'object-detail frame=0 order=0 id=00000010 template=TestObject start_crc=00000001' "$test_dir/trace.log"
 rg -q 'object-field frame=0 order=0 id=00000010 field=private_status crc=00000002' "$test_dir/trace.log"
 rg -q 'object-transform-word frame=0 order=0 id=00000010 index=3 bits=41200000' "$test_dir/trace.log"
+rg -q 'railroad-step frame=100 id=00000010 pull_track=3F800000 .*relative=41900000' "$test_dir/trace.log"
 
 # Source-level guards only: they catch accidental edits to cadence, message,
 # and traversal sites; a full engine/headset run is needed for runtime proof.
@@ -36,6 +38,7 @@ rg -Fq 'm_CRC = getCRC( CRC_RECALC );' "$logic"
 rg -Fq 'msg->appendIntegerArgument(m_CRC);' "$logic"
 rg -Fq 'xferCRC->xferSnapshot( obj );' "$logic"
 rg -Fq 'GXLanCRCTrace::observeObject(traceObjects' "$logic"
+rg -Fq 'GXLanCRCTrace::railroadStep(' "$repo_root/GeneralsMD/Code/GameEngine/Source/GameLogic/Object/Update/AIUpdate/RailroadGuideAIUpdate.cpp"
 rg -Fq 'xferCRC->xferSnapshot( ThePartitionManager );' "$logic"
 rg -Fq 'xferCRC->xferSnapshot( ThePlayerList );' "$logic"
 rg -Fq 'xferCRC->xferSnapshot( TheAI );' "$logic"

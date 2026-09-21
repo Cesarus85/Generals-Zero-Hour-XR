@@ -427,15 +427,32 @@ CRC checking or remove/freeze the train. Only a demonstrated deterministic fix
 followed by idle and interactive same-source passes allows returning to
 Steam/Proton. Public 1.2.28 and `main` remain unchanged.
 
-That observer is deployed as private Quest 10233
+The 10233 raw-matrix test is complete. At frame 100 the first differing word is
+rotation `m01`: Quest `BF6050E9` versus Omarchy `BF6050E6` (about 1.79e-7),
+followed by symmetric `m10` and a one-ULP X-position difference; Y/Z agree.
+Frame 0 is fully equal. Both builds already use `-ffp-contract=off`; the train
+path still uses platform CRT `atan2` and `sinf`/`cosf`. The deterministic-math
+option is presently only a TODO-backed CRT fallback and must not be presented
+as a solution.
+
+The prior observer was deployed as private Quest 10233
 (`1.2.33-lan-transform-trace`), APK SHA-256
 `795cb998be8e6a8530581f36fa882468d0022742ee5a8de372683be7c63bc036`.
 It update-installed with retained app data and matching device hash. Omarchy's
 matching staged executable SHA-256 is
 `5f8ce7ec91812bae805fe0ad27bf9c4ae87bb3d53546d074ff702a5fb247f9e1`;
 10232 is preserved as `runtime/GeneralsXZH.pre-transform-trace` and `ldd -r`
-is clean. Run the same stock-map, no-AI, no-order match once; no settings or
-assets need to be reimported.
+is clean. Its successor is now deployed as private Quest 10234
+(`1.2.34-lan-railroad-trace`), APK SHA-256
+`39bc84d7e4131f18f09548e3e7edef47ec652bade2ab877f3feb3cec78620642`,
+with embedded `libmain.so` SHA-256
+`67a3739a830c6484f041f4db50c3de4af1112531a7aa5e156b22727dea3bc720`.
+It retains app data and adds only the railroad-intermediate trace bounded to
+frames 0-105. Omarchy's matching executable SHA-256 is
+`4c6cbdb95d83b5ad802c38192b236c4239adb6ba382bb4833d521eae46b17498`;
+10233 is preserved as `runtime/GeneralsXZH.pre-railroad-trace`. Run the same
+stock-map, no-AI, no-order match once; no settings or assets need to be
+reimported.
 The user's primary goal is Quest versus the
 unmodified Steam PC version, with Quest peers retained. The custom PC build
 is a diagnostic tool, not a replacement compatibility promise. A no-popup

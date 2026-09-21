@@ -1,13 +1,14 @@
 # PLAN-025 — Quest ↔ PC LAN preflight
 
-**Status (active 2026-09-21):** The paired Quest 10232/native Omarchy run
+**Status (active 2026-09-21):** The paired Quest 10233/native Omarchy run
 localizes the first recorded mismatch to the transform of neutral map object
 `TrainCabUngarrisonable`, ID `000000DF`, at frame 100. Both peers are identical
 through that object's private status and enter it with the same rolling CRC;
-object order/count and RNG seed checksum also agree. The next bounded diagnostic
-will name the first unequal raw matrix word before any simulation correction is
-attempted. Quest 10233 and its matching Omarchy executable are installed/staged
-for that run. Earlier Steam/Proton matches also desynchronized. LAN remains
+object order/count and RNG seed checksum also agree. Its first unequal raw
+matrix value is rotation component `m01`, followed by `m10` and X translation.
+The next bounded diagnostic records the responsible railroad intermediates
+through frame 105 before any simulation correction is attempted. Earlier
+Steam/Proton matches also desynchronized. LAN remains
 experimental and unsupported; public offline release 1.2.28 is separate and has
 not been replaced on GitHub.
 **Scope:** One Quest 3 against a PC on the same LAN. The first peer is the user's Steam Zero Hour running through Proton on Omarchy; the planned Windows Steam peer remains a separate validation. If retail gameplay desynchronizes, isolate it with a same-source GeneralsX PC build. Internet services, public matchmaking, replay and reconnect are later gates.
@@ -719,3 +720,39 @@ The signing certificate remains the established private XR certificate
 the rejected development-signed package was never installed. Omarchy's matching
 executable links cleanly, with 10232 preserved for rollback. The trace marker
 remains in the selected legitimate game-data directory.
+
+#### 2026-09-21 raw transform result
+
+The 10233 pair used map CRC `DEA9E8E4`, seed `27249035` and interval 100.
+Frame 0 agrees completely at final CRC `4D8ED386`. At frame 100 the first
+object remains ID `000000DF`, `TrainCabUngarrisonable`, with the same start and
+private-status CRCs as prior runs. The first raw transform difference is `m01`:
+Quest `BF6050E9` (`-0.876234591`) versus Omarchy `BF6050E6`
+(`-0.876234412`), about 1.79e-7. `m10` differs symmetrically by the same amount,
+and X translation is Quest `4342578D` versus Omarchy `4342578E`, about
+1.53e-5; Y and Z agree. At frame 200 the rotational components remain slightly
+different. Both peers report `different_crc` at validation frame 105.
+
+Both railroad translation units use optimization `-O2`, C++20 and
+`-ffp-contract=off`; no fast-math mismatch explains the result. The update path
+uses platform CRT `atan2`, then `cosf`/`sinf` inside
+`Matrix3D::In_Place_Pre_Rotate_Z`. The existing deterministic-math switch still
+routes to the same CRT functions and is not a fix. The next observer records
+track distance, path position, direction vector, turn/tow deltas and the three
+angle values for railroad objects only through frame 105. This distinguishes an
+earlier path/normalization divergence from `atan2` or final trigonometry without
+changing game state.
+
+#### 2026-09-21 railroad-intermediate deployment
+
+Private Quest build 10234 (`1.2.34-lan-railroad-trace`) is release-signed and
+update-installed with retained app data. Its APK SHA-256 is
+`39bc84d7e4131f18f09548e3e7edef47ec652bade2ab877f3feb3cec78620642`;
+the embedded `libmain.so` SHA-256 is
+`67a3739a830c6484f041f4db50c3de4af1112531a7aa5e156b22727dea3bc720`.
+The matching native Omarchy executable is staged with SHA-256
+`4c6cbdb95d83b5ad802c38192b236c4239adb6ba382bb4833d521eae46b17498`,
+and the 10233 executable is retained as
+`runtime/GeneralsXZH.pre-railroad-trace`. The observer writes only raw float
+words for railroad inputs and intermediate angles through frame 105; it does
+not alter simulation or network state.

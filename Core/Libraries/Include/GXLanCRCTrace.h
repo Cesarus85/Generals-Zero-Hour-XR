@@ -33,6 +33,28 @@ struct ObjectCRC
 	unsigned int crc;
 };
 
+struct RailroadStep
+{
+	float pullTrack;
+	float track;
+	float hitch;
+	float carX;
+	float carY;
+	float objectX;
+	float objectY;
+	float dirX;
+	float dirY;
+	float turnX;
+	float turnY;
+	float towX;
+	float towY;
+	float dx;
+	float dy;
+	float desired;
+	float current;
+	float relative;
+};
+
 struct State
 {
 	bool enabled;
@@ -158,6 +180,29 @@ inline void objectTransform(const void *matrix, int byteCount)
 			"[GX-LAN-CRC] object-transform-word frame=%d order=%d id=%08X index=%d bits=%08X\n",
 			s.objectDetailFrame, s.objectDetailOrder, s.objectDetailID, index, bits);
 	}
+}
+
+inline unsigned int floatBits(float value)
+{
+	unsigned int bits = 0;
+	memcpy(&bits, &value, 4);
+	return bits;
+}
+
+// GeneralsX @feature Codex 21/09/2026 Bound railroad intermediates to the first mismatching checkpoint.
+inline void railroadStep(int frame, unsigned int id, const RailroadStep &v)
+{
+	if (!state().enabled || frame < 0 || frame > 105) return;
+	fprintf(stderr,
+		"[GX-LAN-CRC] railroad-step frame=%d id=%08X pull_track=%08X track=%08X hitch=%08X "
+		"car_x=%08X car_y=%08X object_x=%08X object_y=%08X dir_x=%08X dir_y=%08X "
+		"turn_x=%08X turn_y=%08X tow_x=%08X tow_y=%08X dx=%08X dy=%08X "
+		"desired=%08X current=%08X relative=%08X\n",
+		frame, id, floatBits(v.pullTrack), floatBits(v.track), floatBits(v.hitch),
+		floatBits(v.carX), floatBits(v.carY), floatBits(v.objectX), floatBits(v.objectY),
+		floatBits(v.dirX), floatBits(v.dirY), floatBits(v.turnX), floatBits(v.turnY),
+		floatBits(v.towX), floatBits(v.towY), floatBits(v.dx), floatBits(v.dy),
+		floatBits(v.desired), floatBits(v.current), floatBits(v.relative));
 }
 
 inline void endObjectDetail()
