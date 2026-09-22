@@ -66,6 +66,8 @@ Do not guess a different import directory. Update-install only a candidate with
 the installed release certificate and a higher versionCode; never uninstall or
 clear data to bypass a signature mismatch.
 
+Each serialized record is assembled in a bounded buffer and emitted with one
+stdio call, preventing background log lines from interleaving inside a record.
 There is no per-object/per-frame disk output. The engine emits one bounded
 `[GX-LAN-SNAPSHOT] begin ... end` block to its existing stderr log at the first
 detected missing/different CRC. An orderly game reset also dumps the retained
@@ -136,8 +138,8 @@ existing signed 10236 APK. A release-signed candidate plus matching native
 Omarchy build remains required before the next physical test.
 
 ```text
-APK SHA-256 42d9ab14dcb82aeb8463f1692eeb6d5f5b99b522a2a370a93b30043c156fd485
-libmain.so 519a3fd75ff97df96f94929634bdcdf88bb13a6c583ae5e3407a5605ef3116cc
+APK SHA-256 b69ae3b84733d8e5db87d24d24be9a02d5c0db10faa9631735df1d5c998a7d75
+libmain.so c34205b4b90e2ba8118edaf0f606b605d5a6322f0162e70f232a055015342393
 ```
 
 APK v2 verification passes; the embedded native library equals the compiled

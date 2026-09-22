@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <new>
 
 namespace GXLanDesyncSnapshot
@@ -81,12 +82,34 @@ inline int copyName(char *out, const char *name)
 	out[i] = 0;
 	return name[i] != 0;
 }
-inline void hexName(const char *name)
+// One stdio call per record prevents unrelated audio/worker logs interleaving
+// between fields. Fixed storage also bounds formatting at mismatch time.
+struct Line
 {
-	if (!*name) { fputc('-', stderr); return; }
-	for (const unsigned char *p = reinterpret_cast<const unsigned char *>(name); *p; ++p)
-		fprintf(stderr, "%02X", *p);
-}
+	char text[4096];
+	int used;
+	bool valid;
+	Line() : used(0), valid(true) { text[0] = 0; }
+	void add(const char *format, ...)
+	{
+		if (!valid) return;
+		va_list args;
+		va_start(args, format);
+		const int count = vsnprintf(text + used, sizeof(text) - used, format, args);
+		va_end(args);
+		if (count < 0 || count >= static_cast<int>(sizeof(text)) - used) { valid = false; return; }
+		used += count;
+	}
+	void name(const char *value)
+	{
+		if (!*value) { add("-"); return; }
+		for (const unsigned char *p = reinterpret_cast<const unsigned char *>(value); *p; ++p) add("%02X", *p);
+	}
+	void write() const
+	{
+		fprintf(stderr, "%s\n", valid ? text : "[GX-LAN-SNAPSHOT] invalid reason=line_capacity");
+	}
+};
 // Dump once per match, only after mismatch or orderly reset. No file I/O per object/tick.
 inline void dump(const char *reason, int validationFrame)
 {
@@ -104,27 +127,29 @@ inline void dump(const char *reason, int validationFrame)
 			f.total, f.captured, f.commandsBefore);
 		for (int i = 0; i < f.captured; ++i) {
 			const Object &o = f.objects[i];
-			fprintf(stderr, "[GX-LAN-SNAPSHOT] object frame=%d order=%d id=%08X name=", f.frame, i, o.id);
-			hexName(o.name);
-			fprintf(stderr, " name_cut=%d start=%08X crc=%08X mask=%03X fields=", o.nameCut, o.start, o.crc, o.mask);
-			for (int j = 0; j < kFields; ++j) fprintf(stderr, "%s%08X", j ? "," : "", o.fields[j]);
-			fprintf(stderr, " transform_count=%d transform=", o.transformCount);
-			for (int j = 0; j < 12; ++j) fprintf(stderr, "%s%08X", j ? "," : "", o.transform[j]);
-			fputc('\n', stderr);
+			Line line;
+			line.add("[GX-LAN-SNAPSHOT] object frame=%d order=%d id=%08X name=", f.frame, i, o.id);
+			line.name(o.name);
+			line.add(" name_cut=%d start=%08X crc=%08X mask=%03X fields=", o.nameCut, o.start, o.crc, o.mask);
+			for (int j = 0; j < kFields; ++j) line.add("%s%08X", j ? "," : "", o.fields[j]);
+			line.add(" transform_count=%d transform=", o.transformCount);
+			for (int j = 0; j < 12; ++j) line.add("%s%08X", j ? "," : "", o.transform[j]);
+			line.write();
 		}
 	}
 	for (int n = 0; n < s.commandCount; ++n) {
 		const Command &c = s.storage->commands[(s.nextCommand - s.commandCount + n + kCommands) % kCommands];
-		fprintf(stderr, "[GX-LAN-SNAPSHOT] command seq=%llu frame=%d player=%d type=%d name=", c.sequence, c.frame, c.player, c.type);
-		hexName(c.name);
-		fprintf(stderr, " name_cut=%d argc=%d captured=%d args=", c.nameCut, c.argc, c.captured);
-		if (!c.captured) fputc('-', stderr);
+		Line line;
+		line.add("[GX-LAN-SNAPSHOT] command seq=%llu frame=%d player=%d type=%d name=", c.sequence, c.frame, c.player, c.type);
+		line.name(c.name);
+		line.add(" name_cut=%d argc=%d captured=%d args=", c.nameCut, c.argc, c.captured);
+		if (!c.captured) line.add("-");
 		for (int j = 0; j < c.captured; ++j) {
 			const Arg &a = c.args[j];
-			fprintf(stderr, "%s%d:%d:%08X:%08X:%08X:%08X", j ? "," : "", a.type, a.count,
+			line.add("%s%d:%d:%08X:%08X:%08X:%08X", j ? "," : "", a.type, a.count,
 				a.words[0], a.words[1], a.words[2], a.words[3]);
 		}
-		fputc('\n', stderr);
+		line.write();
 	}
 	fprintf(stderr, "[GX-LAN-SNAPSHOT] end frames=%d commands=%d\n", s.frameCount, s.commandCount);
 	fflush(stderr);

@@ -29,6 +29,9 @@ static void frame(int tick, int count, bool different)
 
 int main(int argc, char **argv)
 {
+	Line line;
+	line.add("%04095d", 1); assert(line.valid && line.used == 4095);
+	line.add("x"); assert(!line.valid); // Fail closed; never emit a silently truncated record.
 	unsetenv("GX_LAN_CRC"); unsetenv("GX_LAN_SNAPSHOT");
 	GXLanCRCTrace::beginMatch(true, 123, 7, 100);
 	assert(!enabled());
