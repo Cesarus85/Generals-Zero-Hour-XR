@@ -34,5 +34,7 @@ extern void InitRandom();
 extern void InitRandom( UnsignedInt seed );
 extern UnsignedInt GetGameLogicRandomSeed();   ///< Get the seed (used for replays)
 extern UnsignedInt GetGameLogicRandomSeedCRC();///< Get the seed (used for CRCs)
+// GeneralsX @feature Codex 22/09/2026 Read-only copy for opt-in desync diagnostics; never advances the RNG.
+extern void CopyGameLogicRandomState(UnsignedInt (&words)[6]);
 
 //--------------------------------------------------------------------------------------------------------------

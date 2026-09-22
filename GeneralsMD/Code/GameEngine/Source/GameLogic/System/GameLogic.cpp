@@ -69,6 +69,7 @@
 #include "Common/XferCRC.h"
 #include "Common/XferDeepCRC.h"
 #include "GXLanCRCTrace.h"
+#include "Common/LanSnapshotCommand.h"
 #include "GXNetworkCRCValidation.h"
 #include "Common/GameSpyMiscPreferences.h"
 
@@ -2726,6 +2727,7 @@ void GameLogic::processCommandList( CommandList *list )
 #ifdef RTS_DEBUG
 		DEBUG_ASSERTCRASH(msg != nullptr && msg != (GameMessage*)0xdeadbeef, ("bad msg"));
 #endif
+		ObserveLanSnapshotCommand(m_frame, msg);
 		logicMessageDispatcher( msg, nullptr );
 	}
 
@@ -2767,9 +2769,9 @@ void GameLogic::processCommandList( CommandList *list )
 				detectorReason = GXLanCRCTrace::different_crc;
 			}
 			// GeneralsX @feature Codex 16/09/2026 Observe the first normal validation checkpoints and one terminal failure.
-			if (GXLanCRCTrace::state().enabled &&
+			if (GXLanDesyncSnapshot::recording() || (GXLanCRCTrace::state().enabled &&
 				(GXLanCRCTrace::state().validated < GXLanCRCTrace::kFirstCheckpoints ||
-				 (sawCRCMismatch && !GXLanCRCTrace::state().failureWritten)))
+				 (sawCRCMismatch && !GXLanCRCTrace::state().failureWritten))))
 			{
 				Int connected[GXLanCRCTrace::kMaxSlots];
 				GXLanCRCTrace::PeerCRC received[GXLanCRCTrace::kMaxSlots];
@@ -4290,6 +4292,7 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 	}
 	const bool traceCRC = isInGameLogicUpdate() && GXLanCRCTrace::captureGeneration() &&
 		xferCRC->getXferMode() == XFER_CRC;
+	if (traceCRC) GXLanDesyncSnapshot::prepare(m_frame);
 	GXLanCRCTrace::ObjectCRC traceObjects[GXLanCRCTrace::kMaxObjectRecords];
 	Int traceObjectCount = 0;
 	Int traceObjectTotal = 0;
@@ -4315,12 +4318,17 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 		// GeneralsX @feature Codex 21/09/2026 Observe object order and rolling CRC without a second scan or CRC write.
 		if (traceCRC)
 		{
-			GXLanCRCTrace::endObjectDetail();
+			GXLanCRCTrace::endObjectDetail(xferCRC->getCRC());
 			GXLanCRCTrace::observeObject(traceObjects, GXLanCRCTrace::kMaxObjectRecords,
 				traceObjectCount, traceObjectTotal, static_cast<UnsignedInt>(obj->getID()), xferCRC->getCRC());
 		}
 	}
 	UnsignedInt seed = GetGameLogicRandomSeedCRC();
+	if (traceCRC && GXLanDesyncSnapshot::captureGeneration()) {
+		UnsignedInt words[6];
+		CopyGameLogicRandomState(words);
+		GXLanDesyncSnapshot::randomState(words);
+	}
 	if (traceCRC) { traceStages.objects = xferCRC->getCRC(); traceSeed = seed; }
 	if (isInGameLogicUpdate())
 	{

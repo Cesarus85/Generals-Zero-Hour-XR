@@ -6,7 +6,7 @@ if [[ "${GX_FAKE_BINARY:-0}" == 1 ]]; then
     printf 'FAKE args:'
     printf ' <%s>' "$@"
     printf '\n'
-    for name in HOME XDG_CONFIG_HOME XDG_DATA_HOME XDG_CACHE_HOME CNC_GENERALS_ZH_PATH CNC_GENERALS_PATH CNC_ZH_INSTALLPATH CNC_GENERALS_INSTALLPATH DXVK_LOG_PATH DXVK_STATE_CACHE_PATH DXVK_CONFIG_FILE GX_LAN_CRC SAGE_PATCH_DISABLED LD_LIBRARY_PATH LD_PRELOAD; do
+    for name in HOME XDG_CONFIG_HOME XDG_DATA_HOME XDG_CACHE_HOME CNC_GENERALS_ZH_PATH CNC_GENERALS_PATH CNC_ZH_INSTALLPATH CNC_GENERALS_INSTALLPATH DXVK_LOG_PATH DXVK_STATE_CACHE_PATH DXVK_CONFIG_FILE GX_LAN_SNAPSHOT SAGE_PATCH_DISABLED LD_LIBRARY_PATH LD_PRELOAD; do
         printf 'FAKE %s=%s\n' "$name" "${!name-}"
     done
     exit "${GX_FAKE_EXIT:-0}"
@@ -45,7 +45,7 @@ rg -Fq "FAKE CNC_GENERALS_INSTALLPATH=$lab/game/ZH_Generals/" "$test_root/first.
 rg -Fq "FAKE DXVK_LOG_PATH=$lab/logs" "$test_root/first.out"
 rg -Fq "FAKE DXVK_STATE_CACHE_PATH=$lab/cache" "$test_root/first.out"
 rg -Fq "FAKE DXVK_CONFIG_FILE=$lab/config/dxvk.conf" "$test_root/first.out"
-rg -Fq 'FAKE GX_LAN_CRC=1' "$test_root/first.out"
+rg -Fq 'FAKE GX_LAN_SNAPSHOT=1' "$test_root/first.out"
 rg -Fq 'FAKE SAGE_PATCH_DISABLED=1' "$test_root/first.out"
 rg -Fq "FAKE LD_LIBRARY_PATH=$lab/runtime" "$test_root/first.out"
 rg -q '^FAKE LD_PRELOAD=$' "$test_root/first.out"

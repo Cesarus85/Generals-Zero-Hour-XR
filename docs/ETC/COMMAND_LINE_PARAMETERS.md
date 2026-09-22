@@ -20,7 +20,29 @@ Common command line parameters for `GeneralsX` (Generals) and `GeneralsXZH` (Zer
 | `-debug` | Enable debug mode | `./GeneralsXZH -debug` |
 | `-logToCon` | Enables legacy debug-log console routing (`DEBUG_LOG`). **Debug builds only** (`ALLOW_DEBUG_UTILS` / `RTS_BUILD_OPTION_DEBUG=ON`); ignored in release builds. | `./GeneralsXZH -logToCon` |
 
-### Opt-in LAN synchronization trace (Zero Hour)
+### Opt-in universal LAN snapshot (Zero Hour, experimental branch)
+
+Set `GX_LAN_SNAPSHOT=1` or create `gx_lan_snapshot.txt` in the actual engine
+working/game-data directory before a live LAN match. `GX_LAN_SNAPSHOT=0`
+overrides the marker. Offline/replay remain disabled. This allocates a bounded
+6.8 MiB ring of the last eight normal CRC generations (2048 objects each) plus
+4096 dispatched commands, including typed arguments and execution frames.
+
+One `[GX-LAN-SNAPSHOT]` block is written to the existing stderr log at the first
+mismatch or orderly match reset. There is no per-tick disk output; force-stopping
+the process can lose the window. The tool reads existing CRC boundaries and RNG
+state without additional CRC traversals or network changes. Snapshot mode
+suppresses older fixed-object probes. The Setup checkbox below still controls
+only the legacy marker; use the new marker/environment variable for snapshots.
+
+Compare complete paired logs with `python3 scripts/qa/lan-snapshot-compare.py
+quest.log pc.log`. Explicit limits, parsing failures and engine mismatches prevent
+an unjustified synchronization verdict. See
+[PLAN-025A](../WORKDIR/planning/PLAN-025A_UNIVERSAL_DESYNC_SNAPSHOT.md) for the
+schema, scope, test evidence and device procedure. The isolated Linux diagnostic
+launcher now enables this universal observer.
+
+### Legacy LAN synchronization trace (Zero Hour)
 
 This is a diagnostic option, not a multiplayer compatibility fix. Set
 `GX_LAN_CRC=1` in the process environment, or create an empty `gx_lan_crc.txt`
@@ -52,7 +74,7 @@ same-source peer may still be required to isolate a divergent subsystem.
 
 For an independently staged Linux comparison, run
 `bash scripts/build/linux/run-lan-diagnostic-zh.sh /absolute/path/to/lab`
-from the PC's graphical terminal. The launcher enables this observer, adds
+from the PC's graphical terminal. The launcher enables the universal snapshot described above, adds
 `-win -quickstart`, and writes a unique `logs/native-zh-*` file on every run.
 It requires a separate `game/` data copy and `runtime/` binary/library set;
 it does not install assets or make an incompatible retail peer synchronize.

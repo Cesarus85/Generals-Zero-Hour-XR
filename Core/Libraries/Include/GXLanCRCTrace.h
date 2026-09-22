@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "GXLanDesyncSnapshot.h"
 
 namespace GXLanCRCTrace
 {
@@ -103,14 +104,16 @@ inline const char *buildPlatform()
 
 inline void endMatch()
 {
+	GXLanDesyncSnapshot::endMatch();
 	state() = State();
 }
 
 inline void beginMatch(bool lan, unsigned int mapCRC, int seed, int interval)
 {
 	endMatch();
+	GXLanDesyncSnapshot::beginMatch(lan, mapCRC, seed, interval);
 	State &s = state();
-	s.enabled = lan && markerEnabled();
+	s.enabled = lan && !GXLanDesyncSnapshot::enabled() && markerEnabled();
 	if (s.enabled) {
 		fprintf(stderr, "[GX-LAN-CRC] begin game=ZeroHour mode=LAN platform=%s map_crc=%08X game_seed=%d crc_interval=%d first_limit=%d\n",
 			buildPlatform(), mapCRC, seed, interval, kFirstCheckpoints);
@@ -120,11 +123,13 @@ inline void beginMatch(bool lan, unsigned int mapCRC, int seed, int interval)
 
 inline bool captureGeneration()
 {
-	return state().enabled && state().armed && state().generated < kFirstCheckpoints;
+	return GXLanDesyncSnapshot::captureGeneration() ||
+		(state().enabled && state().armed && state().generated < kFirstCheckpoints);
 }
 
 inline void armGeneration()
 {
+	GXLanDesyncSnapshot::armGeneration();
 	state().armed = state().enabled && state().generated < kFirstCheckpoints;
 }
 
@@ -143,8 +148,9 @@ inline void observeObject(ObjectCRC *records, int capacity, int &captured, int &
 // interactive deterministic-math match through its existing CRC boundaries.
 inline void beginObjectDetail(int frame, int order, unsigned int id, const char *templateName, unsigned int crc)
 {
+	GXLanDesyncSnapshot::beginObject(id, templateName, crc);
 	State &s = state();
-	s.objectDetailActive = captureGeneration() && id == kDetailObjectID;
+	s.objectDetailActive = s.enabled && captureGeneration() && id == kDetailObjectID;
 	if (!s.objectDetailActive) return;
 	s.objectDetailFrame = frame;
 	s.objectDetailOrder = order;
@@ -156,11 +162,12 @@ inline void beginObjectDetail(int frame, int order, unsigned int id, const char 
 
 inline bool objectDetailActive()
 {
-	return state().objectDetailActive;
+	return GXLanDesyncSnapshot::objectActive() || state().objectDetailActive;
 }
 
 inline void objectField(const char *field, unsigned int crc)
 {
+	GXLanDesyncSnapshot::field(field, crc);
 	const State &s = state();
 	if (!s.objectDetailActive) return;
 	fprintf(stderr, "[GX-LAN-CRC] object-field frame=%d order=%d id=%08X field=%s crc=%08X\n",
@@ -170,6 +177,7 @@ inline void objectField(const char *field, unsigned int crc)
 // GeneralsX @feature Codex 21/09/2026 Expose the raw transform words for the already-selected diagnostic object.
 inline void objectTransform(const void *matrix, int byteCount)
 {
+	GXLanDesyncSnapshot::transform(matrix, byteCount);
 	const State &s = state();
 	if (!s.objectDetailActive || !matrix || byteCount <= 0 || byteCount % 4 != 0) return;
 	const unsigned char *bytes = static_cast<const unsigned char *>(matrix);
@@ -206,8 +214,9 @@ inline void railroadStep(int frame, unsigned int id, const RailroadStep &v)
 		floatBits(v.desired), floatBits(v.current), floatBits(v.relative));
 }
 
-inline void endObjectDetail()
+inline void endObjectDetail(unsigned int crc = 0)
 {
+	GXLanDesyncSnapshot::endObject(crc);
 	State &s = state();
 	if (s.objectDetailActive) fflush(stderr);
 	s.objectDetailActive = false;
@@ -216,6 +225,8 @@ inline void endObjectDetail()
 inline void generated(int frame, int localSlot, unsigned int crc, unsigned int rngSeedCRC, const Stages &stages,
 	const ObjectCRC *objects, int capturedObjects, int totalObjects)
 {
+	const unsigned int snapshotStages[5] = { stages.objects, stages.rng, stages.partition, stages.players, stages.ai };
+	GXLanDesyncSnapshot::generated(localSlot, crc, rngSeedCRC, snapshotStages);
 	State &s = state();
 	if (!captureGeneration()) return;
 	s.armed = false;
@@ -266,6 +277,7 @@ inline const char *reasonName(Reason reason)
 inline void checkpoint(int validationFrame, int localSlot, const int *connected, int connectedCount,
 	const PeerCRC *received, int receivedCount, Reason detectorReason)
 {
+	if (detectorReason != no_mismatch) GXLanDesyncSnapshot::dump(reasonName(detectorReason), validationFrame);
 	State &s = state();
 	if (!s.enabled) return;
 	const Reason reason = classify(connected, connectedCount, received, receivedCount);

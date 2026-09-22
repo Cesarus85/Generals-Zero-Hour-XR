@@ -4008,7 +4008,7 @@ void Object::crc( Xfer *xfer )
 	// the same interface as the XferLoad class for save game restore.  This only works because
 	// XferCRC does not modify its data.
 	xfer->xferUser((Matrix3D *)getTransformMatrix(),	sizeof(Matrix3D));
-	// GeneralsX @feature Codex 21/09/2026 Observe raw matrix words only for the bounded LAN diagnostic object.
+	// GeneralsX @feature Codex 22/09/2026 Observe raw matrix words for every captured LAN snapshot object.
 	if (GXLanCRCTrace::objectDetailActive())
 		GXLanCRCTrace::objectTransform(getTransformMatrix(), sizeof(Matrix3D));
 	if (GXLanCRCTrace::objectDetailActive())

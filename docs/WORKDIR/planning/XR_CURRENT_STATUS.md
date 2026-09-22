@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-16
+**Updated:** 2026-09-22
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`
@@ -9,6 +9,37 @@ This is the short, maintained entry point for the XR branch. Read it before the
 long implementation record. It distinguishes source completion, automated
 verification, device installation and actual worn-headset acceptance; those are
 not interchangeable.
+
+## Current LAN work — 2026-09-22
+
+The isolated `codex/lan-object-crc-trace` branch resumed from clean/pushed
+`4fdda8a`. The fixed-object follow-up is replaced by an opt-in universal
+snapshot: the last eight scheduled CRC generations throughout the match,
+2048 object/type/field records per generation, raw transforms, global stages,
+all six logic RNG words and 4096 executed commands. One bounded dump is emitted
+on mismatch or orderly match reset; a strict paired comparator localizes the
+first retained difference and shows command context. Production CRC inputs,
+simulation rules and network format are unchanged. See
+[PLAN-025A](PLAN-025A_UNIVERSAL_DESYNC_SNAPSHOT.md).
+
+Host tests pass (21 new comparator fixtures, production observer/command tests
+on ARM64 and x86-64/Rosetta, legacy detector/trace/20 comparator fixtures and
+788 workspace checks per LAN gate). Android ARM64 linking and packaging pass.
+The local **10237 debug-signed QA APK is not update-installable over the installed
+release certificate**; release signing and the matching Omarchy build remain
+pending. No device has been updated this session.
+
+Live preflight finds **no Quest via ADB** and **no SSH response from either
+recorded Omarchy address**. The last physical evidence remains 10235's matching
+idle checkpoints followed by frame-400 object `000000D3` divergence after
+construction. The 10236 target-object retest was intentionally superseded.
+The representative construction/production/movement/combat/ability match and
+all new cause/fix evidence remain open, followed by sustained and unmodified
+Steam/Proton/Windows gates. Quest-to-Quest is an independent untested path.
+
+GitHub still lists **1.2.28 as the latest public release**. No change is merged
+or published; the main workspace's pre-existing dirty state is left alone.
+Older baseline sections below are historical milestone records.
 
 ## Read order and sources of truth
 
@@ -90,7 +121,7 @@ the detailed narrative and command transcripts out of this dashboard.
 - The UI menu identifies the selected manipulation target in orange; cyan is
   reserved for laser hover.
 
-## Release and device baseline
+## Historical release and device baseline (through P23)
 
 The newest private Quest preview is `xr-preview-2026-09-16-p23` from PR #5,
 merge `ba9169d5c81604aa9fac00508cf2e5dcbf9a4939`; its APK and hash are

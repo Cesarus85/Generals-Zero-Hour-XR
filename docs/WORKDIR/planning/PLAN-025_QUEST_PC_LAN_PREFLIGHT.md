@@ -1,16 +1,20 @@
 # PLAN-025 — Quest ↔ PC LAN preflight
 
-**Status (active 2026-09-21):** The paired Quest 10233/native Omarchy run
-localizes the first recorded mismatch to the transform of neutral map object
-`TrainCabUngarrisonable`, ID `000000DF`, at frame 100. Both peers are identical
-through that object's private status and enter it with the same rolling CRC;
-object order/count and RNG seed checksum also agree. Its first unequal raw
-matrix value is rotation component `m01`, followed by `m10` and X translation.
-The next bounded diagnostic records the responsible railroad intermediates
-through frame 105 before any simulation correction is attempted. Earlier
-Steam/Proton matches also desynchronized. LAN remains
-experimental and unsupported; public offline release 1.2.28 is separate and has
-not been replaced on GitHub.
+**Status (active 2026-09-22):** The universal bounded desync observer is now
+implemented on `codex/lan-object-crc-trace`, starting from checkpoint `4fdda8a`.
+It captures every retained object's type and existing CRC boundaries, global
+stages, all six logic RNG words and synchronized command execution context.
+Host tests and Android ARM64 build/package verification pass; the local 10237
+package is a debug-signed packaging check, not an update-installable candidate.
+No Quest is connected to ADB and Omarchy SSH is unreachable, so the native PC
+rebuild, release signing, paired representative match and any new root-cause fix
+remain open. The earlier train math fix passed the eight-point idle run; the
+last physical interactive result is still the frame-400 object `000000D3`
+divergence after construction. The pending 10236 single-object test is superseded.
+See [PLAN-025A](PLAN-025A_UNIVERSAL_DESYNC_SNAPSHOT.md) for the implemented
+contract, test evidence, activation, comparison and next physical scenario.
+LAN remains experimental; `main` and public 1.2.28 are unchanged.
+
 **Scope:** One Quest 3 against a PC on the same LAN. The first peer is the user's Steam Zero Hour running through Proton on Omarchy; the planned Windows Steam peer remains a separate validation. If retail gameplay desynchronizes, isolate it with a same-source GeneralsX PC build. Internet services, public matchmaking, replay and reconnect are later gates.
 
 **User priority:** Quest versus the unmodified Steam PC game is the primary
@@ -19,6 +23,21 @@ executable is a diagnostic comparator, not an implicit replacement for Steam
 support. Do not relax CRC checks or claim retail support from same-source tests.
 
 ## Current handoff
+
+1. Keep the isolated LAN branch and public release separate. Use the universal
+   snapshot, not another fixed-object retargeting build.
+2. Reconnect and verify Quest/Omarchy state before deployment; retain the lab's
+   existing Linux compatibility delta and both signed 10236 rollback artifacts.
+3. Build/stage matching source, release-sign Quest 10237, activate
+   `GX_LAN_SNAPSHOT=1` or the new `gx_lan_snapshot.txt` marker on both peers,
+   and collect full logs from the construction/production/movement/combat/ability
+   scenario. The old Setup checkbox alone enables only the legacy observer.
+4. Compare with `scripts/qa/lan-snapshot-compare.py`. Fix only demonstrated
+   causes; then repeat the broader scenario and sustained/Steam device gates.
+5. Quest-to-Quest remains promising but untested. Do not merge, publish LAN
+   support, replace 1.2.28, or interpret a same-source result as retail proof.
+
+## Historical handoff at 10233 (superseded by the above)
 
 1. Keep branch `codex/lan-object-crc-trace` separate from release `main`.
    The unpublished Quest diagnostic is versionCode 10233

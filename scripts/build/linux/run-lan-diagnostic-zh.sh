@@ -72,7 +72,7 @@ export DXVK_STATE_CACHE_PATH="$cache"
 export DXVK_CONFIG_FILE="$config/dxvk.conf"
 export DXVK_WSI_DRIVER=SDL3
 export DXVK_HUD=0
-export GX_LAN_CRC=1
+export GX_LAN_SNAPSHOT=1
 export SAGE_PATCH_DISABLED=1
 export LD_LIBRARY_PATH="$runtime"
 unset LD_PRELOAD
