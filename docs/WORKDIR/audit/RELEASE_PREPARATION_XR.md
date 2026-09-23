@@ -16,7 +16,7 @@ multiplayer compatibility.
 The release-signed APK is 57,161,910 bytes, versionCode `10233`, versionName
 `1.2.33-xr-preview`, package `com.generalsx.zerohour.xr`, ARM64 only and
 nondebuggable. SHA-256 is
-`0f940168d8bf376e0ac8211f9e089c6c86eb0b40b53db0cec9c1647e45deeed1`.
+`146e6ffdbdd71d8db35823b7570a3f215a039967c3e6208ad616be50b6112d5b`.
 APK Signature Scheme v3 verifies with certificate SHA-256
 `a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`.
 Archive inspection found no retail `.big`, `.scb`, `.map` or `.w3d` files.

@@ -19,6 +19,6 @@ and native Quest text entry while retaining the 1.2.28 performance baseline.
 - Human multiplayer remains experimental and is not release-ready; native text entry does not resolve the known simulation mismatch.
 - This is an independent community project, not an Electronic Arts product or endorsement.
 
-APK SHA-256: `0f940168d8bf376e0ac8211f9e089c6c86eb0b40b53db0cec9c1647e45deeed1`
+APK SHA-256: `146e6ffdbdd71d8db35823b7570a3f215a039967c3e6208ad616be50b6112d5b`
 
 See the repository README and Quest installation guide for setup and controls.

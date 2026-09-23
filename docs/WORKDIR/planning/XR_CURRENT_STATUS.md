@@ -61,7 +61,7 @@ routing and bilingual Canvas-payload host tests pass, as do the complete
 1,482-target ARM64 native build and release-signed APK assembly. The
 release candidate is versionCode 10233 / versionName `1.2.33-xr-preview`, 57,161,910
 bytes, SHA-256
-`0f940168d8bf376e0ac8211f9e089c6c86eb0b40b53db0cec9c1647e45deeed1`,
+`146e6ffdbdd71d8db35823b7570a3f215a039967c3e6208ad616be50b6112d5b`,
 and verifies with the established v3 certificate. Android Gradle Plugin 8.5.2
 Lint was excluded because its worker crashes under the locally installed JDK
 25; Java compilation and APK assembly pass. The functionally identical
