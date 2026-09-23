@@ -60,8 +60,11 @@ The test candidate is versionCode 10229 / versionName
 `5561bf8f0455ca582e5e4e37c916fba929846efa280db06b20c4dbdb8afb86fc`,
 and verifies with the established v3 certificate. Android Gradle Plugin 8.5.2
 Lint was excluded because its worker crashes under the locally installed JDK
-25; Java compilation and APK assembly pass. APK installation and worn-headset
-name/IP entry remain open; the public 1.2.28 APK is unchanged.
+25; Java compilation and APK assembly pass. The exact candidate installed as
+an in-place Quest 3 update with versionCode/versionName confirmed by Android.
+An automated launch was intercepted by Quest OS because the controllers were
+asleep, so worn-headset name/IP entry and visual acceptance remain open; the
+public 1.2.28 APK is unchanged.
 
 **Current public offline preview:** [1.2.28](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.28-xr-preview).
 This release promotes the accepted P26-2 Android terrain batching and the
@@ -239,7 +242,7 @@ layout test; keep those limits explicit in the private preview.
 | Returning launch | Saved valid data is checked inside the XR Activity; setup opens only when data is missing or invalid | Device launch verified; final visual no-flash confirmation remains a physical gate |
 | Performance defaults | Balanced resolution, light shadows, Multiview preferred, redundant extra world copy omitted automatically | Reported as relatively smooth and playable; no universal FPS guarantee |
 | End-of-match result | Read-only XR latch presents Victory/Defeat/Match-over across the direct score transition | PR #11: host tests and the 10216 short headset test pass; shipped in private 10217 release without debug controls; exact 10217 headset play and other mission/network end paths remain open |
-| Controller text entry | Current integration candidate has a focused virtual keyboard for native Direct Connect player-name and IPv4 fields; this is not a general arbitrary-text or hardware keyboard implementation | Host geometry/routing/text and full native build pass; headset entry gate open |
+| Controller text entry | Current integration candidate has a focused virtual keyboard for native Direct Connect player-name and IPv4 fields; this is not a general arbitrary-text or hardware keyboard implementation | Host geometry/routing/text, full native build and Quest installation pass; worn-headset entry gate open |
 
 ## XR match-result milestone: headset accepted
 
