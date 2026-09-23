@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 #include <filesystem>
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -54,6 +55,9 @@
 #include "Common/Override.h"
 #include "GameClient/ControlBar.h"
 #include "GameClient/GadgetPushButton.h"
+#include "GameClient/GadgetComboBox.h"
+#include "GameClient/Gadget.h"
+#include "GameClient/GadgetTextEntry.h"
 #include "GameClient/GameText.h"
 #include "GameClient/GUICallbacks.h"
 #include "Common/Player.h"
@@ -1540,6 +1544,73 @@ void XrGameBoot_Key(XrGameKey key, bool down)
 	e.key.timestamp = SDL_GetTicksNS(); e.key.scancode = scans[(int)key];
 	e.key.down = down;
 	keyboard->addSDLEvent(&e);
+}
+
+// GeneralsX @feature Codex 23/09/2026 Bridge every original entry gadget to
+// Meta's runtime-owned OpenXR keyboard. The engine remains authoritative for filtering,
+// max-length handling and owner notifications.
+static GameWindow *xrFocusedTextTarget(uintptr_t token=0)
+{
+	if (!s_booted || !TheWindowManager) return nullptr;
+	GameWindow *target=TheWindowManager->winGetFocus();
+	if (!target || !BitIsSet(target->winGetStyle(),GWS_ENTRY_FIELD)) return nullptr;
+	if (token && reinterpret_cast<uintptr_t>(target)!=token) return nullptr;
+	return target;
+}
+
+uintptr_t XrGameBoot_FocusedTextField()
+{
+	return reinterpret_cast<uintptr_t>(xrFocusedTextTarget());
+}
+
+std::wstring XrGameBoot_TextFieldValue(uintptr_t token)
+{
+	auto *target=xrFocusedTextTarget(token);if(!target)return {};
+	const auto value=GadgetTextEntryGetText(target);
+	return std::wstring(value.str(),value.str()+value.getLength());
+}
+
+int XrGameBoot_TextFieldInputMode(uintptr_t token)
+{
+	auto *target=xrFocusedTextTarget(token);if(!target)return 0;
+	auto *data=static_cast<EntryData *>(target->winGetUserData());if(!data)return 0;
+	if(data->secretText)return 3; // Android text password.
+	if(data->numericalOnly)return 2; // Android numeric keyboard.
+	// Direct Connect needs punctuation including '.', so use the phone pad.
+	if(TheNameKeyGenerator) {
+		auto *combo=TheWindowManager->winGetWindowFromId(nullptr,
+			TheNameKeyGenerator->nameToKey("NetworkDirectConnect.wnd:ComboboxRemoteIP"));
+		if(combo && GadgetComboBoxGetEditBox(combo)==target)return 1;
+	}
+	return 0;
+}
+
+int XrGameBoot_TextFieldMaxLength(uintptr_t token)
+{
+	auto *target=xrFocusedTextTarget(token);if(!target)return 255;
+	auto *data=static_cast<EntryData *>(target->winGetUserData());
+	return data ? std::max(1,int(data->maxTextLen)-1):255;
+}
+
+bool XrGameBoot_ReplaceTextField(uintptr_t token,const std::wstring &text,bool done)
+{
+	auto *target=xrFocusedTextTarget(token);if(!target)return false;
+	auto *data=static_cast<EntryData *>(target->winGetUserData());if(!data)return false;
+	const size_t limit=size_t(std::max(0,int(data->maxTextLen)-1));
+	std::wstring filtered;filtered.reserve(std::min(text.size(),limit));
+	for(WideChar ch:text) {
+		if(filtered.size()>=limit)break;
+		if(data->numericalOnly && !TheWindowManager->winIsDigit(ch))continue;
+		if(data->alphaNumericalOnly && !TheWindowManager->winIsAlNum(ch))continue;
+		if(data->aSCIIOnly && !TheWindowManager->winIsAscii(ch))continue;
+		filtered.push_back(ch);
+	}
+	UnicodeString value(filtered.c_str(),int(filtered.size()));
+	GadgetTextEntrySetText(target,value);
+	GameWindow *owner=target->winGetOwner();
+	if(owner)TheWindowManager->winSendSystemMsg(owner,GEM_UPDATE_TEXT,(WindowMsgData)target,0);
+	if(done && owner)TheWindowManager->winSendSystemMsg(owner,GEM_EDIT_DONE,(WindowMsgData)target,0);
+	return true;
 }
 
 unsigned int XrGameBoot_GameTexture()

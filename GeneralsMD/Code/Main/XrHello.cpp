@@ -145,6 +145,8 @@ static PFNGLDEPTHMASKPROC xr_glDepthMask = nullptr;
 static PFNGLDEPTHFUNCPROC xr_glDepthFunc = nullptr;
 static PFNGLCLEARDEPTHFPROC xr_glClearDepthf = nullptr;
 static PFNGLBLENDFUNCPROC xr_glBlendFunc = nullptr;
+static PFNGLDRAWELEMENTSPROC xr_glDrawElements = nullptr;
+static PFNGLTEXSUBIMAGE2DPROC xr_glTexSubImage2D = nullptr;
 
 static bool loadGlProcs()
 {
@@ -177,7 +179,7 @@ static bool loadGlProcs()
 		GL_ENTRY(glGenRenderbuffers), GL_ENTRY(glBindRenderbuffer), GL_ENTRY(glRenderbufferStorage),
 		GL_ENTRY(glFramebufferRenderbuffer), GL_ENTRY(glDeleteRenderbuffers), GL_ENTRY(glEnable),
 		GL_ENTRY(glDepthMask), GL_ENTRY(glDepthFunc), GL_ENTRY(glClearDepthf),
-		GL_ENTRY(glBlendFunc),
+		GL_ENTRY(glBlendFunc), GL_ENTRY(glDrawElements), GL_ENTRY(glTexSubImage2D),
 	};
 #undef GL_ENTRY
 	for (size_t i = 0; i < sizeof(table) / sizeof(table[0]); i++) {
@@ -278,6 +280,12 @@ static GLuint compileShader(GLenum type, const char *src)
 	}
 	return sh;
 }
+
+// Meta's native Quest keyboard. This is included here (after the private GLES
+// dispatch and shader helper) so it cannot accidentally bind the engine's
+// intercepted gl* symbols. It renders the runtime-provided Meta model and
+// forwards runtime text events into the original Generals entry gadgets.
+#include "XrMetaKeyboard.h"
 
 // ---------------------------------------------------------------------------
 // Phase 1.0 game panel: a tilted quad sampling the game frame texture.
@@ -411,6 +419,8 @@ struct XrHello {
 	GLuint sceneTexture=0;std::string sceneKey;
 	JNIEnv *panelEnv=nullptr;jclass panelPainter=nullptr;
 	XrMenuState menu;XrCommandState commands;float worldZoom=1.0f;bool startViewApplied=false;
+	// GeneralsX @feature Codex 23/09/2026 Meta runtime-owned Quest keyboard.
+	XrMetaKeyboard keyboard;bool keyboardPointerHeld=false;
 	GLuint commandsTexture=0,commandButtonTexture=0;std::string commandsKey;
 	GLuint uiButtonTexture=0,groundButtonTexture=0,settingsTexture=0,hoverTexture=0;
 	GLuint recoveryTexture=0;
@@ -573,12 +583,22 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 	// GeneralsX @feature Codex 14/09/2026 Scene access is optional and XR-only.
 	std::vector<const char *> allExts={wantExts[0],wantExts[1]};
 	if(wantPassthrough)allExts.push_back(XR_FB_PASSTHROUGH_EXTENSION_NAME);
+	// Meta's runtime-owned Quest keyboard needs both the interaction extension
+	// and its runtime render model. Keep this optional so non-Quest OpenXR
+	// runtimes still reach the existing game instead of failing at startup.
+	const bool wantKeyboard=hasExtension(XR_META_VIRTUAL_KEYBOARD_EXTENSION_NAME) &&
+		hasExtension(XR_FB_RENDER_MODEL_EXTENSION_NAME);
+	if(wantKeyboard) {
+		allExts.push_back(XR_META_VIRTUAL_KEYBOARD_EXTENSION_NAME);
+		allExts.push_back(XR_FB_RENDER_MODEL_EXTENSION_NAME);
+	}
 	const char *sceneExts[]={XR_FB_SPATIAL_ENTITY_EXTENSION_NAME,XR_FB_SPATIAL_ENTITY_STORAGE_EXTENSION_NAME,XR_FB_SPATIAL_ENTITY_QUERY_EXTENSION_NAME,XR_FB_SCENE_EXTENSION_NAME};
 	bool wantScene=true;for(const char *name:sceneExts)wantScene=wantScene && hasExtension(name);
 	if(wantScene)for(const char *name:sceneExts)allExts.push_back(name);
 	const bool wantCapture=wantScene && hasExtension(XR_FB_SCENE_CAPTURE_EXTENSION_NAME);
 	if(wantCapture)allExts.push_back(XR_FB_SCENE_CAPTURE_EXTENSION_NAME);
 	XR_LOG("passthrough extension: %s", wantPassthrough ? "present" : "MISSING (opaque fallback)");
+	XR_LOG("Meta native keyboard extensions: %s",wantKeyboard ? "present":"MISSING");
 
 	XrInstanceCreateInfoAndroidKHR androidInfo = { XR_TYPE_INSTANCE_CREATE_INFO_ANDROID_KHR, nullptr };
 	androidInfo.applicationVM = vm;
@@ -671,6 +691,7 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 	rsci.poseInReferenceSpace.orientation.w = 1.0f;
 	XR_CHECK(xrCreateReferenceSpace(x.session, &rsci, &x.localSpace), "xrCreateReferenceSpace(LOCAL)");
 	if (!initControls(x.controls, x.instance, x.session)) return false;
+	x.keyboard.init(x.instance,x.session,systemId,x.localSpace,wantKeyboard);
 
 	// Phase 1.1a passthrough: full-room reconstruction layer, submitted
 	// below the projection layer. Any failure here is NON-fatal (opaque
@@ -806,7 +827,9 @@ static void pollEvents(XrHello &x, bool &quit)
 	XrEventDataBuffer ev = { XR_TYPE_EVENT_DATA_BUFFER, nullptr };
 	while (xrPollEvent(x.instance, &ev) == XR_SUCCESS) {
 		x.scene.event(x.session,ev);
-		if (ev.type == XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
+		if(x.keyboard.handleEvent(ev)) {
+			// Text/visibility events are fully consumed by the Meta keyboard.
+		} else if (ev.type == XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
 			const auto *sc =
 				reinterpret_cast<const XrEventDataSessionStateChanged *>(&ev);
 			if (sc->session != x.session)
@@ -1210,6 +1233,9 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 			}
 		}
 		xr_glDisable(GL_BLEND);xr_glEnable(GL_DEPTH_TEST);xr_glDepthMask(GL_TRUE);
+		// Keyboard geometry uses a separate shader/VAO. Draw it before the
+		// pointer overlay, then restore the quad state for the visible ray.
+		if(x.keyboard.visible){x.keyboard.render(proj,view);xr_glUseProgram(x.quadProgram);xr_glBindVertexArray(x.quadVAO);}
 		// P7.4 Always show the tracked right aim, including misses. UI is an
 		// overlay, so the pointer is drawn last and stops at its selected surface.
 		if(x.rayVisible && !observing && xrRayRibbon(model,x.rayStart,x.rayEnd,pose.position,aspect)) {
@@ -1294,7 +1320,8 @@ struct XrLoadingPresenter {
 			const bool ended=XR_SUCCEEDED(xrEndFrame(x.session,&end));
 			x.splitVisible=false;x.stereoVisible=false;x.diorama=false;
 			x.loadingPresentation=true;x.previousInputTime=0;
-			x.menu.open=false;x.arranging=false;x.grab.cancel();x.controlsArmed=false;x.inputArmed=false;
+			x.menu.open=false;x.keyboard.hide();
+			x.arranging=false;x.grab.cancel();x.controlsArmed=false;x.inputArmed=false;
 			x.menu.click.cancel();x.commands.input.click.cancel();
 			x.rayVisible=false;x.pointerVisible=false;x.hoverVisible=false;
 			updateControls(x,XrControllerState{},outerTime);
@@ -1417,6 +1444,11 @@ static void runLoop(XrHello &x)
 		const XrControllerState controls = pollControls(x.controls,x.session,x.localSpace,
 			frameState.predictedDisplayTime,x.state==XR_SESSION_STATE_FOCUSED && frameState.shouldRender,x.layout.leftHanded);
 		x.lastFrameTime=frameState.predictedDisplayTime;
+		if(x.gameBooted) {
+			if(x.keyboard.token && XrGameBoot_FocusedTextField()!=x.keyboard.token)x.keyboard.hide();
+			if(x.keyboard.visible && controls.back)x.keyboard.hide();
+			else x.keyboard.update(frameState.predictedDisplayTime,controls);
+		}
 		if (x.gameBooted && (!shouldRender || !frameState.shouldRender)) {
 			if(x.observer.mode!=XrObserverMode::Off)x.observer.cancel();
 			x.renderedObserver=false;
@@ -1456,6 +1488,7 @@ static void runLoop(XrHello &x)
 						x.interactiveGame = interactiveGame;
 						x.startViewApplied=false;
 						x.commands.groupOperation=0;x.commands.input.click.cancel();
+						if(x.keyboard.token)x.keyboard.hide();
 						saveLayout(x);
 						x.grab.cancel(); x.arranging=false; x.controlsArmed=false;
 						x.cameraPending=interactiveGame; x.cameraCustom=false; x.cameraSaveFailed=false;
@@ -1482,7 +1515,16 @@ static void runLoop(XrHello &x)
 						x.expandedUI=expanded;x.controlsArmed=false;x.inputArmed=false;x.grab.cancel();
 						x.commands.input.click.cancel();
 					}
-					if(x.recoveryVisible) {
+					if(x.keyboard.visible) {
+						// While the runtime keyboard owns both controller rays, do not
+						// also send the same trigger to the game or movable XR panels.
+						// Clear game input BEFORE preparing the keyboard ray: this
+						// function also clears rayVisible/rayHit/pointerPressed.
+						updateControls(x,XrControllerState{},frameState.predictedDisplayTime);
+						x.pointerVisible=x.hoverVisible=false;x.pointerPressed=controls.select;
+						x.rayVisible=controls.aimValid;x.rayHit=controls.aimValid;
+						if(controls.aimValid){x.rayStart=controls.aim.position;x.rayEnd=x.keyboard.rayEndpoint(controls.aim);}
+					} else if(x.recoveryVisible) {
 						if(x.scene.placing){x.scene.cancel();x.menu.open=true;x.menu.page=5;}
 						XrGameBoot_CancelTarget();x.grab.cancel();x.controlsArmed=false;x.inputArmed=false;
 						updateControls(x,XrControllerState{},frameState.predictedDisplayTime);
@@ -1535,6 +1577,15 @@ static void runLoop(XrHello &x)
 					if(loadingConsumed) {
 						XR_LOG("P11.1 loading returned; next frame reacquires gameplay poses");
 						continue; // The callback already ended this outer frame.
+					}
+					// A controller press on any focused original entry gadget opens
+					// Meta's runtime-owned native Quest keyboard.
+					const bool textFieldPress=x.pointerPressed && !x.keyboardPointerHeld &&
+						!x.menu.open && !x.arranging && x.pointerPiece>=0;
+					x.keyboardPointerHeld=x.pointerPressed;
+					if(textFieldPress) {
+						const uintptr_t token=XrGameBoot_FocusedTextField();
+						if(token)x.keyboard.show(token,views[0].pose);
 					}
 					// Movies/dialogs can start during the native frame. Never use
 					// the previous frame's crop or show stale stereo captures.
@@ -1702,6 +1753,9 @@ static void shutdownXr(XrHello &x)
 {
 	x.gpuTimer.shutdown(); // Delete queries while the owning EGL context is current.
 	saveLayout(x);
+	// Keyboard GL resources, keyboard space and handle all belong to this
+	// still-current EGL/OpenXR session and must be released before either dies.
+	x.keyboard.shutdown();
 	if (x.sessionRunning) {
 		xrEndSession(x.session);
 		x.sessionRunning = false;
@@ -1841,6 +1895,7 @@ Java_com_generalsx_zerohour_XrHelloActivity_runHello(JNIEnv *env, jclass, jobjec
 			d3d8gles_InvalidateCachedState();
 		}
 		runLoop(x);
+		x.keyboard.hide();
 		if (x.gameBooted)
 			XrGameBoot_Shutdown();
 	} else {

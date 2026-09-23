@@ -79,9 +79,9 @@ android {
         // GeneralsX @build Codex 16/09/2026 The endgame fix follows the
         // private 10215 release and the 10216 headset-only diagnostic APK.
         // GeneralsX @performance Codex 20/09/2026 P26-2 is the accepted
-        // Quest terrain-batching release following the 10226-10228 A/B builds.
-        versionCode (project.hasProperty('androidVersionCode') ? (project.androidVersionCode as Integer) : 10228)
-        versionName (project.hasProperty('androidVersionName') ? project.androidVersionName : '1.2.28-xr-preview')
+        // Quest command-console and native Meta keyboard release.
+        versionCode (project.hasProperty('androidVersionCode') ? (project.androidVersionCode as Integer) : 10233)
+        versionName (project.hasProperty('androidVersionName') ? project.androidVersionName : '1.2.33-xr-preview')
         ndk {
             abiFilters 'arm64-v8a'
         }

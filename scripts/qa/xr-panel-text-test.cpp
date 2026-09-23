@@ -27,7 +27,7 @@ struct XrHello {
  GLuint uiButtonTexture=0,groundButtonTexture=0,commandButtonTexture=0,commandsTexture=0,settingsTexture=0,hoverTexture=0;
  std::string commandsKey,settingsKey,hoverCandidate,hoverKey;
  bool splitVisible=true,arranging=false,pointerVisible=false,pointerPressed=false,hoverVisible=false;
- int pointerPiece=0;float pointerU=0,pointerV=0,worldZoom=1;XrTime hoverSince=0;
+	int pointerPiece=0;float pointerU=0,pointerV=0,worldZoom=1;XrTime hoverSince=0;
  int arrangeSlot=1;
 };
 static bool commandsAvailable(const XrHello &x){return !x.menu.open;}

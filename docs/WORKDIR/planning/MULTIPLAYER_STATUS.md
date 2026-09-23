@@ -1,6 +1,6 @@
 # Multiplayer status — paused after the first paired Quest/PC trace
 
-**Updated:** 2026-09-16
+**Updated:** 2026-09-23
 
 **State:** Experimental, paused for the first offline release preparation
 **Do not ship:** Quest LAN diagnostic APKs or LAN-enabled gameplay as a supported feature
@@ -15,7 +15,7 @@ The accepted offline P23 prerelease is [`xr-preview-2026-09-16-p23`](https://git
 
 ## What has been demonstrated
 
-- Quest can reach the LAN lobby, use Direct Connect, join/host a match and load the map. An experimental controller-operated IP-entry keyboard exists on the LAN branch, not in the accepted offline P23 artifact.
+- Quest can reach the LAN lobby, use Direct Connect, join/host a match and load the map. Current PR #41 integrates Meta's runtime-owned OpenXR virtual keyboard for every focused original entry gadget, including LAN name/chat and Direct Connect fields; it does not enable or claim multiplayer compatibility and contains no LAN diagnostic or simulation changes. Candidate 10233 is installed and its readable-layout, controller-ray, Enter/B and reopen gates remain open in headset.
 - The Quest battlefield enters the tabletop view in a human LAN match with the preview-only `GX_XR_LAN_PREVIEW` build option. This option defaults off and does not change simulation or wire format.
 - Quest and an Omarchy laptop running Steam Zero Hour through Proton can start a Direct-Connect match. Automatic LAN discovery remains unreliable. Omarchy's `100.123.209.83` address was Tailscale, while its WLAN is `192.168.178.158`; the isolated diagnostic profile pins both LAN and Online IP to WLAN. This addressed interface selection but did **not** cure the later mismatch.
 - The common Zero Hour and base Generals gameplay archives tested on both devices have matching SHA-256 hashes. This reduces, but does not eliminate, effective-data/mod/override differences.

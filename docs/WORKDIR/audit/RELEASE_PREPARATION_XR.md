@@ -1,10 +1,37 @@
 # XR release preparation and checkpoints
 
-**Updated:** 2026-09-20 — public 1.2.28 performance preview
+**Updated:** 2026-09-23 — 1.2.33 command-console and native-keyboard release
 
-**Publication state:** The non-debuggable 1.2.28 APK is the current public offline preview. Older releases, including debug-signed APKs, are retained as maintainer-only drafts. This leaves one public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
+**Publication state:** The non-debuggable 1.2.33 APK is the prepared public offline preview. Older releases, including debug-signed APKs, are retained as maintainer-only drafts. This leaves one public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
 
-## Current public release checkpoint: 1.2.28
+## Current public release checkpoint: 1.2.33
+
+PR #41 integrates PR #40's accepted military-console visual redesign and
+transparent board-side shortcut plates, then replaces rejected custom/Android
+IME experiments with Meta's runtime-owned OpenXR virtual keyboard. The native
+keyboard covers every focused original entry gadget without changing original
+field filtering or owner notifications. It does not enable or claim human
+multiplayer compatibility.
+
+The release-signed APK is 57,161,910 bytes, versionCode `10233`, versionName
+`1.2.33-xr-preview`, package `com.generalsx.zerohour.xr`, ARM64 only and
+nondebuggable. SHA-256 is
+`0f940168d8bf376e0ac8211f9e089c6c86eb0b40b53db0cec9c1647e45deeed1`.
+APK Signature Scheme v3 verifies with certificate SHA-256
+`a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`.
+Archive inspection found no retail `.big`, `.scb`, `.map` or `.w3d` files.
+
+Local verification passes the complete ARM64 native build, release APK
+assembly, 2,890 menu geometry/capture checks, 363 production routing checks
+and 20,765 bilingual panel checks. The functionally identical versionCode
+10233 test-label APK was installed in place on Quest 3. The maintainer accepted
+the native keyboard's readable keys, controller ray, text confirmation and
+safe return to gameplay, together with the PR #40 presentation. GitHub Actions
+is skipped because the account quota is exhausted; local evidence is not
+represented as hosted CI. Human multiplayer remains experimental because the
+known Quest/PC simulation mismatch is separate from lobby text entry.
+
+## Previous public release checkpoint: 1.2.28
 
 PR #27 reduces XR board-mesh allocation churn; PR #33 exposes the existing
 draw-source diagnostic over ADB; PR #34 batches up to ten unchanged Android
