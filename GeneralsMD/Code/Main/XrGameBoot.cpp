@@ -54,6 +54,8 @@
 #include "Common/Override.h"
 #include "GameClient/ControlBar.h"
 #include "GameClient/GadgetPushButton.h"
+#include "GameClient/GadgetComboBox.h"
+#include "GameClient/GadgetTextEntry.h"
 #include "GameClient/GameText.h"
 #include "GameClient/GUICallbacks.h"
 #include "Common/Player.h"
@@ -1540,6 +1542,51 @@ void XrGameBoot_Key(XrGameKey key, bool down)
 	e.key.timestamp = SDL_GetTicksNS(); e.key.scancode = scans[(int)key];
 	e.key.down = down;
 	keyboard->addSDLEvent(&e);
+}
+
+// GeneralsX @feature Codex 23/09/2026 Bridge the controller keyboard to the
+// original Direct Connect widgets so validation and lobby state stay native.
+static GameWindow *xrDirectConnectTextTarget(int field)
+{
+	if (!s_booted || !TheWindowManager || !TheNameKeyGenerator) return nullptr;
+	const char *name = field == 1 ? "NetworkDirectConnect.wnd:EditPlayerName" :
+		field == 2 ? "NetworkDirectConnect.wnd:ComboboxRemoteIP" : nullptr;
+	if (!name) return nullptr;
+	GameWindow *window = TheWindowManager->winGetWindowFromId(nullptr,
+		TheNameKeyGenerator->nameToKey(name));
+	return field == 2 && window ? GadgetComboBoxGetEditBox(window) : window;
+}
+
+int XrGameBoot_DirectConnectTextField()
+{
+	if (!s_booted || !TheWindowManager) return 0;
+	GameWindow *focus = TheWindowManager->winGetFocus();
+	if (!focus) return 0;
+	for (int field = 1; field <= 2; ++field) {
+		GameWindow *target = xrDirectConnectTextTarget(field);
+		if (target && (focus == target || (field == 2 && focus == target->winGetParent()))) return field;
+	}
+	return 0;
+}
+
+std::string XrGameBoot_DirectConnectTextValue(int field)
+{
+	GameWindow *target = xrDirectConnectTextTarget(field);
+	if (!target) return {};
+	AsciiString value;
+	value.translate(GadgetTextEntryGetText(target));
+	return value.str();
+}
+
+bool XrGameBoot_DirectConnectTextKey(int field, int ascii)
+{
+	if (field != XrGameBoot_DirectConnectTextField()) return false;
+	GameWindow *target = xrDirectConnectTextTarget(field);
+	if (!target || (ascii != 8 && (ascii < 32 || ascii > 126))) return false;
+	if (field == 2 && ascii != 8 && ascii != '.' && (ascii < '0' || ascii > '9')) return false;
+	if (ascii == 8) TheWindowManager->winSendInputMsg(target, GWM_CHAR, KEY_BACKSPACE, KEY_STATE_DOWN);
+	else TheWindowManager->winSendInputMsg(target, GWM_IME_CHAR, ascii, 0);
+	return true;
 }
 
 unsigned int XrGameBoot_GameTexture()

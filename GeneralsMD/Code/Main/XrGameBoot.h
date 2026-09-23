@@ -89,6 +89,11 @@ bool XrGameBoot_IsInteractiveGame();
 void XrGameBoot_Pointer(bool active, float x, float y, bool select, bool secondary, float wheel);
 enum class XrGameKey { Back, Left, Right, Up, Down };
 void XrGameBoot_Key(XrGameKey key, bool down);
+// GeneralsX @feature Codex 23/09/2026 Controller-operated XR keyboard for
+// the native Direct Connect fields. 0 = none, 1 = player name, 2 = IPv4.
+int XrGameBoot_DirectConnectTextField();
+std::string XrGameBoot_DirectConnectTextValue(int field);
+bool XrGameBoot_DirectConnectTextKey(int field, int ascii);
 
 // GeneralsX @feature Codex 13/09/2026 Native camera actions preserve script locks.
 bool XrGameBoot_CameraPreset(int preset);

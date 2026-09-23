@@ -44,6 +44,14 @@ int main(){
 		n=xrCommandLayout(true,false,t,64);check(n==4);checkTable(t,n,kXrPanelHeight,-1);
 		n=xrMenuLayout(4,t,80);check(n==4);checkTable(t,n,kXrPanelHeight,-1);
 	}
+	// GeneralsX @test Codex 23/09/2026 Both keyboard variants keep every
+	// visible key inside the shared panel and give it one unambiguous hit box.
+	for(bool ip:{false,true}) {
+		XrPanelControl t[80];const int n=xrTextKeyboardLayout(ip,t,80);
+		check(n==(ip ? 14:40));checkTable(t,n,kXrPanelHeight,-1);
+		check(xrPanelHit(t,n,(32+32.0f)/768,1-(228+34.0f)/1024,kXrPanelHeight)=='1');
+		check(xrPanelHit(t,n,(496+120.0f)/768,1-(320+38.0f)/1024,kXrPanelHeight)==(ip ? 1001:'O'));
+	}
 	check(xrMenuHit(.5f,std::numeric_limits<float>::quiet_NaN())==-1);
 	check(xrMenuHit(.001f,.999f,0)==-1);
 	check(xrCommandHit(.5f,std::numeric_limits<float>::quiet_NaN())==-1);

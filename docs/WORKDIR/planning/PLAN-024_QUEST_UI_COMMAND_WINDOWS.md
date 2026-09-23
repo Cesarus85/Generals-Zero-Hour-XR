@@ -314,3 +314,17 @@ Branch `claude/p21-ui-command-windows`, starting from `f27d450`.
   Installation of final version 10208 is deliberately deferred to the next
   Quest session; headset acceptance above refers to the content-equivalent
   installed 10207 candidate.
+
+## 16. Visual follow-up: PR #40 (2026-09-23)
+
+PR #40 repaints the existing shared-table UI and Commands panels as a military
+command console: chamfered gunmetal/olive surfaces, brass frames and rivets,
+stencil-style headers and clearer active/hover/state accents. It changes only
+Android Canvas rendering in `XrPanelPainter.java`; native control tables, ray
+hit geometry, panel placement and command actions remain unchanged.
+
+The repaint is integrated on `codex/xr-keyboard-pr40` together with the
+separately scoped Direct Connect keyboard. Host panel/geometry/routing checks,
+the full ARM64 native build and release-signed test APK assembly pass. Final
+visual readability, contrast, state recognition and controller text entry
+still require a worn-headset check before merge/release.

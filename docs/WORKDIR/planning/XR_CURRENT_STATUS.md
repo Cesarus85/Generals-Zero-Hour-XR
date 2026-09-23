@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-20
+**Updated:** 2026-09-23
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`
@@ -44,6 +44,24 @@ the detailed narrative and command transcripts out of this dashboard.
   tests, APK hash where applicable, and a list of physical checks still open.
 
 ## Current product baseline
+
+**Current integration candidate:** branch `codex/xr-keyboard-pr40` starts at
+public `main` `a15ca03` and integrates PR #40's military command-console
+artwork without changing panel geometry, hit regions or command semantics. It
+also promotes the previously isolated Direct Connect keyboard mechanics into
+the normal XR source without taking any LAN diagnostic or simulation changes:
+triggering the native player-name or remote-IP field opens a controller panel;
+name entry offers uppercase letters, digits and space, while IP entry accepts
+digits and `.` only. Delete, Done, Back and UI-toggle close paths are explicit.
+Focused geometry, routing and bilingual Canvas-payload host tests pass, as do
+the complete 1,482-target ARM64 native build and release-signed APK assembly.
+The test candidate is versionCode 10229 / versionName
+`1.2.29-ui-keyboard-test`, 57,100,470 bytes, SHA-256
+`5561bf8f0455ca582e5e4e37c916fba929846efa280db06b20c4dbdb8afb86fc`,
+and verifies with the established v3 certificate. Android Gradle Plugin 8.5.2
+Lint was excluded because its worker crashes under the locally installed JDK
+25; Java compilation and APK assembly pass. APK installation and worn-headset
+name/IP entry remain open; the public 1.2.28 APK is unchanged.
 
 **Current public offline preview:** [1.2.28](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.28-xr-preview).
 This release promotes the accepted P26-2 Android terrain batching and the
@@ -212,8 +230,8 @@ layout test; keep those limits explicit in the private preview.
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
 | View model | Tabletop remains default; optional Ground View is available during live offline Campaign and Skirmish, with experimental stick navigation and the board-side shortcut column. Videos and full native dialogs stay upright. | Skirmish static view positive; 10223 button layout accepted; campaign transitions and stick movement/collision/comfort require headset testing |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
-| Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
-| Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |
+| Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states; PR #40's military-console repaint is in the current candidate | P21 presentation accepted; PR #40 host-verified, headset gate open |
+| Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips; PR #40 applies the same military-console visual language | P21 interaction accepted; PR #40 host-verified, headset gate open |
 | Build window | Original production/build UI detached above the tabletop and independently movable, scalable and tiltable | User accepted current arrangement and interaction |
 | Localization | XR interface and help support German and English; initial choice follows German OS, otherwise English | Resource/host checks pass in both languages, including long German labels with shrink-to-fit rendering; device use remains a physical gate |
 | Play-space setup | Optional free board, detected table/floor and manual-height workflows; no required room binding; unanchored launches use safe HMD-relative geometry | P19.1 and P20/P20.3 startup, transition and explicit-alignment behavior accepted in the headset |
@@ -221,7 +239,7 @@ layout test; keep those limits explicit in the private preview.
 | Returning launch | Saved valid data is checked inside the XR Activity; setup opens only when data is missing or invalid | Device launch verified; final visual no-flash confirmation remains a physical gate |
 | Performance defaults | Balanced resolution, light shadows, Multiview preferred, redundant extra world copy omitted automatically | Reported as relatively smooth and playable; no universal FPS guarantee |
 | End-of-match result | Read-only XR latch presents Victory/Defeat/Match-over across the direct score transition | PR #11: host tests and the 10216 short headset test pass; shipped in private 10217 release without debug controls; exact 10217 headset play and other mission/network end paths remain open |
-| Controller text entry | No general in-game virtual keyboard in the 1.2.17 offline release; a Direct Connect name/IP prototype exists only on the separate LAN branch | Separate follow-up; do not merge LAN diagnostics into the offline fix |
+| Controller text entry | Current integration candidate has a focused virtual keyboard for native Direct Connect player-name and IPv4 fields; this is not a general arbitrary-text or hardware keyboard implementation | Host geometry/routing/text and full native build pass; headset entry gate open |
 
 ## XR match-result milestone: headset accepted
 
@@ -269,10 +287,12 @@ GitHub rejected runner jobs for account billing/spending-limit reasons, so the
 release relied on a complete local ARM64 build and host tests. The exact
 10217 release bytes have not yet had a separate worn-headset play test.
 
-General controller text entry is **not** part of that end-game PR. The LAN
-branch's Direct Connect keyboard is hard-coded to player name and IPv4; reuse
-its XR panel mechanics only in a later, independently reviewed generic
-text-field task. The native Android setup/importer input is separate.
+General controller text entry was **not** part of that end-game PR. On
+2026-09-23 the LAN branch's focused player-name/IPv4 keyboard mechanics were
+ported independently onto current offline `main`; no LAN preview, diagnostic,
+simulation or wire-format code came with them. It remains intentionally scoped
+to those two Direct Connect fields. Native Android setup/importer input and
+future arbitrary chat/text or hardware keyboard support are separate.
 
 ## Current visual and interaction defaults
 
