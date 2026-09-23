@@ -1547,7 +1547,7 @@ void XrGameBoot_Key(XrGameKey key, bool down)
 }
 
 // GeneralsX @feature Codex 23/09/2026 Bridge every original entry gadget to
-// Android's system IME. The engine remains authoritative for filtering,
+// Meta's runtime-owned OpenXR keyboard. The engine remains authoritative for filtering,
 // max-length handling and owner notifications.
 static GameWindow *xrFocusedTextTarget(uintptr_t token=0)
 {

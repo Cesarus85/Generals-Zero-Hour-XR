@@ -23,6 +23,7 @@ These are headset captures supplied by the project maintainer. Map, faction, gra
 - Detached build window, persistent Commands window and a spatial UI panel; move, tilt, scale or recenter the workspace. Optional detected-surface or manual-height placement does not require a room scan.
 - Matching UI, Commands and Ground View shortcuts beside the board. During live offline Campaign and Skirmish gameplay, Ground View offers an optional human-scale, passive view of visible terrain; controller walking and turning are experimental, with B/Y returning to the unchanged tabletop. Videos and scripted camera sequences use the regular presentation.
 - English and German XR interface/help, left-handed controller mode, hover names and build costs.
+- Meta's native Quest keyboard for original game text fields, including LAN player name, chat and Direct Connect address entry. This improves text entry but does not make human multiplayer release-ready.
 - An XR Victory/Defeat/Match over card remains visible across the transition to match statistics.
 - Quest 3 defaults: Balanced resolution, Light shadows and Multiview. Higher quality modes, including Ultra+, are optional and may cost performance.
 
@@ -30,13 +31,13 @@ The **supported preview path is offline play**. Human LAN/Internet multiplayer, 
 
 ## Get the current offline APK
 
-Download the release-signed [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.28-xr-preview/Generals-Zero-Hour-XR.apk) from the [1.2.28 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.28-xr-preview). This is the public offline preview build, not an experimental LAN diagnostic APK. Older development releases are retained privately as drafts; use the linked release for new installations.
+Download the release-signed [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.33-xr-preview/Generals-Zero-Hour-XR.apk) from the [1.2.33 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.33-xr-preview). This is the public offline preview build, not an experimental LAN diagnostic APK. Older development releases are retained privately as drafts; use the linked release for new installations.
 
-- APK SHA-256: `fc04349550027cab90964261e6eb221e4f4947c41ec57ff6def03529ca88ca20` (also in the release's `.sha256` asset).
+- APK SHA-256: `0f940168d8bf376e0ac8211f9e089c6c86eb0b40b53db0cec9c1647e45deeed1` (also in the release's `.sha256` asset).
 - Android package: `com.generalsx.zerohour.xr` (retained for update compatibility)
-- Android versionCode: `10228`; versionName: `1.2.28-xr-preview`.
+- Android versionCode: `10233`; versionName: `1.2.33-xr-preview`.
 
-The 1.2.28 release adds the accepted Android terrain batching from P26-2. On the measured maximum-zoom Campaign scene it reduced frame time from 42.00 to 34.30 ms without lowering terrain detail; results vary by map and battle load. It also includes the post-1.2.25 board-mesh churn reduction. Campaign Ground View transitions and long-session walking, collision and comfort remain incremental validation areas. Use the exact release link above rather than an older APK or a copied APK from the LAN branch. See [release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md) for verification and open validation work.
+The 1.2.33 release keeps the accepted 1.2.28 performance work and adds PR #40's military-console visual redesign, transparent board-side shortcut plates and Meta's native runtime keyboard for original game text fields. The keyboard is physically accepted on Quest 3 with readable keys, controller ray, text confirmation and safe return to the game. Campaign Ground View transitions and long-session walking, collision and comfort remain incremental validation areas. Human multiplayer remains experimental because text entry and lobby access do not resolve the known simulation mismatch. Use the exact release link above rather than an older APK or a copied APK from the LAN branch. See [release preparation](docs/WORKDIR/audit/RELEASE_PREPARATION_XR.md) for verification and open validation work.
 
 ## Install and play
 

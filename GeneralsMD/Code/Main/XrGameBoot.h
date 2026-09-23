@@ -90,7 +90,7 @@ bool XrGameBoot_IsInteractiveGame();
 void XrGameBoot_Pointer(bool active, float x, float y, bool select, bool secondary, float wheel);
 enum class XrGameKey { Back, Left, Right, Up, Down };
 void XrGameBoot_Key(XrGameKey key, bool down);
-// GeneralsX @feature Codex 23/09/2026 Android/Quest system keyboard bridge
+// GeneralsX @feature Codex 23/09/2026 Meta OpenXR virtual-keyboard bridge
 // for every focused original entry gadget. Tokens are valid only while that
 // exact gadget retains focus on the engine thread.
 uintptr_t XrGameBoot_FocusedTextField();

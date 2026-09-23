@@ -36,6 +36,17 @@
         android:version="1"
         android:required="false" />
 
+    <!-- Meta's native OpenXR virtual keyboard. Optional keeps the common APK
+         installable on other Android/OpenXR devices; Quest supplies both the
+         keyboard behavior and its render model at runtime. -->
+    <uses-feature
+        android:name="com.oculus.feature.VIRTUAL_KEYBOARD"
+        android:required="false" />
+    <uses-feature
+        android:name="com.oculus.feature.RENDER_MODEL"
+        android:required="false" />
+    <uses-permission android:name="com.oculus.permission.RENDER_MODEL" />
+
     <!-- GeneralsX @build Android port 07/07/2026 "All files access": lets the
          in-app folder browser (FolderPickerActivity) resolve to a real
          filesystem path anywhere in shared storage (Downloads, an SD card,
