@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-23 — 1.2.33 command-console and native-keyboard release
 
-**Publication state:** The non-debuggable 1.2.33 APK is the prepared public offline preview. Older releases, including debug-signed APKs, are retained as maintainer-only drafts. This leaves one public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
+**Publication state:** The nondebuggable 1.2.33 APK is the current public offline preview and GitHub Latest release. Older releases, including debug-signed APKs, are retained as maintainer-only drafts. This leaves one current public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
 
 ## Current public release checkpoint: 1.2.33
 
@@ -30,6 +30,15 @@ safe return to gameplay, together with the PR #40 presentation. GitHub Actions
 is skipped because the account quota is exhausted; local evidence is not
 represented as hosted CI. Human multiplayer remains experimental because the
 known Quest/PC simulation mismatch is separate from lobby text entry.
+
+PR #41 merged as `86b5c20bbd8787ec8855e08d852283fb60649fb2`. Release
+tag `v1.2.33-xr-preview` targets documentation checkpoint
+`9bf4767a5d1145c3f9ba8a2c81a2c1faa55e3ca1`. GitHub reports the APK at
+57,161,910 bytes with the exact digest above. A fresh independent GitHub
+download passes the uploaded `.sha256` sidecar and is byte-identical to the
+local artifact. The exact final APK update-installed on Quest 3; Android
+reports versionCode 10233 / `1.2.33-xr-preview`, and the pulled device
+`base.apk` has the same SHA-256. GitHub marks this non-prerelease as Latest.
 
 ## Previous public release checkpoint: 1.2.28
 

@@ -45,8 +45,7 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Current product baseline
 
-**Current integration candidate:** branch `codex/xr-keyboard-pr40` starts at
-public `main` `a15ca03` and integrates PR #40's military command-console
+**Current merged release:** PR #41 integrates PR #40's military command-console
 artwork without changing panel geometry, hit regions or command semantics. It
 adds Quest-native text entry without taking any LAN diagnostic or simulation
 changes: a controller press on any focused original entry gadget opens the
@@ -78,8 +77,10 @@ draws the pointer after keyboard geometry, submits both controller ray and
 direct input, uses a compact head-relative location, and makes B an emergency
 close. Readable layout, ray interaction, Enter/B behavior, reopening another
 field and shortcut transparency were accepted by the maintainer in headset.
-The public 1.2.28 APK remains unchanged until this branch is merged and the
-1.2.33 release is published.
+PR #41 merged as `86b5c20`; release tag `v1.2.33-xr-preview` targets `9bf4767`.
+GitHub publishes the exact APK and checksum above as the public Latest release;
+a fresh download and the Quest-installed `base.apk` both match the recorded
+SHA-256 byte-for-byte.
 
 **Previous public offline preview:** [1.2.28](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.28-xr-preview).
 This release promotes the accepted P26-2 Android terrain batching and the
