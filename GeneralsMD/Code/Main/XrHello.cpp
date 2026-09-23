@@ -45,6 +45,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <mutex>
 #include <vector>
 
 #include "XrGameBoot.h"
@@ -411,8 +412,8 @@ struct XrHello {
 	GLuint sceneTexture=0;std::string sceneKey;
 	JNIEnv *panelEnv=nullptr;jclass panelPainter=nullptr;
 	XrMenuState menu;XrCommandState commands;float worldZoom=1.0f;bool startViewApplied=false;
-	// GeneralsX @feature Codex 23/09/2026 Session-only Direct Connect keyboard.
-	int keyboardField=0;bool keyboardReady=false,keyboardPointerHeld=false;
+	// GeneralsX @feature Codex 23/09/2026 Quest system keyboard for original fields.
+	uintptr_t keyboardToken=0;bool keyboardPointerHeld=false;
 	GLuint commandsTexture=0,commandButtonTexture=0;std::string commandsKey;
 	GLuint uiButtonTexture=0,groundButtonTexture=0,settingsTexture=0,hoverTexture=0;
 	GLuint recoveryTexture=0;
@@ -483,6 +484,69 @@ struct XrHello {
 	XrResult lastLocateResult = XR_SUCCESS;
 	uint32_t lastViewCount = 0;
 };
+
+// GeneralsX @feature Codex 23/09/2026 Android IME callbacks arrive on the UI
+// thread. Keep the engine single-threaded by retaining only the latest complete
+// editor value and applying it from the XR/game thread.
+struct XrImeUpdate {
+	uintptr_t token=0;std::wstring text;bool done=false,pending=false;
+};
+static std::mutex g_imeMutex;
+static XrImeUpdate g_imeUpdate;
+
+static jstring xrJavaString(JNIEnv *env,const std::wstring &value)
+{
+	std::vector<jchar> utf16;utf16.reserve(value.size());
+	for(wchar_t wide:value) {
+		const uint32_t cp=uint32_t(wide);
+		if(cp<=0xffff && !(cp>=0xd800 && cp<=0xdfff))utf16.push_back(jchar(cp));
+		else if(cp<=0x10ffff) {
+			const uint32_t v=cp-0x10000;
+			utf16.push_back(jchar(0xd800+(v>>10)));utf16.push_back(jchar(0xdc00+(v&0x3ff)));
+		}
+	}
+	static const jchar empty=0;
+	return env->NewString(utf16.empty() ? &empty:utf16.data(),jsize(utf16.size()));
+}
+
+static bool showXrSystemKeyboard(XrHello &x,uintptr_t token)
+{
+	if(!token || !x.panelEnv || !x.activityRef)return false;
+	auto *env=x.panelEnv;jclass cls=env->GetObjectClass(x.activityRef);
+	if(!cls || env->ExceptionCheck()){env->ExceptionClear();return false;}
+	const auto method=env->GetMethodID(cls,"showXrKeyboard","(JLjava/lang/String;II)V");
+	if(!method || env->ExceptionCheck()){env->ExceptionClear();env->DeleteLocalRef(cls);return false;}
+	jstring value=xrJavaString(env,XrGameBoot_TextFieldValue(token));
+	env->CallVoidMethod(x.activityRef,method,jlong(token),value,
+		XrGameBoot_TextFieldInputMode(token),XrGameBoot_TextFieldMaxLength(token));
+	if(value)env->DeleteLocalRef(value);env->DeleteLocalRef(cls);
+	if(env->ExceptionCheck()){env->ExceptionDescribe();env->ExceptionClear();return false;}
+	x.keyboardToken=token;return true;
+}
+
+static void hideXrSystemKeyboard(XrHello &x)
+{
+	if(!x.keyboardToken || !x.panelEnv || !x.activityRef)return;
+	auto *env=x.panelEnv;jclass cls=env->GetObjectClass(x.activityRef);
+	const auto method=cls ? env->GetMethodID(cls,"hideXrKeyboard","(J)V"):nullptr;
+	if(method && !env->ExceptionCheck())env->CallVoidMethod(x.activityRef,method,jlong(x.keyboardToken));
+	if(env->ExceptionCheck())env->ExceptionClear();if(cls)env->DeleteLocalRef(cls);
+	x.keyboardToken=0;
+}
+
+static void drainXrSystemKeyboard(XrHello &x)
+{
+	XrImeUpdate update;
+	{
+		std::lock_guard<std::mutex> lock(g_imeMutex);
+		if(!g_imeUpdate.pending)return;
+		update=std::move(g_imeUpdate);g_imeUpdate=XrImeUpdate{};
+	}
+	if(XrGameBoot_ReplaceTextField(update.token,update.text,update.done)) {
+		XR_LOG("Quest keyboard applied %zu characters%s",update.text.size(),update.done ? " (done)":"");
+	}
+	if(update.done && x.keyboardToken==update.token)x.keyboardToken=0;
+}
 
 static bool initEgl(XrHello &x)
 {
@@ -1296,7 +1360,7 @@ struct XrLoadingPresenter {
 			const bool ended=XR_SUCCEEDED(xrEndFrame(x.session,&end));
 			x.splitVisible=false;x.stereoVisible=false;x.diorama=false;
 			x.loadingPresentation=true;x.previousInputTime=0;
-			x.menu.open=false;x.keyboardField=0;x.keyboardReady=false;
+			x.menu.open=false;hideXrSystemKeyboard(x);
 			x.arranging=false;x.grab.cancel();x.controlsArmed=false;x.inputArmed=false;
 			x.menu.click.cancel();x.commands.input.click.cancel();
 			x.rayVisible=false;x.pointerVisible=false;x.hoverVisible=false;
@@ -1420,6 +1484,10 @@ static void runLoop(XrHello &x)
 		const XrControllerState controls = pollControls(x.controls,x.session,x.localSpace,
 			frameState.predictedDisplayTime,x.state==XR_SESSION_STATE_FOCUSED && frameState.shouldRender,x.layout.leftHanded);
 		x.lastFrameTime=frameState.predictedDisplayTime;
+		if(x.gameBooted) {
+			drainXrSystemKeyboard(x);
+			if(x.keyboardToken && XrGameBoot_FocusedTextField()!=x.keyboardToken)hideXrSystemKeyboard(x);
+		}
 		if (x.gameBooted && (!shouldRender || !frameState.shouldRender)) {
 			if(x.observer.mode!=XrObserverMode::Off)x.observer.cancel();
 			x.renderedObserver=false;
@@ -1459,7 +1527,7 @@ static void runLoop(XrHello &x)
 						x.interactiveGame = interactiveGame;
 						x.startViewApplied=false;
 						x.commands.groupOperation=0;x.commands.input.click.cancel();
-						if(x.menu.page==7) {x.menu.open=false;x.keyboardField=0;x.keyboardReady=false;}
+						if(x.keyboardToken)hideXrSystemKeyboard(x);
 						saveLayout(x);
 						x.grab.cancel(); x.arranging=false; x.controlsArmed=false;
 						x.cameraPending=interactiveGame; x.cameraCustom=false; x.cameraSaveFailed=false;
@@ -1540,20 +1608,15 @@ static void runLoop(XrHello &x)
 						XR_LOG("P11.1 loading returned; next frame reacquires gameplay poses");
 						continue; // The callback already ended this outer frame.
 					}
-					// GeneralsX @feature Codex 23/09/2026 A press on a focused
-					// Direct Connect field opens the controller keyboard once.
+					// GeneralsX @feature Codex 23/09/2026 A controller press on any
+					// focused original entry gadget opens the Quest system keyboard.
 					const bool textFieldPress=x.pointerPressed && !x.keyboardPointerHeld &&
-						!x.menu.open && !x.arranging && x.pointerPiece==0;
+						!x.menu.open && !x.arranging && x.pointerPiece>=0;
 					x.keyboardPointerHeld=x.pointerPressed;
 					if(textFieldPress) {
-						const int field=XrGameBoot_DirectConnectTextField();
-						if(field) {
-							x.keyboardField=field;x.keyboardReady=false;x.menu.click.cancel();
-							x.menu.open=true;x.menu.page=7;x.controlsArmed=false;
-							x.menu.surface.pose=xrPoseMul(xrWorkspaceHeading(views),{{0,0,0,1},{0,-.12f,-.85f}});
-							x.menu.surface.width=.68f;
-							XR_LOG("XR keyboard opened for Direct Connect field %d",field);
-						}
+						const uintptr_t token=XrGameBoot_FocusedTextField();
+						if(token && showXrSystemKeyboard(x,token))
+							XR_LOG("Quest system keyboard requested for focused entry field");
 					}
 					// Movies/dialogs can start during the native frame. Never use
 					// the previous frame's crop or show stale stereo captures.
@@ -1860,6 +1923,7 @@ Java_com_generalsx_zerohour_XrHelloActivity_runHello(JNIEnv *env, jclass, jobjec
 			d3d8gles_InvalidateCachedState();
 		}
 		runLoop(x);
+		hideXrSystemKeyboard(x);
 		if (x.gameBooted)
 			XrGameBoot_Shutdown();
 	} else {
@@ -1868,6 +1932,27 @@ Java_com_generalsx_zerohour_XrHelloActivity_runHello(JNIEnv *env, jclass, jobjec
 	shutdownXr(x);
 	env->DeleteGlobalRef(activityRef);
 	XR_LOG("runHello: exit");
+}
+
+JNIEXPORT void JNICALL
+Java_com_generalsx_zerohour_XrHelloActivity_nativeXrTextChanged(JNIEnv *env,jclass,
+	jlong token,jstring text,jboolean done)
+{
+	if(!text || !token)return;
+	const jsize length=env->GetStringLength(text);
+	const jchar *chars=env->GetStringChars(text,nullptr);if(!chars)return;
+	std::wstring value;value.reserve(size_t(length));
+	for(jsize i=0;i<length;++i) {
+		uint32_t cp=chars[i];
+		if(cp>=0xd800 && cp<=0xdbff && i+1<length && chars[i+1]>=0xdc00 && chars[i+1]<=0xdfff)
+			cp=0x10000+((cp-0xd800)<<10)+(chars[++i]-0xdc00);
+		else if(cp>=0xd800 && cp<=0xdfff)continue;
+		value.push_back(wchar_t(cp));
+	}
+	env->ReleaseStringChars(text,chars);
+	std::lock_guard<std::mutex> lock(g_imeMutex);
+	g_imeUpdate.token=uintptr_t(token);g_imeUpdate.text=std::move(value);
+	g_imeUpdate.done=done==JNI_TRUE;g_imeUpdate.pending=true;
 }
 
 JNIEXPORT void JNICALL

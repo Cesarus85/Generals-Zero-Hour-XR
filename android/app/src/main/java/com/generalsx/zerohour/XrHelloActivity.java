@@ -13,10 +13,21 @@
 package com.generalsx.zerohour;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -66,6 +77,79 @@ public class XrHelloActivity extends Activity {
 
     private static native void runHello(Object activity, int initialLanguage);
     private static native void stopHello();
+    private static native void nativeXrTextChanged(long token, String text, boolean done);
+
+    private EditText xrKeyboardEditor;
+    private boolean xrKeyboardInternalChange;
+    private long xrKeyboardToken;
+
+    // GeneralsX @feature Codex 23/09/2026 The native OpenXR activity has no
+    // SDL View, so provide one nearly invisible Android editor solely to let
+    // Quest's system IME serve every original game entry gadget.
+    public void showXrKeyboard(long token, String value, int inputMode, int maxLength) {
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed() || token == 0) return;
+            if (xrKeyboardEditor == null) {
+                xrKeyboardEditor = new EditText(this);
+                xrKeyboardEditor.setSingleLine(true);
+                xrKeyboardEditor.setBackgroundColor(Color.TRANSPARENT);
+                xrKeyboardEditor.setTextColor(Color.TRANSPARENT);
+                xrKeyboardEditor.setCursorVisible(false);
+                xrKeyboardEditor.setAlpha(0.01f);
+                xrKeyboardEditor.setShowSoftInputOnFocus(true);
+                xrKeyboardEditor.setImeOptions(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+                xrKeyboardEditor.addTextChangedListener(new TextWatcher() {
+                    @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                    @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                    @Override public void afterTextChanged(Editable s) {
+                        if (!xrKeyboardInternalChange && xrKeyboardToken != 0)
+                            nativeXrTextChanged(xrKeyboardToken, s.toString(), false);
+                    }
+                });
+                xrKeyboardEditor.setOnEditorActionListener((view, actionId, event) -> {
+                    if (actionId == EditorInfo.IME_ACTION_DONE ||
+                            (event != null && event.getKeyCode() == android.view.KeyEvent.KEYCODE_ENTER)) {
+                        nativeXrTextChanged(xrKeyboardToken, xrKeyboardEditor.getText().toString(), true);
+                        hideXrKeyboard(xrKeyboardToken);
+                        return true;
+                    }
+                    return false;
+                });
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(2, 2, Gravity.TOP | Gravity.START);
+                addContentView(xrKeyboardEditor, params);
+            }
+            xrKeyboardToken = token;
+            int type = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
+            if (inputMode == 1) type = InputType.TYPE_CLASS_PHONE;
+            else if (inputMode == 2) type = InputType.TYPE_CLASS_NUMBER;
+            else if (inputMode == 3)
+                type = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD;
+            xrKeyboardEditor.setInputType(type);
+            xrKeyboardEditor.setFilters(new InputFilter[]{new InputFilter.LengthFilter(Math.max(1, maxLength))});
+            xrKeyboardInternalChange = true;
+            xrKeyboardEditor.setText(value == null ? "" : value);
+            xrKeyboardEditor.setSelection(xrKeyboardEditor.length());
+            xrKeyboardInternalChange = false;
+            xrKeyboardEditor.requestFocus();
+            xrKeyboardEditor.postDelayed(() -> {
+                InputMethodManager ime = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (ime != null) {
+                    boolean requested = ime.showSoftInput(xrKeyboardEditor, InputMethodManager.SHOW_IMPLICIT);
+                    Log.i(TAG, "Quest system keyboard requested: " + requested);
+                }
+            }, 100);
+        });
+    }
+
+    public void hideXrKeyboard(long token) {
+        runOnUiThread(() -> {
+            if (xrKeyboardEditor == null || (token != 0 && token != xrKeyboardToken)) return;
+            InputMethodManager ime = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (ime != null) ime.hideSoftInputFromWindow(xrKeyboardEditor.getWindowToken(), 0);
+            xrKeyboardEditor.clearFocus();
+            xrKeyboardToken = 0;
+        });
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

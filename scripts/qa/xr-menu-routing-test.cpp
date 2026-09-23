@@ -21,7 +21,6 @@ struct XrHello {
 	XrSessionState state=XR_SESSION_STATE_FOCUSED;
 	bool splitVisible=true,panelLatched=true,arranging=false,controlsArmed=true,interactiveGame=true;
 	bool stereoWorld=false,stereoVisible=false,recoveryVisible=false,layoutDirty=false,rayVisible=false,rayHit=false,pointerPressed=false,hoverVisible=false;
-	int keyboardField=0;bool keyboardReady=false;
 	int arrangeSlot=1;float worldZoom=1;XrVector3f rayStart={},rayEnd={};
 };
 static int checks=0,releases=0,saves=0;static bool locked=false;
@@ -48,20 +47,11 @@ static void saveLayout(XrHello &){++saves;}
 static void updateControls(XrHello &,const XrControllerState &c,XrTime){check(!c.select);++releases;}
 static bool xrSceneMenuAction(XrHello &,int){return false;}
 static void XrGameBoot_CancelTarget(){}
-static int textKeyField=-1,textKeyAscii=-1;
-static bool XrGameBoot_DirectConnectTextKey(int field,int ascii){textKeyField=field;textKeyAscii=ascii;return true;}
 #include "XrMenuUI.h"
 #include "XrCommandUI.h"
 int main(){
 	XrHello x;XrView views[2]={};views[0].pose.orientation.w=views[1].pose.orientation.w=1;
 	for(int i=0;i<3;++i)x.surfaces[i]=x.layout.relative[i];
-	// GeneralsX @test Codex 23/09/2026 Keyboard actions remain local to the
-	// focused field, including backspace and the explicit Done close path.
-	x.menu.open=true;x.menu.page=7;x.keyboardField=2;
-	applyMenuAction(x,'7',views);check(textKeyField==2 && textKeyAscii=='7' && x.menu.open);
-	applyMenuAction(x,1000,views);check(textKeyAscii==8 && x.menu.open);
-	applyMenuAction(x,1001,views);check(!x.menu.open && x.keyboardField==0 && !x.keyboardReady);
-	x.menu.open=false;x.menu.page=0;
 	const auto uiDock=uiButtonSurface(x),commandsDock=commandButtonSurface(x),groundDock=groundButtonSurface(x);
 	check(uiDock.width==.20f && commandsDock.width==uiDock.width && groundDock.width==uiDock.width);
 	check(fabsf(commandsDock.pose.position.y-uiDock.pose.position.y+.16f)<.0001f);

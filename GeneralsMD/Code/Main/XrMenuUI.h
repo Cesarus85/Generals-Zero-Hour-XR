@@ -50,14 +50,6 @@ static bool armGroundView(XrHello &x) {
 	return true;
 }
 static void applyMenuAction(XrHello &x,int action,const XrView *views) {
-	// GeneralsX @feature Codex 23/09/2026 Keyboard keys write only to the
-	// native focused Direct Connect widget; Done closes without side effects.
-	if(x.menu.page==7) {
-		if(action==1001) {x.menu.open=false;x.keyboardField=0;x.keyboardReady=false;x.controlsArmed=false;return;}
-		if(action==1000 || (action>=32 && action<=126))
-			XrGameBoot_DirectConnectTextKey(x.keyboardField,action==1000 ? 8:action);
-		return;
-	}
 	if(x.menu.page==6) {
 		if(action==18)requestWorkspaceRecenter(x,views,true);
 		else if(action==19)x.menu.page=0;
@@ -180,23 +172,16 @@ static bool updateXrMenu(XrHello &x,const XrControllerState &c,const XrView *vie
 		const auto point=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{(u-.5f)*s.width,(v-.5f)*s.width*aspect,0}));
 		const float distance=xrLength(xrSub(point,c.aim.position));
 		if(distance<nearest) {nearest=distance;endpoint=point;hit=piece==0 ? 100:piece==1 ? 101:
-			(x.menu.page==7 ? ([&] {XrPanelControl table[80];const int count=xrTextKeyboardLayout(x.keyboardField==2,table,80);return xrPanelHit(table,count,u,v,kXrPanelHeight);}()) :
-			x.menu.page==4 ? xrCommandHit(u,v,true):x.menu.page==5 ? xrSceneMenuHit(u,v):xrMenuHit(u,v,x.menu.page));}
+			(x.menu.page==4 ? xrCommandHit(u,v,true):x.menu.page==5 ? xrSceneMenuHit(u,v):xrMenuHit(u,v,x.menu.page));}
 	}
 	const bool captured=x.menu.open || hit==100 || hit==101;
-	if(x.menu.page==7 && !c.select)x.keyboardReady=true;
-	const bool fire=x.menu.update(c.select && (x.menu.page!=7 || x.keyboardReady),hit,tracked);x.menu.hover=hit;
+	const bool fire=x.menu.update(c.select,hit,tracked);x.menu.hover=hit;
 	if(!captured) return false;
 	updateControls(x,XrControllerState{},time);
 	x.rayVisible=tracked;x.rayStart=c.aim.position;x.rayEnd=endpoint;x.rayHit=hit>=0;
 	x.pointerPressed=hit>=0 && c.select;x.hoverVisible=false;
-	if(x.menu.open && c.back) {
-		if(x.menu.page==7) {x.menu.open=false;x.keyboardField=0;x.keyboardReady=false;x.controlsArmed=false;x.menu.click.cancel();}
-		else finishArrangement(x);
-		return true;
-	}
+	if(x.menu.open && c.back) {finishArrangement(x);return true;}
 	if(fire && hit==100) {
-		if(x.menu.open && x.menu.page==7) {x.menu.open=false;x.keyboardField=0;x.keyboardReady=false;x.controlsArmed=false;return true;}
 		if(x.arranging) {finishArrangement(x);return true;}
 		x.menu.open=!x.menu.open;x.controlsArmed=false;
 		if(x.menu.open) {

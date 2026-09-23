@@ -12,6 +12,7 @@ import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PorterDuff;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.text.Layout;
@@ -155,6 +156,21 @@ public final class XrPanelPainter {
         rivet(canvas, width - cut * .75f - 6, height - cut * .75f - 6);
     }
 
+    // GeneralsX @bugfix Codex 23/09/2026 Compact room shortcuts must retain
+    // only their chamfered console plate. A full opaque FRAME clear produced
+    // black rectangular quads, one of which visibly overlapped the map.
+    private static void shortcutChrome(Canvas canvas, int width, int height, float cut) {
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+        plate(canvas, 4, 4, width - 8, height - 8, cut, BG_TOP, BG_BOT);
+        outline(canvas, 4, 4, width - 8, height - 8, cut, TRIM_DIM, 5);
+        outline(canvas, 9, 9, width - 18, height - 18, Math.max(4, cut - 5), TRIM, 2);
+        bevel(canvas, 9, 9, width - 18, height - 18, Math.max(4, cut - 5));
+        rivet(canvas, cut * .75f + 6, cut * .75f + 6);
+        rivet(canvas, width - cut * .75f - 6, cut * .75f + 6);
+        rivet(canvas, cut * .75f + 6, height - cut * .75f - 6);
+        rivet(canvas, width - cut * .75f - 6, height - cut * .75f - 6);
+    }
+
     // Stencil header text: heavy face, tracked out, gold. Resets tracking so
     // the shared TextPaint stays body-clean.
     private static void stencil(TextPaint text, float size) {
@@ -182,7 +198,7 @@ public final class XrPanelPainter {
         if (kind == 0) {
             // Compact room-space shortcut: one chamfered metal plate, brass
             // frame, centered stencil label. Hit surface unchanged.
-            consoleChrome(canvas, width, height, 22);
+            shortcutChrome(canvas, width, height, 22);
             stencil(text, 30);
             text.setColor(GOLD_HI);
             text.setTextAlign(Paint.Align.CENTER);

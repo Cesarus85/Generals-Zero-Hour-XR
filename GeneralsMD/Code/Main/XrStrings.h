@@ -121,12 +121,6 @@ inline constexpr XrTranslation kXrTranslations[]={
  {"GPU nicht verfügbar","GPU unavailable"},
  {"GPU wartet / verworfen","GPU pending / discarded"},
  {"Fertig","Done"},
- // GeneralsX @feature Codex 23/09/2026 Direct Connect keyboard labels.
- {"Virtuelle Tastatur","Virtual keyboard"},
- {"Remote-IP","Remote IP"},
- {"Spielername","Player name"},
- {"Löschen","Delete"},
- {"Leerzeichen","Space"},
  {"Befehle · P11.1","Commands · P11.1"},
  {"%s · %.2f m · Karte %.1fx · P11.1","%s · %.2f m · Map %.1fx · P11.1"},
  {"Gemischte Formationen: zuerst einzeln lösen","Mixed formations: release each formation first"},

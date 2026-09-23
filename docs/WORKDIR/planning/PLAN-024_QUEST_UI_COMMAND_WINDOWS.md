@@ -324,7 +324,9 @@ Android Canvas rendering in `XrPanelPainter.java`; native control tables, ray
 hit geometry, panel placement and command actions remain unchanged.
 
 The repaint is integrated on `codex/xr-keyboard-pr40` together with the
-separately scoped Direct Connect keyboard. Host panel/geometry/routing checks,
-the full ARM64 native build and release-signed test APK assembly pass. Final
-visual readability, contrast, state recognition and controller text entry
-still require a worn-headset check before merge/release.
+separately scoped native Quest system-keyboard bridge. Pixels outside the three
+chamfered board-side shortcuts are transparent, removing their rectangular
+black quads without changing physical hit surfaces. Host panel/geometry/routing
+checks, the full ARM64 native build and release-signed test APK assembly pass.
+Final visual readability, shortcut transparency, state recognition and native
+system-keyboard text entry still require a worn-headset check before merge.

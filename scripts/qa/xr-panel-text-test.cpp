@@ -27,7 +27,6 @@ struct XrHello {
  GLuint uiButtonTexture=0,groundButtonTexture=0,commandButtonTexture=0,commandsTexture=0,settingsTexture=0,hoverTexture=0;
  std::string commandsKey,settingsKey,hoverCandidate,hoverKey;
  bool splitVisible=true,arranging=false,pointerVisible=false,pointerPressed=false,hoverVisible=false;
-	int keyboardField=0;
 	int pointerPiece=0;float pointerU=0,pointerV=0,worldZoom=1;XrTime hoverSince=0;
  int arrangeSlot=1;
 };
@@ -44,7 +43,6 @@ static int XrGameBoot_GroupSize(int group){return group;}
 static int tacticMode=0,tacticGroup=0;static bool tacticQueue=false;
 static void XrGameBoot_TacticalState(int &mode,int &group,bool &queue){mode=tacticMode;group=tacticGroup;queue=tacticQueue;}
 static std::string XrGameBoot_WorldHoverInfo(){return {};}
-static std::string XrGameBoot_DirectConnectTextValue(int field){return field==2 ? "192.168.178.158":"Commander";}
 static bool building=false;
 static bool XrGameBoot_CanRotatePlacement(){return building;}
 static bool XrGameBoot_CanObserveGround(){return true;}
@@ -200,15 +198,6 @@ int main(int argc,char **argv){
   x.menu.page=0;updateMenuTextures(x,100);
   {const auto &c=captures[1];check(stateOf(c,1)&kXrStateSelected);check(hasLabelPrefix(c,std::string(xrTr("Baufenster"))+"|"));}
   x.menu.target=1;updateMenuTextures(x,100);check(stateOf(captures[1],0)&kXrStateSelected);
-  // Controller keyboard: player-name and IPv4 layouts are localized and
-  // display the native widget value without leaking unavailable characters.
-  x.menu.page=7;x.keyboardField=1;updateMenuTextures(x,100);
-  {const auto &c=captures[1];check(c.title==xrTr("Virtuelle Tastatur"));
-   check(c.detail.find("Commander")!=std::string::npos);check(hasLabel(c,xrTr("Leerzeichen")));
-   check(hasLabel(c,xrTr("Löschen")));check(hasLabel(c,xrTr("Fertig")));check(c.ctrl.size()/8==40);}
-  x.keyboardField=2;updateMenuTextures(x,100);
-  {const auto &c=captures[1];check(c.detail.find("192.168.178.158")!=std::string::npos);
-   check(hasLabel(c,"."));check(!hasLabel(c,xrTr("Leerzeichen")));check(c.ctrl.size()/8==14);}
   // Controller guide pages resolve all placeholders in both handedness modes.
   x.menu.page=4;for(bool left:{false,true})for(int page=0;page<kXrControllerHelpPages;++page) {
    x.layout.leftHanded=left;x.menu.helpPage=page;updateMenuTextures(x,100);
