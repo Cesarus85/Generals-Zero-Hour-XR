@@ -1036,6 +1036,8 @@ void W3DDisplay::init()
 		WW3D::Set_Prelit_Mode( WW3D::PRELIT_MODE_LIGHTMAP_MULTI_PASS );
 		WW3D::Set_Collision_Box_Display_Mask(0x00);	///<set to 0xff to make collision boxes visible
 		WW3D::Enable_Static_Sort_Lists(true);
+		// Safe default until the loader thread proves alive; re-enabled after
+		// device init when background streaming can actually drain.
 		WW3D::Set_Thumbnail_Enabled(false);
 		WW3D::Set_Screen_UV_Bias( TRUE );  ///< this makes text look good :)
 		WW3D::Set_Texture_Bitdepth(32);
@@ -1126,6 +1128,14 @@ void W3DDisplay::init()
 			throw ERROR_INVALID_D3D;	//failed to initialize.  User probably doesn't have DX 8.1
 			DEBUG_CRASH( ("Unable to set render device") );
 			return;
+		}
+
+		// GeneralsX @feature 19/09/2026 Background texture streaming: restore
+		// the retail thumbnail default only when the loader thread is alive
+		// (POSIX revival); with a dead thread every background task would
+		// stall forever, which is why thumbnails were forced off above.
+		if (TextureLoader::Is_Background_Thread_Running()) {
+			WW3D::Set_Thumbnail_Enabled(true);
 		}
 
 		// GeneralsX @bugfix Android port 09/04/2026 REVERTED: this refresh
