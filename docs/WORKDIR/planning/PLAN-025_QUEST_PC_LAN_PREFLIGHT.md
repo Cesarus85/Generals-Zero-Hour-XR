@@ -1,5 +1,12 @@
 # PLAN-025 — Quest ↔ PC LAN preflight
 
+**Harness handoff, 2026-09-24:** Start with
+[PLAN-025B](PLAN-025B_MULTIPLAYER_HARNESS_HANDOFF.md). The implementation remains
+at `078f8ea`; this handoff adds documentation only. Remote `main` and the public
+release have advanced separately (latest public: 1.2.33). Preserve all public
+releases; do not merge this experimental branch. Device results below are dated
+historical evidence, not a fresh connectivity/install check.
+
 **Status (active 2026-09-22):** The universal bounded desync observer is now
 implemented on `codex/lan-object-crc-trace`, starting from checkpoint `4fdda8a`.
 It captures every retained object's type and existing CRC boundaries, global

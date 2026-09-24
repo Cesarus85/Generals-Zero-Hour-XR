@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-22
+**Updated:** 2026-09-24
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`
@@ -9,6 +9,23 @@ This is the short, maintained entry point for the XR branch. Read it before the
 long implementation record. It distinguishes source completion, automated
 verification, device installation and actual worn-headset acceptance; those are
 not interchangeable.
+
+## Harness handoff — 2026-09-24
+
+Start from the head of `codex/lan-object-crc-trace`; implementation checkpoint
+`078f8ea` is unchanged by this documentation handoff. Read
+[PLAN-025B_MULTIPLAYER_HARNESS_HANDOFF.md](PLAN-025B_MULTIPLAYER_HARNESS_HANDOFF.md)
+for the exact desired outcome, read order, verified evidence, research leads,
+non-goals and receiving harness's first assignment. Use a separate continuation
+branch. Do not automatically rebase/merge the now-diverged `main` into this
+baseline; the handoff PR is experimental and must remain unmerged.
+
+Repository/release state was refreshed today: remote `main` is `286d6c2` and
+GitHub's latest public release is now **1.2.33** (2026-09-23), not the historical
+1.2.28 baseline. Neither release is changed by the LAN handoff. Similar public
+and private diagnostic version numbers are different artifacts; use hashes and
+certificates to identify them. No new device check/build/install/match occurred
+today; connectivity and test results below retain their original dates.
 
 ## Current LAN work — 2026-09-22
 
@@ -37,7 +54,8 @@ The representative construction/production/movement/combat/ability match and
 all new cause/fix evidence remain open, followed by sustained and unmodified
 Steam/Proton/Windows gates. Quest-to-Quest is an independent untested path.
 
-GitHub still lists **1.2.28 as the latest public release**. No change is merged
+At the 2026-09-22 checkpoint, GitHub listed **1.2.28 as the latest public release**;
+see the 2026-09-24 handoff above for the current public baseline. No change is merged
 or published; the main workspace's pre-existing dirty state is left alone.
 Older baseline sections below are historical milestone records.
 
