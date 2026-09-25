@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iterator>
+#include <limits>
 #include <string>
 static int checks=0;
 static void check(bool value) {++checks;if(!value){fprintf(stderr,"observer check %d failed\n",checks);exit(1);}}
@@ -44,6 +45,12 @@ int main(int argc,char **argv) {
 	// inside it (even for the tallest terrain) and the negative radius signal.
 	check(std::string(GX_XR_STEREO_FRAGMENT_BODY).find("uXrAspect<0.0 && dot(vXrBoard.xz,vXrBoard.xz)>uXrAspect*uXrAspect")!=std::string::npos);
 	check(boot.find("s_worldFrame.observer ? -kXrObserverFarMetres:")!=std::string::npos);
+	// The stereo begin must accept that radius; it once only allowed -1, which
+	// silently disabled Ground View entry on the device.
+	check(gxXrStereoAspectValid(-kXrObserverFarMetres));
+	check(gxXrStereoAspectValid(576.0f/1280.0f) && gxXrStereoAspectValid(1));
+	check(!gxXrStereoAspectValid(0) && !gxXrStereoAspectValid(-.5f) && !gxXrStereoAspectValid(3));
+	check(!gxXrStereoAspectValid(std::numeric_limits<float>::quiet_NaN()));
 	check(boot.find("shaderBoard[12]-=head.x;shaderBoard[13]-=head.y;shaderBoard[14]-=head.z;")!=std::string::npos);
 	check(boot.find("kXrObserverClipFarMetres*kXrObserverUnitsPerMetre:20000")!=std::string::npos);
 	{

@@ -15,6 +15,12 @@
 // head yaw. The tabletop branch (uXrAspect>0) is unchanged.
 #define GX_XR_STEREO_FRAGMENT_BODY "if(uXrActive==1 && uXrAspect>0.0 && (abs(vXrBoard.x)>0.5 || abs(vXrBoard.y)>uXrAspect*0.5 || vXrBoard.z < -0.15 || vXrBoard.z > " GX_XR_BOARD_CEILING_GLSL("uXrBoard") ")) discard;\n" \
 	"if(uXrActive==1 && uXrAspect<0.0 && dot(vXrBoard.xz,vXrBoard.xz)>uXrAspect*uXrAspect) discard;\n"
+// GeneralsX @bugfix Claude 25/09/2026 Shared stereo-begin contract: a positive
+// aspect is the tabletop board, a negative one the observer horizon radius in
+// metres. Pipeline validation and host tests use this one definition.
+inline bool gxXrStereoAspectValid(float aspect) {
+	return aspect==aspect && ((aspect>0 && aspect<=2) || (aspect<=-1 && aspect>=-1000));
+}
 // GeneralsX @bugfix Codex 13/09/2026 D3D opaque material alpha is not MR coverage.
 // Apply AFTER the original alpha test, preserving cutout holes and RGB.
 #define GX_XR_STEREO_COVERAGE_BODY "if(uXrActive!=0 && uXrOpaque!=0) cur.a=1.0;\n"
