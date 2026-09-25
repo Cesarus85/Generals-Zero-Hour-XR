@@ -245,7 +245,7 @@ AsciiString GenerateGameOptionsString()
 	if(!TheLAN->GetMyGame() || !TheLAN->GetMyGame()->amIHost())
 		return AsciiString::TheEmptyString;
 
-	return GameInfoToAsciiString(TheLAN->GetMyGame());
+	return GameInfoToAsciiString(TheLAN->GetMyGame(), FALSE);
 }
 
 Bool ParseGameOptionsString(LANGameInfo *game, AsciiString options)
@@ -315,4 +315,3 @@ Bool ParseGameOptionsString(LANGameInfo *game, AsciiString options)
 
 	return false;
 }
-

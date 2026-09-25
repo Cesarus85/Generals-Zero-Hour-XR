@@ -205,6 +205,15 @@ public class LogViewerActivity extends Activity {
         sb.append(getString(R.string.logviewer_section_prev_log));
         sb.append(prevLog != null && prevLog.exists() ? readHeadAndTail(prevLog) : getString(R.string.logviewer_prev_log_absent));
 
+        // GeneralsX @feature Codex 16/09/2026 Show the XR native stderr logs used by LAN CRC diagnostics.
+        if (extDir != null && getPackageName().endsWith(".xr")) {
+            for (String name : new String[] { "generals-xr-stderr.log", "generals-xr-stderr-prev.log" }) {
+                File xrLog = new File(extDir, name);
+                sb.append("\n\n").append(name).append("\n");
+                sb.append(xrLog.isFile() ? readHeadAndTail(xrLog) : getString(R.string.logviewer_stderr_log_absent));
+            }
+        }
+
         combinedLog = sb.toString();
         logText().setText(combinedLog);
     }
@@ -225,6 +234,11 @@ public class LogViewerActivity extends Activity {
         if (extDir != null) {
             new File(extDir, "generals-stderr.log").delete();
             new File(extDir, "generals-stderr-prev.log").delete();
+            // GeneralsX @feature Codex 16/09/2026 Clear the matching XR log rotation as well.
+            if (getPackageName().endsWith(".xr")) {
+                new File(extDir, "generals-xr-stderr.log").delete();
+                new File(extDir, "generals-xr-stderr-prev.log").delete();
+            }
         }
         loadLogs();
         Toast.makeText(this, R.string.logviewer_toast_cleared, Toast.LENGTH_SHORT).show();
@@ -265,6 +279,11 @@ public class LogViewerActivity extends Activity {
                 if (extDir != null) {
                     fileCount += addLogFileToZip(zos, new File(extDir, "generals-stderr.log"));
                     fileCount += addLogFileToZip(zos, new File(extDir, "generals-stderr-prev.log"));
+                    // GeneralsX @feature Codex 16/09/2026 Include untruncated XR stderr and its previous launch.
+                    if (getPackageName().endsWith(".xr")) {
+                        fileCount += addLogFileToZip(zos, new File(extDir, "generals-xr-stderr.log"));
+                        fileCount += addLogFileToZip(zos, new File(extDir, "generals-xr-stderr-prev.log"));
+                    }
                 }
             }
 

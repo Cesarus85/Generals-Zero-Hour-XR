@@ -3,7 +3,18 @@
 #include "NGMP_include.h"
 #include "OnlineServices_RoomsInterface.h"
 #include "GameNetwork/GameInfo.h"
+// GeneralsX @build Codex 16/09/2026 Shield chrono from GameSpy min/max macros and restore them.
+#pragma push_macro("min")
+#pragma push_macro("max")
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include <chrono>
+#pragma pop_macro("max")
+#pragma pop_macro("min")
 #include "Common/PlayerList.h"
 #include "Common/Player.h"
 #include "GameClient/InGameUI.h"

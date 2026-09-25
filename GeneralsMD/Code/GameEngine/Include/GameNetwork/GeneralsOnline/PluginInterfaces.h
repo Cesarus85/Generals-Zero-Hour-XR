@@ -3,8 +3,19 @@
 // GeneralsX @bugfix Android port 07/11/2026 - ported verbatim from upstream GeneralsOnline. The
 // GENERALS_ONLINE_USE_PLUGINS_INTERFACE branch below (Windows DLL-based anti-cheat plugin loader)
 // is never compiled since we don't define that macro; only the portable no-op stub class is used.
+// GeneralsX @build Codex 16/09/2026 Shield standard headers when included after GameSpy min/max macros.
+#pragma push_macro("min")
+#pragma push_macro("max")
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include <cstdint>
 #include <string>
+#pragma pop_macro("max")
+#pragma pop_macro("min")
 
 enum class EConnectionState : uint8_t
 {

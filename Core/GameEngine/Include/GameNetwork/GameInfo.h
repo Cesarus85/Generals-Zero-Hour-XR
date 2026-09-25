@@ -275,7 +275,9 @@ UnsignedShort GameInfo::getSuperweaponRestriction() const { return m_superweapon
 Bool        GameInfo::oldFactionsOnly() const           { return m_oldFactionsOnly; }
 void        GameInfo::setOldFactionsOnly( Bool oldFactionsOnly ) { m_oldFactionsOnly = oldFactionsOnly; }
 
-AsciiString GameInfoToAsciiString( const GameInfo *game );
+// Legacy LAN peers expect the map directory verbatim (including spaces).
+// Other callers retain percent encoding for replay/save metadata.
+AsciiString GameInfoToAsciiString( const GameInfo *game, Bool encodeMapName = TRUE );
 Bool ParseAsciiStringToGameInfo( GameInfo *game, AsciiString options );
 
 

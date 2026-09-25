@@ -24,6 +24,16 @@ It interrupts the running app; finish any match first. Remove the separate
 
 #### `build/linux/` - Linux & Docker Build
 Scripts for Linux native and Docker-based builds:
+- `run-lan-diagnostic-zh.sh /absolute/path/to/lab` - Run a separately staged
+  native Zero Hour CRC diagnostic from a graphical PC terminal. Requires
+  `runtime/GeneralsXZH` and its shared libraries, plus an independent Steam-layout
+  game-data copy in `game/` (including `ZH_Generals`). Keeps engine settings,
+  saves, DXVK caches and unique diagnostic logs under the lab; leaves `HOME`
+  unchanged and refuses Steam-library/symlinked lab destinations. Enables
+  `GX_LAN_SNAPSHOT=1` and disables optional SagePatch injection. This is a diagnostic
+  comparator, not a replacement for retail Steam compatibility. See PLAN-025.
+  Run `bash scripts/qa/lan-diagnostic-launcher-test.sh` for asset-free launcher
+  preflight, quoting, isolation, unique-log and exit-status regression tests.
 - `build-linux-appimage-generals.sh` - Package GeneralsX as AppImage (portable single-file Linux distribution)
 - `docker-configure-linux.sh` - Configure CMake for Linux build
 - `docker-build-linux-zh.sh` - Build GeneralsXZH (Zero Hour) for Linux
@@ -207,6 +217,36 @@ Utilities for large-scale code refactoring and fixes:
   verbatim with engine spies under UBSan. Checks spatial versus ordinary GUI
   refusal, terrain occlusion and model hits without ground. Run with
   `bash scripts/qa/xr-pick-bridge-test.sh`; no device or game assets required.
+- `lan-snapshot-test.sh` - UBSan tests of the universal bounded LAN snapshot
+  emitter and production command adapter, plus strict paired-comparator fixtures.
+  Tests activation/offline gates, ring overwrite, all object fields, typed argument
+  padding, late mismatch, truncation, freeze/reset and incomplete input.
+- `lan-snapshot-compare.py quest.log pc.log` - Compare complete universal snapshot
+  dumps; use `--match-a N` / `--match-b N` for multi-match logs. Exit 0 only means
+  retained observations agree, 1 means a difference, 2 is incomplete/incompatible.
+  Reports object/type/field/global/RNG differences with execution-frame command
+  context. See `docs/WORKDIR/planning/PLAN-025A_UNIVERSAL_DESYNC_SNAPSHOT.md`.
+- `lan-crc-trace-test.sh` / `.cpp` - Compiles the opt-in LAN CRC observer with
+  UBSan and warnings-as-errors. Tests marker/environment activation, offline
+  silence, reset/new match, bounded generation/validation output and one-shot
+  missing/different failure records. Source guards check the existing CRC
+  cadence, message and traversal sites; these are not proof of full-engine
+  CRC identity or retail multiplayer compatibility. Run with
+  `bash scripts/qa/lan-crc-trace-test.sh`; no device or retail assets required.
+- `lan-crc-detector-test.sh` / `.cpp` - Exercises the same pure network-slot
+  evaluator called by the Zero Hour production validator, under UBSan. Includes
+  non-identity player/slot indices, equal/different/zero CRCs, missing peers,
+  stale disconnected entries and ambiguous mappings. Dispatcher/replay guards
+  are source-level checks, not an end-to-end network simulation.
+- `lan-crc-compare.py` - Offline comparison of two instrumented peers' generation
+  records: `python3 scripts/qa/lan-crc-compare.py quest.log pc.log`. Requires
+  matching map CRC, seed and interval; explicitly select `--match-a N` and/or
+  `--match-b N` (one-based) for multi-match logs. Reports first observed rolling
+  checkpoint difference, refuses missing/incompatible input, and does not
+  equate validation frames with generation frames. Exit codes: 0 recorded
+  samples agree, 1 difference, 2 inconclusive. Agreement is not full-match
+  acceptance or proof that the builds/data match. Run parser/comparison tests
+  with `python3 scripts/qa/lan-crc-compare-test.py`.
 - `xr-workspace-test.sh` / `.cpp` - Compiles production native-dialog detection
   and video/loadscreen split eligibility plus surface crop/placement functions
   with spies. Checks science-tree expansion, full-screen video fallback, complete dialog corner

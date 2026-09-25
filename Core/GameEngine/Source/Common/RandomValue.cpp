@@ -76,6 +76,12 @@ UnsignedInt GetGameLogicRandomSeedCRC()
 	return c.get();
 }
 
+// GeneralsX @feature Codex 22/09/2026 Expose all six logic seed words without drawing a random value.
+void CopyGameLogicRandomState(UnsignedInt (&words)[6])
+{
+	for (int i = 0; i < 6; ++i) words[i] = theGameLogicSeed[i];
+}
+
 static void seedRandom(UnsignedInt SEED, UnsignedInt (&seed)[6])
 {
 	UnsignedInt ax;

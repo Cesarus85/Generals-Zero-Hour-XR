@@ -78,6 +78,10 @@
          multiplayer client both need plain outbound HTTPS/WebSocket. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- GeneralsX @bugfix Claude 25/09/2026 Normal (install-time) permission
+         for the Wi-Fi multicast lock that lets the LAN lobby receive broadcast
+         game announcements (XrHelloActivity). -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
     <!-- GeneralsX @bugfix Android port 10/07/2026 the sign-in flow backgrounds
          this app for the whole browser round-trip (open playgenerals.online,

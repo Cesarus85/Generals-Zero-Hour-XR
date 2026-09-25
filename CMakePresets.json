@@ -311,7 +311,9 @@
                 "RTS_BUILD_CORE_TOOLS": "OFF",
                 "RTS_BUILD_ZEROHOUR_TOOLS": "OFF",
                 "RTS_BUILD_ZEROHOUR_EXTRAS": "OFF",
-                "RTS_GAMEMEMORY_ENABLE": "OFF"
+                "RTS_GAMEMEMORY_ENABLE": "OFF",
+                "GX_XR_LAN_PREVIEW": "ON",
+                "SAGE_USE_DETERMINISTIC_MATH": "ON"
             },
             "environment": {
                 "PKG_CONFIG_PATH": ""

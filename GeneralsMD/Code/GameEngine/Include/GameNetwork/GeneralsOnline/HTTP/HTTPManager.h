@@ -2,10 +2,21 @@
 
 #include "HTTPRequest.h"
 #include <curl/multi.h>
+// GeneralsX @build Codex 16/09/2026 Shield standard headers from GameSpy min/max macros, then restore them.
+#pragma push_macro("min")
+#pragma push_macro("max")
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include <vector>
 #include <mutex>
 #include <thread>
 #include <atomic>
+#pragma pop_macro("max")
+#pragma pop_macro("min")
 #if defined(_WIN32)
 #include <winhttp.h>
 #pragma comment(lib, "winhttp.lib")
@@ -69,5 +80,4 @@ private:
 	std::vector<HTTPRequest*> m_vecRequestsPendingStart = std::vector<HTTPRequest*>();
 	std::vector<HTTPRequest*> m_vecRequestsInFlight = std::vector<HTTPRequest*>();
 };
-
 

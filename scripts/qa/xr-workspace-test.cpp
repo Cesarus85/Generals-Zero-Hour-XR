@@ -11,6 +11,9 @@
 constexpr bool FALSE=false;
 static bool GX_XR_OffscreenBoot=true,interactive=true;
 static bool XrGameBoot_IsInteractiveGame(){return interactive;}
+enum GameMode { GAME_SKIRMISH, GAME_SINGLE_PLAYER, GAME_LAN, GAME_INTERNET, GAME_REPLAY };
+struct GameLogic { GameMode mode=GAME_SKIRMISH; GameMode getGameMode() const {return mode;} } gameLogic;
+static GameLogic *TheGameLogic=&gameLogic;
 static bool diplomacy=false;
 static bool IsDiplomacyVisible(){return diplomacy;}
 struct ControlBar {bool visible=false;bool isPurchaseScienceVisible(){return visible;}} science;
@@ -96,6 +99,17 @@ int main(int argc,char **argv) {
 		saved.initializeLanguage(false,system);check(saved.language==(system==0 ? XrLanguage::German:XrLanguage::English));
 	}
 	check(GX_XR_SplitUIAllowed());
+	for(auto mode:{GAME_SKIRMISH,GAME_SINGLE_PLAYER}) {
+		gameLogic.mode=mode;check(XrGameBoot_CanStereoWorld());
+	}
+	gameLogic.mode=GAME_LAN;
+	check(XrGameBoot_CanStereoWorld()==bool(GX_XR_LAN_PREVIEW));
+	for(auto mode:{GAME_INTERNET,GAME_REPLAY}) {
+		gameLogic.mode=mode;check(!XrGameBoot_CanStereoWorld());
+	}
+	interactive=false;gameLogic.mode=GAME_SKIRMISH;
+	check(!XrGameBoot_CanStereoWorld());interactive=true;
+	TheGameLogic=nullptr;check(!XrGameBoot_CanStereoWorld());TheGameLogic=&gameLogic;
 	// The old favorite application stopped scripted camera movement as soon
 	// as the short native lock expired, even while letterboxed/movie playback.
 	for(bool *block:{&globals.m_loadScreenRender,&globals.m_disableRender,&globals.m_playIntro,&globals.m_afterIntro,&display.movie,&display.letterbox,&ui.video,&camera.moving,&camera.locked,&shell.active}) {

@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-23
+**Updated:** 2026-09-25
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`
@@ -10,14 +10,76 @@ long implementation record. It distinguishes source completion, automated
 verification, device installation and actual worn-headset acceptance; those are
 not interchangeable.
 
+## Quest-to-Quest LAN release candidate — 2026-09-25
+
+The owner decided to ship Quest-to-Quest LAN as the 1.2.34 preview. Branch
+`codex/quest-quest-lan-diag` merged main `286d6c2` into the handoff head,
+replaced the LAN branch's Direct Connect keyboard with main's Meta keyboard and
+added two fixes: the keyboard reopens only for a press on the focused field, and
+the LAN lobby binds INADDR_ANY off Windows plus holds a Wi-Fi MulticastLock so
+Quests see each other's hosted games. Two Quest 3 headsets with identical APK,
+OS build and game data played a Direct Connect match; both snapshots agree
+(148 CRC generations, 134 commands, `reason=match_end`). The release branch
+`codex/xr-release-1.2.34-lan` enables `GX_XR_LAN_PREVIEW` and
+`SAGE_USE_DETERMINISTIC_MATH` in the `android-vulkan` preset so release builds
+match the tested configuration. **Quest <-> PC/Steam remains unsupported**; the
+PLAN-025B retail goal is still open and is not claimed by this release.
+
+## Harness handoff — 2026-09-24
+
+Start from the head of `codex/lan-object-crc-trace`; implementation checkpoint
+`078f8ea` is unchanged by this documentation handoff. Read
+[PLAN-025B_MULTIPLAYER_HARNESS_HANDOFF.md](PLAN-025B_MULTIPLAYER_HARNESS_HANDOFF.md)
+for the exact desired outcome, read order, verified evidence, research leads,
+non-goals and receiving harness's first assignment. Use a separate continuation
+branch. Do not automatically rebase/merge the now-diverged `main` into this
+baseline; the handoff PR is experimental and must remain unmerged.
+
+Repository/release state was refreshed today: remote `main` is `286d6c2` and
+GitHub's latest public release is now **1.2.33** (2026-09-23), not the historical
+1.2.28 baseline. Neither release is changed by the LAN handoff. Similar public
+and private diagnostic version numbers are different artifacts; use hashes and
+certificates to identify them. No new device check/build/install/match occurred
+today; connectivity and test results below retain their original dates.
+
+## Current LAN work — 2026-09-22
+
+The isolated `codex/lan-object-crc-trace` branch resumed from clean/pushed
+`4fdda8a`. The fixed-object follow-up is replaced by an opt-in universal
+snapshot: the last eight scheduled CRC generations throughout the match,
+2048 object/type/field records per generation, raw transforms, global stages,
+all six logic RNG words and 4096 executed commands. One bounded dump is emitted
+on mismatch or orderly match reset; a strict paired comparator localizes the
+first retained difference and shows command context. Production CRC inputs,
+simulation rules and network format are unchanged. See
+[PLAN-025A](PLAN-025A_UNIVERSAL_DESYNC_SNAPSHOT.md).
+
+Host tests pass (21 new comparator fixtures, production observer/command tests
+on ARM64 and x86-64/Rosetta, legacy detector/trace/20 comparator fixtures and
+788 workspace checks per LAN gate). Android ARM64 linking and packaging pass.
+The local **10237 debug-signed QA APK is not update-installable over the installed
+release certificate**; release signing and the matching Omarchy build remain
+pending. No device has been updated this session.
+
+Live preflight finds **no Quest via ADB** and **no SSH response from either
+recorded Omarchy address**. The last physical evidence remains 10235's matching
+idle checkpoints followed by frame-400 object `000000D3` divergence after
+construction. The 10236 target-object retest was intentionally superseded.
+The representative construction/production/movement/combat/ability match and
+all new cause/fix evidence remain open, followed by sustained and unmodified
+Steam/Proton/Windows gates. Quest-to-Quest is an independent untested path.
+
+At the 2026-09-22 checkpoint, GitHub listed **1.2.28 as the latest public release**;
+see the 2026-09-24 handoff above for the current public baseline. No change is merged
+or published; the main workspace's pre-existing dirty state is left alone.
+Older baseline sections below are historical milestone records.
+
 ## Read order and sources of truth
 
 1. `AGENTS.md` for repository-wide engineering rules.
 2. This file for the current XR baseline, open gates and next work.
-3. `PLAN-025_XR_GROUND_OBSERVER.md` for Ground View and campaign entry;
-   `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md` for the shipped P21 UI.
-4. `MULTIPLAYER_STATUS.md` for the paused QTR-MP evidence and exact resume
-   sequence; `../audit/RELEASE_PREPARATION_XR.md` for first-release gates.
+3. `PLAN-024_QUEST_UI_COMMAND_WINDOWS.md` when working on P21.
+4. `PLAN-025_QUEST_PC_LAN_PREFLIGHT.md` for the current Quest-to-PC LAN slice.
 5. `PLAN-023_QUEST_TABLETOP_RECOVERY.md` for detailed architecture, decisions,
    dated implementation evidence and rollback boundaries.
 6. The newest entries in `docs/DEV_BLOG/2026-09-DIARY.md` for the latest delta.
@@ -29,7 +91,7 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Repository and handoff contract
 
-- Canonical collaboration repository: public
+- Canonical collaboration repository: private
   `Cesarus85/Generals-Zero-Hour-XR`, branch `main`.
 - Start delegated work from a clean, pushed checkpoint and record the starting
   commit in the task or pull request. Do not work from an uncommitted shared
@@ -45,274 +107,21 @@ the detailed narrative and command transcripts out of this dashboard.
 
 ## Current product baseline
 
-**Current merged release:** PR #41 integrates PR #40's military command-console
-artwork without changing panel geometry, hit regions or command semantics. It
-adds Quest-native text entry without taking any LAN diagnostic or simulation
-changes: a controller press on any focused original entry gadget opens the
-runtime-owned Meta virtual keyboard through `XR_META_virtual_keyboard`; its
-runtime GLB and changing key textures come from `XR_FB_render_model`. Both
-physical controller rays are sent to that runtime keyboard. This covers LAN
-player name and chat, Direct Connect IP/name and other original text fields;
-entry constraints and owner notifications remain engine-native.
-PR #40's three board-side shortcuts now clear pixels outside their chamfered
-plates instead of presenting opaque black rectangular quads. Focused geometry,
-routing and bilingual Canvas-payload host tests pass, as do the complete
-1,482-target ARM64 native build and release-signed APK assembly. The
-release candidate is versionCode 10233 / versionName `1.2.33-xr-preview`, 57,161,910
-bytes, SHA-256
-`146e6ffdbdd71d8db35823b7570a3f215a039967c3e6208ad616be50b6112d5b`,
-and verifies with the established v3 certificate. Android Gradle Plugin 8.5.2
-Lint was excluded because its worker crashes under the locally installed JDK
-25; Java compilation and APK assembly pass. The functionally identical
-`1.2.33-meta-keyboard-test` candidate installed as an in-place Quest 3 update
-with versionCode/versionName confirmed by Android.
-Device startup confirms that the Oculus runtime exposes both required
-extensions and that keyboard/model support plus keyboard-handle creation
-succeed. Headset attempts 10231 and 10232 proved that text events reach the
-engine, but exposed an oversized bind-pose model with blank labels and no
-visible ray. Candidate 10233 follows Meta's reference renderer for animated
-translation, rotation, scale, ordered/additive morph weights, node-local
-geometry and texture alpha. It clears game routing before preparing the ray,
-draws the pointer after keyboard geometry, submits both controller ray and
-direct input, uses a compact head-relative location, and makes B an emergency
-close. Readable layout, ray interaction, Enter/B behavior, reopening another
-field and shortcut transparency were accepted by the maintainer in headset.
-PR #41 merged as `86b5c20`; release tag `v1.2.33-xr-preview` targets `9bf4767`.
-GitHub publishes the exact APK and checksum above as the public Latest release;
-a fresh download and the Quest-installed `base.apk` both match the recorded
-SHA-256 byte-for-byte.
-
-**Previous public offline preview:** [1.2.28](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.28-xr-preview).
-This release promotes the accepted P26-2 Android terrain batching and the
-post-1.2.25 board-mesh churn reduction without lowering terrain detail. The
-release-signed APK is versionCode 10228 / versionName
-`1.2.28-xr-preview`, 57,100,470 bytes, SHA-256
-`fc04349550027cab90964261e6eb221e4f4947c41ec57ff6def03529ca88ca20`.
-It verifies with the established v3 certificate, contains ARM64 only and no
-retail game data. The exact bytes update-installed over the accepted 10228
-test build on Quest 3, retained the 2026-09-16 first-install time and matched
-the pulled device `base.apk` byte-for-byte. The maintainer accepted image
-correctness and reported the measured build as much smoother. The focused
-maximum-coverage result is 34.30 ms/frame (29.2 derived FPS), versus 42.00 ms
-(23.8 FPS) before batching. Release tag `v1.2.28-xr-preview` points to merged
-source `2b51503`; GitHub marks it Latest, and its uploaded digest, checksum
-sidecar and a fresh independent download match the verified APK. Results
-remain map- and battle-dependent.
-
-**Previous public offline preview:** [1.2.25](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview).
-Ground View now allows entry during live Campaign as well as offline Skirmish.
-The same central gate blocks menus, cinematics, scripted camera movement,
-loading, placement and camera locks; the XR runtime cancels observation on
-mode, tracking, result or rendering transitions. The merged gameplay source
-is `652f46f`; release packaging is merged at `5938257`. Native ARM64, both
-Android debug flavors and XR host checks pass.
-The release-signed APK is versionCode 10225, SHA-256
-`dcd79e4d6be706f0ddd01d01416d321abd977a37aad768d750232bd1fc65e009`.
-Release tag `v1.2.25-xr-preview` resolves to `6b50f74`; GitHub marks it
-latest, and a fresh asset download matches the local APK and checksum sidecar.
-After publication, this exact APK update-installed on Quest 3
-`2G0YC5ZG9609PY` as 10225. The original first-install time was retained;
-device-side `base.apk` SHA-256 matches the GitHub asset. The Campaign-specific
-worn-headset transition, performance and locomotion gate is still open;
-tabletop remains the supported fallback. Older GitHub releases are retained as
-maintainer-only drafts so the public release page offers the current APK alone.
-Historical release links below are accessible only to repository maintainers;
-`v1.2.25-xr-preview` is the sole public download.
-
-**Included post-1.2.25 source optimization:** PR #27 removes per-frame allocation and
-redundant alpha traversal from the XR board-decoration mesh while preserving
-the uploaded vertex stream. The Android/Quest CI build passes and the focused
-board test passes 77 checks. It is included in 1.2.28. PR #26's GL polling/FBO proposal was rejected: its
-error polling could lose the current-frame world-elision recovery correlation,
-and its FBO cache tracked only the most recently seen texture rather than every
-swapchain image.
-
-**P26 far-zoom baseline:** the release-signed test APK `10226 /
-1.2.26-xr-board-mesh-test` is installed on Quest 3 over the public preview.
-In one live Campaign scene at Balanced/Multiview/Light, a controlled 60-second
-comparison measured normal coverage 1.5508 at 21.71 ms/frame (46.1 derived FPS,
-20.73 ms engine CPU) versus maximum coverage 4.5000 at 42.00 ms/frame (23.8
-derived FPS, 40.96 ms engine CPU). Eye CPU, XR wait and 1536x1609 eye extent
-remained stable. This makes engine work the next target; do not start with
-dynamic resolution or claim PR #28 as the fix. Native stderr hid the existing
-draw-source split from ADB, so `codex/p26-draw-breakdown-logcat` temporarily
-mirrors the already-computed two-second category averages to logcat. The
-release-signed `10227 / 1.2.27-p26-drawlog-test` worn-headset repeat measured
-normal versus maximum zoom at 418.0 versus 842.1 total draws/frame. Terrain
-rose 56.0 -> 311.3, models 275.5 -> 404.3 and sorted draws 54.8 -> 91.3.
-P26-2 terrain batching is therefore the selected first implementation slice;
-P26-1 model/cosmetic visibility remains a measured follow-up. The diagnostic
-branch changes logging only and is not a release candidate.
-
-**P26-2 terrain batching result:** Android groups up to ten unchanged terrain
-patches per static vertex/index-buffer submission; non-Android behavior and
-terrain detail are unchanged. Release-signed test APK `10228 /
-1.2.28-p26-terrain-batch-test`, SHA-256
-`78ff8ed5abfc3b1f5b2ac608961dad4289f95fa715c289bf43e3f02a1791fbeb`,
-is installed on Quest 3. Native ARM64/package verification passed and the
-maintainer accepted the rendered image. In the immediate normal/max capture,
-maximum-zoom terrain draws fell from the diagnostic 311.3 to 45.0 per frame
-(-85.5%) and total draws from 842.1 to 522.2 (-38.0%). A later 26-sample
-maximum-coverage timing capture measured 33.17 ms engine CPU and 34.30
-ms/frame (29.2 derived FPS), versus the 10226 baseline's 40.96/42.00 ms and
-23.8 FPS. P26-2 therefore passes its focused headset gate. Diagnostic PR #33
-merged at `6954206`; accepted terrain PR #34 is the current `main` head at
-`3e895fa`. This is merged source, not a new public release; broader
-map/Campaign regression remains open. Models and sorted effects are now the
-measured far-zoom follow-up, so any P26-1 work must be a reversible
-cosmetic-only A/B test.
-
-**P26-1 closed result:** PR #38 tested a default-Off, session-only far-scenery
-filter restricted to non-interactive `KINDOF_PROP` drawables. In the physical
-Campaign maximum-zoom run, every enabled sample reported
-`cosmeticChecked=0 cosmeticCulled=0`; it therefore demonstrated no possible
-draw saving. Its On/Off samples also used different eye tiers and are not a
-valid timing comparison. The maintainer accepted the recommendation to stop;
-PR #38 is closed unmerged and must not be revived by broadening the whitelist
-without new evidence.
-
-Quest 3 is restored to source commit `2b51503`, the exact public 1.2.28 game
-source. Android rejected a direct 10229 -> 10228 downgrade, so the
-data-preserving local restore uses versionCode 10230 with versionName
-`1.2.28-xr-preview`. Installed and local APK SHA-256 both equal
-`e81090f88bb72d92cb224153bfa46e31ec57aecdcf2c070d5ef3db08cb2ca9dc`.
-This local re-versioned restore is not a release asset; the public 10228 APK
-remains the authoritative distributable.
-
-**Previous private offline preview:** [1.2.24](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
-PR #15 merged P25 source at `9792d947`; PR #16 merged version/guide updates
-at `d72a7969`. Release tag `v1.2.24-xr-preview` points to `0403c5e4`, which
-adds verified-hash documentation only. The APK was built from merged source
-`d72a7969` as 10224 / `1.2.24-xr-preview`, SHA-256
-`bb685046bcfcdcd5222b648ac3ebe3a008dbe19bfc5a863b18b4ba749c17195e`.
-Its GitHub asset digest, fresh download, checksum sidecar and installed Quest
-`base.apk` all match. It update-installed on Quest 3 `2G0YC5ZG9609PY` with
-the original first-install date intact. The repo remains private; the LAN
-branch remains separate.
-The first ground-view checkpoint was `d955d29`; its earlier test APK was
-**10218 / `1.2.18-xr-ground-observer`**,
-`build/apk/Generals-Zero-Hour-XR-1.2.18-ground-observer.apk`, SHA-256
-`88d8e4e87ebedd28cb01712aecd322b2c518fd87bfd0a1b5c75cdd989887ba1e`.
-The user liked that installed view. Multiplayer remains paused. Committed
-The previous Android defaults were 10224 / `1.2.24-xr-preview`; the new
-defaults are 10225 / `1.2.25-xr-preview`.
-
-The user reports that the initial ground view looks great. P25.1 adds physical
-left-stick movement and physical right-stick smooth yaw, with terrain, shroud,
-boundary and drawable guards. Source/host tests, native ARM64, both Android
-debug flavors and signed XR packaging pass. Test APK **10219 /
-`1.2.19-xr-ground-movement`**, saved as
-`build/apk/Generals-Zero-Hour-XR-1.2.19-ground-movement.apk`, SHA-256
-`878dd8ef2e9ea0fd6399648049f88d6b08187d03abce7ce7301cd95c4e97527c`.
-It was installed over 10218 on Quest 3 `2G0YC5ZG9609PY`; Android reports
-10219 and the original first-install date. Headset movement, comfort and
-collision behavior are not separately verified by the user's layout feedback.
-
-**P25.1 test:** in offline Skirmish enter Bodenansicht/Ground view, release
-trigger and center sticks, then move with physical left stick and turn with
-physical right stick. B (Y for left-handed gameplay) returns to the table.
-Inspect turning direction/pivot, slope and obstacle stops, frame rate and
-comfort; verify the table and panels remain where they were.
-
-**P25.2 headset feedback:** the bilingual Bodenansicht / Ground View button
-works and triggers the same ground-placement flow as UI > View. Its scattered,
-unequal-size presentation was rejected. The earlier APK **10220 /
-`1.2.20-xr-ground-button`** is
-`build/apk/Generals-Zero-Hour-XR-1.2.20-ground-button.apk`, SHA-256
-`1faa24d4ac50f82184a3ed2170b9e4df87248349c7cf54420562813bbdc3a8bc`.
-It was installed on Quest 3 `2G0YC5ZG9609PY`.
-
-**P25.3 accepted button layout:** UI, Commands and
-Ground View are equal-width buttons in a vertical column beside the board,
-following its movement independently of the build window. The user liked the
-column, but asked twice for it to be farther away. The current test places it
-16 cm behind its first position and yaws it 15 degrees inward toward the
-player while keeping it upright. Host menu/ray checks pass (363); native
-ARM64, both Android debug flavors and signed XR packaging pass. Test APK
-**10223 / `1.2.23-xr-button-aim`** is
-`build/apk/Generals-Zero-Hour-XR-1.2.23-button-aim.apk`, SHA-256
-`56788cc8549078054ab15515038d23389099d796614bd55dd3f0be09158e2c4b`.
-It was installed as an in-place update on Quest 3 `2G0YC5ZG9609PY`; the
-original first-install date remained intact. The maintainer accepted the
-current button arrangement. Ground View stick movement, collision and comfort
-remain experimental until separately confirmed in worn-headset play.
-
-Also inspect stereo/scale/horizon, physical lean, handedness and
-focus/loading/end-of-match recovery. Verify that no gameplay orders occur.
-Do not claim full Ground View locomotion/comfort acceptance from the button
-layout test; keep those limits explicit in the private preview.
-
 | Area | Current state | Acceptance level |
 |---|---|---|
 | Product identity | Generals: Zero Hour XR; update-compatible package ID retained | Built, installed and resource-verified |
 | Game modes | Campaign and offline AI Skirmish run in the XR tabletop presentation | Repeated user headset use; mission-specific coverage remains incremental |
 | Battlefield | Original engine terrain, objects and effects rendered as a stereoscopic miniature world | P7.4 accepted; later graphics/performance steps used in live play |
-| View model | Tabletop remains default; optional Ground View is available during live offline Campaign and Skirmish, with experimental stick navigation and the board-side shortcut column. Videos and full native dialogs stay upright. | Skirmish static view positive; 10223 button layout accepted; campaign transitions and stick movement/collision/comfort require headset testing |
+| View model | Gameplay is tabletop-only; videos and full native dialogs use an upright presentation | Implemented and exercised, not every campaign transition exhaustively tested |
 | Controller input | Ray selection, contextual orders, drag-box multi-select, additive selection, camera pan/rotate/zoom and building rotation | Core flow accepted in headset; rare commands remain ongoing coverage work |
-| Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states; PR #40's military-console repaint is in the current candidate | P21 presentation and PR #40 theme/shortcut transparency accepted in headset |
-| Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips; PR #40 applies the same military-console visual language | P21 interaction and PR #40 theme/shortcut transparency accepted in headset |
+| Commands console | Persistent spatial console with direct orders, groups, tactics, camera bookmarks, Communicator and in-place help, redesigned into grouped sections with persistent armed/pending/toggle/disabled states | P21 visual presentation accepted in the headset; focused host tests pass |
+| Workspace UI | Spatial settings window for table/build manipulation, graphics, handedness, language, help and play-space setup, regrouped into intent sections with value chips | P21 visual presentation and current interaction accepted in the headset; focused host tests pass |
 | Build window | Original production/build UI detached above the tabletop and independently movable, scalable and tiltable | User accepted current arrangement and interaction |
 | Localization | XR interface and help support German and English; initial choice follows German OS, otherwise English | Resource/host checks pass in both languages, including long German labels with shrink-to-fit rendering; device use remains a physical gate |
 | Play-space setup | Optional free board, detected table/floor and manual-height workflows; no required room binding; unanchored launches use safe HMD-relative geometry | P19.1 and P20/P20.3 startup, transition and explicit-alignment behavior accepted in the headset |
 | Game-data setup | Guided Steam or installed/extracted CD/ISO folder import with validation; raw images/installers are not extracted | Host and Quest instrumentation pass; real Steam-based use confirmed |
 | Returning launch | Saved valid data is checked inside the XR Activity; setup opens only when data is missing or invalid | Device launch verified; final visual no-flash confirmation remains a physical gate |
 | Performance defaults | Balanced resolution, light shadows, Multiview preferred, redundant extra world copy omitted automatically | Reported as relatively smooth and playable; no universal FPS guarantee |
-| End-of-match result | Read-only XR latch presents Victory/Defeat/Match-over across the direct score transition | PR #11: host tests and the 10216 short headset test pass; shipped in private 10217 release without debug controls; exact 10217 headset play and other mission/network end paths remain open |
-| Controller text entry | Current integration candidate uses Meta's native OpenXR virtual keyboard for every focused original game entry gadget, including the runtime-provided render model and both controller rays; the rejected Android IME bridge and custom keyboard are absent | Full native/Java build passes; readable keys, controller ray, entry confirmation and return to gameplay accepted in headset on candidate 10233 |
-
-## XR match-result milestone: headset accepted
-
-The maintainer completed a long, ordinary offline Skirmish, destroyed every
-opponent and saw the statistics screen immediately, with no visible win result.
-Do not ask for another full match to reproduce this. The original engine has
-`Menus/Victorious.wnd` and `Menus/Defeat.wnd` via
-`ScriptActions::doVictory`/`doDefeat`, normally followed by an end-game timer;
-`doQuickVictory` is an end-transition action that omits the native window, not
-a statement about how long the match lasted. Diagnosis (PR #11): retail
-`MultiplayerScripts.scb` fires the normal `VICTORY` action, whose non-modal
-`Victorious.wnd` plus ~4 s end
-timer reach XR tabletop only through the small blended HUD overlay, so the
-message is missed; then `exitGame` leads directly to the score screen, which
-itself shows no Skirmish win/loss marker (winner logic commented out in
-`ScoreScreen.cpp`). The quick path skips even that.
-
-The fix latches the result from read-only end state (`VictoryConditions`
-trio for Skirmish/LAN/replay with a neutral observer card,
-`ScriptEngine::isGameEnding` plus `CampaignManager::isVictorious` for
-campaign) and shows an unmissable head-yaw “Victory”/“Defeat”/“Match over”
-card that survives the direct score transition and dismisses on any press or
-a new match, without altering victory conditions, simulation/network state or
-retail game data. Host tests plus bilingual card payloads pass; debug-only
-controller chords (both grips plus A/stick clicks) drive the four retail end
-actions for short controlled scenarios and stay out of normal release builds.
-The maintainer reports that the installed short-test build works perfectly.
-Do not infer exhaustive campaign or network end-path coverage from this test.
-
-Review identified two corrections added to PR #11: poll before as well as
-after the game frame to catch a one-frame quick end, and prevent the
-result-triggering press from dismissing
-the card before first render. A scripted quick victory in Skirmish also needs
-the end-action result fallback when VictoryConditions has not yet latched.
-The local signed test APK is `Generals-Zero-Hour-XR-1.2.16-endgame-test.apk`,
-versionCode 10216, SHA-256
-`051b7163d2199803d4c20eec0551350e46ba6a0bc4506d1603662e927f2379df`.
-This is **not** the authoritative release APK and must not be published.
-The test APK was subsequently installed as an in-place update on Quest 3;
-device package inspection confirms versionCode 10216. The maintainer accepted
-the short worn-headset test. The separate 10217 production APK was then built
-with `RTS_DEBUG_CHEATS=OFF`, release-signed, verified and published privately;
-the debug-chord test APK was not uploaded. Android CI could not start because
-GitHub rejected runner jobs for account billing/spending-limit reasons, so the
-release relied on a complete local ARM64 build and host tests. The exact
-10217 release bytes have not yet had a separate worn-headset play test.
-
-General controller text entry was **not** part of that end-game PR. On
-2026-09-23 an initial custom Direct Connect-only panel was built, rejected in
-headset because it did not cover the LAN-lobby name field, and removed. The
-replacement uses Meta's runtime-owned OpenXR virtual keyboard for every focused
-original entry gadget. No LAN preview, diagnostic, simulation or wire-format
-code came with it. Native Android setup/importer fields already use Android widgets;
-hardware keyboard support remains a separate investigation.
 
 ## Current visual and interaction defaults
 
@@ -345,79 +154,12 @@ hardware keyboard support remains a separate investigation.
 - The UI menu identifies the selected manipulation target in orange; cyan is
   reserved for laser hover.
 
-## Release and device baseline
+## Historical release and device baseline (through P23)
 
-The current [1.2.25 release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.25-xr-preview)
-expands Ground View to live Campaign gameplay. Its signed APK SHA-256 is
-`dcd79e4d6be706f0ddd01d01416d321abd977a37aad768d750232bd1fc65e009`;
-it was built from merged source `5938257` (gameplay PR #19), installed as an
-in-place Quest 3 update and device-hash verified. It has not been played in
-Campaign Ground View on the headset yet.
-Automated checks cannot certify campaign mission cutscenes, end transitions,
-performance or headset comfort; the 1.2.24 evidence below is historical.
-
-The historical 1.2.24 offline download was
-[`v1.2.24-xr-preview`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.24-xr-preview).
-The non-debuggable ARM64 APK is versionCode 10224, SHA-256
-`bb685046bcfcdcd5222b648ac3ebe3a008dbe19bfc5a863b18b4ba749c17195e`.
-At that time GitHub's `latest` endpoint selected this release; the asset digest, fresh
-download and checksum sidecar verify. The exact APK is installed on Quest 3
-with intact app data and matching device-side hash. The button layout is
-accepted; Ground View stick movement/collision/comfort remain experimental.
-GitHub Actions was skipped due to exhausted quota; local native, Android,
-host and Quest GPU checks passed. This older release is now a maintainer-only
-draft, not the public download. EA's source license does not grant trademark
-rights; the maintainer elected to retain the product name for the public preview.
-
-The previous 1.2.17 release included PR #11's result card. The maintainer
-accepted the 10216 headset-only result test. Its historical download is
-[`v1.2.17-xr-preview`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.17-xr-preview),
-tagged at `af439c387f91905c5df0d8d6345c9647b8521563` (PRs #11/#12). The
-non-debuggable ARM64 APK is versionCode 10217, SHA-256
-`8913648e9c8c124367ac812a4a3e9db0d0f296ec3a2c7e83a7d22627c2182869`.
-It was built locally with debug cheats off and signed with the established
-private release certificate. The GitHub asset digest and an independent fresh
-download match; the checksum asset verifies. It update-installed over 10216 on Quest 3 without
-uninstalling; `firstInstallTime` remained unchanged and device-side `base.apk`
-SHA-256 matches the release. Its exact bytes have not yet been separately
-worn-headset-played. The 10216 diagnostic APK must
-not be published. The repository remains private; public distribution under
-the retained product name needs a separate EA trademark-terms review.
-
-The older release-signed offline preview is tagged `v1.2.15-xr-preview` at
-`main` merge `683997a89198ff418f0c7c2191836a2f62c25add` (PR #8). It
-preserves P23 gameplay without the experimental LAN branch and adds a separate,
-non-debuggable XR release package path. The APK is `1.2.15-xr-preview` (10215), SHA-256
-`bafff443d77e7b9e925a73fcf16b5bf7234c54f256e2cb7fa0f95d1aad008d2b`;
-certificate SHA-256
-`a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`.
-It update-installed successfully over the 10214 LAN diagnostic APK on the
-Quest 3/API 34 without uninstalling; the original first-install timestamp
-remained unchanged. The app is no longer debuggable. A clean ARM64/DXVK native
-source build passes; its packaged `libmain.so` matches the newly built file,
-and the installed APK SHA-256 matches the local final artifact above.
-The maintainer confirmed worn-headset Skirmish and Campaign launch with this
-**exact final hash**, with prior settings and game data retained. This is not a
-fresh-import or all-missions test. An earlier session with a preliminary signed
-repack was interrupted by our ADB installation of the final candidate, not a
-proven app crash; avoid installing while the user plays.
-The [previous private GitHub release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.15-xr-preview)
-remains available as history: GitHub's asset digest and a fresh independent
-download match the exact Quest-installed APK. Its checksum file also verifies.
-The repository remains private; all older debug-signed assets are marked as
-historical prereleases. The maintainer reports that the signing key/password
-are backed up and has visually approved the passthrough screenshots. An
-explicit visibility decision remains before any public release. The
-end-of-match result gap was addressed by PR #11 and its accepted Quest test;
-it is included in 1.2.17, not in the historical 1.2.15 APK.
-See the [release audit](../audit/RELEASE_PREPARATION_XR.md) for signing,
-migration, artifact and publication gates. The tracked development key remains
-for debug builds and old-signature lineage only.
-
-The previous private Quest preview was `xr-preview-2026-09-16-p23` from PR #5,
+The newest private Quest preview is `xr-preview-2026-09-16-p23` from PR #5,
 merge `ba9169d5c81604aa9fac00508cf2e5dcbf9a4939`; its APK and hash are
-recorded in the P23 section below. The earlier 10208 release combined P21,
-P20/P20.3, base navigation and PR
+recorded in the P23 section below. The earlier 10208 release remains the latest
+non-prerelease checkpoint and combines P21, P20/P20.3, base navigation and PR
 #2's reproducible DXVK/Android foundation:
 
 ```text
@@ -556,6 +298,272 @@ human networking. LAN/internet matches, deterministic synchronization, reconnect
 chat/team chat, diplomacy/player controls, observer/replay access and their XR
 interaction need a separately authorized compatibility and headset-validation
 slice. P20-P22 must not change simulation commands or wire formats casually.
+On 2026-09-16 the user authorized beginning this slice and chose a Windows PC
+running Steam Zero Hour as the first counterpart to one Quest. Branch
+`codex/quest-pc-lan-preflight` starts from `a5cb2d0393d9778bc0fcbb013020b29d1e750325`.
+`PLAN-025_QUEST_PC_LAN_PREFLIGHT.md` records the two-endpoint procedure and
+gates. The source now has a default-OFF Android-only `GX_XR_LAN_PREVIEW` flag
+that can admit `GAME_LAN` to tabletop rendering in a deliberately built test
+candidate; internet and replay remain excluded. Host eligibility tests pass
+with the flag both off and on. The local native build and XR APK package pass:
+`build/apk/Generals-Zero-Hour-XR.apk`, version 10210
+(`1.2.10-lan-preflight`), SHA-256
+`5cc4f84a04eb7b44bab906f8acff3414b1e5d9b808fafc04b557d8fcfb374a4b`.
+APK v2 signing and native staging match are verified. On 2026-09-16 the test
+APK was update-installed on Quest 3 `2G0YC5ZG9609PY` with app data retained;
+the installed `base.apk` reads back with that exact SHA-256. It has not been
+published. Direct Connect now reaches a Steam/Proton LAN lobby; tabletop human
+gameplay and a sustained match are not verified. The accepted P23 release APK
+remains unchanged.
+The first user Quest ↔ Windows Steam Zero Hour test found that the LAN lobbies
+do not automatically discover each other despite the same Wi-Fi. Both menus
+explicitly identify Zero Hour; their differing animated shell backgrounds are
+not proof of a network/SKU mismatch. Quest has one active WLAN IPv4 interface
+and no saved fixed LAN IP. This initial discovery failure alone does not prove
+Steam incompatibility or usable LAN gameplay.
+An alternate Omarchy laptop (`192.168.178.158`) runs Steam Zero Hour through
+Proton and is reachable from Quest WLAN (3/3 ICMP replies). Direct Connect
+reaches the shared game lobby, but Omarchy reports that it lacks the selected
+map. The Quest hosted and the user believes the selected map was Alpine
+Assault, matching its last `Network.ini`. Quest and Omarchy SHA-256 values for
+`MapsZH.big` and base Generals `maps.big` are identical, so reimporting those
+archives is not the next step. Effective map lookup/cache/path/CRC still need
+diagnosis; the match has not started. Quest Direct Connect IP entry also lacks
+a usable controller-triggered virtual keyboard in the 10210 test. A new
+unmerged 10212 candidate changes LAN map serialization to literal legacy
+paths (retaining encoded replay/save metadata) and adds a controller-operated
+spatial keyboard for Direct Connect player name and IPv4 entry. Native and
+APK builds, v2 signing, embedded-library verification, 3848 menu geometry,
+329 menu routing, and 22429 bilingual panel-payload checks pass. Version
+10212 (`1.2.12-lan-keyboard`), SHA-256
+`e8f05cc2c77a3d125117ed7a836e36fdcd159f59d4807d37a89006954fd166fc`,
+was update-installed on Quest 3 `2G0YC5ZG9609PY` with data retained. The user
+now confirms Direct Connect and actual map/game start against Omarchy Steam
+Zero Hour via Proton. A photo shows Omarchy's in-game dialog: "Game has
+detected a mismatch. This means the multiplayer game has lost synchronization
+data between the players." The loaded map/base is visible behind it. This is
+a simulation synchronization failure, not the earlier map warning or an
+ordinary connection timeout. The Quest log confirms tabletop world
+presentation but no explicit local CRC-mismatch event in the inspected
+window; the cause is pending. The user-supplied Omarchy SHA-256 values for
+`INIZH.big`, `PatchINI.big`, `PatchZH.big`, `PatchData.big`, and both loose
+multiplayer/skirmish `.scb` scripts all match Quest. Base Generals INI/patch
+archives and loose overrides remain unchecked. Test a same-source PC build
+after that before treating retail Steam
+compatibility as viable. No sustained human match has passed. Automatic LAN
+discovery remains broken.
+
+The mismatch was reproduced after the user's successful P23 reinstall and our
+verified update to 10212 (installed APK hash matches the candidate). Source
+audit finds native platform math active and the alternative GameMath wrappers
+still partly TODO; `-ffp-contract=off` is already present. Inherited retail
+simulation differences remain candidates. The same mismatch handler also
+handles missing expected CRC messages, so the diagnostic must distinguish
+missing messages from different values and collect rolling subsystem
+checkpoints for comparison. PLAN-025 contains the ranked audit. Two identical Quest 3 peers
+should avoid several cross-build differences but remain untested. P23 remains
+the planned public offline preview, with LAN development continuing separately.
+
+The first **unpublished diagnostic candidate** was 10213
+(`1.2.13-lan-diagnostics`) on `codex/quest-pc-lan-preflight`, at
+`build/apk/Generals-Zero-Hour-XR.apk`, SHA-256
+`bd781f6462e0f959419ade77faca32b967a6407c08659a046b4547e02e22f0a8`.
+It adds opt-in first-eight generation/validation CRC records and one later
+local failure, without changing simulation rules, messages or CRC cadence.
+Records distinguish network slots from engine player indices and actual
+detector reasons from the observer's classification. Setup has an EN/DE
+diagnostic switch; View Logs shares current and previous full XR stderr logs.
+
+The native ARM64 build and both Android APK flavors pass; observer UBSan tests,
+source guards and 788 workspace checks for each LAN-gate setting pass. APK v2
+signing, package/version/ABI, bundled native-library equality and the installed
+APK hash verify. Update-install on Quest `2G0YC5ZG9609PY` retained data. The
+`gx_lan_crc.txt` marker was placed in its saved game-data folder for the next
+test. The initial launch was blocked pending controllers; the user subsequently
+reproduced the error and the real 10213 LAN trace was captured successfully.
+No runtime permissions were changed.
+
+At validation frame 105, both peers' CRCs arrived but differed (Quest
+`FF3C9DF3`, peer `EB80E220`); frame 207 confirms another unequal pair. The
+observer reports `different_crc` while the original detector reports `none`.
+Source inspection confirms an inherited index-space defect: cached engine
+player indices 2/3 are passed to a connected-network-slot check expecting 0/1,
+so the Quest skips these CRC comparisons. At frame 305 only slot 0 remains
+connected. This explains a missing Quest-side error, not the original differing
+CRC values. The first divergent simulation tick/subsystem remains unknown;
+an idle-before-error test has not yet been confirmed by the user.
+
+The detector mapping is now corrected in source: every connected network slot
+requires exactly one CRC, regardless of internal player index; stale
+disconnected entries cannot mask missing active peers. Its production evaluator
+and the bounded observer pass UBSan tests. No simulation math, CRC inputs,
+generation cadence, message format or shared replay cache was changed.
+
+**Current local APK:** version 10214 (`1.2.14-lan-crc-check`),
+`build/apk/Generals-Zero-Hour-XR.apk`, SHA-256
+`c13aac9a39858771cf0232d29cf396f181fb9a0d105fe43b82617c7e501e34d1`.
+Native ARM64 and both Android flavors build; v2 signing, package/version/ABI
+and bundled-library equality verify. Workspace regressions pass 788 checks
+with each LAN gate setting. **Installed:** the subsequent Quest reconnection
+allowed an update-install of 10214 without clearing data; package inspection
+confirms the version and on-device APK SHA-256 matches the value above. Meta's
+controller-required dialog blocks the requested launch until controllers wake.
+Worn-headset detection and paired-match acceptance remain open.
+
+A paired-log comparator (`scripts/qa/lan-crc-compare.py`) is ready and passes
+ten synthetic tests. It requires matching map CRC/seed/interval, handles
+explicit multi-match selection, compares generation rather than validation
+frames and reports only the first observed rolling-checkpoint difference.
+Omarchy SSH access now works. An isolated native PC diagnostic lab contains a
+clone of engine checkpoint `78207e6` plus the build-compatibility fixes in PLAN-025,
+a separate copy of Steam game data and user-local build tools. Its launcher
+has passed asset-free tests on macOS and
+Omarchy and redirects engine configuration, saves and diagnostics to the lab.
+**Native PC build is complete and staged.** Executable SHA-256:
+`9bad0faa0c075f4f3de71c63ab8615806818a9f39fbd70bc8558599f5cb6597f`.
+Project libraries are staged beside it; `ldd -r` reports no missing libraries
+or unresolved symbols, with FFmpeg supplied by the current host. Final Android
+native regression compilation and 788 workspace checks per LAN-gate setting
+pass; the installed 10214 APK is unchanged. **Graphical PC startup and a paired
+match are now verified, but LAN still fails synchronization.** In the first
+Quest-hosted match against this native Omarchy build, the PC received both
+players' CRCs at validation frame 105 and reported `different_crc`:
+Quest/slot 0 `E2E3DF5F`, PC/slot 1 `A6E913D4`. The PC generated its own
+frame-0 CRC `3263A8D7` and frame-100 CRC `A6E913D4`; map CRC `DEA9E8E4`,
+seed `4042777`, interval 100. Quest USB ADB was reconnected and both current
+and previous XR stderr logs were preserved. The paired comparator confirms
+identical frame-0 CRC and all rolling checkpoints (`3263A8D7`). At frame 100
+the first observed difference is already in the object-list checkpoint:
+Quest `6AE75FBB`, PC `03972538`; the RNG seed checksum still agrees
+(`A82FF014`). Both sides report `different_crc` at validation frame 105.
+This localizes the first recorded divergence to object state by frame 100,
+not to a particular object, tick or root cause. Omarchy's displayed
+`100.123.209.83` was its Tailscale address;
+the isolated diagnostic profile now pins both LAN and online interface choices
+to WLAN `192.168.178.158`. The match did start, so this mismatch is not a
+Direct-Connect reachability failure. No original Steam files or Proton
+settings were changed. The two remaining
+base Generals INI/Patch archive hashes also match Quest (details in PLAN-025).
+
+**Resumed on 2026-09-21 with a bounded per-object diagnostic pair.** Branch
+`codex/lan-object-crc-trace` records object traversal order, stable ID and the
+rolling production CRC after each object at the existing first eight normal
+checkpoints, capped at 2048 objects with explicit count/truncation metadata. It
+adds no second scan, CRC input, cadence, random draw or network field. The
+paired comparator validates complete records and now passes 14 fixtures.
+Signed Quest diagnostic 10231 (`1.2.31-lan-object-trace`), SHA-256
+`41b24487ef54540d6890f34285d72752adc8b9357657eca24863f989caddcea2`,
+is update-installed with retained data and its device APK hash matches. The
+Omarchy lab has the matching observer over its required Linux build-compatibility
+delta; staged executable SHA-256 is
+`a403f82f9ddf7e8a5e9de6bb3b05699c2098df5736ad886299139f57e01bf48f`,
+with its previous executable preserved. Native link and `ldd -r` checks pass.
+The first 10231 physical capture is conclusive at object granularity. On stock
+map CRC `DEA9E8E4`, seed `24456948`, both peers match fully at frame 0. At frame
+100 each has 223 objects in the same order and matching RNG seed checksum, but
+the first object (ID `000000DF`, order 0) ends with Quest CRC `AA85737D` versus
+Omarchy `2AC9737D`; final CRCs are `0602409A` versus `55929D3A`. Both detectors
+report `different_crc` at validation frame 105. A missing CRC message, differing
+object count/order or later-only subsystem is not the immediate cause.
+
+The installed follow-up is Quest 10232 (`1.2.32-lan-field-trace`), SHA-256
+`8f9c348a9c20a4327d07922fcc4d80c0d62c360d139fcd0182e46b344a0a09e9`;
+the on-device hash matches. It reads the starting and existing major field CRC
+boundaries for only order 0 and names its template, without a second object CRC
+call or simulation/network write. Omarchy executable SHA-256 is
+`6e9d715019674f5d0b837fbd16c24f6cade6278d4a65283ff538499abf4d68a8`;
+the 10231 executable is preserved. Seventeen comparator fixtures and all focused
+and workspace tests pass. Public release 1.2.28 and `main` remain unchanged.
+
+The 10232 physical pair is complete. Frame 0 agrees fully. At frame 100, both
+peers enter the same first object (ID `000000DF`, template
+`TrainCabUngarrisonable`) with the same CRC and remain equal through private
+status, then first differ at its transform: Quest `E46FFD73`, Omarchy
+`2770FDF3`. Counts/order and RNG seed CRC agree, and both peers detect the
+resulting mismatch at validation frame 105. This points to train
+position/orientation calculation, not LAN delivery, but does not yet identify
+the responsible matrix component or arithmetic operation.
+
+The immediate physical gate is one more same-source idle match using a bounded
+raw 12-word transform observer for that already-selected first object. Use the
+result to isolate railroad translation, rotation or height math; do not disable
+CRC checking or remove/freeze the train. Only a demonstrated deterministic fix
+followed by idle and interactive same-source passes allows returning to
+Steam/Proton. Public 1.2.28 and `main` remain unchanged.
+
+The 10233 raw-matrix test is complete. At frame 100 the first differing word is
+rotation `m01`: Quest `BF6050E9` versus Omarchy `BF6050E6` (about 1.79e-7),
+followed by symmetric `m10` and a one-ULP X-position difference; Y/Z agree.
+Frame 0 is fully equal. Both builds already use `-ffp-contract=off`; the train
+path still uses platform CRT `atan2` and `sinf`/`cosf`. The deterministic-math
+option is presently only a TODO-backed CRT fallback and must not be presented
+as a solution.
+
+The prior observer was deployed as private Quest 10233
+(`1.2.33-lan-transform-trace`), APK SHA-256
+`795cb998be8e6a8530581f36fa882468d0022742ee5a8de372683be7c63bc036`.
+It update-installed with retained app data and matching device hash. Omarchy's
+matching staged executable SHA-256 is
+`5f8ce7ec91812bae805fe0ad27bf9c4ae87bb3d53546d074ff702a5fb247f9e1`;
+10232 is preserved as `runtime/GeneralsXZH.pre-transform-trace` and `ldd -r`
+is clean. Its successor is now deployed as private Quest 10234
+(`1.2.34-lan-railroad-trace`), APK SHA-256
+`39bc84d7e4131f18f09548e3e7edef47ec652bade2ab877f3feb3cec78620642`,
+with embedded `libmain.so` SHA-256
+`67a3739a830c6484f041f4db50c3de4af1112531a7aa5e156b22727dea3bc720`.
+It retains app data and adds only the railroad-intermediate trace bounded to
+frames 0-105. Omarchy's matching executable SHA-256 is
+`4c6cbdb95d83b5ad802c38192b236c4239adb6ba382bb4833d521eae46b17498`;
+10233 is preserved as `runtime/GeneralsXZH.pre-railroad-trace`. Run the same
+stock-map, no-AI, no-order match once; no settings or assets need to be
+reimported.
+The 10234 result identifies the initiating operation. At frame 1, object
+`0000000D` enters the railroad angle calculation with every logged input
+bit-identical on Quest and Omarchy. Native `atan2` alone returns Quest
+`BF5788E6` versus Omarchy `BF5788E7`; the difference propagates from frame 2.
+The experimental branch is therefore wiring the pinned GameMath software path
+behind the existing opt-in `SAGE_USE_DETERMINISTIC_MATH` switch and routing the
+railroad angle/matrix rotation through it. This must first pass another paired
+same-source run. It is not yet a Steam retail compatibility result, and public
+1.2.28 remains unchanged.
+That pair is now deployed as private Quest build 10235
+(`1.2.35-lan-deterministic-math`) and the matching staged Omarchy executable.
+Quest APK SHA-256 is
+`f871b075ea9ffe2e5cd2c6e78fc4f4cbcb1cc069a0f8bd1601b1639b3a023454`;
+embedded `libmain.so` SHA-256 is
+`f160d56d268398e7de4c9f62d2d9ac55e8d81d852cbb174844597a15bf5e6259`;
+Omarchy executable SHA-256 is
+`d11817b4be3207dfe5c73629694311605ddbbc8270885d44ea6aa8db67a0e38c`.
+App data and the 10234 Omarchy rollback binary are retained. The idle gate has
+now passed all eight sampled checkpoints without mismatch. In the follow-up,
+both players built one building: both peers still agree through frame 300 but
+first differ in the object stage at frame 400. Object count/order and RNG seed
+agree; the first unequal rolling object is existing ID `000000D3`, order 14.
+The next private build retargets the bounded per-field observer to that object
+for one repeat of the same construction action. Public 1.2.28 and `main` remain
+untouched; LAN is still experimental and unsupported.
+That diagnostic is now installed/staged as 10236
+(`1.2.36-lan-object-d3-trace`): Quest APK SHA-256
+`44ae069a4957b5f000d5b67e5ba566a0bb7b113ce0ff6432b5f50f94a71382b3`,
+embedded `libmain.so`
+`ab0a695ddad20efefee39248ee007af76eb13d81dcbf615b783ecc9224a5ac0d`,
+and Omarchy executable
+`25da958cae8ad18a8065a6ca840f41f7284f95da03a48764b7726e4c3338833a`.
+Multiplayer work is paused at the user's request. Do not ask for the pending
+10236 single-object repetition on resume. First implement the universal,
+bounded desync snapshot described in PLAN-025 so one representative match can
+diagnose all captured objects/field boundaries and synchronized command
+context without per-event rebuilds. Quest-to-Quest with two copies of the
+public 1.2.28 APK is plausible because architecture, binary and game-data basis
+can be identical, but it remains untested and unsupported; the public build
+also predates the corrected CRC-slot validation and deterministic-math work.
+
+The user's primary goal is Quest versus the
+unmodified Steam PC version, with Quest peers retained. The custom PC build
+is a diagnostic tool, not a replacement compatibility promise. A no-popup
+match on old 10213 is NOT proof, since both Quest peers could skip checks.
+Do not merge or publish LAN as supported; keep P23 separate. PLAN-025 records
+the sanitized trace evidence and next test boundaries.
 
 ### P22 - deferred keyboard and mouse investigation
 
@@ -600,26 +608,13 @@ earlier hash above is the previously accepted P23 candidate, not this release.
 The user considers the important everyday commands covered. Defer the remaining
 P23 edge-command audit (formation/force-move/guard variants and faction-specific
 coverage). Extensive play has not exposed a pressing visual/readability problem,
-so do not schedule another generic graphics QA pass as the next feature.
-QTR-MP preflight ran on the separate `codex/quest-pc-lan-preflight` branch and
-is still **paused** while the private offline preview is maintained. Direct Connect
-starts a Quest/PC match, but paired Quest/native-Linux diagnostic traces first
-diverge in the object CRC by generation frame 100 and both peers report a
-different-CRC error at validation frame 105. See
-[`MULTIPLAYER_STATUS.md`](MULTIPLAYER_STATUS.md) for the preserved
-evidence, the next bounded per-object diagnostic, and the remaining gates. No
-LAN diagnostic APK belongs in the current offline release. Do not infer human
-multiplayer or replay compatibility from offline AI Skirmish. Keep P22
-keyboard/mouse secondary; revisit Ultra+ performance only if a real campaign
-scene shows a regression.
-
-The offline release preparation and checkpoints are documented in
-[`RELEASE_PREPARATION_XR.md`](../audit/RELEASE_PREPARATION_XR.md). The P23
-asset/tag remains a historical debug-signed development preview; the 10217
-privately signed APK is now the current verified private-release checkpoint.
-It is not a **public** release. Its source rebuild, local artifact and
-downloaded-asset gates pass; exact-byte headset play, signing-key backup and
-public-visibility/trademark review remain separate.
+so do not schedule another generic graphics QA pass as the next feature. The
+active next slice is QTR-MP Quest ↔ Windows Steam LAN validation: build an
+opt-in Quest candidate, attempt lobby and sustained human match, then use a
+same-source Windows GeneralsX build only if needed to isolate retail mismatch.
+Do not infer human-multiplayer or replay compatibility from offline AI Skirmish.
+Keep P22 keyboard/mouse secondary; revisit Ultra+ performance only if a real
+campaign scene shows a regression.
 
 ## P21 key implementation map
 
@@ -668,12 +663,6 @@ public-visibility/trademark review remain separate.
 - The user's room photographs are useful visual references but contain private
   surroundings. Do not add them to GitHub. Use cropped/redacted panel captures
   or synthetic Canvas fixtures for a pull request.
-- P25 Ground View is optional in the current private 1.2.25 release. Its 10
-  game units/metre scale, 1.65 m eye height, 60 m visibility envelope,
-  locomotion guards and opaque horizon need longer worn-headset review. It has
-  no network/replay entry; campaign Ground View is newly enabled and still
-  needs a real mission transition test. Offline tabletop remains the supported
-  default play view.
 
 ## Minimum verification before handoff
 

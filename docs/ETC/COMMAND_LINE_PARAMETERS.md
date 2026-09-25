@@ -20,6 +20,66 @@ Common command line parameters for `GeneralsX` (Generals) and `GeneralsXZH` (Zer
 | `-debug` | Enable debug mode | `./GeneralsXZH -debug` |
 | `-logToCon` | Enables legacy debug-log console routing (`DEBUG_LOG`). **Debug builds only** (`ALLOW_DEBUG_UTILS` / `RTS_BUILD_OPTION_DEBUG=ON`); ignored in release builds. | `./GeneralsXZH -logToCon` |
 
+### Opt-in universal LAN snapshot (Zero Hour, experimental branch)
+
+Set `GX_LAN_SNAPSHOT=1` or create `gx_lan_snapshot.txt` in the actual engine
+working/game-data directory before a live LAN match. `GX_LAN_SNAPSHOT=0`
+overrides the marker. Offline/replay remain disabled. This allocates a bounded
+6.8 MiB ring of the last eight normal CRC generations (2048 objects each) plus
+4096 dispatched commands, including typed arguments and execution frames.
+
+One `[GX-LAN-SNAPSHOT]` block is written to the existing stderr log at the first
+mismatch or orderly match reset. There is no per-tick disk output; force-stopping
+the process can lose the window. The tool reads existing CRC boundaries and RNG
+state without additional CRC traversals or network changes. Snapshot mode
+suppresses older fixed-object probes. The Setup checkbox below still controls
+only the legacy marker; use the new marker/environment variable for snapshots.
+
+Compare complete paired logs with `python3 scripts/qa/lan-snapshot-compare.py
+quest.log pc.log`. Explicit limits, parsing failures and engine mismatches prevent
+an unjustified synchronization verdict. See
+[PLAN-025A](../WORKDIR/planning/PLAN-025A_UNIVERSAL_DESYNC_SNAPSHOT.md) for the
+schema, scope, test evidence and device procedure. The isolated Linux diagnostic
+launcher now enables this universal observer.
+
+### Legacy LAN synchronization trace (Zero Hour)
+
+This is a diagnostic option, not a multiplayer compatibility fix. Set
+`GX_LAN_CRC=1` in the process environment, or create an empty `gx_lan_crc.txt`
+in the selected game-data/working directory. On Android/Quest, use
+**Setup → Diagnostics → LAN sync checkpoints**, then restart the game.
+The opt-in is checked at each live LAN match start; offline play and replay
+remain silent. Remove the marker and unset the environment variable to disable
+it. `GX_LAN_CRC=0` does not override an existing marker.
+
+Release builds write `[GX-LAN-CRC]` records to stderr without `-logToCon`:
+match metadata, the first eight scheduled CRC generations and validations,
+and at most one additional local mismatch after the normal output budget.
+The negotiated CRC interval, game messages and simulation rules are unchanged.
+Generation frames and validation frames are distinct; the retail CRC message
+does not carry its generation frame. Intermediate values after objects, RNG,
+partition, players and AI are **rolling** CRCs, not independent subsystem hashes.
+`detector_reason` is the game's actual decision; `reason` separately checks
+whether every connected slot has a value and whether those values agree.
+Received entries use `s<network-slot>/p<engine-player-index>:<CRC>`; do not
+assume that those two indices are identical.
+
+On Quest, **View Logs → Share** includes the full current and previous
+`generals-xr-stderr.log` files. The on-screen preview may be truncated. Capture
+the logs promptly after reproducing, before repeated restarts rotate them out.
+No player names or IP addresses are added by this trace, but the complete
+existing game logs can contain personal paths/network details: review before
+sharing publicly. Stock Steam peers expose no matching subsystem trace, so a
+same-source peer may still be required to isolate a divergent subsystem.
+
+For an independently staged Linux comparison, run
+`bash scripts/build/linux/run-lan-diagnostic-zh.sh /absolute/path/to/lab`
+from the PC's graphical terminal. The launcher enables the universal snapshot described above, adds
+`-win -quickstart`, and writes a unique `logs/native-zh-*` file on every run.
+It requires a separate `game/` data copy and `runtime/` binary/library set;
+it does not install assets or make an incompatible retail peer synchronize.
+Do not use debug builds or add optional game patches for the comparison.
+
 ## Mods & Content
 
 | Parameter | Description | Example |

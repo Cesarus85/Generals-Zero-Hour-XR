@@ -318,18 +318,19 @@ and readable. If a bug report needs more detail, ask for one of these: **drop
 an empty text file with the exact name below into the same game data folder
 you picked in Setup → Select Game Folder** (the one that has your `.big`
 files in it — no `adb`, no rebuild, just a file manager). Delete the file (or
-uninstall/reinstall the game data) to turn it back off; each one is read once
-per launch.
+turn the matching switch off) to disable it. Most are read once per launch;
+the LAN CRC trace is checked at live LAN match start.
 
 | File to create | What it does | When to ask for it |
 |---|---|---|
 | `gx_trace.txt` | Turns on full `[GX-TRACE]` logging (font/UI/INI internals, very verbose). | Chasing a hang or a specific UI/parsing bug. **Warning:** on a long session this can produce a 50-100+ MB log — use `gx_perf.txt` instead if you only need frame-timing numbers. |
 | `gx_perf.txt` | Turns on just the low-volume `[GX-PERF]` line (one per second: time spent in radar/audio/client/network/logic/render, per subsystem). Implied automatically by `gx_trace.txt`. | Performance/FPS reports — this is the one that actually shows where frame time goes, safe to leave on for a whole session. |
+| `gx_lan_crc.txt` | Logs the first eight normal LAN CRC generations and validations, rolling subsystem checkpoints, and one local failure. No CRC interval or simulation changes. | Reproduce a LAN synchronization mismatch; restart after enabling **LAN sync checkpoints**, then use **View Logs → Share**. Quest exports include current and previous XR stderr logs. Offline play/replay remain silent. |
 | `dxvk_hud.txt` | Turns on DXVK's own HUD (on-screen counters, mirrored into the log as `DXVK_HUD: ...` lines). Leave the file empty for the safe default (`fps,drawcalls,submissions,pipelines`); anything you type inside becomes the element list. `frametimes`/`memory` are refused and fall back to the default — those two crash on this port's Vulkan 1.1 devices. | GPU-side numbers: draw call counts, submissions, pipeline count. |
 | `dxvk_validation.txt` | Turns on the Vulkan validation layer (`DXVK_DEBUG=validation`) — adds real per-call overhead, so only for a specific repro, not everyday testing. | Suspected Vulkan API misuse (validation errors/UB), not a performance report. |
 | `dxvk_verbose_log.txt` | Bumps `DXVK_LOG_LEVEL` from this build's default of `error` up to `info`, surfacing DXVK's normally-silent "Presenter: Actual swapchain properties" line (format, present mode, image count, composite alpha). Negligible overhead. | Tracking down a device-specific compositing/present artifact (e.g. a screenshot- or task-switcher-only glitch). |
 
-All five are read from the working directory the engine `chdir()`s into at
+These markers are read from the working directory the engine `chdir()`s into at
 startup — the game data folder, same place as above, not the app's internal
 storage. Setup → Diagnostics has a switch for each one, so testers don't need
 a file manager to create them by hand.

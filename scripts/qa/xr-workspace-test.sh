@@ -17,11 +17,15 @@ test_dir="$(mktemp -d "${TMPDIR:-/tmp}/generals-workspace-test.XXXXXX")"
   sed -n '/^bool XrGameBoot_CameraPreset(/,/^}/p' GeneralsMD/Code/Main/XrGameBoot.cpp
   sed -n '/^bool XrGameBoot_AdjustCamera(/,/^}/p' GeneralsMD/Code/Main/XrGameBoot.cpp
   sed -n '/^std::string XrGameBoot_PresentationStatus(/,/^}/p' GeneralsMD/Code/Main/XrGameBoot.cpp
+  sed -n '/^bool XrGameBoot_CanStereoWorld(/,/^}/p' GeneralsMD/Code/Main/XrGameBoot.cpp
   sed -n '/^static XrGameRect surfaceRect(/,/^}/p' GeneralsMD/Code/Main/XrHello.cpp
   sed -n '/^static float surfaceAspect(/,/^}/p' GeneralsMD/Code/Main/XrHello.cpp
   sed -n '/^static XrSurface displayedSurface(/,/^}/p' GeneralsMD/Code/Main/XrHello.cpp
 } > "$test_dir/xr-workspace-bridge.inc"
-"${CXX:-clang++}" -std=c++17 -Wall -Wextra -Werror -fsanitize=undefined \
-  -IGeneralsMD/Code/Main -I"$test_dir" -I"$build_dir/vcpkg_installed/arm64-android/include" \
-  scripts/qa/xr-workspace-test.cpp -o "$test_dir/workspace-test"
-"$test_dir/workspace-test" "$test_dir/layout.cfg"
+for lan_preview in 0 1; do
+  "${CXX:-clang++}" -std=c++17 -Wall -Wextra -Werror -fsanitize=undefined \
+    -D__ANDROID__=1 -DGX_XR_LAN_PREVIEW="$lan_preview" \
+    -IGeneralsMD/Code/Main -I"$test_dir" -I"$build_dir/vcpkg_installed/arm64-android/include" \
+    scripts/qa/xr-workspace-test.cpp -o "$test_dir/workspace-test"
+  "$test_dir/workspace-test" "$test_dir/layout-$lan_preview.cfg"
+done

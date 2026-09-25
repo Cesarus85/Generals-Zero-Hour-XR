@@ -37,8 +37,13 @@ size_t wcsnlen(const wchar_t *str, size_t maxlen);
 template<typename T> size_t strlcpy_t(T *dst, const T *src, size_t dstsize);
 template<typename T> size_t strlcat_t(T *dst, const T *src, size_t dstsize);
 
+// GeneralsX @build Codex 16/09/2026 Avoid redeclaring host libc functions with incompatible exception specifications.
+#ifndef HAVE_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t dstsize);
+#endif
+#ifndef HAVE_STRLCAT
 size_t strlcat(char *dst, const char *src, size_t dstsize);
+#endif
 #ifndef HAVE_WCSLCPY
 size_t wcslcpy(wchar_t *dst, const wchar_t *src, size_t dstsize);
 #endif
@@ -308,4 +313,3 @@ template<typename T> inline bool endsWithNoCase(const T *str, const T *suffix)
 
 	return strnicmp_t(str + strlen - suffixlen, suffix, suffixlen) == 0;
 }
-

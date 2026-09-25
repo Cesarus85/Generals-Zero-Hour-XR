@@ -1,9 +1,20 @@
 #pragma once
 
 #include <curl/curl.h>
+// GeneralsX @build Codex 16/09/2026 Shield standard headers from GameSpy min/max macros, then restore them.
+#pragma push_macro("min")
+#pragma push_macro("max")
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include <map>
 #include <string>
 #include <functional>
+#pragma pop_macro("max")
+#pragma pop_macro("min")
 
 enum class EHTTPVerb;
 enum class EIPProtocolVersion;

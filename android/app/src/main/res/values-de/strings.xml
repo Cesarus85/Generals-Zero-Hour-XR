@@ -92,6 +92,8 @@
     <string name="setup_switch_gx_perf_desc">Fügt einmal pro Sekunde eine kurze Zeile hinzu, die zeigt, wohin die Frame-Zeit geht (Radar, Audio, Netzwerk, Spiellogik, Rendering). Kann problemlos die ganze Spielsitzung über aktiviert bleiben — nutze dies für FPS-/Ruckler-Berichte. (gx_perf.txt)</string>
     <string name="setup_switch_gx_audio_trace">Audio-Protokoll</string>
     <string name="setup_switch_gx_audio_trace_desc">Zeichnet auf, was das Soundsystem tut: Pufferstände von Musik und Sprache, Filmton sowie jede Quelle, die startet oder stoppt. Aktivieren Sie dies, wenn nach einer Meldung über fehlenden, stockenden oder stummen Ton ein Audio-Protokoll angefordert wird. (gx_audio_trace.txt)</string>
+    <string name="setup_switch_lan_crc">LAN-Synchronisationsprüfung</string>
+    <string name="setup_switch_lan_crc_desc">Bei Synchronisationsfehlern in einem LAN-Spiel. Speichert nur die ersten acht regulären CRC-Prüfpunkte und einen Fehler im Spielprotokoll; das Spielverhalten bleibt unverändert. Starten Sie das Spiel nach dem Einschalten neu und teilen Sie dann das Protokoll über „Protokolle anzeigen“. (gx_lan_crc.txt)</string>
     <string name="setup_button_download_langpack">Sprachpaket herunterladen</string>
     <string name="setup_langpack_downloading">Sprachpaket wird heruntergeladen…</string>
     <string name="setup_langpack_done">Sprachpaket installiert. Das Spiel verwendet es beim nächsten Start.</string>

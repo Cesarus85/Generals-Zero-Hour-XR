@@ -68,6 +68,9 @@
 #include "Common/Xfer.h"
 #include "Common/XferCRC.h"
 #include "Common/XferDeepCRC.h"
+#include "GXLanCRCTrace.h"
+#include "Common/LanSnapshotCommand.h"
+#include "GXNetworkCRCValidation.h"
 #include "Common/GameSpyMiscPreferences.h"
 
 #include "GameClient/ControlBar.h"
@@ -449,6 +452,8 @@ void GameLogic::init()
 //-------------------------------------------------------------------------------------------------
 void GameLogic::reset()
 {
+	// GeneralsX @feature Codex 16/09/2026 Never carry a LAN trace into an offline or later match.
+	GXLanCRCTrace::endMatch();
 	m_thingTemplateBuildableOverrides.clear();
 	m_controlBarOverrides.clear();
 
@@ -1307,6 +1312,13 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 			TheGameInfo = TheChallengeGameInfo;
 		}
 	}
+	// GeneralsX @feature Codex 16/09/2026 Start only at actual map load, after game info is selected.
+	// XR and SDL startup have already changed to the game-data directory; replays stay silent.
+	GXLanCRCTrace::beginMatch(m_gameMode == GAME_LAN && !loadingSaveGame && TheNetwork &&
+		TheRecorder && !TheRecorder->isPlaybackMode() && TheGameInfo,
+		TheGameInfo ? TheGameInfo->getMapCRC() : 0,
+		TheGameInfo ? TheGameInfo->getSeed() : 0,
+		TheGameInfo ? TheGameInfo->getCRCInterval() : 0);
 
   // On a NEW game, we need to copy the superweapon restrictions from the game info to here
   // (because TheGameInfo is not always saved and doesn't carry over to replays). On a save
@@ -2715,12 +2727,14 @@ void GameLogic::processCommandList( CommandList *list )
 #ifdef RTS_DEBUG
 		DEBUG_ASSERTCRASH(msg != nullptr && msg != (GameMessage*)0xdeadbeef, ("bad msg"));
 #endif
+		ObserveLanSnapshotCommand(m_frame, msg);
 		logicMessageDispatcher( msg, nullptr );
 	}
 
 	if (m_shouldValidateCRCs && !TheNetwork->sawCRCMismatch())
 	{
 		Bool sawCRCMismatch = FALSE;
+		GXLanCRCTrace::Reason detectorReason = GXLanCRCTrace::no_mismatch;
 		Int numPlayers = 0;
 		DEBUG_ASSERTCRASH(TheNetwork, ("No Network!"));
 		if (TheNetwork)
@@ -2731,38 +2745,55 @@ void GameLogic::processCommandList( CommandList *list )
 					++numPlayers;
 			}
 
-			if (m_cachedCRCs.size() < numPlayers)
+			// GeneralsX @bugfix Codex 16/09/2026 Resolve engine player IDs to live network slots before validation.
+			const GXNetworkCRCValidation::Reason result = GXNetworkCRCValidation::evaluate(
+				m_cachedCRCs, MAX_SLOTS,
+				[](Int slot) { return TheNetwork->isPlayerConnected(slot); },
+				[](Int playerIndex) {
+					Player *player = ThePlayerList ? ThePlayerList->getNthPlayer(playerIndex) : nullptr;
+					if (!player || player->getPlayerType() != PLAYER_HUMAN) return -1;
+					for (Int slot = 0; slot < MAX_SLOTS; ++slot)
+						if (TheNetwork->getPlayerName(slot) == player->getPlayerDisplayName()) return slot;
+					return -1;
+				});
+			if (result == GXNetworkCRCValidation::missing_crc)
 			{
 				DEBUG_CRASH(("Not enough CRCs!"));
 				sawCRCMismatch = TRUE;
+				detectorReason = GXLanCRCTrace::missing_crc;
 			}
-			else
+			else if (result == GXNetworkCRCValidation::different_crc)
 			{
-				Bool hasReferenceCRC = FALSE;
-				UnsignedInt referenceCRC = 0;
-
-				for (CachedCRCMap::const_iterator it = m_cachedCRCs.begin(); it != m_cachedCRCs.end(); ++it)
+				DEBUG_CRASH(("CRC mismatch!"));
+				sawCRCMismatch = TRUE;
+				detectorReason = GXLanCRCTrace::different_crc;
+			}
+			// GeneralsX @feature Codex 16/09/2026 Observe the first normal validation checkpoints and one terminal failure.
+			if (GXLanDesyncSnapshot::recording() || (GXLanCRCTrace::state().enabled &&
+				(GXLanCRCTrace::state().validated < GXLanCRCTrace::kFirstCheckpoints ||
+				 (sawCRCMismatch && !GXLanCRCTrace::state().failureWritten))))
+			{
+				Int connected[GXLanCRCTrace::kMaxSlots];
+				GXLanCRCTrace::PeerCRC received[GXLanCRCTrace::kMaxSlots];
+				Int connectedCount = 0;
+				Int receivedCount = 0;
+				for (Int i = 0; i < MAX_SLOTS && connectedCount < GXLanCRCTrace::kMaxSlots; ++i)
+					if (TheNetwork->isPlayerConnected(i)) connected[connectedCount++] = i;
+				for (CachedCRCMap::const_iterator it = m_cachedCRCs.begin(); it != m_cachedCRCs.end() && receivedCount < GXLanCRCTrace::kMaxSlots; ++it)
 				{
-					// TheSuperHackers @bugfix Caball009 14/06/2026 Check if player is still connected,
-					// to avoid spurious mismatches at low CRC intervals, e.g. every frame.
-					if (!TheNetwork->isPlayerConnected(it->first))
-						continue;
-
-					const UnsignedInt crc = it->second;
-
-					if (!hasReferenceCRC)
-					{
-						hasReferenceCRC = TRUE;
-						referenceCRC = crc;
-						continue;
-					}
-
-					if (referenceCRC != crc)
-					{
-						DEBUG_CRASH(("CRC mismatch!"));
-						sawCRCMismatch = TRUE;
-					}
+					// Match onLogicCrc's name-based network-slot lookup without logging names or altering its cache.
+					Int networkSlot = -1;
+					Player *player = ThePlayerList ? ThePlayerList->getNthPlayer(it->first) : nullptr;
+					if (player && player->getPlayerType() == PLAYER_HUMAN)
+						for (Int i = 0; i < MAX_SLOTS; ++i)
+							if (TheNetwork->getPlayerName(i) == player->getPlayerDisplayName())
+							{ networkSlot = i; break; }
+					received[receivedCount].playerIndex = it->first;
+					received[receivedCount].networkSlot = networkSlot;
+					received[receivedCount++].crc = it->second;
 				}
+				GXLanCRCTrace::checkpoint(m_frame, TheGameInfo ? TheGameInfo->getLocalSlotNum() : -1,
+					connected, connectedCount, received, receivedCount, detectorReason);
 			}
 		}
 
@@ -3843,6 +3874,8 @@ void GameLogic::update()
 
 	if (generateForSolo || generateForMP)
 	{
+		// GeneralsX @feature Codex 16/09/2026 Arm only the game's normally scheduled LAN CRC pass.
+		if (generateForMP && getGameMode() == GAME_LAN) GXLanCRCTrace::armGeneration();
 		m_CRC = getCRC( CRC_RECALC );
 		bool isPlayback = (TheRecorder && TheRecorder->isPlaybackMode());
 
@@ -4223,6 +4256,9 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 	setFPMode();
 
 	LatchRestore<Bool> latch(inCRCGen, !isInGameLogicUpdate());
+	// GeneralsX @feature Codex 16/09/2026 Read intermediate values from this existing CRC traversal only.
+	GXLanCRCTrace::Stages traceStages = {};
+	UnsignedInt traceSeed = 0;
 
 	XferCRC *xferCRC;
 	AsciiString marker;
@@ -4254,6 +4290,12 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 		}
 		xferCRC->open(crcName);
 	}
+	const bool traceCRC = isInGameLogicUpdate() && GXLanCRCTrace::captureGeneration() &&
+		xferCRC->getXferMode() == XFER_CRC;
+	if (traceCRC) GXLanDesyncSnapshot::prepare(m_frame);
+	GXLanCRCTrace::ObjectCRC traceObjects[GXLanCRCTrace::kMaxObjectRecords];
+	Int traceObjectCount = 0;
+	Int traceObjectTotal = 0;
 
 	// calculate CRCs
 	Object *obj;
@@ -4267,9 +4309,27 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 	xferCRC->xferAsciiString(&marker);
 	for( obj = m_objList; obj; obj=obj->getNextObject() )
 	{
+		if (traceCRC)
+		{
+			GXLanCRCTrace::beginObjectDetail(m_frame, traceObjectTotal,
+				static_cast<UnsignedInt>(obj->getID()), obj->getTemplate()->getName().str(), xferCRC->getCRC());
+		}
 		xferCRC->xferSnapshot( obj );
+		// GeneralsX @feature Codex 21/09/2026 Observe object order and rolling CRC without a second scan or CRC write.
+		if (traceCRC)
+		{
+			GXLanCRCTrace::endObjectDetail(xferCRC->getCRC());
+			GXLanCRCTrace::observeObject(traceObjects, GXLanCRCTrace::kMaxObjectRecords,
+				traceObjectCount, traceObjectTotal, static_cast<UnsignedInt>(obj->getID()), xferCRC->getCRC());
+		}
 	}
 	UnsignedInt seed = GetGameLogicRandomSeedCRC();
+	if (traceCRC && GXLanDesyncSnapshot::captureGeneration()) {
+		UnsignedInt words[6];
+		CopyGameLogicRandomState(words);
+		GXLanDesyncSnapshot::randomState(words);
+	}
+	if (traceCRC) { traceStages.objects = xferCRC->getCRC(); traceSeed = seed; }
 	if (isInGameLogicUpdate())
 	{
 		CRCGEN_LOG(("CRC after objects for frame %d is 0x%8.8X", m_frame, xferCRC->getCRC()));
@@ -4283,9 +4343,11 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 	{
 		xferCRC->xferUnsignedInt( &seed );
 	}
+	if (traceCRC) traceStages.rng = xferCRC->getCRC();
 	marker = "MARKER:ThePartitionManager";
 	xferCRC->xferAsciiString(&marker);
 	xferCRC->xferSnapshot( ThePartitionManager );
+	if (traceCRC) traceStages.partition = xferCRC->getCRC();
 	if (isInGameLogicUpdate())
 	{
 		CRCGEN_LOG(("CRC after partition manager for frame %d is 0x%8.8X", m_frame, xferCRC->getCRC()));
@@ -4308,6 +4370,7 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 	marker = "MARKER:ThePlayerList";
 	xferCRC->xferAsciiString(&marker);
 	xferCRC->xferSnapshot( ThePlayerList );
+	if (traceCRC) traceStages.players = xferCRC->getCRC();
 	if (isInGameLogicUpdate())
 	{
 		CRCGEN_LOG(("CRC after PlayerList for frame %d is 0x%8.8X", m_frame, xferCRC->getCRC()));
@@ -4316,6 +4379,7 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 	marker = "MARKER:TheAI";
 	xferCRC->xferAsciiString(&marker);
 	xferCRC->xferSnapshot( TheAI );
+	if (traceCRC) traceStages.ai = xferCRC->getCRC();
 	if (isInGameLogicUpdate())
 	{
 		CRCGEN_LOG(("CRC after AI for frame %d is 0x%8.8X", m_frame, xferCRC->getCRC()));
@@ -4331,6 +4395,11 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 	xferCRC->close();
 
 	UnsignedInt theCRC = xferCRC->getCRC();
+	if (traceCRC)
+	{
+		GXLanCRCTrace::generated(m_frame, TheGameInfo ? TheGameInfo->getLocalSlotNum() : -1,
+			theCRC, traceSeed, traceStages, traceObjects, traceObjectCount, traceObjectTotal);
+	}
 
 	delete xferCRC;
 	xferCRC = nullptr;

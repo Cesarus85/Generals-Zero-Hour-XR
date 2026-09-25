@@ -102,6 +102,8 @@
     <string name="setup_switch_gx_perf_desc">Adds one short line per second showing where frame time goes (radar, audio, network, game logic, rendering). Safe to leave on for a whole play session — turn this on for FPS/slowdown reports. (gx_perf.txt)</string>
     <string name="setup_switch_gx_audio_trace">Audio log</string>
     <string name="setup_switch_gx_audio_trace_desc">Records what the sound system is doing: music and speech buffer levels, movie audio, and every source that starts or stops. Turn this on if you are asked for an audio log after reporting missing, stuttering or silent sound. (gx_audio_trace.txt)</string>
+    <string name="setup_switch_lan_crc">LAN sync checkpoints</string>
+    <string name="setup_switch_lan_crc_desc">For a LAN match that reports a synchronization error. Saves only the first eight normal CRC checkpoints and one failure to the game log; it does not change gameplay. Restart the game after switching this on, then share the logs from View Logs. (gx_lan_crc.txt)</string>
     <string name="setup_button_download_langpack">Download language pack</string>
     <string name="setup_langpack_downloading">Downloading the language pack…</string>
     <string name="setup_langpack_done">Language pack installed. The game will use it on the next launch.</string>

@@ -29,6 +29,8 @@
 
 #include "PreRTS.h"
 
+#include "GXLanCRCTrace.h"
+
 #include "Common/Player.h"
 #include "Common/ThingFactory.h"
 #include "Common/ThingTemplate.h"
@@ -1286,6 +1288,7 @@ void RailroadBehavior::updatePositionTrackDistance( PullInfo *pullerInfo, PullIn
 
 
 	Coord3D turnPos = *obj->getPosition();
+	const Coord3D objectPosition = turnPos;
 
 	if (!m_inTunnel)
 		turnPos.z = TheTerrainLogic->getGroundHeight( turnPos.x, turnPos.y );
@@ -1299,10 +1302,23 @@ void RailroadBehavior::updatePositionTrackDistance( PullInfo *pullerInfo, PullIn
 	trackPosDelta.z = 0;
 	Real dx = pullerInfo->towHitchPosition.x - turnPos.x;
 	Real dy = pullerInfo->towHitchPosition.y - turnPos.y;
-	Real desiredAngle = atan2(dy, dx);
+	// GeneralsX @bugfix Codex 21/09/2026 Use the shared math gateway: the native
+	// Android and glibc atan2 results differ by one ULP on identical train inputs.
+	Real desiredAngle = WWMath::Atan2(dy, dx);
 
 
-	Real relAngle = stdAngleDiff(desiredAngle, obj->getTransformMatrix()->Get_Z_Rotation());
+	Real currentAngle = obj->getTransformMatrix()->Get_Z_Rotation();
+	Real relAngle = stdAngleDiff(desiredAngle, currentAngle);
+	// GeneralsX @feature Codex 21/09/2026 Observe the demonstrated train desync without changing its math.
+	GXLanCRCTrace::RailroadStep traceStep = {
+		pullerInfo->trackDistance, myInfo->trackDistance, hitchRadius,
+		carPosition.x, carPosition.y, objectPosition.x, objectPosition.y,
+		dir->x, dir->y, turnPos.x, turnPos.y,
+		pullerInfo->towHitchPosition.x, pullerInfo->towHitchPosition.y,
+		dx, dy, desiredAngle, currentAngle, relAngle
+	};
+	GXLanCRCTrace::railroadStep(static_cast<int>(TheGameLogic->getFrame()),
+		static_cast<unsigned int>(obj->getID()), traceStep);
 
 
 	Matrix3D mtx;
@@ -1641,7 +1657,5 @@ void RailroadBehavior::loadPostProcess()
 	m_clicketyClackSound.setObjectID( getObject()->getID() ) ;
 
 }
-
-
 
 

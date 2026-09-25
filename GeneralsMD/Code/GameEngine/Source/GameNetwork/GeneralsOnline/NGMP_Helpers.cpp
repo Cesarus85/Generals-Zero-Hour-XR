@@ -1,9 +1,20 @@
 #include "GameNetwork/GeneralsOnline/NGMP_include.h"
+// GeneralsX @build Codex 16/09/2026 Shield C++ headers from GameSpy min/max macros and restore them afterward.
+#pragma push_macro("min")
+#pragma push_macro("max")
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include <chrono>
 #include <mutex>
 #include <string>
 #include <locale>
 #include <codecvt>
+#pragma pop_macro("max")
+#pragma pop_macro("min")
 #include "GameNetwork/GeneralsOnline/OnlineServices_Init.h"
 #include "GameNetwork/GeneralsOnline/OnlineServices_Auth.h"
 

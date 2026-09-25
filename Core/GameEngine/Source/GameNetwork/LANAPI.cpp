@@ -65,6 +65,22 @@ LANGame::LANGame()
 
 
 
+// GeneralsX @bugfix Claude 25/09/2026 Linux/Android deliver 255.255.255.255
+// datagrams only to sockets bound to INADDR_ANY, never to one bound to a
+// unicast address, so a peer bound to its own IP never saw other LAN hosts'
+// game announcements (Direct Connect, being unicast, still worked). Windows
+// keeps the original interface binding. Own broadcasts are still dropped by
+// the senderIP == m_localIP check in update(); the match transport is unchanged.
+static UnsignedInt lanLobbyBindAddress(UnsignedInt localIP)
+{
+#ifdef _WIN32
+	return localIP;
+#else
+	(void)localIP;
+	return INADDR_ANY;
+#endif
+}
+
 LANAPI::LANAPI() : m_transport(nullptr)
 {
 	DEBUG_LOG(("LANAPI::LANAPI() - max game option size is %d, sizeof(LANMessage)=%d, MAX_LANAPI_PACKET_SIZE=%d",
@@ -100,7 +116,7 @@ void LANAPI::init()
 	m_gameStartTime = 0;
 	m_gameStartSeconds = 0;
 	m_transport->reset();
-	m_transport->init(m_localIP, lobbyPort);
+	m_transport->init(lanLobbyBindAddress(m_localIP), lobbyPort);
 	m_transport->allowBroadcasts(true);
 
 	m_pendingAction = ACT_NONE;
@@ -715,7 +731,7 @@ void LANAPI::RequestGameAnnounce()
 			fillInLANMessage( &reply );
 			reply.messageType = LANMessage::MSG_GAME_ANNOUNCE;
 
-			AsciiString gameOpts = GameInfoToAsciiString(m_currentGame);
+			AsciiString gameOpts = GameInfoToAsciiString(m_currentGame, FALSE);
 			strlcpy(reply.GameInfo.options,gameOpts.str(), ARRAY_SIZE(reply.GameInfo.options));
 			// GeneralsX @bugfix BenderAI 13/02/2026 Use CopyWcharToWindowsWideChar (fighter19 pattern)
 			CopyWcharToWindowsWideChar(reply.GameInfo.gameName, m_currentGame->getName().str(), ARRAY_SIZE(reply.GameInfo.gameName) - 1);
@@ -1275,7 +1291,7 @@ Bool LANAPI::SetLocalIP( UnsignedInt localIP )
 	m_localIP = localIP;
 
 	m_transport->reset();
-	retval = m_transport->init(m_localIP, lobbyPort);
+	retval = m_transport->init(lanLobbyBindAddress(m_localIP), lobbyPort);
 	m_transport->allowBroadcasts(true);
 
 	return retval;

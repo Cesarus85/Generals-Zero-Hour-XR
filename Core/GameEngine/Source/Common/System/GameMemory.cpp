@@ -88,6 +88,10 @@ DECLARE_PERF_TIMER(MemoryPoolInitFilling)
 	#define MPSB_DLINK
 #endif
 
+// GeneralsX @bugfix Android port 11/07/2026 always-present ownership marker;
+// @build Codex 16/09/2026 keep it outside MEMORYPOOL_DEBUG for release builds too.
+static const UnsignedInt OWNERSHIP_COOKIE = 0x47454e58; // 'GENX'
+
 #ifdef MEMORYPOOL_DEBUG
 
 	/**
@@ -111,10 +115,6 @@ DECLARE_PERF_TIMER(MemoryPoolInitFilling)
 	static const char* FREE_SINGLEBLOCK_TAG_STRING			= "FREE_SINGLEBLOCK_TAG_STRING";
 	const Short SINGLEBLOCK_MAGIC_COOKIE								= 12345;
 	const Int GARBAGE_FILL_VALUE												= 0xdeadbeef;
-
-	// GeneralsX @bugfix Android port 11/07/2026 always-present (not gated by
-	// MEMORYPOOL_DEBUG) ownership marker -- see m_ownershipCookie below.
-	static const UnsignedInt OWNERSHIP_COOKIE = 0x47454e58; // 'GENX'
 
 	// flags for m_debugFlags
 	enum

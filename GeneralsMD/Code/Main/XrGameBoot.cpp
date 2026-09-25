@@ -522,10 +522,17 @@ std::string XrGameBoot_PresentationStatus(bool stereoVisible,bool requested) {
 	return text;
 }
 bool GX_XR_BeginUILayer() { return GX_XR_SplitUIAllowed() && d3d8gles_BeginXRUI(s_worldFrame.elideWorldCopy); }
-// GeneralsX @feature Codex 13/09/2026 Read-only graphics prototype for offline games.
+// The LAN tabletop is an Android-only opt-in preview until a human Quest/PC
+// match proves lobby, deterministic play, leave and XR input/lifecycle safety.
+// Internet matches and replay remain outside this presentation gate.
 bool XrGameBoot_CanStereoWorld() {
 	if(!TheGameLogic || !XrGameBoot_IsInteractiveGame()) return false;
-	const auto mode=TheGameLogic->getGameMode();return mode==GAME_SKIRMISH || mode==GAME_SINGLE_PLAYER;
+	const auto mode=TheGameLogic->getGameMode();
+	if(mode==GAME_SKIRMISH || mode==GAME_SINGLE_PLAYER)return true;
+#if defined(__ANDROID__) && defined(GX_XR_LAN_PREVIEW) && GX_XR_LAN_PREVIEW
+	if(mode==GAME_LAN)return true;
+#endif
+	return false;
 }
 const char *XrGameBoot_PerformanceScene() {
 	if(!TheGameLogic)return "shell";
@@ -1492,10 +1499,11 @@ void XrGameBoot_DebugEndgame(XrDebugEndgame action)
 
 // GeneralsX @feature Codex 13/09/2026 Persistent controller ray -> existing
 // pointer pipeline, including hover, drag and balanced button releases.
+static float s_pointerX = kXrGameWidth * 0.5f, s_pointerY = kXrGameHeight * 0.5f;
 void XrGameBoot_Pointer(bool active, float x, float y, bool select, bool secondary, float wheel)
 {
 	static bool held[2] = {false, false};
-	static float lastX = kXrGameWidth * 0.5f, lastY = kXrGameHeight * 0.5f;
+	float &lastX = s_pointerX, &lastY = s_pointerY;
 	auto *mouse = dynamic_cast<SDL3Mouse *>(TheMouse);
 	if (!s_booted || !mouse) return;
 	SDL_Event e = {};
@@ -1561,6 +1569,13 @@ static GameWindow *xrFocusedTextTarget(uintptr_t token=0)
 uintptr_t XrGameBoot_FocusedTextField()
 {
 	return reinterpret_cast<uintptr_t>(xrFocusedTextTarget());
+}
+
+uintptr_t XrGameBoot_FocusedTextFieldAtPointer()
+{
+	GameWindow *target=xrFocusedTextTarget();
+	if (!target || !target->winPointInWindow(int(s_pointerX),int(s_pointerY))) return 0;
+	return reinterpret_cast<uintptr_t>(target);
 }
 
 std::wstring XrGameBoot_TextFieldValue(uintptr_t token)

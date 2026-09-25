@@ -2,8 +2,19 @@
 
 #include "NGMP_include.h"
 
+// GeneralsX @build Codex 16/09/2026 Shield C++ headers from GameSpy min/max macros, then restore them.
+#pragma push_macro("min")
+#pragma push_macro("max")
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include <thread>
 #include <memory>
+#pragma pop_macro("max")
+#pragma pop_macro("min")
 
 class HTTPManager;
 
@@ -23,8 +34,18 @@ enum class EScreenshotType : int
 	SCREENSHOT_TYPE_SCORESCREEN = 2
 };
 
+#pragma push_macro("min")
+#pragma push_macro("max")
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include <mutex>
 #include <atomic>
+#pragma pop_macro("max")
+#pragma pop_macro("min")
 
 // GeneralsX @bugfix Android port 10/07/2026 this literal Windows-style path
 // doesn't correspond to a real library anywhere in our build (we link
@@ -39,7 +60,17 @@ enum class EScreenshotType : int
 
 
 #include <curl/curl.h>
+#pragma push_macro("min")
+#pragma push_macro("max")
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include <chrono>
+#pragma pop_macro("max")
+#pragma pop_macro("min")
 #include "GeneralsOnline_Settings.h"
 #include "GameClient/DisplayStringManager.h"
 #include "Common/GameEngine.h"

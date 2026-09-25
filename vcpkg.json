@@ -25,7 +25,7 @@
       },
       {
         "name": "gamenetworkingsockets",
-        "platform": "android"
+        "platform": "android | linux"
       },
       {
         "name": "ffmpeg",
