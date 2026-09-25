@@ -702,7 +702,7 @@ void GX_XR_BeginStereoWorld() {
 	const auto &f=s_worldFrame.fov[0],&g=s_worldFrame.fov[1];
 	s_renderCamera->Set_View_Plane(Vector2(std::min(tanf(f.angleLeft),tanf(g.angleLeft))-.05f,std::min(tanf(f.angleDown),tanf(g.angleDown))-.05f),
 		Vector2(std::max(tanf(f.angleRight),tanf(g.angleRight))+.05f,std::max(tanf(f.angleUp),tanf(g.angleUp))+.05f));
-	s_renderCamera->Set_Clip_Planes(1,s_worldFrame.observer ? kXrObserverFarMetres*kXrObserverUnitsPerMetre:20000);
+	s_renderCamera->Set_Clip_Planes(1,s_worldFrame.observer ? kXrObserverClipFarMetres*kXrObserverUnitsPerMetre:20000);
 	static unsigned mappingFrames=0;
 	if(!s_worldFrame.observer && (mappingFrames++%180)==0) {
 		// GeneralsX @tweak Codex 16/09/2026 Report the shared P20.1 underside.
@@ -729,8 +729,12 @@ void GX_XR_BeginStereoWorld() {
 		s_pickAim=oldAim;s_pickRoom=oldRoom;
 	}
 	for(int eye=0;eye<2;++eye) xrWorldEyeClip(clip[eye],s_worldFrame,eye,board);
-	s_renderReady=d3d8gles_BeginXRStereo(s_worldFrame.width,s_worldFrame.height,clip[0],clip[1],board,
-		s_worldFrame.observer ? -1.0f:float(h)/w,camera,s_worldFrame.atlasStereo,s_worldFrame.multiviewStereo);
+	// GeneralsX @bugfix Claude 25/09/2026 The observer's shader-only board is
+	// head-relative so the fragment stage can test a horizontal horizon circle.
+	float shaderBoard[16];memcpy(shaderBoard,board,sizeof(shaderBoard));
+	if(s_worldFrame.observer) {shaderBoard[12]-=head.x;shaderBoard[13]-=head.y;shaderBoard[14]-=head.z;}
+	s_renderReady=d3d8gles_BeginXRStereo(s_worldFrame.width,s_worldFrame.height,clip[0],clip[1],shaderBoard,
+		s_worldFrame.observer ? -kXrObserverFarMetres:float(h)/w,camera,s_worldFrame.atlasStereo,s_worldFrame.multiviewStereo);
 }
 static void drawXrWorldDecorations();
 void GX_XR_EndStereoWorld() {
