@@ -94,6 +94,9 @@ void XrGameBoot_Key(XrGameKey key, bool down);
 // for every focused original entry gadget. Tokens are valid only while that
 // exact gadget retains focus on the engine thread.
 uintptr_t XrGameBoot_FocusedTextField();
+// GeneralsX @bugfix Claude 25/09/2026 Original push buttons never take focus,
+// so an entry field keeps it after Enter. Only a press on that field reopens.
+uintptr_t XrGameBoot_FocusedTextFieldAtPointer();
 std::wstring XrGameBoot_TextFieldValue(uintptr_t token);
 int XrGameBoot_TextFieldInputMode(uintptr_t token);
 int XrGameBoot_TextFieldMaxLength(uintptr_t token);

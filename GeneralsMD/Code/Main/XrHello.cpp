@@ -1578,13 +1578,14 @@ static void runLoop(XrHello &x)
 						XR_LOG("P11.1 loading returned; next frame reacquires gameplay poses");
 						continue; // The callback already ended this outer frame.
 					}
-					// A controller press on any focused original entry gadget opens
-					// Meta's runtime-owned native Quest keyboard.
+					// A controller press on a focused original entry gadget opens
+					// Meta's runtime-owned native Quest keyboard. Presses elsewhere
+					// (e.g. Direct Connect's button after Enter) must not reopen it.
 					const bool textFieldPress=x.pointerPressed && !x.keyboardPointerHeld &&
 						!x.menu.open && !x.arranging && x.pointerPiece>=0;
 					x.keyboardPointerHeld=x.pointerPressed;
 					if(textFieldPress) {
-						const uintptr_t token=XrGameBoot_FocusedTextField();
+						const uintptr_t token=XrGameBoot_FocusedTextFieldAtPointer();
 						if(token)x.keyboard.show(token,views[0].pose);
 					}
 					// Movies/dialogs can start during the native frame. Never use
