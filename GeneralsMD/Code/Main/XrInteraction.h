@@ -26,6 +26,53 @@ static void updateInteraction(XrHello &x, const XrControllerState &c, const XrVi
 {
 	const float dt=x.previousInputTime ? std::clamp(float(time-x.previousInputTime)*1e-9f,0.0f,.05f) : 0;
 	x.previousInputTime=time;
+	// GeneralsX @feature Codex 17/09/2026 Observer owns every controller
+	// action. The native game receives explicit releases, never a world click.
+	if(x.observer.mode!=XrObserverMode::Off) {
+		const bool neutral=!c.buttonsHeld && !c.select && !c.secondary && !c.back &&
+			!c.grip[0] && !c.grip[1] && fabsf(c.pan.x)<.25f && fabsf(c.pan.y)<.25f &&
+			fabsf(c.zoom.x)<.25f && fabsf(c.zoom.y)<.25f;
+		x.observer.neutral(neutral);
+		updateControls(x,XrControllerState{},time);
+		x.grab.cancel();x.buildRotation={};x.commands.input.click.cancel();x.menu.click.cancel();
+		x.controlsArmed=false;x.inputArmed=false;x.hoverVisible=false;
+		if(x.observer.mode==XrObserverMode::Armed) {
+			x.rayVisible=c.aimValid;x.rayStart=c.aim.position;
+			x.rayEnd=xrAdd(c.aim.position,xrRotate(c.aim.orientation,{0,0,-2.5f}));
+			XrVector3f target={},room={};const bool valid=c.aimValid &&
+				XrGameBoot_PickObserverGround(x.surfaces[1],c.aim,target,&room);
+			x.rayHit=valid;
+			if(valid)x.rayEnd=room;
+			if((c.back || c.secondary) && !x.observer.requireRelease) {
+				x.observer.cancel();x.controlsArmed=false;x.rayVisible=false;
+			} else if(x.observer.canChoose(c.select) && valid) {
+				const auto head=xrScale(xrAdd(views[0].pose.position,views[1].pose.position),.5f);
+				float fx=0,fz=-1;yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
+				if(x.observer.choose(target,head,{fx,0,fz})) {
+					x.observerFadeStart=time;x.rayVisible=false;x.menu.open=false;
+				}
+			}
+		} else if(c.back && !x.observer.requireRelease) {
+			x.observer.cancel();x.observerFadeStart=time;x.controlsArmed=false;
+		} else if(x.observer.mode==XrObserverMode::Active && !x.observer.requireRelease) {
+			// Physical left/right sticks are independent of gameplay handedness.
+			// Look direction includes real head rotation; only the virtual world
+			// turns, with the current head as pivot.
+			const auto head=xrScale(xrAdd(views[0].pose.position,views[1].pose.position),.5f);
+			float fx=0,fz=-1;yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
+			x.observer.turn(xrStick(c.rightStick.x),dt,head);
+			const auto delta=x.observer.walkDelta({xrStick(c.leftStick.x),xrStick(c.leftStick.y)},
+				{fx,0,fz},dt);
+			if(fabsf(delta.x)+fabsf(delta.y)>.0001f) {
+				XrVector3f next={};
+				if(XrGameBoot_ObserverStep(x.observer.ground,delta,next) ||
+					(fabsf(delta.x)>.0001f && XrGameBoot_ObserverStep(x.observer.ground,{delta.x,0,0},next)) ||
+					(fabsf(delta.y)>.0001f && XrGameBoot_ObserverStep(x.observer.ground,{0,delta.y,0},next)))
+					x.observer.ground=next;
+			}
+		}
+		return;
+	}
 	// GeneralsX @feature Codex 14/09/2026 Modal/focus/arrangement transitions
 	// clear the modifier capture; their existing neutral re-arm still applies.
 	if(x.state!=XR_SESSION_STATE_FOCUSED || !c.aimValid || !x.controlsArmed ||

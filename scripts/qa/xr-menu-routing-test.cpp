@@ -5,29 +5,33 @@
 #include "XrCommands.h"
 #include "XrPerformance.h"
 #include "XrBuildRotation.h"
+#include "XrWorld.h"
 #include <cstdio>
 #include <cstdlib>
 struct XrControllerState {XrPosef aim={{0,0,0,1},{0,0,0}};bool aimValid=true,select=false,back=false;};
 struct XrHello {
 	XrScene scene;
+	XrObserverState observer;
 	XrBuildRotation buildRotation;bool inputArmed=true,roomPoseLost=false;
 	XrMenuState menu;XrSurface surfaces[3];XrLayout layout;XrSurfaceGrab grab;
-	int keyboardField=0;bool keyboardReady=false;
 	XrPerformance performance;
 	bool uprightGame=false,startViewApplied=false;
 	XrCommandState commands;bool diorama=false;
 	XrPosef layoutAnchor={{0,0,0,1},{0,0,0}};
 	XrSessionState state=XR_SESSION_STATE_FOCUSED;
 	bool splitVisible=true,panelLatched=true,arranging=false,controlsArmed=true,interactiveGame=true;
-	bool stereoWorld=false,layoutDirty=false,rayVisible=false,rayHit=false,pointerPressed=false,hoverVisible=false;
+	bool stereoWorld=false,stereoVisible=false,recoveryVisible=false,layoutDirty=false,rayVisible=false,rayHit=false,pointerPressed=false,hoverVisible=false;
 	int arrangeSlot=1;float worldZoom=1;XrVector3f rayStart={},rayEnd={};
 };
 static int checks=0,releases=0,saves=0;static bool locked=false;
-static void check(bool b){++checks;if(!b){fprintf(stderr,"menu route check %d failed\n",checks);exit(1);}}
+static void checkAt(bool b,int line){++checks;if(!b){fprintf(stderr,"menu route check %d failed at line %d\n",checks,line);exit(1);}}
+#define check(b) checkAt((b),__LINE__)
 static bool XrGameBoot_CanStereoWorld(){return true;}
 static bool expanded=false;
 static bool XrGameBoot_ExpandedUI(){return expanded;}
 static bool XrGameBoot_CanAdjustWorld(){return !locked;}
+static bool groundAllowed=true;
+static bool XrGameBoot_CanObserveGround(){return groundAllowed;}
 static int tactic=-1;
 static void XrGameBoot_TacticalAction(int action){tactic=action;}
 static int group=-1,operation=-1;
@@ -38,7 +42,6 @@ static std::string XrGameBoot_TacticalReason(int){return {};}
 static int communicator=0,language=-1;
 static void XrGameBoot_Communicator(){++communicator;}
 static void XrGameBoot_SetLanguage(int value){language=value;}
-static bool XrGameBoot_DirectConnectTextKey(int,int){return true;}
 static float surfaceAspect(int){return .25f;}
 static void saveLayout(XrHello &){++saves;}
 static void updateControls(XrHello &,const XrControllerState &c,XrTime){check(!c.select);++releases;}
@@ -49,6 +52,22 @@ static void XrGameBoot_CancelTarget(){}
 int main(){
 	XrHello x;XrView views[2]={};views[0].pose.orientation.w=views[1].pose.orientation.w=1;
 	for(int i=0;i<3;++i)x.surfaces[i]=x.layout.relative[i];
+	const auto uiDock=uiButtonSurface(x),commandsDock=commandButtonSurface(x),groundDock=groundButtonSurface(x);
+	check(uiDock.width==.20f && commandsDock.width==uiDock.width && groundDock.width==uiDock.width);
+	check(fabsf(commandsDock.pose.position.y-uiDock.pose.position.y+.16f)<.0001f);
+	check(fabsf(groundDock.pose.position.y-commandsDock.pose.position.y+.16f)<.0001f);
+	check(fabsf(uiDock.pose.position.x-commandsDock.pose.position.x)<.0001f &&
+		fabsf(uiDock.pose.position.x-groundDock.pose.position.x)<.0001f);
+	check(fabsf(uiDock.pose.position.z-x.surfaces[1].pose.position.z+.08f)<.0001f);
+	const auto facing=xrRotate(uiDock.pose.orientation,{0,0,1});
+	check(facing.x<-.25f && facing.z>.95f && fabsf(facing.y)<.0001f);
+	check(fabsf(commandsDock.pose.orientation.w-uiDock.pose.orientation.w)<.0001f &&
+		fabsf(groundDock.pose.orientation.w-uiDock.pose.orientation.w)<.0001f);
+	const auto oldBuild=x.surfaces[2];x.surfaces[2].pose.position.x+=.5f;
+	check(xrLength(xrSub(uiButtonSurface(x).pose.position,uiDock.pose.position))<.0001f);
+	x.surfaces[2]=oldBuild;x.surfaces[1].pose.position.x+=.2f;
+	check(fabsf(uiButtonSurface(x).pose.position.x-uiDock.pose.position.x-.2f)<.0001f);
+	x.surfaces[1].pose.position.x-=.2f;
 	const auto compact=commandSurface(x);applyCommandAction(x,37);
 	check(x.commands.tactics && xrCommandHeight(x.commands)==1280);
 	const auto expandedConsole=commandSurface(x);
@@ -62,7 +81,7 @@ int main(){
 	applyCommandAction(x,37);check(!x.commands.tactics);tactic=-1;x.stereoWorld=false;
 	for(int i=0;i<3;++i)x.surfaces[i]=x.layout.relative[i];
 	x.surfaces[2].pose={{0,0,0,1},{0,0,-1}};
-	const auto button=uiButtonSurface(x);XrControllerState c;c.aim.position={button.pose.position.x,0,0};
+	const auto button=uiButtonSurface(x);XrControllerState c;c.aim.position={button.pose.position.x,button.pose.position.y,0};
 	check(updateXrMenu(x,c,views,1));check(!x.menu.open);
 	c.select=true;check(updateXrMenu(x,c,views,2));check(!x.menu.open);
 	c.select=false;check(updateXrMenu(x,c,views,3));check(x.menu.open && !x.controlsArmed);
@@ -72,11 +91,23 @@ int main(){
 	c.select=false;check(updateXrMenu(x,c,views,5));check(x.menu.open);
 	c.back=true;check(updateXrMenu(x,c,views,6));check(!x.menu.open);c.back=false;
 	check(!updateXrMenu(x,c,views,7));
+	// Direct Ground View button shares the board-side column, captures its
+	// own laser click and arms placement only after a release.
+	x.stereoVisible=true;
+	const auto groundButton=groundButtonSurface(x);
+	check(xrLength(xrSub(groundButton.pose.position,button.pose.position))>.12f);
+	c.aim.position={groundButton.pose.position.x,groundButton.pose.position.y,0};
+	check(updateXrMenu(x,c,views,11));c.select=true;
+	check(updateXrMenu(x,c,views,12));check(x.observer.mode==XrObserverMode::Off);
+	c.select=false;check(updateXrMenu(x,c,views,13));
+	check(x.observer.mode==XrObserverMode::Armed && !x.menu.open && !x.controlsArmed);
+	x.observer.cancel();x.stereoVisible=false;
+	check(!updateXrMenu(x,c,views,14)); // No button when mode is unavailable.
 	// P18.1 help captures input on every page and never issues an order.
 	const int priorTactic=tactic;
 	check(xrMenuHit(700.0f/768,1-36.0f/1024)==24);
 	applyMenuAction(x,24,views);check(x.menu.page==4 && x.menu.helpPage==0);
-	for(int page=1;page<=4;++page){applyMenuAction(x,36,views);check(x.menu.helpPage==page%4);}
+	for(int page=1;page<=kXrControllerHelpPages;++page){applyMenuAction(x,36,views);check(x.menu.helpPage==page%kXrControllerHelpPages);}
 	applyMenuAction(x,0,views);check(tactic==priorTactic && x.menu.page==4);
 	applyMenuAction(x,34,views);check(x.menu.page==0);
 	x.menu.open=true;check(xrEditTarget(x)==1);
@@ -100,7 +131,7 @@ int main(){
 	x.menu.page=0;applyMenuAction(x,14,views);check(x.arranging && !x.menu.open && !x.controlsArmed);
 	check(releases>4 && saves>7);
 	// Loss of focus cannot turn a held trigger into a fresh workspace click.
-	x.arranging=false;x.menu.open=false;c.aim.position={button.pose.position.x,0,0};c.select=true;
+	x.arranging=false;x.menu.open=false;c.aim.position={button.pose.position.x,button.pose.position.y,0};c.select=true;
 	x.state=XR_SESSION_STATE_VISIBLE;updateXrMenu(x,c,views,8);
 	x.state=XR_SESSION_STATE_FOCUSED;updateXrMenu(x,c,views,9);c.select=false;updateXrMenu(x,c,views,10);
 	check(!x.menu.open);
@@ -195,6 +226,12 @@ int main(){
 	// Nonmodal: a ray outside the panel is free; background is captured.
 	x.surfaces[2].pose={{0,0,0,1},{0,0,-1}};c={};c.aim.position={5,0,0};
 	check(!updateCommands(x,c,100));
+	const auto commandToggle=commandButtonSurface(x);
+	c.aim.position={commandToggle.pose.position.x,commandToggle.pose.position.y,0};
+	check(updateCommands(x,c,100));c.select=true;check(updateCommands(x,c,100));
+	c.select=false;check(updateCommands(x,c,100));check(!x.layout.commandsVisible);
+	check(updateCommands(x,c,100));c.select=true;check(updateCommands(x,c,100));
+	c.select=false;check(updateCommands(x,c,100));check(x.layout.commandsVisible);
 	const auto fixed=commandSurface(x);
 	// GeneralsX @test Ultron 15/09/2026 P21 the console center is a real
 	// button in the new layout; the no-dispatch contract moves to a true
@@ -217,7 +254,8 @@ int main(){
 	// P11.1: the UI button becomes Done, not another modal submenu.
 	x={};for(int i=0;i<3;++i)x.surfaces[i]=x.layout.relative[i];
 	x.surfaces[2].pose={{0,0,0,1},{0,0,-1}};c={};
-	c.aim.position={uiButtonSurface(x).pose.position.x,0,0};
+	const auto arrangeButton=uiButtonSurface(x);
+	c.aim.position={arrangeButton.pose.position.x,arrangeButton.pose.position.y,0};
 	applyMenuAction(x,14,views);check(x.arranging && !x.menu.open);
 	updateXrMenu(x,c,views,120);c.select=true;updateXrMenu(x,c,views,121);
 	check(x.arranging);c.select=false;updateXrMenu(x,c,views,122);

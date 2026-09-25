@@ -1,13 +1,9 @@
 name: Build Android
 
 permissions:
-  # GeneralsX @feature Android port 09/07/2026 contents:write is needed for the
-  # optional "create a GitHub Release" step below (softprops/action-gh-release
-  # needs to create a tag + release + upload an asset). Safe to declare at the
-  # workflow level: pull_request (not pull_request_target) from a fork always
-  # gets a read-only token from GitHub regardless of this block, and push/
-  # workflow_dispatch on this repo both require write access to trigger anyway.
-  contents: write
+  # GeneralsX @build Codex 16/09/2026 Hosted CI uploads development APKs only.
+  # It cannot publish a debug-signed APK as a GitHub Release.
+  contents: read
   pull-requests: read
   # GeneralsX @bugfix Android CI 18/07/2026 needed by the "Delete old
   # artifacts" cleanup step below (DELETE .../actions/artifacts/{id}) --
@@ -23,9 +19,8 @@ on:
   # pushing, and pushes to BOTH main and the working branch on every commit
   # (main is kept fast-forwarded) -- so every commit was silently kicking off
   # two full ~15min CI builds nobody was looking at, burning real Actions
-  # usage for zero benefit. pull_request/workflow_dispatch (manual runs,
-  # including the "publish a Release" path) are unaffected and still work
-  # exactly as before.
+  # usage for zero benefit. pull_request/workflow_dispatch remain available
+  # for development builds, never for publication.
   pull_request:
     branches:
       - main
@@ -57,14 +52,6 @@ on:
       version_code:
         type: string
         description: "Override versionCode (must be higher than any build already installed on your device). Leave blank to use the committed default."
-        default: ""
-      create_release:
-        type: boolean
-        description: "Also publish a GitHub Release for this build (tag = v<version_name>). Requires version_name above to be set."
-        default: false
-      release_notes:
-        type: string
-        description: "Optional custom text for the top of the release description (auto-generated commit/PR notes are still appended below it)."
         default: ""
 
 # GeneralsX @tweak Codex 16/09/2026 A PR receives a full hosted Quest build
@@ -547,42 +534,13 @@ jobs:
 
       # Same 7 days as the APK above on purpose: the table is only useful while
       # someone can still be running the build it came from, and the cleanup
-      # step below keeps just the newest run per branch anyway. Released builds
-      # do not rely on this copy -- their table is attached to the Release.
+      # step below keeps just the newest run per branch anyway.
       - name: Upload symbol table artifact
         uses: actions/upload-artifact@v7
         with:
           name: android-symbols-run${{ github.run_number }}
           path: symbols/
           retention-days: 7
-
-      # GeneralsX @feature Android port 09/07/2026 Actions artifacts expire
-      # (30 days) and require a GitHub login to download -- not a real "here,
-      # everyone download this" link. Manual dispatch with create_release=true
-      # publishes an actual GitHub Release with the APK attached instead,
-      # tagged from version_name (set alongside it above) so the release name
-      # always matches what's baked into the APK's own versionName.
-      - name: Create GitHub Release
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_release }}
-        run: |
-          set -euo pipefail
-          if [ -z "${{ inputs.version_name }}" ]; then
-            echo "::error::create_release requires version_name to be set (used as the release tag)."
-            exit 1
-          fi
-
-      - name: Publish GitHub Release
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_release }}
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ inputs.version_name }}
-          name: v${{ inputs.version_name }}
-          body: ${{ inputs.release_notes }}
-          files: |
-            ${{ steps.locate.outputs.path }}
-            symbols/libmain-run${{ github.run_number }}.symbols.txt.gz
-          generate_release_notes: true
-          make_latest: true
 
       - name: Collect dependency build logs for diagnosis
         if: always()

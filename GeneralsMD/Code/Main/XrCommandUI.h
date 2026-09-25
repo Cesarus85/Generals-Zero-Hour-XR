@@ -4,7 +4,7 @@ static bool commandsAvailable(const XrHello &x) {
 	return x.interactiveGame && x.splitVisible && !x.arranging && !x.diorama && !x.menu.open && !XrGameBoot_ExpandedUI() && XrGameBoot_CanStereoWorld();
 }
 static XrSurface commandButtonSurface(const XrHello &x) {
-	auto s=uiButtonSurface(x);s.pose.position=xrAdd(s.pose.position,xrRotate(s.pose.orientation,{.18f,0,0}));s.width=.20f;return s;
+	auto s=uiButtonSurface(x);s.pose.position=xrAdd(s.pose.position,{0,-.16f,0});return s;
 }
 static XrSurface commandSurface(const XrHello &x) {
 	auto s=x.surfaces[2];const float width=.72f;

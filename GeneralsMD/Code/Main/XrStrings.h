@@ -7,11 +7,20 @@ enum class XrLanguage {German,English};
 inline XrLanguage g_xrLanguage=XrLanguage::German; // XR thread only
 struct XrTranslation {const char *de,*en;};
 inline constexpr XrTranslation kXrTranslations[]={
- {"Virtuelle Tastatur","Virtual keyboard"},
- {"Remote-IP","Remote IP"},
- {"Spielername","Player name"},
- {"Löschen","Delete"},
- {"Leerzeichen","Space"},
+	// GeneralsX @feature Codex 17/09/2026 P25 bilingual observer controls.
+	{"Bodenansicht","Ground view"},
+	{"BODENANSICHT","GROUND VIEW"},
+	{"Bodenansicht · Ort wählen","Ground view · choose location"},
+	{"Nur Offline-Gefecht: Bodenansicht wählen, dann sichtbaren freien Boden anklicken. B/Y kehrt zurück.",
+	 "Offline Skirmish only: choose Ground view, then click visible open ground. B/Y returns."},
+	{"B: Zurück zum Tisch","B: Return to table"},
+	{"Y: Zurück zum Tisch","Y: Return to table"},
+	{"Links: gehen · Rechts: drehen · B: Tisch","Left: move · Right: turn · B: table"},
+	{"Links: gehen · Rechts: drehen · Y: Tisch","Left: move · Right: turn · Y: table"},
+	{"Sichtbaren freien Boden mit Trigger wählen. B/Y bricht ab.","Choose visible open ground with the trigger. B/Y cancels."},
+	{"Hier kein sicherer, sichtbarer Boden. Anderen Ort wählen; B/Y bricht ab.",
+	 "No safe visible ground here. Choose another spot; B/Y cancels."},
+	{"Spiel: Tisch; Bodenansicht optional","Game: table; Ground view optional"},
  {"Bearbeitung: %s · %.2f m · Karte %.1fx · P19.1","Editing: %s · %.2f m · Map %.1fx · P19.1"},
  // GeneralsX @feature Codex 14/09/2026 P19.1 optional placement wizard.
  {"Spielplatz einrichten · P19.1","Set up play space · P19.1"},
@@ -254,7 +263,12 @@ inline constexpr XrTranslation kXrTranslations[]={
  {"Sprache","Language"},
  {"Deutsch","German"},
  {"English","English"},
- {"Linkshändig","Left-handed"}
+ {"Linkshändig","Left-handed"},
+ // GeneralsX @feature Muse 16/09/2026 Match-result card titles and hint.
+ {"Sieg!","Victory!"},
+ {"Niederlage","Defeat"},
+ {"Partie beendet","Match over"},
+ {"Die Partie ist entschieden.\nBeliebige Taste zum Schließen.","The match is decided.\nPress any button to dismiss."}
 };
 inline const char *xrTr(const char *source) {
  if(g_xrLanguage==XrLanguage::German)return source;

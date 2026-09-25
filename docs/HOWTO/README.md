@@ -6,6 +6,7 @@ Step-by-step guides for common tasks in GeneralsX.
 
 | Tutorial | Description |
 |---|---|
+| [Quest 3 installation and controls](INSTALLATION_XR.md) | Install Generals: Zero Hour XR, import retail data and use the tabletop controls |
 | [Installation](INSTALLATION.md) | Install GeneralsX on Linux (Flatpak) or macOS |
 | [Getting the Game Files](GETTING_THE_GAME_FILES.md) | Obtain original game assets (Steam, CrossOver, SteamCMD) |
 | [SagePatch Configuration](SAGEPATCH_CONFIGURATION.md) | Configure camera height, scroll speed, terrain draw distance, and other QoL settings |

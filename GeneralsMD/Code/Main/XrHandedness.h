@@ -11,10 +11,19 @@ struct XrControllerState {
 	XrPosef aim={{0,0,0,1},{0,0,0}};
 	bool aimValid=false,select=false,secondary=false,back=false,recenter=false,upright=false;
 	XrVector2f pan={},zoom={};
+	// Physical sticks remain left/right in the observer, even when gameplay
+	// swaps pointing and supporting hands for left-handed controls.
+	XrVector2f leftStick={},rightStick={};
 	bool arrange=false,preset=false,homeBase=false,tilt=false,buttonsHeld=false;
 	// Index 0 = supporting hand; index 1 = pointing hand, in BOTH modes.
 	XrPosef hands[2]={{{0,0,0,1},{0,0,0}},{{0,0,0,1},{0,0,0}}};
 	bool grip[2]={},handValid[2]={};
+	// Physical left/right aim poses are kept as well as the logical dominant
+	// aim. Meta's native virtual keyboard accepts both controller rays and
+	// requires their actual handedness to select the right input source.
+	XrPosef physicalAim[2]={{{0,0,0,1},{0,0,0}},{{0,0,0,1},{0,0,0}}};
+	XrPosef physicalGrip[2]={{{0,0,0,1},{0,0,0}},{{0,0,0,1},{0,0,0}}};
+	bool physicalAimValid[2]={},physicalGripValid[2]={},physicalSelect[2]={};
 };
 inline XrControllerState xrMapHands(const XrPhysicalHand (&hands)[2],bool leftHanded,bool menu) {
 	const auto &dominant=hands[leftHanded ? 0:1],&support=hands[leftHanded ? 1:0];
@@ -27,9 +36,15 @@ inline XrControllerState xrMapHands(const XrPhysicalHand (&hands)[2],bool leftHa
 	out.homeBase=support.stickEdge;
 	out.tilt=support.trigger;out.recenter=support.lowerEdge;out.upright=support.upperEdge;
 	out.pan=support.stick;out.zoom=dominant.stick;
+	out.leftStick=hands[0].stick;out.rightStick=hands[1].stick;
 	out.hands[0]=support.pose;out.hands[1]=dominant.pose;
 	out.grip[0]=support.grip;out.grip[1]=dominant.grip;
 	out.handValid[0]=support.poseValid;out.handValid[1]=dominant.poseValid;
+	for(int i=0;i<2;++i) {
+		out.physicalAim[i]=hands[i].aim;out.physicalAimValid[i]=hands[i].aimValid;
+		out.physicalGrip[i]=hands[i].pose;out.physicalGripValid[i]=hands[i].poseValid;
+		out.physicalSelect[i]=hands[i].trigger;
+	}
 	out.buttonsHeld=menu;
 	for(const auto &h:hands)out.buttonsHeld=out.buttonsHeld || h.lower || h.upper || h.stickClick;
 	return out;

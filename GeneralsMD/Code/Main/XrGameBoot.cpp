@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 #include <filesystem>
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -55,6 +56,7 @@
 #include "GameClient/ControlBar.h"
 #include "GameClient/GadgetPushButton.h"
 #include "GameClient/GadgetComboBox.h"
+#include "GameClient/Gadget.h"
 #include "GameClient/GadgetTextEntry.h"
 #include "GameClient/GameText.h"
 #include "GameClient/GUICallbacks.h"
@@ -71,6 +73,7 @@
 #include "GameClient/CommandXlat.h"
 #include "GameLogic/Object.h"
 #include "GameLogic/TerrainLogic.h"
+#include "GameLogic/PartitionManager.h"
 #include "GameLogic/Module/BodyModule.h"
 #include "coltest.h"
 #include "GameClient/LookAtXlat.h"
@@ -78,6 +81,11 @@
 #include "SDL3Device/GameClient/SDL3Keyboard.h"
 #include "GameLogic/GameLogic.h"
 #include "GameLogic/FPUControl.h"
+// GeneralsX @feature Muse 16/09/2026 Read-only match-result queries.
+#include "Common/Recorder.h"
+#include "GameClient/CampaignManager.h"
+#include "GameLogic/ScriptEngine.h"
+#include "GameLogic/VictoryConditions.h"
 #include "SDL3GameEngine.h"
 #include "GeneratedVersion.h"
 #include "d3d8gles.h"
@@ -534,6 +542,15 @@ const char *XrGameBoot_PerformanceScene() {
 bool XrGameBoot_CanAdjustWorld() {
 	return XrGameBoot_CanStereoWorld() && GX_XR_SplitUIAllowed() && XrGameBoot_CanControlCamera();
 }
+// GeneralsX @feature Codex 17/09/2026 Allow observation in live offline campaign
+// and Skirmish; the shared camera/presentation guard excludes cinematics.
+bool XrGameBoot_CanObserveGround() {
+	return TheGameLogic && (TheGameLogic->getGameMode()==GAME_SKIRMISH ||
+		TheGameLogic->getGameMode()==GAME_SINGLE_PLAYER) &&
+		XrGameBoot_CanAdjustWorld() && TheInGameUI && !TheInGameUI->getPendingPlaceType() &&
+		ThePartitionManager && ThePlayerList && ThePlayerList->getLocalPlayer() &&
+		!XrGameBoot_ExpandedUI();
+}
 // GeneralsX @feature Codex 15/09/2026 Reuse the original local camera command:
 // command center, otherwise most expensive owned structure; no unit orders.
 bool XrGameBoot_ViewBase() {
@@ -584,14 +601,20 @@ int GX_XR_ShadowCategory(int category) {return d3d8gles_SetDrawCategory(category
 CameraClass *GX_XR_RenderCamera() {return s_renderReady ? s_renderCamera:nullptr;}
 int GX_XR_CullSphere(const SphereClass &sphere) {
 	if(!s_renderReady) return -1;
+	if(s_worldFrame.observer) {
+		const auto tracked=xrScale(xrAdd(s_worldFrame.eyes[0].position,s_worldFrame.eyes[1].position),.5f);
+		const auto eye=xrInversePoint(s_worldMapping,tracked);
+		return xrObserverContainsSphere(eye,{sphere.Center.X,sphere.Center.Y,sphere.Center.Z},sphere.Radius) ? 0:1;
+	}
 	return xrBoardContainsSphere(s_worldMapping,s_worldAspect,{sphere.Center.X,sphere.Center.Y,sphere.Center.Z},sphere.Radius) ? 0:1;
 }
 // Conservative table coverage, independent of either eye. Quantize allocation
 // to terrain tile blocks rather than reallocating on each tiny zoom change.
 bool GX_XR_UpdateTerrainCoverage() {
 	if(!GX_XR_WorldRequested() || !s_mappingReady || !TheTerrainRenderObject || !TheTerrainRenderObject->getMap()) return false;
-	const auto center=xrInversePoint(s_worldMapping,{});
-	const float extent=s_worldSpan*(fabsf(s_worldMapping[0])+fabsf(s_worldMapping[1]))*s_worldSpan;
+	const auto center=s_worldFrame.observer ? s_worldFrame.observerGround:xrInversePoint(s_worldMapping,{});
+	const float extent=s_worldFrame.observer ? kXrObserverFarMetres*kXrObserverUnitsPerMetre:
+		s_worldSpan*(fabsf(s_worldMapping[0])+fabsf(s_worldMapping[1]))*s_worldSpan;
 	const int cells=std::clamp(1+64*int(ceilf((extent+160)/640)),129,513);
 	TheTerrainRenderObject->setTerrainDrawSize(cells,cells);
 	CameraClass coverage;Matrix3D pose(1);
@@ -626,6 +649,12 @@ bool XrGameBoot_StereoAtlas() {return d3d8gles_XRStereoAtlas();}
 static bool xrPrepareWorldMapping() {
 	s_mappingReady=false;
 	if(!s_worldFrame.enabled || !XrGameBoot_CanStereoWorld() || !GX_XR_SplitUIAllowed() || !TheTacticalView || !TheTerrainLogic) return false;
+	if(s_worldFrame.observer) {
+		if(!XrGameBoot_CanObserveGround() || !xrObserverWorldToRoom(s_worldMapping,
+			s_worldFrame.observerGround,s_worldFrame.observerHead,s_worldFrame.observerForward))return false;
+		s_worldAspect=1;s_worldSpan=kXrObserverFarMetres*kXrObserverUnitsPerMetre;
+		s_mappingReady=true;return true;
+	}
 	const int w=TheTacticalView->getWidth(),h=TheTacticalView->getHeight();
 	if(w<2 || h<2) return false;
 	// GeneralsX @bugfix Codex 14/09/2026 P18 map-wide height bounds are
@@ -652,9 +681,11 @@ void GX_XR_BeginStereoWorld() {
 	GX_XR_UpdateTerrainCoverage();
 	// Render billboards from the head midpoint. Input/UI retain the tactical
 	// camera. Each eye still gets its own projection, depth and stencil.
-	float room[16],physical[16];surfaceMatrix(s_worldFrame.board,physical);
-	for(int i=8;i<11;++i) physical[i]*=s_worldFrame.board.width;
-	matMultiply(room,physical,board);
+	float room[16],physical[16];
+	if(s_worldFrame.observer) memcpy(room,board,sizeof(room));
+	else {surfaceMatrix(s_worldFrame.board,physical);
+		for(int i=8;i<11;++i) physical[i]*=s_worldFrame.board.width;
+		matMultiply(room,physical,board);}
 	const auto head=xrScale(xrAdd(s_worldFrame.eyes[0].position,s_worldFrame.eyes[1].position),.5f);
 	const auto position=xrInversePoint(room,head);
 	float camera[16]={};camera[15]=1;
@@ -671,9 +702,9 @@ void GX_XR_BeginStereoWorld() {
 	const auto &f=s_worldFrame.fov[0],&g=s_worldFrame.fov[1];
 	s_renderCamera->Set_View_Plane(Vector2(std::min(tanf(f.angleLeft),tanf(g.angleLeft))-.05f,std::min(tanf(f.angleDown),tanf(g.angleDown))-.05f),
 		Vector2(std::max(tanf(f.angleRight),tanf(g.angleRight))+.05f,std::max(tanf(f.angleUp),tanf(g.angleUp))+.05f));
-	s_renderCamera->Set_Clip_Planes(1,20000);
+	s_renderCamera->Set_Clip_Planes(1,s_worldFrame.observer ? kXrObserverFarMetres*kXrObserverUnitsPerMetre:20000);
 	static unsigned mappingFrames=0;
-	if((mappingFrames++%180)==0) {
+	if(!s_worldFrame.observer && (mappingFrames++%180)==0) {
 		// GeneralsX @tweak Codex 16/09/2026 Report the shared P20.1 underside.
 		GXLOG("P18 stable height datum=%.3f map-max=%.3f span=%.3f ceiling=%.3f plinth=%.3f board-widths",
 			center.z,s_worldMaxHeight,s_worldSpan,gxXrBoardCeiling(s_worldMapping),kXrBoardUnderside);
@@ -698,11 +729,12 @@ void GX_XR_BeginStereoWorld() {
 		s_pickAim=oldAim;s_pickRoom=oldRoom;
 	}
 	for(int eye=0;eye<2;++eye) xrWorldEyeClip(clip[eye],s_worldFrame,eye,board);
-	s_renderReady=d3d8gles_BeginXRStereo(s_worldFrame.width,s_worldFrame.height,clip[0],clip[1],board,float(h)/w,camera,s_worldFrame.atlasStereo,s_worldFrame.multiviewStereo);
+	s_renderReady=d3d8gles_BeginXRStereo(s_worldFrame.width,s_worldFrame.height,clip[0],clip[1],board,
+		s_worldFrame.observer ? -1.0f:float(h)/w,camera,s_worldFrame.atlasStereo,s_worldFrame.multiviewStereo);
 }
 static void drawXrWorldDecorations();
 void GX_XR_EndStereoWorld() {
-	if(GX_XR_OffscreenBoot) {d3d8gles_EndXRStereo();if(s_renderReady) drawXrWorldDecorations();}
+	if(GX_XR_OffscreenBoot) {d3d8gles_EndXRStereo();if(s_renderReady && !s_worldFrame.observer) drawXrWorldDecorations();}
 	s_renderReady=false;
 }
 
@@ -742,6 +774,77 @@ bool XrGameBoot_PickWorld(const XrSurface &board,const XrPosef &aim,XrWorldHit &
 	hit.room=xrAdd(board.pose.position,xrRotate(board.pose.orientation,xrScale(local,board.width)));
 	hit.distance=xrLength(xrSub(hit.room,aim.position));hit.x=float(pixel.x);hit.y=float(pixel.y);
 	s_pickStart=a;s_pickEnd=b;s_pickPixel=pixel;s_pickAim=aim;s_pickRoom=hit.room;return result(5);
+}
+// GeneralsX @feature Codex 17/09/2026 P25 terrain-only destination; never
+// routes through native selection or issues a simulation message.
+bool XrGameBoot_PickObserverGround(const XrSurface &board,const XrPosef &aim,XrVector3f &groundPoint,XrVector3f *roomPoint) {
+	if(!XrGameBoot_CanObserveGround() || !s_mappingReady || s_worldFrame.observer || !TheTerrainLogic ||
+		!TheTerrainRenderObject || !W3DDisplay::m_3DScene)return false;
+	setFPMode();XrVector3f start,end;
+	if(!xrWorldRay(board,s_worldAspect,s_worldMapping,aim,start,end))return false;
+	const Vector3 a(start.x,start.y,start.z),b(end.x,end.y,end.z);
+	LineSegClass terrainLine;terrainLine.Set(a,b);
+	CastResultStruct result;result.ComputeContactPoint=true;
+	RayCollisionTestClass terrain(terrainLine,&result);
+	if(!TheTerrainRenderObject->Cast_Ray(terrain))return false;
+	const Vector3 p=result.ContactPoint;
+	// Reject cliff/wall triangles and large local height discontinuities.
+	// Terrain-only ray hits can otherwise place the eye inside a slope.
+	if(!std::isfinite(result.Normal.Z) || result.Normal.Z<.64f ||
+		fabsf(TheTerrainLogic->getGroundHeight(p.X,p.Y)-p.Z)>3.0f)return false;
+	Region3D extent;TheTerrainLogic->getExtent(&extent);
+	const Coord3D location={p.X,p.Y,p.Z};const int player=ThePlayerList->getLocalPlayer()->getPlayerIndex();
+	const bool clear=ThePartitionManager->getShroudStatusForPlayer(player,&location)==CELLSHROUD_CLEAR;
+	// A nearer drawable means the laser hit a unit/structure, not bare earth.
+	LineSegClass modelLine;modelLine.Set(a,p);CastResultStruct modelResult;
+	RayCollisionTestClass model(modelLine,&modelResult,COLL_TYPE_ALL,false,false);
+	const bool blocking=W3DDisplay::m_3DScene->castRay(model,false,PICK_TYPE_ALL_DRAWABLES);
+	const XrVector3f proposed={p.X,p.Y,p.Z};
+	if(!xrObserverValidGround(proposed,{extent.lo.x,extent.lo.y,extent.lo.z},
+		{extent.hi.x,extent.hi.y,extent.hi.z},clear,blocking))return false;
+	// Keep a small footprint clear and visible; avoids spawning at building
+	// edges or where a shroud boundary crosses the viewer's immediate space.
+	for(const auto offset:{XrVector3f{0,0,0},XrVector3f{18,0,0},XrVector3f{-18,0,0},XrVector3f{0,18,0},XrVector3f{0,-18,0}}) {
+		const Coord3D probe={p.X+offset.x,p.Y+offset.y,p.Z};
+		if(ThePartitionManager->getShroudStatusForPlayer(player,&probe)!=CELLSHROUD_CLEAR)return false;
+		if(fabsf(TheTerrainLogic->getGroundHeight(probe.x,probe.y)-p.Z)>8.0f)return false;
+		LineSegClass vertical;vertical.Set(Vector3(probe.x,probe.y,probe.z+45),Vector3(probe.x,probe.y,probe.z+2));
+		CastResultStruct nearbyResult;RayCollisionTestClass nearby(vertical,&nearbyResult,COLL_TYPE_ALL,false,false);
+		if(W3DDisplay::m_3DScene->castRay(nearby,false,PICK_TYPE_ALL_DRAWABLES))return false;
+	}
+	groundPoint=proposed;
+	if(roomPoint) {
+		const auto local=xrTransformPoint(s_worldMapping,proposed);
+		*roomPoint=xrAdd(board.pose.position,xrRotate(board.pose.orientation,xrScale(local,board.width)));
+	}
+	return true;
+}
+// GeneralsX @feature Codex 17/09/2026 P25.1: validate each small observer
+// step against the actual terrain and scene. This never moves a game object.
+bool XrGameBoot_ObserverStep(XrVector3f current,XrVector3f delta,XrVector3f &next) {
+	if(!XrGameBoot_CanObserveGround() || !TheTerrainLogic || !W3DDisplay::m_3DScene ||
+		!std::isfinite(delta.x) || !std::isfinite(delta.y) ||
+		fabsf(delta.x)>2 || fabsf(delta.y)>2)return false;
+	setFPMode();
+	const float x=current.x+delta.x,y=current.y+delta.y;
+	Coord3D normal={};const float z=TheTerrainLogic->getGroundHeight(x,y,&normal);
+	if(!std::isfinite(z) || !std::isfinite(normal.z) || normal.z<.64f ||
+		fabsf(z-current.z)>2.0f || TheTerrainLogic->isCliffCell(x,y))return false;
+	Region3D extent;TheTerrainLogic->getExtent(&extent);
+	const Coord3D location={x,y,z};
+	const int player=ThePlayerList->getLocalPlayer()->getPlayerIndex();
+	const bool clear=ThePartitionManager->getShroudStatusForPlayer(player,&location)==CELLSHROUD_CLEAR;
+	if(!xrObserverValidGround({x,y,z},{extent.lo.x,extent.lo.y,extent.lo.z},
+		{extent.hi.x,extent.hi.y,extent.hi.z},clear,false))return false;
+	// A short chest-height sweep and a standing-height probe keep the camera
+	// out of buildings and moving units without touching their gameplay state.
+	LineSegClass across;across.Set(Vector3(current.x,current.y,current.z+12),Vector3(x,y,z+12));
+	CastResultStruct result;RayCollisionTestClass sweep(across,&result,COLL_TYPE_ALL,false,false);
+	if(W3DDisplay::m_3DScene->castRay(sweep,false,PICK_TYPE_ALL_DRAWABLES))return false;
+	LineSegClass vertical;vertical.Set(Vector3(x,y,z+20),Vector3(x,y,z+2));
+	RayCollisionTestClass space(vertical,&result,COLL_TYPE_ALL,false,false);
+	if(W3DDisplay::m_3DScene->castRay(space,false,PICK_TYPE_ALL_DRAWABLES))return false;
+	next={x,y,z};return true;
 }
 // GeneralsX @feature Codex 14/09/2026 Adjust the actual preview, not a
 // second model. The original click translator sends this same angle.
@@ -1081,7 +1184,12 @@ std::string XrGameBoot_WorldHoverInfo() {
 // the live game. Terrain samples close its cut faces; no replacement map.
 static void drawXrWorldDecorations() {
 	if(!d3d8gles_XRStereoTexture(0) || !s_mappingReady || !TheTerrainLogic || !TheGameClient) return;
-	XrBoardMesh mesh;
+	// GeneralsX @perf XR 19/09/2026 Reuse the mesh storage across frames: the
+	// board copy alone can be ~43k vertices (~1.2 MB), previously malloc/free
+	// per frame. Single-threaded XR render path; cleared on every call, and
+	// the decoration draw uploads synchronously, so no stale data survives.
+	static XrBoardMesh mesh;
+	mesh.vertices.clear();
 	if(s_worldFrame.boardFrame) {
 		static XrBoardMesh cached;static float previous[16]={};static float aspect=0;static unsigned frame=0;
 		if(cached.vertices.empty() || memcmp(previous,s_worldMapping,sizeof(previous)) || aspect!=s_worldAspect || (++frame%30)==0) {
@@ -1090,11 +1198,11 @@ static void drawXrWorldDecorations() {
 				return xrTransformPoint(s_worldMapping,{p.x,p.y,TheTerrainLogic->getGroundHeight(p.x,p.y)}).z;
 			},gxXrBoardCeiling(s_worldMapping));
 			for(auto &v:cached.vertices) v.position=xrInversePoint(s_worldMapping,v.position);
+			xrMarkBoardVertices(cached);
 			memcpy(previous,s_worldMapping,sizeof(previous));aspect=s_worldAspect;
 		}
 		mesh.vertices=cached.vertices;
 	}
-	const auto feedbackStart=mesh.vertices.size();
 	Drawable *hover=s_spatialActive ? TheTacticalView->pickDrawable(&s_activePixel,FALSE,PICK_TYPE_SELECTABLE):nullptr;
 	unsigned marked=0;
 	for(auto *d=TheGameClient->getDrawableList();d && marked<192;d=d->getNextDrawable()) {
@@ -1147,7 +1255,9 @@ static void drawXrWorldDecorations() {
 			}
 		}
 	}
-	for(size_t i=0;i<mesh.vertices.size();++i) mesh.vertices[i].a=i>=feedbackStart ? 1:0;
+	// Board vertices were marked alpha 0 at rebuild time; all feedback above
+	// was appended via quad()/ring() with alpha 1, so the uploaded stream
+	// matches the old per-frame alpha loop exactly without rewalking it.
 	if(!mesh.vertices.empty()) d3d8gles_DrawXRDecorations(reinterpret_cast<const float *>(mesh.vertices.data()),int(mesh.vertices.size()));
 }
 void XrGameBoot_SetSplitEnabled(bool enabled) { s_splitEnabled=enabled; }
@@ -1322,6 +1432,71 @@ bool XrGameBoot_IsInteractiveGame()
 	return GameLogic::isInInteractiveGame(TheGameLogic->getGameMode()) == TRUE;
 }
 
+// GeneralsX @feature Muse 16/09/2026 Poll read-only end state into the
+// match-result latch (XrEndgame.h). The VictoryConditions trio indexes a
+// cached player slot, so it is only queried for a loaded multiplayer match;
+// ScriptEngine::isGameEnding and CampaignManager::isVictorious are plain
+// scalar reads. Nothing here writes simulation or network state.
+static XrEndgameState s_endgame;
+void XrGameBoot_PollMatchResult()
+{
+	XrEndgameInput in;
+	if (s_booted && TheGameLogic != nullptr) {
+		in.interactive = XrGameBoot_IsInteractiveGame();
+		in.frame = TheGameLogic->getFrame();
+		const bool loading = TheGameLogic->isLoadingMap() || TheGameLogic->isLoadingSave();
+		if (in.interactive && !loading) {
+			if (TheScriptEngine != nullptr) in.ending = TheScriptEngine->isGameEnding();
+			if (TheRecorder != nullptr && TheVictoryConditions != nullptr &&
+				TheRecorder->isMultiplayer()) {
+				in.vcValid = true;
+				in.observer = TheVictoryConditions->amIObserver();
+				in.localVictory = TheVictoryConditions->isLocalAlliedVictory();
+				in.alliedDefeat = TheVictoryConditions->isLocalAlliedDefeat();
+				in.localDefeat = TheVictoryConditions->isLocalDefeat();
+			}
+			if (TheCampaignManager != nullptr) {
+				in.endActionValid = true;
+				in.victorious = TheCampaignManager->isVictorious();
+			}
+		}
+	}
+	const auto before = s_endgame.latch;
+	xrEndgamePoll(s_endgame, in);
+	if (s_endgame.latch != before && s_endgame.latch != XrEndgameResult::None) {
+		const bool vcTerminal = in.vcValid && (in.observer ? in.alliedDefeat :
+			in.localVictory || in.alliedDefeat || in.localDefeat);
+		GXLOG("match result latched: %s (frame %u, source %s)",
+			s_endgame.latch == XrEndgameResult::Victory ? "victory" :
+			s_endgame.latch == XrEndgameResult::Defeat ? "defeat" : "match-over",
+			s_endgame.latchFrame, vcTerminal ? "victory-conditions" : "end-action-timer");
+	}
+}
+XrEndgameResult XrGameBoot_MatchResult()
+{
+	return xrEndgameVisible(s_endgame) ? s_endgame.latch : XrEndgameResult::None;
+}
+void XrGameBoot_DismissMatchResult()
+{
+	xrEndgameDismiss(s_endgame);
+}
+#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+// GeneralsX @feature Muse 16/09/2026 Debug-only end-game triggers for short
+// controlled scenarios (same XR thread, retail end actions, no new semantics).
+// Absent from release builds; enable explicitly with RTS_DEBUG_CHEATS=ON.
+void XrGameBoot_DebugEndgame(XrDebugEndgame action)
+{
+	if (!s_booted || TheScriptEngine == nullptr) return;
+	switch (action) {
+		case XrDebugEndgame::Victory: TheScriptEngine->debugVictory(); break;
+		case XrDebugEndgame::Defeat: TheScriptEngine->debugDefeat(); break;
+		case XrDebugEndgame::QuickVictory: TheScriptEngine->debugQuickVictory(); break;
+		case XrDebugEndgame::LocalDefeat: TheScriptEngine->debugLocalDefeat(); break;
+	}
+	GXLOG("debug endgame trigger: %d", static_cast<int>(action));
+}
+#endif
+
 // GeneralsX @feature Codex 13/09/2026 Persistent controller ray -> existing
 // pointer pipeline, including hover, drag and balanced button releases.
 void XrGameBoot_Pointer(bool active, float x, float y, bool select, bool secondary, float wheel)
@@ -1378,44 +1553,70 @@ void XrGameBoot_Key(XrGameKey key, bool down)
 	keyboard->addSDLEvent(&e);
 }
 
-static GameWindow *xrDirectConnectTextTarget(int field)
+// GeneralsX @feature Codex 23/09/2026 Bridge every original entry gadget to
+// Meta's runtime-owned OpenXR keyboard. The engine remains authoritative for filtering,
+// max-length handling and owner notifications.
+static GameWindow *xrFocusedTextTarget(uintptr_t token=0)
 {
-	if (!s_booted || !TheWindowManager || !TheNameKeyGenerator) return nullptr;
-	const char *name = field == 1 ? "NetworkDirectConnect.wnd:EditPlayerName" :
-		field == 2 ? "NetworkDirectConnect.wnd:ComboboxRemoteIP" : nullptr;
-	if (!name) return nullptr;
-	GameWindow *window = TheWindowManager->winGetWindowFromId(nullptr,TheNameKeyGenerator->nameToKey(name));
-	return field == 2 && window ? GadgetComboBoxGetEditBox(window) : window;
+	if (!s_booted || !TheWindowManager) return nullptr;
+	GameWindow *target=TheWindowManager->winGetFocus();
+	if (!target || !BitIsSet(target->winGetStyle(),GWS_ENTRY_FIELD)) return nullptr;
+	if (token && reinterpret_cast<uintptr_t>(target)!=token) return nullptr;
+	return target;
 }
 
-int XrGameBoot_DirectConnectTextField()
+uintptr_t XrGameBoot_FocusedTextField()
 {
-	if (!s_booted || !TheWindowManager) return 0;
-	GameWindow *focus = TheWindowManager->winGetFocus();
-	if (!focus) return 0;
-	for (int field=1;field<=2;++field) {
-		GameWindow *target=xrDirectConnectTextTarget(field);
-		if (target && (focus==target || (field==2 && focus==target->winGetParent()))) return field;
+	return reinterpret_cast<uintptr_t>(xrFocusedTextTarget());
+}
+
+std::wstring XrGameBoot_TextFieldValue(uintptr_t token)
+{
+	auto *target=xrFocusedTextTarget(token);if(!target)return {};
+	const auto value=GadgetTextEntryGetText(target);
+	return std::wstring(value.str(),value.str()+value.getLength());
+}
+
+int XrGameBoot_TextFieldInputMode(uintptr_t token)
+{
+	auto *target=xrFocusedTextTarget(token);if(!target)return 0;
+	auto *data=static_cast<EntryData *>(target->winGetUserData());if(!data)return 0;
+	if(data->secretText)return 3; // Android text password.
+	if(data->numericalOnly)return 2; // Android numeric keyboard.
+	// Direct Connect needs punctuation including '.', so use the phone pad.
+	if(TheNameKeyGenerator) {
+		auto *combo=TheWindowManager->winGetWindowFromId(nullptr,
+			TheNameKeyGenerator->nameToKey("NetworkDirectConnect.wnd:ComboboxRemoteIP"));
+		if(combo && GadgetComboBoxGetEditBox(combo)==target)return 1;
 	}
 	return 0;
 }
 
-std::string XrGameBoot_DirectConnectTextValue(int field)
+int XrGameBoot_TextFieldMaxLength(uintptr_t token)
 {
-	GameWindow *target=xrDirectConnectTextTarget(field);
-	if (!target) return {};
-	AsciiString value;value.translate(GadgetTextEntryGetText(target));
-	return value.str();
+	auto *target=xrFocusedTextTarget(token);if(!target)return 255;
+	auto *data=static_cast<EntryData *>(target->winGetUserData());
+	return data ? std::max(1,int(data->maxTextLen)-1):255;
 }
 
-bool XrGameBoot_DirectConnectTextKey(int field,int ascii)
+bool XrGameBoot_ReplaceTextField(uintptr_t token,const std::wstring &text,bool done)
 {
-	if (field != XrGameBoot_DirectConnectTextField()) return false;
-	GameWindow *target=xrDirectConnectTextTarget(field);
-	if (!target || (ascii!=8 && (ascii<32 || ascii>126))) return false;
-	if (field==2 && ascii!=8 && ascii!='.' && (ascii<'0' || ascii>'9')) return false;
-	if (ascii==8) TheWindowManager->winSendInputMsg(target,GWM_CHAR,KEY_BACKSPACE,KEY_STATE_DOWN);
-	else TheWindowManager->winSendInputMsg(target,GWM_IME_CHAR,ascii,0);
+	auto *target=xrFocusedTextTarget(token);if(!target)return false;
+	auto *data=static_cast<EntryData *>(target->winGetUserData());if(!data)return false;
+	const size_t limit=size_t(std::max(0,int(data->maxTextLen)-1));
+	std::wstring filtered;filtered.reserve(std::min(text.size(),limit));
+	for(WideChar ch:text) {
+		if(filtered.size()>=limit)break;
+		if(data->numericalOnly && !TheWindowManager->winIsDigit(ch))continue;
+		if(data->alphaNumericalOnly && !TheWindowManager->winIsAlNum(ch))continue;
+		if(data->aSCIIOnly && !TheWindowManager->winIsAscii(ch))continue;
+		filtered.push_back(ch);
+	}
+	UnicodeString value(filtered.c_str(),int(filtered.size()));
+	GadgetTextEntrySetText(target,value);
+	GameWindow *owner=target->winGetOwner();
+	if(owner)TheWindowManager->winSendSystemMsg(owner,GEM_UPDATE_TEXT,(WindowMsgData)target,0);
+	if(done && owner)TheWindowManager->winSendSystemMsg(owner,GEM_EDIT_DONE,(WindowMsgData)target,0);
 	return true;
 }
 

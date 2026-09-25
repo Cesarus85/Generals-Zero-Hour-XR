@@ -14,8 +14,10 @@
 #ifdef __ANDROID__
 
 #include <jni.h>
+#include "XrEndgame.h"
 #include "XrLayers.h"
 #include "XrWorld.h"
+#include <cstdint>
 #include <string>
 std::string XrGameBoot_HoverInfo(float x,float y);
 bool XrGameBoot_CanAdjustWorld();
@@ -44,6 +46,18 @@ void XrGameBoot_SetLanguage(int language);
 std::string XrGameBoot_LanguageStatus();
 bool XrGameBoot_ExpandedUI();
 std::string XrGameBoot_WorldHoverInfo();
+// GeneralsX @feature Muse 16/09/2026 Read-only match-result latch: poll once
+// before and after the game frame; MatchResult returns None when no result
+// is latched or the card was dismissed. Dismiss never touches the engine.
+void XrGameBoot_PollMatchResult();
+XrEndgameResult XrGameBoot_MatchResult();
+void XrGameBoot_DismissMatchResult();
+#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+// Debug-only end-game triggers for short controlled scenarios; absent from
+// release builds unless RTS_DEBUG_CHEATS=ON is set explicitly.
+enum class XrDebugEndgame { Victory, Defeat, QuickVictory, LocalDefeat };
+void XrGameBoot_DebugEndgame(XrDebugEndgame action);
+#endif
 
 #include "Lib/BaseType.h" // Bool
 
@@ -76,11 +90,14 @@ bool XrGameBoot_IsInteractiveGame();
 void XrGameBoot_Pointer(bool active, float x, float y, bool select, bool secondary, float wheel);
 enum class XrGameKey { Back, Left, Right, Up, Down };
 void XrGameBoot_Key(XrGameKey key, bool down);
-// Controller-operated XR keyboard for the native Direct Connect text fields.
-// 0 = no focused field, 1 = player name, 2 = remote IPv4 address.
-int XrGameBoot_DirectConnectTextField();
-std::string XrGameBoot_DirectConnectTextValue(int field);
-bool XrGameBoot_DirectConnectTextKey(int field,int ascii);
+// GeneralsX @feature Codex 23/09/2026 Meta OpenXR virtual-keyboard bridge
+// for every focused original entry gadget. Tokens are valid only while that
+// exact gadget retains focus on the engine thread.
+uintptr_t XrGameBoot_FocusedTextField();
+std::wstring XrGameBoot_TextFieldValue(uintptr_t token);
+int XrGameBoot_TextFieldInputMode(uintptr_t token);
+int XrGameBoot_TextFieldMaxLength(uintptr_t token);
+bool XrGameBoot_ReplaceTextField(uintptr_t token,const std::wstring &text,bool done);
 
 // GeneralsX @feature Codex 13/09/2026 Native camera actions preserve script locks.
 bool XrGameBoot_CameraPreset(int preset);
@@ -97,6 +114,9 @@ XrGameRect XrGameBoot_WorldRect();
 XrGameRect XrGameBoot_CommandRect();
 bool XrGameBoot_HasUIAt(float x,float y);
 bool XrGameBoot_CanStereoWorld();
+bool XrGameBoot_CanObserveGround();
+bool XrGameBoot_PickObserverGround(const XrSurface &board,const XrPosef &aim,XrVector3f &ground,XrVector3f *roomPoint=nullptr);
+bool XrGameBoot_ObserverStep(XrVector3f current,XrVector3f delta,XrVector3f &next);
 const char *XrGameBoot_PerformanceScene();
 std::string XrGameBoot_PresentationStatus(bool stereoVisible,bool requested);
 void XrGameBoot_SetWorldFrame(const XrWorldFrame &frame);

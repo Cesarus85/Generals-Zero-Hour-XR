@@ -31,9 +31,14 @@ outside the scope of this project; see
 
 ## Install the APK
 
-1. Download the latest
-   [`Generals-Zero-Hour-XR.apk`](../../releases/latest/download/Generals-Zero-Hour-XR.apk)
-   from GitHub Releases.
+1. Download the current offline, release-signed
+   [`Generals-Zero-Hour-XR.apk`](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/download/v1.2.28-xr-preview/Generals-Zero-Hour-XR.apk)
+   from the [1.2.28 XR preview release](https://github.com/Cesarus85/Generals-Zero-Hour-XR/releases/tag/v1.2.28-xr-preview).
+   Do not use an older debug-signed release or an experimental LAN diagnostic
+   APK. The APK SHA-256 is
+   `fc04349550027cab90964261e6eb221e4f4947c41ec57ff6def03529ca88ca20`,
+   also listed in the release's `Generals-Zero-Hour-XR.apk.sha256` asset.
+   This public release can be downloaded without repository access.
 2. Enable Developer Mode in the Meta Quest mobile app, connect the headset over
    USB, and accept the USB debugging prompt inside the headset.
 3. Check the connection and install the APK from a computer with Android
@@ -45,8 +50,10 @@ outside the scope of this project; see
    ```
 
    The `-r` flag matters: the XR application ID deliberately remains
-   `com.generalsx.zerohour.xr`, so an update can keep existing settings and
-   window positions. Do not uninstall the previous build when updating.
+   `com.generalsx.zerohour.xr`, so an update can keep existing preferences and
+   game-folder selection. The spatial board/window arrangement deliberately
+   starts fresh in front of the player on every app process, even after an
+   update. Do not uninstall the previous build when preserving app data.
    SideQuest can install the same APK.
 4. Launch **Generals: Zero Hour XR** from the Quest app library. On first
    launch, the game-data assistant opens automatically. Grant file access when
@@ -55,7 +62,7 @@ outside the scope of this project; see
 
 ## Select game data
 
-The current release provides a three-step assistant:
+The 1.2.28 XR preview provides a three-step assistant:
 
 1. **Prepare your game files.** Copy your own complete installed Generals and
    Zero Hour folders to the Quest, for example `Download/GeneralsZH`.
@@ -158,6 +165,22 @@ The native alternate-mouse option swaps these radar actions.
 | A | Toggle the Commands window |
 | B or the system menu | Open or close the game menu |
 | Left Grip + Right Stick while placing | Rotate a building preview before placement |
+
+### Ground View (offline Campaign and Skirmish)
+
+Point at **Ground View / Bodenansicht** in the board-side shortcut column (or
+open **UI → View → Ground View**), then click a visible, clear patch of terrain
+with the pointing-hand Trigger. This opens a passive human-scale viewpoint;
+it does not possess a unit, change the game camera or issue an order. In this
+view, the physical left stick walks relative to your gaze and the physical
+right stick turns. Release the Trigger and center both sticks before walking.
+Press **B** (or **Y** in left-handed mode) to return to the saved tabletop.
+Terrain edges, shroud, steep slopes and nearby objects can block movement.
+Walking/collision and comfort remain experimental in this preview; the normal
+tabletop is the supported play view. Ground View is available only during live,
+controllable gameplay. Videos, scripted camera moves, loading, match results
+and menus return to the normal presentation. Campaign transitions require
+additional worn-headset verification; human-network matches are not included.
 
 Select units first. Then choose **Move**, **Attack move**, or **Guard** in the
 Commands window and point at a target on the table. **STOP** and **Scatter** act

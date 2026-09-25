@@ -145,6 +145,8 @@ static PFNGLDEPTHMASKPROC xr_glDepthMask = nullptr;
 static PFNGLDEPTHFUNCPROC xr_glDepthFunc = nullptr;
 static PFNGLCLEARDEPTHFPROC xr_glClearDepthf = nullptr;
 static PFNGLBLENDFUNCPROC xr_glBlendFunc = nullptr;
+static PFNGLDRAWELEMENTSPROC xr_glDrawElements = nullptr;
+static PFNGLTEXSUBIMAGE2DPROC xr_glTexSubImage2D = nullptr;
 
 static bool loadGlProcs()
 {
@@ -177,7 +179,7 @@ static bool loadGlProcs()
 		GL_ENTRY(glGenRenderbuffers), GL_ENTRY(glBindRenderbuffer), GL_ENTRY(glRenderbufferStorage),
 		GL_ENTRY(glFramebufferRenderbuffer), GL_ENTRY(glDeleteRenderbuffers), GL_ENTRY(glEnable),
 		GL_ENTRY(glDepthMask), GL_ENTRY(glDepthFunc), GL_ENTRY(glClearDepthf),
-		GL_ENTRY(glBlendFunc),
+		GL_ENTRY(glBlendFunc), GL_ENTRY(glDrawElements), GL_ENTRY(glTexSubImage2D),
 	};
 #undef GL_ENTRY
 	for (size_t i = 0; i < sizeof(table) / sizeof(table[0]); i++) {
@@ -279,6 +281,12 @@ static GLuint compileShader(GLenum type, const char *src)
 	return sh;
 }
 
+// Meta's native Quest keyboard. This is included here (after the private GLES
+// dispatch and shader helper) so it cannot accidentally bind the engine's
+// intercepted gl* symbols. It renders the runtime-provided Meta model and
+// forwards runtime text events into the original Generals entry gadgets.
+#include "XrMetaKeyboard.h"
+
 // ---------------------------------------------------------------------------
 // Phase 1.0 game panel: a tilted quad sampling the game frame texture.
 // UVs map 1:1 (v=0 at the quad's bottom = texture row 0 = the game image's
@@ -321,6 +329,8 @@ static const char *kQuadFragShader =
 	"    vec3 rayColor=mix(vec3(0.55),vec3(0.15,0.95,1.0),uPointer.z);\n"
 	"    oColor=vec4(xrDisplayToLinear(mix(rayColor,vec3(1.0,0.65,0.12),uPointer.w)),1.0); return;\n"
 	"  }\n"
+	// GeneralsX @feature Codex 17/09/2026 Short opaque transition veil.
+	"  if (uLayer == 10) { oColor=vec4(0.0,0.0,0.0,uPointer.x); return; }\n"
 	"  highp vec2 texSize = uArrayEye>=0 ? vec2(textureSize(uStereoArray,0).xy):vec2(textureSize(uTex,0));\n"
 	"  vec2 size = texSize*uUVRect.zw;\n"
 	// GeneralsX @bugfix Codex 14/09/2026 Clamp each atlas eye to its own
@@ -409,11 +419,22 @@ struct XrHello {
 	GLuint sceneTexture=0;std::string sceneKey;
 	JNIEnv *panelEnv=nullptr;jclass panelPainter=nullptr;
 	XrMenuState menu;XrCommandState commands;float worldZoom=1.0f;bool startViewApplied=false;
-	int keyboardField=0;bool keyboardReady=false,keyboardPointerHeld=false;
+	// GeneralsX @feature Codex 23/09/2026 Meta runtime-owned Quest keyboard.
+	XrMetaKeyboard keyboard;bool keyboardPointerHeld=false;
 	GLuint commandsTexture=0,commandButtonTexture=0;std::string commandsKey;
-	GLuint uiButtonTexture=0,settingsTexture=0,hoverTexture=0;
+	GLuint uiButtonTexture=0,groundButtonTexture=0,settingsTexture=0,hoverTexture=0;
 	GLuint recoveryTexture=0;
 	bool recoveryVisible=false;
+	// GeneralsX @feature Muse 16/09/2026 Match-result card: head-yaw
+	// billboard texture, refreshed from the read-only end-state latch.
+	GLuint resultTexture=0;
+	// GeneralsX @feature Codex 17/09/2026 P25 session-only observer state.
+	XrObserverState observer;GLuint observerHintTexture=0;std::string observerHintKey;
+	XrSurface observerHintSurface{};XrTime observerFadeStart=0,lastFrameTime=0;
+	bool renderedObserver=false; // Mapping actually used for this completed capture.
+	std::string resultKey;
+	XrSurface resultSurface{};
+	bool resultVisible=false,resultPressHeld=false;
 	bool loadingPresentation=false;
 	std::string settingsKey,hoverKey,hoverCandidate;XrTime hoverSince=0;
 	bool hoverVisible=false;
@@ -562,12 +583,22 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 	// GeneralsX @feature Codex 14/09/2026 Scene access is optional and XR-only.
 	std::vector<const char *> allExts={wantExts[0],wantExts[1]};
 	if(wantPassthrough)allExts.push_back(XR_FB_PASSTHROUGH_EXTENSION_NAME);
+	// Meta's runtime-owned Quest keyboard needs both the interaction extension
+	// and its runtime render model. Keep this optional so non-Quest OpenXR
+	// runtimes still reach the existing game instead of failing at startup.
+	const bool wantKeyboard=hasExtension(XR_META_VIRTUAL_KEYBOARD_EXTENSION_NAME) &&
+		hasExtension(XR_FB_RENDER_MODEL_EXTENSION_NAME);
+	if(wantKeyboard) {
+		allExts.push_back(XR_META_VIRTUAL_KEYBOARD_EXTENSION_NAME);
+		allExts.push_back(XR_FB_RENDER_MODEL_EXTENSION_NAME);
+	}
 	const char *sceneExts[]={XR_FB_SPATIAL_ENTITY_EXTENSION_NAME,XR_FB_SPATIAL_ENTITY_STORAGE_EXTENSION_NAME,XR_FB_SPATIAL_ENTITY_QUERY_EXTENSION_NAME,XR_FB_SCENE_EXTENSION_NAME};
 	bool wantScene=true;for(const char *name:sceneExts)wantScene=wantScene && hasExtension(name);
 	if(wantScene)for(const char *name:sceneExts)allExts.push_back(name);
 	const bool wantCapture=wantScene && hasExtension(XR_FB_SCENE_CAPTURE_EXTENSION_NAME);
 	if(wantCapture)allExts.push_back(XR_FB_SCENE_CAPTURE_EXTENSION_NAME);
 	XR_LOG("passthrough extension: %s", wantPassthrough ? "present" : "MISSING (opaque fallback)");
+	XR_LOG("Meta native keyboard extensions: %s",wantKeyboard ? "present":"MISSING");
 
 	XrInstanceCreateInfoAndroidKHR androidInfo = { XR_TYPE_INSTANCE_CREATE_INFO_ANDROID_KHR, nullptr };
 	androidInfo.applicationVM = vm;
@@ -660,6 +691,7 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 	rsci.poseInReferenceSpace.orientation.w = 1.0f;
 	XR_CHECK(xrCreateReferenceSpace(x.session, &rsci, &x.localSpace), "xrCreateReferenceSpace(LOCAL)");
 	if (!initControls(x.controls, x.instance, x.session)) return false;
+	x.keyboard.init(x.instance,x.session,systemId,x.localSpace,wantKeyboard);
 
 	// Phase 1.1a passthrough: full-room reconstruction layer, submitted
 	// below the projection layer. Any failure here is NON-fatal (opaque
@@ -795,12 +827,17 @@ static void pollEvents(XrHello &x, bool &quit)
 	XrEventDataBuffer ev = { XR_TYPE_EVENT_DATA_BUFFER, nullptr };
 	while (xrPollEvent(x.instance, &ev) == XR_SUCCESS) {
 		x.scene.event(x.session,ev);
-		if (ev.type == XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
+		if(x.keyboard.handleEvent(ev)) {
+			// Text/visibility events are fully consumed by the Meta keyboard.
+		} else if (ev.type == XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
 			const auto *sc =
 				reinterpret_cast<const XrEventDataSessionStateChanged *>(&ev);
 			if (sc->session != x.session)
 				continue;
 			x.state = sc->state;
+			if(x.state!=XR_SESSION_STATE_FOCUSED && x.observer.mode!=XrObserverMode::Off) {
+				x.observer.cancel();x.controlsArmed=false;x.inputArmed=false;
+			}
 			if(x.state!=XR_SESSION_STATE_FOCUSED && x.scene.placing) {
 				x.scene.cancel();x.menu.open=true;x.menu.page=5;x.controlsArmed=false;
 				x.scene.message="Platzierung unterbrochen; Vorschau neu starten";
@@ -980,6 +1017,7 @@ static void applyWorkspaceReference(XrHello &x,const XrView *views,XrTime time) 
 	placePanel(x,views);
 	const int rebase=x.referenceChanges.apply(time,x.surfaces,x.layoutAnchor,x.menu.surface);
 	if(!rebase)return;
+	if(x.observer.mode!=XrObserverMode::Off) {x.observer.cancel();x.controlsArmed=false;x.inputArmed=false;}
 	x.grab.cancel();x.controlsArmed=false;x.inputArmed=false;x.buildRotation={};
 	x.menu.click.cancel();x.commands.input.click.cancel();XrGameBoot_CancelTarget();
 	updateControls(x,XrControllerState{},time);
@@ -1033,7 +1071,11 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 	// passthrough (opaque fallback) the background is plain black.
 	// (The Phase-0.4 blue/red per-eye tints proved eye order then; stereo
 	// is long established, transparency matters more now.)
-	xr_glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	const bool observing=x.renderedObserver && x.stereoVisible;
+	// Opaque dark horizon prevents passthrough from appearing where the bounded
+	// terrain mesh has no fragment; the ordinary tabletop remains transparent.
+	xr_glClearColor(observing ? .055f:0.0f,observing ? .085f:0.0f,
+		observing ? .11f:0.0f,observing ? 1.0f:0.0f);
 	xr_glDepthMask(GL_TRUE); xr_glClearDepthf(1);
 	xr_glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1080,6 +1122,7 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 			xr_glEnable(GL_DEPTH_TEST);xr_glDepthMask(GL_TRUE);xr_glDisable(GL_BLEND);
 		}
 		for(int slot=x.splitVisible ? 1:0;slot<=(x.splitVisible ? 3:0);++slot) {
+			if(observing)break;
 			if(hideWorkspace)break;
 			if(x.diorama) break;
 			if(x.recoveryVisible) break; // Never sample the incomplete composed frame.
@@ -1099,7 +1142,7 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 				x.pointerPressed ? 1.0f:0.0f);
 			xr_glDrawArrays(GL_TRIANGLES,0,6);
 		}
-		if(x.diorama && x.dioramaReady && !hideWorkspace) {
+		if(x.diorama && x.dioramaReady && !hideWorkspace && !observing) {
 			xrDioramaMatrix(x.surfaces[1],model);
 			matMultiply(viewModel,view,model);matMultiply(mvp,proj,viewModel);
 			xr_glDisable(GL_BLEND);xr_glUseProgram(x.dioramaProgram);
@@ -1162,19 +1205,40 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 			xr_glDisable(GL_DEPTH_TEST);xr_glDepthMask(GL_FALSE);xr_glEnable(GL_BLEND);xr_glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
 			xr_glBindTexture(GL_TEXTURE_2D,texture);xr_glDrawArrays(GL_TRIANGLES,0,6);
 		};
-		if(x.scene.placing)panel(x.menu.surface,.5f,x.sceneTexture);
-		if(x.recoveryVisible)panel(x.surfaces[0],.5f,x.recoveryTexture);
-		if(x.hoverVisible && !x.menu.open && !x.recoveryVisible && !x.scene.placing) panel(hoverCardSurface(x),1.0f,x.hoverTexture);
-		if(commandsAvailable(x) && !hideWorkspace) {
+		if(x.scene.placing && !observing)panel(x.menu.surface,.5f,x.sceneTexture);
+		if(x.recoveryVisible && !observing)panel(x.surfaces[0],.5f,x.recoveryTexture);
+		if(x.hoverVisible && !x.menu.open && !x.recoveryVisible && !x.scene.placing && !observing) panel(hoverCardSurface(x),1.0f,x.hoverTexture);
+		if(commandsAvailable(x) && !hideWorkspace && !observing) {
 			if(x.layout.commandsVisible)panel(commandSurface(x),float(xrCommandHeight(x.commands))/768,x.commandsTexture);
 			panel(commandButtonSurface(x),128.0f/192,x.commandButtonTexture);
 		}
-		if(!x.loadingPresentation && !hideWorkspace)panel(uiButtonSurface(x),128.0f/192,x.uiButtonTexture);
-		if(x.menu.open) panel(x.menu.surface,float(kXrMenuHeight)/kXrMenuWidth,x.settingsTexture);
+		if(!x.loadingPresentation && !hideWorkspace && !observing)panel(uiButtonSurface(x),128.0f/192,x.uiButtonTexture);
+		if(!x.loadingPresentation && !hideWorkspace && !observing && groundButtonAvailable(x))
+			panel(groundButtonSurface(x),128.0f/192,x.groundButtonTexture);
+		if(x.menu.open && !observing) panel(x.menu.surface,float(kXrMenuHeight)/kXrMenuWidth,x.settingsTexture);
+		if(observing || x.observer.mode==XrObserverMode::Armed)
+			panel(x.observerHintSurface,.5f,x.observerHintTexture);
+		// GeneralsX @feature Muse 16/09/2026 Match-result card last: the
+		// head-yaw billboard stays readable above every other panel.
+		if(x.resultVisible && !x.loadingPresentation) panel(x.resultSurface,.5f,x.resultTexture);
+		if(x.observerFadeStart && x.lastFrameShouldRender && !x.loadingPresentation) {
+			const float elapsed=float(x.lastFrameTime-x.observerFadeStart)*1e-9f;
+			const float alpha=std::clamp(1.0f-elapsed/.18f,0.0f,1.0f);
+			if(alpha>0) {
+				matScale(mvp,2,2/aspect,1);xr_glUniformMatrix4fv(x.qMVP,1,GL_FALSE,mvp);
+				xr_glUniform1i(x.qLayer,10);xr_glUniform4f(x.qPointer,alpha,0,0,0);
+				xr_glDisable(GL_DEPTH_TEST);xr_glDepthMask(GL_FALSE);
+				xr_glEnable(GL_BLEND);xr_glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
+				xr_glDrawArrays(GL_TRIANGLES,0,6);
+			}
+		}
 		xr_glDisable(GL_BLEND);xr_glEnable(GL_DEPTH_TEST);xr_glDepthMask(GL_TRUE);
+		// Keyboard geometry uses a separate shader/VAO. Draw it before the
+		// pointer overlay, then restore the quad state for the visible ray.
+		if(x.keyboard.visible){x.keyboard.render(proj,view);xr_glUseProgram(x.quadProgram);xr_glBindVertexArray(x.quadVAO);}
 		// P7.4 Always show the tracked right aim, including misses. UI is an
 		// overlay, so the pointer is drawn last and stops at its selected surface.
-		if(x.rayVisible && xrRayRibbon(model,x.rayStart,x.rayEnd,pose.position,aspect)) {
+		if(x.rayVisible && !observing && xrRayRibbon(model,x.rayStart,x.rayEnd,pose.position,aspect)) {
 			xr_glDisable(GL_DEPTH_TEST);xr_glDepthMask(GL_FALSE);xr_glDisable(GL_BLEND);
 			matMultiply(viewModel,view,model);matMultiply(mvp,proj,viewModel);
 			xr_glUniformMatrix4fv(x.qMVP,1,GL_FALSE,mvp);xr_glUniform1i(x.qLayer,5);
@@ -1230,6 +1294,11 @@ struct XrLoadingPresenter {
 		if(frame.consumed)XrGameBoot_Key(XrGameKey::Back,false);
 	}
 	void present() {
+		// Registration wraps every game frame. Only the actual synchronous
+		// loading callback ends observer mode and changes presentation.
+		if(x.observer.mode!=XrObserverMode::Off) {x.observer.cancel();x.controlsArmed=false;x.inputArmed=false;}
+		x.renderedObserver=false;
+		x.observerFadeStart=0;
 		// GeneralsX @performance Codex 14/09/2026 Never time a nested movie
 		// presenter as gameplay, nor leave a timer active across its XR waits.
 		x.gpuTimer.end(false);x.performance.invalidate();
@@ -1251,7 +1320,7 @@ struct XrLoadingPresenter {
 			const bool ended=XR_SUCCEEDED(xrEndFrame(x.session,&end));
 			x.splitVisible=false;x.stereoVisible=false;x.diorama=false;
 			x.loadingPresentation=true;x.previousInputTime=0;
-			x.menu.open=false;x.keyboardField=0;x.keyboardReady=false;
+			x.menu.open=false;x.keyboard.hide();
 			x.arranging=false;x.grab.cancel();x.controlsArmed=false;x.inputArmed=false;
 			x.menu.click.cancel();x.commands.input.click.cancel();
 			x.rayVisible=false;x.pointerVisible=false;x.hoverVisible=false;
@@ -1366,7 +1435,7 @@ static void runLoop(XrHello &x)
 		};
 		uint32_t layerCount = 0;
 		uint32_t layerBase = 0;
-		if (x.passthroughActive) {
+		if (x.passthroughActive && x.observer.mode!=XrObserverMode::Active) {
 			layerCount = 1; // passthrough submits even on frames the game skips
 			layerBase = 1;
 		}
@@ -1374,7 +1443,15 @@ static void runLoop(XrHello &x)
 		x.lastViewCount = 0;
 		const XrControllerState controls = pollControls(x.controls,x.session,x.localSpace,
 			frameState.predictedDisplayTime,x.state==XR_SESSION_STATE_FOCUSED && frameState.shouldRender,x.layout.leftHanded);
+		x.lastFrameTime=frameState.predictedDisplayTime;
+		if(x.gameBooted) {
+			if(x.keyboard.token && XrGameBoot_FocusedTextField()!=x.keyboard.token)x.keyboard.hide();
+			if(x.keyboard.visible && controls.back)x.keyboard.hide();
+			else x.keyboard.update(frameState.predictedDisplayTime,controls);
+		}
 		if (x.gameBooted && (!shouldRender || !frameState.shouldRender)) {
+			if(x.observer.mode!=XrObserverMode::Off)x.observer.cancel();
+			x.renderedObserver=false;
 			if(x.scene.placing) {x.scene.cancel();x.menu.open=true;x.menu.page=5;}
 			x.performance.invalidate();
 			updateControls(x,XrControllerState{},frameState.predictedDisplayTime);
@@ -1399,6 +1476,10 @@ static void runLoop(XrHello &x)
 					if(x.headTrackingLost){XR_LOG("P20.2 head tracking recovered; workspace retained");x.headTrackingLost=false;}
 				if (x.gameBooted) {
 					const bool interactiveGame = XrGameBoot_IsInteractiveGame();
+					if(x.observer.mode!=XrObserverMode::Off &&
+						(!XrGameBoot_CanObserveGround() || x.roomPoseLost || x.resultVisible)) {
+						x.observer.cancel();x.controlsArmed=false;x.inputArmed=false;
+					}
 					// Never obscure a match started by any asynchronous shell transition.
 					if(interactiveGame) x.diorama=false;
 					if(!XrGameBoot_CanStereoWorld()) x.stereoWorld=false;
@@ -1407,7 +1488,7 @@ static void runLoop(XrHello &x)
 						x.interactiveGame = interactiveGame;
 						x.startViewApplied=false;
 						x.commands.groupOperation=0;x.commands.input.click.cancel();
-						if(x.menu.page==7) {x.menu.open=false;x.keyboardField=0;x.keyboardReady=false;}
+						if(x.keyboard.token)x.keyboard.hide();
 						saveLayout(x);
 						x.grab.cancel(); x.arranging=false; x.controlsArmed=false;
 						x.cameraPending=interactiveGame; x.cameraCustom=false; x.cameraSaveFailed=false;
@@ -1434,7 +1515,16 @@ static void runLoop(XrHello &x)
 						x.expandedUI=expanded;x.controlsArmed=false;x.inputArmed=false;x.grab.cancel();
 						x.commands.input.click.cancel();
 					}
-					if(x.recoveryVisible) {
+					if(x.keyboard.visible) {
+						// While the runtime keyboard owns both controller rays, do not
+						// also send the same trigger to the game or movable XR panels.
+						// Clear game input BEFORE preparing the keyboard ray: this
+						// function also clears rayVisible/rayHit/pointerPressed.
+						updateControls(x,XrControllerState{},frameState.predictedDisplayTime);
+						x.pointerVisible=x.hoverVisible=false;x.pointerPressed=controls.select;
+						x.rayVisible=controls.aimValid;x.rayHit=controls.aimValid;
+						if(controls.aimValid){x.rayStart=controls.aim.position;x.rayEnd=x.keyboard.rayEndpoint(controls.aim);}
+					} else if(x.recoveryVisible) {
 						if(x.scene.placing){x.scene.cancel();x.menu.open=true;x.menu.page=5;}
 						XrGameBoot_CancelTarget();x.grab.cancel();x.controlsArmed=false;x.inputArmed=false;
 						updateControls(x,XrControllerState{},frameState.predictedDisplayTime);
@@ -1455,8 +1545,17 @@ static void runLoop(XrHello &x)
 					world.atlasStereo=x.performance.atlasStereo;
 					world.multiviewStereo=x.performance.multiviewStereo;
 					world.elideWorldCopy=x.performance.elideWorldCopy;
+					world.observer=x.observer.mode==XrObserverMode::Active;
+					x.renderedObserver=world.observer;
+					if(world.observer) {
+						world.observerGround=x.observer.ground;world.observerHead=x.observer.head;
+						world.observerForward=x.observer.forward;
+					}
 					for(int eye=0;eye<2;++eye) {world.eyes[eye]=views[eye].pose;world.fov[eye]=views[eye].fov;}
 					XrGameBoot_SetWorldFrame(world);XrGameBoot_SetSplitEnabled(!x.uprightGame);
+					// A one-frame quick end can exit during executeSingleFrame;
+					// capture its still-interactive end state before that update.
+					XrGameBoot_PollMatchResult();
 					// GeneralsX @performance Codex 14/09/2026 Settings changes,
 					// focus loss and movies start a fresh, warmed-up measurement epoch.
 					char perfKey[192];snprintf(perfKey,sizeof(perfKey),"scene=%s shadows=%s eye=%dx%d coverage=%.4f board=%.4f stereo=%s copy=%s",
@@ -1479,37 +1578,82 @@ static void runLoop(XrHello &x)
 						XR_LOG("P11.1 loading returned; next frame reacquires gameplay poses");
 						continue; // The callback already ended this outer frame.
 					}
-					// A ray click focuses the game's native edit box first; then open
-					// the controller keyboard on its own XR surface, never an Android
-					// 2D IME that may replace the immersive Quest environment.
+					// A controller press on any focused original entry gadget opens
+					// Meta's runtime-owned native Quest keyboard.
 					const bool textFieldPress=x.pointerPressed && !x.keyboardPointerHeld &&
-						!x.menu.open && !x.arranging && x.pointerPiece==0;
+						!x.menu.open && !x.arranging && x.pointerPiece>=0;
 					x.keyboardPointerHeld=x.pointerPressed;
 					if(textFieldPress) {
-						const int field=XrGameBoot_DirectConnectTextField();
-						if(field) {
-							x.keyboardField=field;x.keyboardReady=false;x.menu.click.cancel();
-							x.menu.open=true;x.menu.page=7;x.controlsArmed=false;
-							x.menu.surface.pose=xrPoseMul(xrWorkspaceHeading(views),{{0,0,0,1},{0,-.12f,-.85f}});
-							x.menu.surface.width=.68f;
-							XR_LOG("XR keyboard opened for Direct Connect field %d",field);
-						}
+						const uintptr_t token=XrGameBoot_FocusedTextField();
+						if(token)x.keyboard.show(token,views[0].pose);
 					}
 					// Movies/dialogs can start during the native frame. Never use
 					// the previous frame's crop or show stale stereo captures.
 					x.recoveryVisible=xrResolveCapturedView(x,XrGameBoot_SplitReady(),
 						XrGameBoot_StereoTexture(0)!=0 && XrGameBoot_StereoTexture(1)!=0,
 						XrGameBoot_WorldTexture()!=0,XrGameBoot_GameTexture()!=0);
+					// A sky-only/failed stereo capture must never leave an active
+					// observer with neither an opaque scene nor a visible return.
+					if(x.renderedObserver && !x.stereoVisible) x.recoveryVisible=true;
 					if(x.recoveryVisible) {
+						if(x.observer.mode!=XrObserverMode::Off)x.observer.cancel();
+						x.renderedObserver=false;
 						d3d8gles_RequireXRFullWorld();x.controlsArmed=false;x.inputArmed=false;
 						x.rayVisible=x.hoverVisible=false;
 						XR_LOG("P17 late capture loss: suppress incomplete image, full world requested");
 					}
+					// GeneralsX @feature Muse 16/09/2026 Match-result card: poll
+					// the read-only end-state latch, pose the head-yaw
+					// billboard, dismiss on any controller press. Debug chords
+					// fire retail end actions for short controlled scenarios
+					// (absent from release builds); their ordinary input side
+					// effects are irrelevant once the match ends.
+					XrGameBoot_PollMatchResult();
+					const bool hadResult=x.resultVisible;
+					x.resultVisible=XrGameBoot_MatchResult()!=XrEndgameResult::None;
+					if(x.resultVisible && x.observer.mode!=XrObserverMode::Off) {
+						x.observer.cancel();x.controlsArmed=false;x.inputArmed=false;
+					}
+					if(x.resultVisible) {
+						float fx=0,fz=-1;yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
+						const auto head=xrScale(xrAdd(views[0].pose.position,views[1].pose.position),.5f);
+						const auto card=xrEndgameCardPose(head.x,head.y,head.z,fx,fz);
+						x.resultSurface.pose.position={card.x,card.y,card.z};
+						x.resultSurface.pose.orientation=xrAxisAngle({0,1,0},card.yaw);
+						x.resultSurface.width=card.width;
+					}
+					const bool pressed=controls.select || controls.secondary || controls.back ||
+						controls.tilt || controls.buttonsHeld;
+					// Never dismiss a card with the same press that ended the match.
+					if(x.resultVisible && !hadResult)x.resultPressHeld=pressed;
+					if(x.resultVisible && pressed && !x.resultPressHeld) {
+						XrGameBoot_DismissMatchResult();x.resultVisible=false;
+					}
+					x.resultPressHeld=pressed;
+#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+					if(x.gameBooted && x.interactiveGame && controls.grip[0] && controls.grip[1]) {
+						if(controls.arrange)XrGameBoot_DebugEndgame(XrDebugEndgame::Victory);
+						else if(controls.preset)XrGameBoot_DebugEndgame(XrDebugEndgame::Defeat);
+						else if(controls.homeBase)XrGameBoot_DebugEndgame(XrDebugEndgame::QuickVictory);
+						else if(controls.upright)XrGameBoot_DebugEndgame(XrDebugEndgame::LocalDefeat);
+					}
+#endif
 					if(!x.stereoVisible || perfEngine>=1000){perfMeasured=false;x.performance.invalidate();}
 					if(x.frame%120==0)XR_LOG("P17 presentation: %s requested=%d upright=%d split=%d quality=%s",
 						XrGameBoot_PresentationStatus(x.stereoVisible,x.stereoWorld).c_str(),int(x.stereoWorld),int(x.uprightGame),int(x.splitVisible),x.layout.resolutionTier==2 ? "ultra+":x.layout.resolutionTier==1 ? "high":"balanced");
 					updateMenuTextures(x,frameState.predictedDisplayTime);
+					if(x.observer.mode!=XrObserverMode::Off) {
+						float fx=0,fz=-1;yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
+						const auto head=xrScale(xrAdd(views[0].pose.position,views[1].pose.position),.5f);
+						x.observerHintSurface.pose={{0,0,0,1},{head.x+fx*.85f,head.y-.32f,head.z+fz*.85f}};
+						x.observerHintSurface.pose.orientation=xrAxisAngle({0,1,0},atan2f(-fx,-fz));
+						x.observerHintSurface.width=.42f;
+					}
 				}
+				// Mode can change during the game/input frame; compositor layer
+				// bookkeeping follows the final state without altering passthrough.
+				layerBase=x.passthroughActive && !x.renderedObserver ? 1:0;
+				layerCount=layerBase;
 				bool ok = true;
 				const double perfEyeStart=xrPerfNow();
 				for (int eye = 0; eye < 2 && ok; eye++)
@@ -1541,6 +1685,8 @@ static void runLoop(XrHello &x)
 			} else if (x.gameBooted) {
 				if(!x.headTrackingLost)XR_LOG("P20.2 head tracking lost flags=%llu; input suspended",(unsigned long long)viewState.viewStateFlags);
 				x.headTrackingLost=true;XrGameBoot_CancelTarget();x.buildRotation={};
+				if(x.observer.mode!=XrObserverMode::Off)x.observer.cancel();
+				x.renderedObserver=false;
 				x.menu.click.cancel();x.commands.input.click.cancel();x.inputArmed=false;
 				x.performance.invalidate();
 				updateControls(x,XrControllerState{},frameState.predictedDisplayTime);
@@ -1553,7 +1699,7 @@ static void runLoop(XrHello &x)
 		// passthrough visibility comes from layer order and source alpha.
 		endInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 		endInfo.layerCount = layerCount;
-		endInfo.layers = layers + (x.passthroughActive ? 0 : 1);
+		endInfo.layers = layers + (layerBase ? 0 : 1);
 		if (!XR_SUCCEEDED(xrEndFrame(x.session, &endInfo)))
 			break;
 		if(perfMeasured) {
@@ -1607,6 +1753,9 @@ static void shutdownXr(XrHello &x)
 {
 	x.gpuTimer.shutdown(); // Delete queries while the owning EGL context is current.
 	saveLayout(x);
+	// Keyboard GL resources, keyboard space and handle all belong to this
+	// still-current EGL/OpenXR session and must be released before either dies.
+	x.keyboard.shutdown();
 	if (x.sessionRunning) {
 		xrEndSession(x.session);
 		x.sessionRunning = false;
@@ -1634,10 +1783,13 @@ static void shutdownXr(XrHello &x)
 	x.scene.clear();
 	for(int i=0;i<2;++i) if(x.controls.aimSpace[i]!=XR_NULL_HANDLE) xrDestroySpace(x.controls.aimSpace[i]);
 	if (x.uiButtonTexture) xr_glDeleteTextures(1,&x.uiButtonTexture);
+	if (x.groundButtonTexture) xr_glDeleteTextures(1,&x.groundButtonTexture);
 	if (x.settingsTexture) xr_glDeleteTextures(1,&x.settingsTexture);
 	if (x.hoverTexture) xr_glDeleteTextures(1,&x.hoverTexture);
 	if (x.sceneTexture) xr_glDeleteTextures(1,&x.sceneTexture);
 	if (x.recoveryTexture) xr_glDeleteTextures(1,&x.recoveryTexture);
+	if (x.resultTexture) xr_glDeleteTextures(1,&x.resultTexture);
+	if (x.observerHintTexture) xr_glDeleteTextures(1,&x.observerHintTexture);
 	if (x.commandsTexture) xr_glDeleteTextures(1,&x.commandsTexture);
 	if (x.commandButtonTexture) xr_glDeleteTextures(1,&x.commandButtonTexture);
 	for (int i=0;i<2;++i) if(x.controls.gripSpace[i]!=XR_NULL_HANDLE) xrDestroySpace(x.controls.gripSpace[i]);
@@ -1743,6 +1895,7 @@ Java_com_generalsx_zerohour_XrHelloActivity_runHello(JNIEnv *env, jclass, jobjec
 			d3d8gles_InvalidateCachedState();
 		}
 		runLoop(x);
+		x.keyboard.hide();
 		if (x.gameBooted)
 			XrGameBoot_Shutdown();
 	} else {

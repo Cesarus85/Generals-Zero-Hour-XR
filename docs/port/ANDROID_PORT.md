@@ -2,8 +2,9 @@
 
 **Status: campaign/skirmish/Challenge run natively, and online multiplayer
 works.** GitHub Actions (§3, Option A) builds and links the full engine,
-compiles DXVK's d3d8/d3d9 for Android, and packages a signed APK on every
-push — first achieved 07/07/2026. Since then this has moved well past initial
+compiles DXVK's d3d8/d3d9 for Android, and packages a debug-signed APK on
+manual dispatch or a `quest-build`-labeled pull request in this Quest fork;
+the first hosted Android build was achieved 07/07/2026. Since then this has moved well past initial
 bring-up: **GeneralsOnline**, a from-scratch NGMP-based multiplayer backend
 (REST + WebSocket) replacing the long-dead GameSpy servers, has been built and
 wired into the original `.wnd` UI — account login, the multiplayer Welcome
@@ -191,18 +192,26 @@ vcpkg deps → DXVK d3d8/d3d9 → `libmain.so` → Gradle `assembleDebug`, with 
 same artifact verification (`Sdl3WsiDriver` compiled in, AArch64 ELF) the local
 build script does.
 
-Trigger it from the **Actions** tab → *Build Android* → *Run workflow*, or just
-push to `main`/`claude/**` touching engine or `android/` files. Download the
+Trigger it from the **Actions** tab → *Build Android* → *Run workflow*, or add
+the `quest-build` label to an eligible pull request. Normal pushes and
+unlabeled pull requests do not run this expensive workflow. Download the
 `GeneralsXZH-android-<run>.apk` artifact from the run summary and `adb install`
 it (or transfer + tap-install on the phone).
 
 **Every CI build is signed with the same committed debug key**
 (`android/app/debug.keystore` — a fixed, non-secret debug key checked into the
 repo instead of the machine-local key Android tooling normally auto-generates)
-and gets a strictly increasing `versionCode` from the workflow run number.
-That combination is what makes consecutive CI builds installable **as updates
-over each other** — tap a newer APK on the phone without uninstalling first —
-instead of Android refusing the install over a signature mismatch.
+and uses the manually managed or explicitly overridden `versionCode`.
+The shared signature permits updates only when Android's version and package
+rules also allow them; the workflow no longer auto-increments versionCode.
+This committed signing key and the debuggable preview APK are **not** a
+production-signing strategy for a public release. Hosted Actions now uploads
+debug test artifacts only and cannot publish a GitHub Release. The XR-only
+`package-android-zh.sh --release` path builds an unsigned, non-debuggable
+Gradle variant, then signs it locally using a private out-of-repository key
+and an Android v3 update lineage. See the
+[XR release-preparation audit](../WORKDIR/audit/RELEASE_PREPARATION_XR.md)
+for key custody, exact variables, migration evidence and remaining gates.
 
 **On a fork, Actions must be enabled once**: GitHub disables workflow runs on
 forks by default. Go to the repo's **Actions** tab → click **"I understand my

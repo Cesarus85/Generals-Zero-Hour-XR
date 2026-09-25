@@ -44,15 +44,6 @@ int main(){
 		n=xrCommandLayout(true,false,t,64);check(n==4);checkTable(t,n,kXrPanelHeight,-1);
 		n=xrMenuLayout(4,t,80);check(n==4);checkTable(t,n,kXrPanelHeight,-1);
 	}
-	for(bool ip:{false,true}) {
-		XrPanelControl t[80];const int n=xrTextKeyboardLayout(ip,t,80);
-		check(n==(ip ? 14:40));checkTable(t,n,kXrPanelHeight,-1);
-		for(int i=0;i<n;++i)if(xrPanelRoleHittable(t[i].role)) {
-			const float u=(t[i].x+t[i].w*.5f)/kXrPanelWidth;
-			const float v=1-(t[i].y+t[i].h*.5f)/kXrPanelHeight;
-			check(xrPanelHit(t,n,u,v,kXrPanelHeight)==t[i].id);
-		}
-	}
 	check(xrMenuHit(.5f,std::numeric_limits<float>::quiet_NaN())==-1);
 	check(xrMenuHit(.001f,.999f,0)==-1);
 	check(xrCommandHit(.5f,std::numeric_limits<float>::quiet_NaN())==-1);

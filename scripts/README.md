@@ -119,6 +119,17 @@ Utilities for large-scale code refactoring and fixes:
   evaluator and tests discounts, purchase restrictions, prerequisites, upgrades
   and science-point costs without creating UI or changing gameplay. Host only.
   Run `bash scripts/qa/xr-hover-info-test.sh`; CXX optional.
+- `xr-endgame-test.sh` / `.cpp` - Match-result latch, dismiss, new-match/save
+  reset and head-yaw card pose from the production XrEndgame.h header: win,
+  loss, observer-neutral, quick end, campaign win/loss, quit-mid-mission and
+  mid-match dismiss. Host C++17/UBSan only; no device or assets needed. Run
+  `bash scripts/qa/xr-endgame-test.sh`; CXX optional. The result-card Canvas
+  payloads (localized titles, shared hint, per-result accent) are covered by
+  `xr-panel-text-test.sh`, which compiles the production updateMenuTextures.
+- `xr-ground-observer-test.sh` / `.cpp` - P25 host state/mapping and production
+  frame-order contract: held-button re-arm, human-scale stereo transform,
+  map/shroud gate helper, shader clipping mode and loading-presenter ownership.
+  Run `bash scripts/qa/xr-ground-observer-test.sh [configured-android-build]`.
 - `xr-build-controls-test.sh` / `.cpp` - P18.1 actual native building-preview
   rotation adapter plus physical hand mapping and editing-outline geometry.
   Includes missing/replaced ghost, line-build, tracking ownership, modal,

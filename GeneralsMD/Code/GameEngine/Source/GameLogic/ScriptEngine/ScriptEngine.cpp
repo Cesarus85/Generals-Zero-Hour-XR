@@ -9344,6 +9344,25 @@ void ScriptEngine::debugVictory()
 	TheScriptActions->executeAction(action);
 }
 //#endif
+// GeneralsX @feature Muse 16/09/2026 Debug-only end-game triggers for short
+// XR test scenarios; same retail actions scripts use, no new semantics.
+#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+void ScriptEngine::debugDefeat()
+{
+	ScriptAction *action = newInstance(ScriptAction)(ScriptAction::DEFEAT);
+	TheScriptActions->executeAction(action);
+}
+void ScriptEngine::debugQuickVictory()
+{
+	ScriptAction *action = newInstance(ScriptAction)(ScriptAction::QUICKVICTORY);
+	TheScriptActions->executeAction(action);
+}
+void ScriptEngine::debugLocalDefeat()
+{
+	ScriptAction *action = newInstance(ScriptAction)(ScriptAction::LOCALDEFEAT);
+	TheScriptActions->executeAction(action);
+}
+#endif
 
 Bool ScriptEngine::hasShownMPLocalDefeatWindow()
 {

@@ -26,5 +26,17 @@ int main(){
 	for(size_t i=safe.vertices.size()-6;i<safe.vertices.size();++i)
 		check(fabsf(safe.vertices[i].position.z-kXrBoardUnderside)<.000001f);
 	XrBoardMesh ring;ring.ring({0,0,1},3,1,{1,1,1});check(ring.vertices.size()==192);
+	// GeneralsX @test XR 19/09/2026 Board/feedback alpha contract for the
+	// decoration shader: cached boards are marked 0 at rebuild time, appended
+	// feedback carries 1. Guards the per-frame alpha-loop removal.
+	auto marked=xrBuildBoard(1.0f,16,[](float,float){return 0.0f;});
+	check(!marked.vertices.empty());
+	xrMarkBoardVertices(marked);
+	bool allBoard=true;for(const auto &v:marked.vertices)allBoard &= v.a==0;check(allBoard);
+	XrBoardMesh feedback;feedback.vertices=marked.vertices;
+	feedback.quad({0,0,0},{1,0,0},{1,1,0},{0,1,0},{1,1,1});feedback.ring({0,0,1},3,1,{1,1,1});
+	bool split=true;
+	for(size_t i=0;i<feedback.vertices.size();++i)split &= feedback.vertices[i].a==(i<marked.vertices.size() ? 0:1);
+	check(split);
 	printf("PASS %d terrain board/ring checks\n",checks);
 }
