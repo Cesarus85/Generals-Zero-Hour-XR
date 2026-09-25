@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-25 — 1.2.34 Quest-to-Quest LAN multiplayer preview
 
-**Publication state:** The nondebuggable 1.2.33 APK is the current public offline preview and GitHub Latest release. Older releases, including debug-signed APKs, are retained as maintainer-only drafts. This leaves one current public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
+**Publication state:** The nondebuggable 1.2.34 APK (experimental Quest-to-Quest LAN) is the current public preview and GitHub Latest release; 1.2.33 remains published. Older releases, including debug-signed APKs, are retained as maintainer-only drafts. This leaves one current public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
 
 ## Current public release checkpoint: 1.2.34
 
@@ -32,6 +32,12 @@ build; its host log shows a clean short match. Local checks pass: LAN
 snapshot/detector/trace, 788 workspace, 2,890 menu and 363 routing checks.
 GitHub Actions was not run. The exact release APK update-installed on Quest 3
 `2G0YC5ZG9609PY`; the device `base.apk` has the same SHA-256.
+
+Release tag `v1.2.34-xr-preview` targets documentation checkpoint
+`2dcf68e3e47eccb80bc45591c00891129b88520c`. GitHub reports the APK at
+57,194,678 bytes and marks this non-prerelease as Latest. A fresh GitHub
+download passes the uploaded `.sha256` sidecar and is byte-identical to the
+local artifact.
 
 ## Previous public release checkpoint: 1.2.33
 
