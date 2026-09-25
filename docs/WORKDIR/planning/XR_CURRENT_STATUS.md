@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-24
+**Updated:** 2026-09-25
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`
@@ -9,6 +9,21 @@ This is the short, maintained entry point for the XR branch. Read it before the
 long implementation record. It distinguishes source completion, automated
 verification, device installation and actual worn-headset acceptance; those are
 not interchangeable.
+
+## Quest-to-Quest LAN release candidate — 2026-09-25
+
+The owner decided to ship Quest-to-Quest LAN as the 1.2.34 preview. Branch
+`codex/quest-quest-lan-diag` merged main `286d6c2` into the handoff head,
+replaced the LAN branch's Direct Connect keyboard with main's Meta keyboard and
+added two fixes: the keyboard reopens only for a press on the focused field, and
+the LAN lobby binds INADDR_ANY off Windows plus holds a Wi-Fi MulticastLock so
+Quests see each other's hosted games. Two Quest 3 headsets with identical APK,
+OS build and game data played a Direct Connect match; both snapshots agree
+(148 CRC generations, 134 commands, `reason=match_end`). The release branch
+`codex/xr-release-1.2.34-lan` enables `GX_XR_LAN_PREVIEW` and
+`SAGE_USE_DETERMINISTIC_MATH` in the `android-vulkan` preset so release builds
+match the tested configuration. **Quest <-> PC/Steam remains unsupported**; the
+PLAN-025B retail goal is still open and is not claimed by this release.
 
 ## Harness handoff — 2026-09-24
 

@@ -4,6 +4,11 @@
 or release request. No device availability, installation or new match was
 checked or performed while preparing it.
 
+**2026-09-25 owner decision:** the Quest-to-Quest subset of this work ships in
+the 1.2.34 preview (see XR_CURRENT_STATUS). The "never merge" guidance below
+still applies to any claim of Quest <-> PC/Steam compatibility, which remains
+open.
+
 ## Desired outcome and exact starting point
 
 Make **Generals: Zero Hour XR on Quest play a sustained synchronized match

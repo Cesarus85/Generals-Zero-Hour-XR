@@ -4,9 +4,10 @@
 # game remains a regular executable.
 if(ANDROID)
     add_library(z_generals SHARED)
-    # Opt-in presentation experiment for Quest <-> PC LAN validation. This
-    # changes neither network messages nor game simulation and is OFF in normal
-    # XR/Android builds until a human match passes the device gates.
+    # XR tabletop in LAN matches. Presentation only: it changes neither network
+    # messages nor game simulation. GeneralsX @feature Claude 25/09/2026 The
+    # android-vulkan preset enables it after a synchronized Quest-to-Quest match;
+    # Quest <-> PC/Steam remains unsupported (simulation mismatch).
     option(GX_XR_LAN_PREVIEW "Enable experimental XR tabletop in LAN matches" OFF)
     if(GX_XR_LAN_PREVIEW)
         target_compile_definitions(z_generals PRIVATE GX_XR_LAN_PREVIEW=1)
