@@ -1,10 +1,39 @@
 # XR release preparation and checkpoints
 
-**Updated:** 2026-09-23 — 1.2.33 command-console and native-keyboard release
+**Updated:** 2026-09-25 — 1.2.34 Quest-to-Quest LAN multiplayer preview
 
 **Publication state:** The nondebuggable 1.2.33 APK is the current public offline preview and GitHub Latest release. Older releases, including debug-signed APKs, are retained as maintainer-only drafts. This leaves one current public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
 
-## Current public release checkpoint: 1.2.33
+## Current public release checkpoint: 1.2.34
+
+PR #43 (merge `909a2a82d9c49b022938db357107a9faa5923e1d`) ships experimental
+LAN multiplayer between two Quest 3 headsets on the 1.2.33 UI: the PR #42 LAN
+work (CRC detector slot fix, snapshot observer, deterministic GameMath, LAN
+tabletop), a Meta-keyboard reopen fix and LAN lobby discovery for Android
+(INADDR_ANY lobby bind, Wi-Fi MulticastLock). The `android-vulkan` preset now
+enables `GX_XR_LAN_PREVIEW` and `SAGE_USE_DETERMINISTIC_MATH`. Quest <-> PC/Steam
+remains unsupported.
+
+The release-signed APK is 57,194,678 bytes, versionCode `10234`, versionName
+`1.2.34-xr-preview`, package `com.generalsx.zerohour.xr`, ARM64 only and
+nondebuggable, and requests `CHANGE_WIFI_MULTICAST_STATE`. SHA-256 is
+`20f987324b14e27e4ed7dd8ccc149af27883de830bc7a1066f53265baf097d60`.
+APK Signature Scheme v3 verifies with certificate SHA-256
+`a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`.
+Archive inspection found no retail `.big`, `.scb`, `.map` or `.w3d` files.
+The packaged `libmain.so` equals the stripped local build (SHA-256 prefix
+`d949726d4b4e`). It differs from the owner-tested `1.2.34-lan-q2q-main.2` build
+only in embedded build time and commit strings.
+
+Evidence: two Quest 3 headsets (identical OS build, APK and game data)
+played a Direct Connect match with 148 CRC generations and 134 commands. Both
+peers' snapshots agree. The owner then tested the lobby-discovery and keyboard
+build; its host log shows a clean short match. Local checks pass: LAN
+snapshot/detector/trace, 788 workspace, 2,890 menu and 363 routing checks.
+GitHub Actions was not run. The exact release APK update-installed on Quest 3
+`2G0YC5ZG9609PY`; the device `base.apk` has the same SHA-256.
+
+## Previous public release checkpoint: 1.2.33
 
 PR #41 integrates PR #40's accepted military-console visual redesign and
 transparent board-side shortcut plates, then replaces rejected custom/Android
@@ -40,7 +69,7 @@ local artifact. The exact final APK update-installed on Quest 3; Android
 reports versionCode 10233 / `1.2.33-xr-preview`, and the pulled device
 `base.apk` has the same SHA-256. GitHub marks this non-prerelease as Latest.
 
-## Previous public release checkpoint: 1.2.28
+## Older public release checkpoint: 1.2.28
 
 PR #27 reduces XR board-mesh allocation churn; PR #33 exposes the existing
 draw-source diagnostic over ADB; PR #34 batches up to ten unchanged Android

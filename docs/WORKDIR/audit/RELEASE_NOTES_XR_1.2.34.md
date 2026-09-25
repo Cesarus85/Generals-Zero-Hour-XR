@@ -23,6 +23,6 @@ command-console release.
 - Supply your own legally obtained complete Generals and Zero Hour game files. No retail game data is included.
 - This is an independent community project, not an Electronic Arts product or endorsement.
 
-APK SHA-256: `<filled in after signing>`
+APK SHA-256: `20f987324b14e27e4ed7dd8ccc149af27883de830bc7a1066f53265baf097d60`
 
 See the repository README and Quest installation guide for setup and controls.
