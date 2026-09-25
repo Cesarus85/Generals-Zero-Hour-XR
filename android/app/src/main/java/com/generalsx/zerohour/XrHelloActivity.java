@@ -15,6 +15,7 @@ package com.generalsx.zerohour;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -56,6 +57,11 @@ public class XrHelloActivity extends Activity {
 
     private Thread mThread;
     private boolean mXrStarted = false;
+    // GeneralsX @bugfix Claude 25/09/2026 Android's Wi-Fi driver drops inbound
+    // broadcast frames unless an app holds a multicast lock; without it the
+    // LAN lobby never hears another host's announcements (Direct Connect,
+    // being unicast, is unaffected). Held for the game session only.
+    private WifiManager.MulticastLock mLanDiscoveryLock;
     private Thread mDataCheck;
     private Boolean mStartupReady;
     private boolean mResumed, mStartDispatched;
@@ -142,6 +148,7 @@ public class XrHelloActivity extends Activity {
         SetupActivity.seedInitialGameTextLanguage(this, haveCustomPath ? gamePath :
                 new File(externalRoot, "GameData").getAbsolutePath());
         final int initialLanguage = InitialLanguage.xrCode(LocaleHelper.systemLanguage());
+        acquireLanDiscoveryLock();
         mThread = new Thread(() -> {
             try {
                 runHello(XrHelloActivity.this, initialLanguage);
@@ -153,6 +160,23 @@ public class XrHelloActivity extends Activity {
         }, "xr-hello");
         mThread.start();
         mXrStarted = true;
+    }
+
+    private void acquireLanDiscoveryLock() {
+        WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        if (wifi == null) {
+            Log.w(TAG, "Wi-Fi service unavailable; LAN lobby discovery may not see other hosts");
+            return;
+        }
+        mLanDiscoveryLock = wifi.createMulticastLock("gx-lan-lobby");
+        mLanDiscoveryLock.setReferenceCounted(false);
+        mLanDiscoveryLock.acquire();
+        Log.i(TAG, "LAN discovery multicast lock held");
+    }
+
+    private void releaseLanDiscoveryLock() {
+        if (mLanDiscoveryLock != null && mLanDiscoveryLock.isHeld()) mLanDiscoveryLock.release();
+        mLanDiscoveryLock = null;
     }
 
     // The Setup-selected folder, same marker file the 2D flavor's native
@@ -239,6 +263,7 @@ public class XrHelloActivity extends Activity {
         // A setup redirect must not stop a newly approved XR activity when
         // Android destroys the old, never-started entry asynchronously.
         if (mXrStarted) stopHello();
+        releaseLanDiscoveryLock();
         super.onDestroy();
         // The engine's singletons are not restart-safe: a second boot in
         // this process would re-init over live state. End the process with
