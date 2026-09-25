@@ -345,7 +345,10 @@ static const char *kQuadFragShader =
 	"  highp vec2 uv = uUVRect.xy+vUV*uUVRect.zw;\n"
 	"  if(uLayer==3) { highp vec2 halfTexel=.5/texSize;\n"
 	"    uv=clamp(uv,uUVRect.xy+halfTexel,uUVRect.xy+uUVRect.zw-halfTexel); }\n"
-	"  vec4 sampleColor = uArrayEye>=0 ? texture(uStereoArray,vec3(uv,float(uArrayEye))):texture(uTex, uv);\n"
+	// GeneralsX @tweak Claude 25/09/2026 Only Canvas panels (layer 6) are mipmapped.
+	// A negative LOD bias keeps their text crisp at the Commands console's distance
+	// and yaw; trilinear + anisotropic filtering still suppresses the shimmer.
+	"  vec4 sampleColor = uArrayEye>=0 ? texture(uStereoArray,vec3(uv,float(uArrayEye))):texture(uTex, uv, uLayer==6 ? -0.75:0.0);\n"
 	"  vec3 color = sampleColor.rgb;\n"
 	"  float alpha=1.0;\n"
 	"  if (uLayer == 2 || uLayer == 3) {\n"
