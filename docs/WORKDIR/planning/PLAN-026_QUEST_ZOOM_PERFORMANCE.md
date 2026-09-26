@@ -250,3 +250,45 @@ Conclusion: a High default is affordable at the normal zoom. The lever that
 makes higher tiers free is lower engine CPU. Next steps are a simpleperf
 profile of the engine/D3D8-to-GLES path in a profileable test build, then
 fixed foveation (P26-3) to absorb the remaining GPU share.
+
+## Engine CPU profile, 2026-09-26
+
+`simpleperf record --app com.generalsx.zerohour.xr --call-graph fp -f 2000
+--duration 35` on Quest 3 with profileable test APK `1.2.35-xr-profile.5` (same
+`libmain.so` as `1.2.35-xr-test.4`). Settings: Skirmish at the base, Balanced,
+Light shadows, Multiview, extra world off, about 500 draws/frame. The capture
+has 46,280 samples; the game thread `xr-hello` accounts for 94.4% of the
+process. Raw data stays local in `logs/perf-2026-09-26/`.
+
+Game thread by library: Adreno GLES driver 49.2%, `libmain.so` 32.6%, libc
+8.4% (mostly memmove), kernel 4.9%. `glDrawElements` in
+`WebGLPipeline::drawCommon` (`gles_pipeline.cpp:2298`) alone costs 32.2%. The
+driver defers validation to the draw, so cost scales with draw and state-change
+count; the translation layer's own work (uniforms 5.6%, textures 1.7%) is
+already small after P12.2. Game logic is only about 3%.
+
+Inclusive hotspots (frame-pointer unwinding stops above `W3DView::draw`, so
+parents are undercounted):
+
+| Area | Inclusive | Note |
+|---|---:|---|
+| Model mesh flush (`DX8MeshRendererClass::Flush`) | 42.9% | includes the rows below |
+| Procedural material passes (`Render_Material_Pass`) | 18.4% | shroud second pass for partly fogged objects (`W3DScene.cpp:823`) |
+| Terrain object incl. water/trees (`HeightMapRenderObjClass::Render`) | 20.4% | terrain itself is batched (P26-2) |
+| Water (`renderWater`, mostly `drawTrapezoidWater`) | 9.0% | |
+| Trees (`drawTrees`, per-frame `doLighting` + buffer reload) | 3.9% | |
+| In-game 2D UI (`W3DInGameUI::draw`, `Render2DClass`) | about 4.8% | redrawn every frame |
+| Picking (`Cast_Ray`, `CollisionMath::Collide`) | about 2% | XR pointer/hover each frame |
+| Waypoints | not a cost | only the call site that flushes queued meshes |
+
+Candidates, by expected gain per risk:
+
+1. Single-pass shroud for models (fold the shroud texture into the main pass
+   instead of re-drawing partly fogged objects): up to about 15% of the thread;
+   needs pixel comparison against the two-pass look.
+2. Water: find why trapezoid water costs 7% (per-frame vertex rebuild/upload?)
+   and cache it.
+3. Throttle static 2D UI redraws and XR pointer ray casts; stop per-frame tree
+   lighting/buffer reloads when nothing changed (about 2-5% each).
+4. Long term: per-draw driver overhead is the structural limit of GLES on
+   Adreno. A Vulkan XR path would lower it, but that is a large project.
