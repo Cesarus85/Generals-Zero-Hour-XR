@@ -139,6 +139,13 @@ public:
 	void beginXRFrame(bool split,bool elideOrdinaryWorld=false);
 	void finishXRFrame();
 	void requireXRFullWorld() {m_xrElision.requireFullWorld();}
+	// GeneralsX @performance Claude 26/09/2026 Single-pass object shroud (XR).
+	// The engine publishes the shroud texture and its world->UV transform once
+	// per frame; per-mesh draws then request folding instead of re-drawing the
+	// mesh in a multiplicative second pass. See W3DScene.cpp / mesh.cpp.
+	void setShroudTexture(WebGLTexture *tex,const float *worldToUV);
+	void setShroudFold(bool active) {m_shroudFoldActive=active;}
+	bool shroudFoldAvailable();
 	unsigned xrOrdinarySkipped() const {return m_xrElision.publishedSkipped;}
 	bool beginXRUI(bool elideWorldCopy=false);
 	bool xrSplitReady() const { return m_xrSplitReady; }
@@ -493,6 +500,14 @@ private:
 	// unconditionally so applySamplerState (called right after) always has
 	// the correct unit current if it needs to touch sampler parameters.
 	GLuint m_lastBoundTex[2] = {0, 0};
+	WebGLTexture *m_shroudTex=nullptr; // AddRef'd while published
+	float m_shroudST[4]={0,0,0,0};      // scale xy, offset xy
+	bool m_shroudFoldActive=false,m_shroudFoldDisabled=false;
+	unsigned m_shroudMarkerPoll=0;
+	GLuint m_shroudSampler=0,m_lastShroudBound=~0u;
+	bool shroudFoldFor(bool xyzrhw) const {return m_xrMode && m_shroudFoldActive && m_shroudTex && !xyzrhw;}
+	void bindShroud(ProgramInfo *prog);
+	void pollShroudMarker();
 
 	// Perf counters logged once every couple of seconds by present(), not
 	// per frame -- draws/frame and cache hit rate are the numbers that

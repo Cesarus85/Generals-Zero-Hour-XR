@@ -70,6 +70,10 @@ public:
 	/// MW: Had to make this virtual so app can perform direct/custom D3D setup.
 	virtual void	Install_Materials() const;
 	virtual void	UnInstall_Materials() const { };	///< reset/cleanup D3D states
+	/// GeneralsX @performance Claude 26/09/2026 True when this pass may be folded
+	/// into an opaque rigid mesh's base draw instead of re-drawing the mesh
+	/// (used by the XR single-pass shroud; see MeshClass::Render).
+	virtual bool	Fold_Into_Base_Pass() const { return false; }
 
 	void							Set_Texture(TextureClass * Texture,int stage = 0);
 	void							Set_Shader(ShaderClass shader);

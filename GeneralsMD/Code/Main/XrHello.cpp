@@ -36,6 +36,7 @@
 
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
+#include <GLES2/gl2ext.h> // GL_EXT_texture_filter_anisotropic tokens
 
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
@@ -147,6 +148,11 @@ static PFNGLCLEARDEPTHFPROC xr_glClearDepthf = nullptr;
 static PFNGLBLENDFUNCPROC xr_glBlendFunc = nullptr;
 static PFNGLDRAWELEMENTSPROC xr_glDrawElements = nullptr;
 static PFNGLTEXSUBIMAGE2DPROC xr_glTexSubImage2D = nullptr;
+// GeneralsX @bugfix Claude 25/09/2026 Mipmapped panel textures (XrMenuPainting.h).
+static PFNGLGENERATEMIPMAPPROC xr_glGenerateMipmap = nullptr;
+static PFNGLTEXPARAMETERFPROC xr_glTexParameterf = nullptr;
+static PFNGLGETSTRINGPROC xr_glGetString = nullptr;
+static PFNGLGETFLOATVPROC xr_glGetFloatv = nullptr;
 
 static bool loadGlProcs()
 {
@@ -180,6 +186,7 @@ static bool loadGlProcs()
 		GL_ENTRY(glFramebufferRenderbuffer), GL_ENTRY(glDeleteRenderbuffers), GL_ENTRY(glEnable),
 		GL_ENTRY(glDepthMask), GL_ENTRY(glDepthFunc), GL_ENTRY(glClearDepthf),
 		GL_ENTRY(glBlendFunc), GL_ENTRY(glDrawElements), GL_ENTRY(glTexSubImage2D),
+		GL_ENTRY(glGenerateMipmap), GL_ENTRY(glTexParameterf), GL_ENTRY(glGetString), GL_ENTRY(glGetFloatv),
 	};
 #undef GL_ENTRY
 	for (size_t i = 0; i < sizeof(table) / sizeof(table[0]); i++) {
@@ -338,7 +345,10 @@ static const char *kQuadFragShader =
 	"  highp vec2 uv = uUVRect.xy+vUV*uUVRect.zw;\n"
 	"  if(uLayer==3) { highp vec2 halfTexel=.5/texSize;\n"
 	"    uv=clamp(uv,uUVRect.xy+halfTexel,uUVRect.xy+uUVRect.zw-halfTexel); }\n"
-	"  vec4 sampleColor = uArrayEye>=0 ? texture(uStereoArray,vec3(uv,float(uArrayEye))):texture(uTex, uv);\n"
+	// GeneralsX @tweak Claude 25/09/2026 Only Canvas panels (layer 6) are mipmapped.
+	// A negative LOD bias keeps their text crisp at the Commands console's distance
+	// and yaw; trilinear + anisotropic filtering still suppresses the shimmer.
+	"  vec4 sampleColor = uArrayEye>=0 ? texture(uStereoArray,vec3(uv,float(uArrayEye))):texture(uTex, uv, uLayer==6 ? -0.75:0.0);\n"
 	"  vec3 color = sampleColor.rgb;\n"
 	"  float alpha=1.0;\n"
 	"  if (uLayer == 2 || uLayer == 3) {\n"

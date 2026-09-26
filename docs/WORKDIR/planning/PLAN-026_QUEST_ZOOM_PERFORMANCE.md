@@ -221,3 +221,117 @@ The next implementation branch is selected from Gate 0, not preference:
 
 This keeps every optimization attributable, reversible and testable, while
 protecting the currently working controls, visual readability and simulation.
+
+## Resolution-tier measurement, 2026-09-26
+
+Quest 3 `2G0YC5ZG9609PY`, test build `1.2.35-xr-test.4` (panel mipmaps and
+Ground View horizon; no engine change against 1.2.34). Settings: Skirmish, same
+scene at the player base, Light shadows, Multiview, automatic world copy,
+"Messung" on. The in-game P12 reporter logs a sample every two seconds. The
+first sample after each tier switch is dropped as warm-up.
+
+| Coverage | Eye extent (tier) | Samples | Engine CPU | Frame | Derived FPS |
+|---:|---|---:|---:|---:|---:|
+| 2.181 | 1536x1609 (Balanced) | 37 | 20.29 ms | 21.78 ms | 45.9 |
+| 2.181 | 1920x2011 (High) | 14 | 21.51 ms | 23.07 ms | 43.4 |
+| 2.181 | 2304x2413 (Ultra+) | 19 | 22.19 ms | 24.06 ms | 41.6 |
+| 4.500 | 1536x1609 (Balanced) | 8 | 29.17 ms | 30.78 ms | 32.5 |
+| 4.500 | 1920x2011 (High) | 11 | 32.40 ms | 34.56 ms | 28.9 |
+| 4.500 | 2304x2413 (Ultra+) | 10 | 34.00 ms | 35.58 ms | 28.1 |
+
+At the normal zoom, High costs +1.3 ms (+6%) and Ultra+ +2.3 ms (+10%) per
+frame. At maximum zoom-out, High costs +3.8 ms (+12%) and Ultra+ +4.8 ms (+16%).
+Engine CPU rises with the tier too. Draw submission likely waits on the
+GPU/driver, so part of the GPU cost shows up as CPU time. The frame stays
+CPU-dominated at every tier: the Balanced engine CPU alone is about 20 ms. The
+Balanced max-zoom row has only 8 samples.
+
+Conclusion: a High default is affordable at the normal zoom. The lever that
+makes higher tiers free is lower engine CPU. Next steps are a simpleperf
+profile of the engine/D3D8-to-GLES path in a profileable test build, then
+fixed foveation (P26-3) to absorb the remaining GPU share.
+
+## Engine CPU profile, 2026-09-26
+
+`simpleperf record --app com.generalsx.zerohour.xr --call-graph fp -f 2000
+--duration 35` on Quest 3 with profileable test APK `1.2.35-xr-profile.5` (same
+`libmain.so` as `1.2.35-xr-test.4`). Settings: Skirmish at the base, Balanced,
+Light shadows, Multiview, extra world off, about 500 draws/frame. The capture
+has 46,280 samples; the game thread `xr-hello` accounts for 94.4% of the
+process. Raw data stays local in `logs/perf-2026-09-26/`.
+
+Game thread by library: Adreno GLES driver 49.2%, `libmain.so` 32.6%, libc
+8.4% (mostly memmove), kernel 4.9%. `glDrawElements` in
+`WebGLPipeline::drawCommon` (`gles_pipeline.cpp:2298`) alone costs 32.2%. The
+driver defers validation to the draw, so cost scales with draw and state-change
+count; the translation layer's own work (uniforms 5.6%, textures 1.7%) is
+already small after P12.2. Game logic is only about 3%.
+
+Inclusive hotspots (frame-pointer unwinding stops above `W3DView::draw`, so
+parents are undercounted):
+
+| Area | Inclusive | Note |
+|---|---:|---|
+| Model mesh flush (`DX8MeshRendererClass::Flush`) | 42.9% | includes the rows below |
+| Procedural material passes (`Render_Material_Pass`) | 18.4% | shroud second pass for partly fogged objects (`W3DScene.cpp:823`) |
+| Terrain object incl. water/trees (`HeightMapRenderObjClass::Render`) | 20.4% | terrain itself is batched (P26-2) |
+| Water (`renderWater`, mostly `drawTrapezoidWater`) | 9.0% | |
+| Trees (`drawTrees`, per-frame `doLighting` + buffer reload) | 3.9% | |
+| In-game 2D UI (`W3DInGameUI::draw`, `Render2DClass`) | about 4.8% | redrawn every frame |
+| Picking (`Cast_Ray`, `CollisionMath::Collide`) | about 2% | XR pointer/hover each frame |
+| Waypoints | not a cost | only the call site that flushes queued meshes |
+
+Candidates, by expected gain per risk:
+
+1. Single-pass shroud for models (fold the shroud texture into the main pass
+   instead of re-drawing partly fogged objects): up to about 15% of the thread;
+   needs pixel comparison against the two-pass look.
+2. Water: find why trapezoid water costs 7% (per-frame vertex rebuild/upload?)
+   and cache it.
+3. Throttle static 2D UI redraws and XR pointer ray casts; stop per-frame tree
+   lighting/buffer reloads when nothing changed (about 2-5% each).
+4. Long term: per-draw driver overhead is the structural limit of GLES on
+   Adreno. A Vulkan XR path would lower it, but that is a large project.
+
+## Tree culling and single-pass shroud: first device check, 2026-09-26
+
+Test APK `1.2.35-xr-perf.6` on Quest `2G0YC5ZG9609PY`. The log shows
+`[d3d8gles] shroud single-pass fold` and no shader compile errors. The owner
+compared fold against two-pass (`gx_shroud_twopass.txt` pushed and removed
+during the session) and saw no visual difference or artifact.
+
+The 35 s CPU profile (fold active) compared with the baseline profile, as
+shares of the game thread: procedural material passes 18.8% -> 6.3% (the
+remaining skins and the second prop pass in fog keep the original path);
+tree rebuild plus lighting 2.4% -> 0.2%; terrain object including props
+20.4% -> 10.0%; `W3DView::draw` 59.8% -> 48.2%.
+
+Frame times in this session are not a clean A/B: board coverage changed
+between phases (1.76 to 4.21). At similar coverage (~1.9), fold averaged
+about 23.4 ms and two-pass about 24.3 ms. Fold at coverage 2.18 ran 14-21 ms
+against 21.8 ms in the earlier baseline, but in a different scene. A
+fixed-zoom alternating A/B is still needed before quoting an FPS gain.
+
+## Accepted 2026-09-26: change record and rollback for troubleshooting
+
+The owner accepted tree culling and the single-pass shroud without a clean FPS
+A/B. The evidence is the CPU profile plus visual equivalence (see above). If
+fog, shading, trees or props look wrong later, or a mesh renders black,
+unfogged or wrongly fogged, check these changes first (branch
+`codex/xr-engine-cpu-opt`):
+
+| Change | Files | What it does | Rollback / check |
+|---|---|---|---|
+| Tree culling | `Core/GameEngineDevice/.../W3DTreeBuffer.cpp` (`cull`) | On Android XR, tree visibility uses `GX_XR_CullSphere` (table/observer volume) instead of the head frustum; the buffer is only rebuilt when visibility really changes | Symptoms: trees missing at board edges or in Ground View, or stale dynamic tree lighting. Remove the `#ifdef __ANDROID__` block to restore head culling |
+| Shroud fold decision | `GeneralsMD/.../WW3D2/mesh.cpp` (`MeshClass::Render`), `Core/.../WW3D2/matpass.h` (`Fold_Into_Base_Pass`) | Opaque, rigid, unsorted meshes at alpha 1 fold the shroud pass instead of queuing a second pass | Skins, translucent/sorted/fading meshes and pass-only renders keep the second pass |
+| Shroud per task | `Core/.../WW3D2/dx8renderer.{h,cpp}` (`PolyRenderTaskClass::FoldShroud`) | `d3d8gles_SetShroudFold` per render task; reset after the category loop | A fold flag leaking to a later draw would fog something unexpected |
+| Shroud parameters | `GeneralsMD/.../W3DScene.cpp` (`Customized_Render`), `W3DShroud.{h,cpp}` | Publishes the shroud texture and `uv = (world.xy + offset) * scale` each frame, same mapping as `ShroudTextureShader::set` | Symptoms: fog offset or scaled on objects relative to terrain |
+| GLES shader | `Core/Libraries/Source/d3d8gles/src/gles_pipeline.{h,cpp}`, `include/d3d8gles.h`, `src/d3d8gles.cpp` | Program-key bit; `vShroudUV` from world position; `cur.rgb *= texture(uShroudTex, vShroudUV).rgb` after fog; texture unit 5 with its own linear/clamp sampler | Log `[d3d8gles] shroud ...`; shader compile errors would appear in stderr |
+
+**Runtime rollback without a rebuild:** create `gx_shroud_twopass.txt` in the
+game-data working directory (for example
+`Download/Command & Conquer Generals - Zero Hour/`). It is polled every 60th
+scene frame and logged as `[d3d8gles] shroud two-pass (marker)`; deleting it
+switches back. The first device build (`1.2.35-xr-perf.6`) still polled per
+4096 fold queries, which could take minutes in scenes with little fogged
+scenery. The frame-based poll is implemented after that build.

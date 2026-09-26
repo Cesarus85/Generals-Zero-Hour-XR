@@ -2220,6 +2220,12 @@ extern "C" void d3d8gles_InvalidateCachedState()
 }
 extern "C" void d3d8gles_BeginXRFrame(bool split,bool elideOrdinaryWorld) { WebGLPipeline::get()->beginXRFrame(split,elideOrdinaryWorld); }
 extern "C" void d3d8gles_RequireXRFullWorld() {WebGLPipeline::get()->requireXRFullWorld();}
+extern "C" void d3d8gles_SetShroudTexture(IDirect3DBaseTexture8 *texture,const float *worldToUV) {
+	WebGLTexture *tex = texture && texture->GetType()==D3DRTYPE_TEXTURE ? static_cast<WebGLTexture *>(texture):nullptr;
+	WebGLPipeline::get()->setShroudTexture(tex,worldToUV);
+}
+extern "C" int d3d8gles_ShroudFoldAvailable() {return WebGLPipeline::get()->shroudFoldAvailable() ? 1:0;}
+extern "C" void d3d8gles_SetShroudFold(int active) {WebGLPipeline::get()->setShroudFold(active!=0);}
 extern "C" unsigned d3d8gles_XROrdinarySkipped() {return WebGLPipeline::get()->xrOrdinarySkipped();}
 extern "C" bool d3d8gles_BeginXRUI(bool elideWorldCopy) { return WebGLPipeline::get()->beginXRUI(elideWorldCopy); }
 extern "C" bool d3d8gles_XRSplitReady() { return WebGLPipeline::get()->xrSplitReady(); }

@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iterator>
+#include <limits>
 #include <string>
 static int checks=0;
 static void check(bool value) {++checks;if(!value){fprintf(stderr,"observer check %d failed\n",checks);exit(1);}}
@@ -39,6 +40,35 @@ int main(int argc,char **argv) {
 	check(code.find("x.renderedObserver=world.observer")!=std::string::npos);
 	check(code.find("layerBase=x.passthroughActive && !x.renderedObserver")!=std::string::npos);
 	check(std::string(GX_XR_STEREO_FRAGMENT_BODY).find("uXrAspect>0.0")!=std::string::npos);
+	// GeneralsX @test Claude 25/09/2026 Head-yaw independent observer horizon:
+	// a horizontal circle in the shader, a depth far plane that never cuts
+	// inside it (even for the tallest terrain) and the negative radius signal.
+	check(std::string(GX_XR_STEREO_FRAGMENT_BODY).find("uXrAspect<0.0 && dot(vXrBoard.xz,vXrBoard.xz)>uXrAspect*uXrAspect")!=std::string::npos);
+	check(boot.find("s_worldFrame.observer ? -kXrObserverFarMetres:")!=std::string::npos);
+	// The stereo begin must accept that radius; it once only allowed -1, which
+	// silently disabled Ground View entry on the device.
+	check(gxXrStereoAspectValid(-kXrObserverFarMetres));
+	check(gxXrStereoAspectValid(576.0f/1280.0f) && gxXrStereoAspectValid(1));
+	check(!gxXrStereoAspectValid(0) && !gxXrStereoAspectValid(-.5f) && !gxXrStereoAspectValid(3));
+	check(!gxXrStereoAspectValid(std::numeric_limits<float>::quiet_NaN()));
+	check(boot.find("shaderBoard[12]-=head.x;shaderBoard[13]-=head.y;shaderBoard[14]-=head.z;")!=std::string::npos);
+	check(boot.find("kXrObserverClipFarMetres*kXrObserverUnitsPerMetre:20000")!=std::string::npos);
+	{
+		const float tallest=255*0.625f/kXrObserverUnitsPerMetre+kXrObserverEyeHeightMetres;
+		check(kXrObserverClipFarMetres>=sqrtf(kXrObserverFarMetres*kXrObserverFarMetres+tallest*tallest));
+		XrWorldFrame frame;frame.observer=true;
+		frame.eyes[0].orientation=frame.eyes[1].orientation={0,0,0,1};
+		for(auto &f:frame.fov) f={-.9f,.9f,.8f,-.8f};
+		float identity[16]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1},clip[16];
+		xrWorldEyeClip(clip,frame,0,identity);
+		// A point just inside the horizon, 45 degrees off axis and straight ahead,
+		// stays within the depth range; the old 60 m plane clipped straight ahead.
+		for(const XrVector3f p:{XrVector3f{0,0,-59},XrVector3f{-41.7f,0,-41.7f}}) {
+			const float z=clip[2]*p.x+clip[6]*p.y+clip[10]*p.z+clip[14];
+			const float w=clip[3]*p.x+clip[7]*p.y+clip[11]*p.z+clip[15];
+			check(w>0 && z/w<1);
+		}
+	}
 	XrObserverState state;
 	check(!state.arm(false));check(state.arm(true));check(state.mode==XrObserverMode::Armed);
 	check(!state.canChoose(true));state.neutral(true);check(state.canChoose(true));

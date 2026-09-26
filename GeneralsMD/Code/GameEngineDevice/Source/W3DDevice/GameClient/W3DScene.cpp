@@ -65,6 +65,9 @@
 #include "WW3D2/colorspace.h"
 
 #include "WW3D2/shdlib.h"
+#ifdef __ANDROID__
+extern "C" void d3d8gles_SetShroudTexture(IDirect3DBaseTexture8 *texture,const float *worldToUV); // d3d8gles.h
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // DEFINITIONS ////////////////////////////////////////////////////////////////
@@ -1144,6 +1147,29 @@ void RTS3DScene::Customized_Render( RenderInfoClass &rinfo )
 			it.Peek_Obj()->On_Frame_Update();
 		}
 	}
+
+#ifdef __ANDROID__
+	// GeneralsX @performance Claude 26/09/2026 Publish this frame's shroud texture
+	// and world->UV transform for the XR single-pass shroud (W3DShroud.cpp
+	// Fold_Into_Base_Pass). Same mapping as ShroudTextureShader::set: the shroud
+	// was already updated for this frame in W3DDisplay::draw.
+	{
+		W3DShroud *shroud = (m_customPassMode == SCENE_PASS_DEFAULT && m_shroudMaterialPass && TheTerrainRenderObject)
+			? TheTerrainRenderObject->getShroud() : nullptr;
+		TextureClass *shroudTexture = shroud ? shroud->getShroudTexture() : nullptr;
+		if (shroudTexture && shroud->getTextureWidth() > 0 && shroud->getTextureHeight() > 0) {
+			const Real width = shroud->getCellWidth(), height = shroud->getCellHeight();
+			const bool haveMap = TheTerrainRenderObject->getMap() != nullptr;
+			const float worldToUV[4] = {
+				1.0f/(width*shroud->getTextureWidth()), 1.0f/(height*shroud->getTextureHeight()),
+				haveMap ? -shroud->getDrawOriginX() + width : 0.0f,
+				haveMap ? -shroud->getDrawOriginY() + height : 0.0f };
+			d3d8gles_SetShroudTexture(shroudTexture->Peek_D3D_Base_Texture(), worldToUV);
+		} else {
+			d3d8gles_SetShroudTexture(nullptr, nullptr);
+		}
+	}
+#endif
 
 	//terrain needs to be rendered first
 	if (terrainObject)	// Don't check visibility - terrain is always visible. jba.

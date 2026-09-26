@@ -115,6 +115,14 @@ extern "C" unsigned int d3d8gles_GetGameTexture();
 extern "C" void d3d8gles_BeginXRFrame(bool split,bool elideOrdinaryWorld=false);
 // P17: incomplete ordinary frames must never be presented or used for input.
 extern "C" void d3d8gles_RequireXRFullWorld();
+// GeneralsX @performance Claude 26/09/2026 Single-pass object shroud (XR only).
+// SetShroudTexture publishes the shroud texture and {scaleX, scaleY, offsetX,
+// offsetY} so that uv = (world.xy + offset) * scale (null texture disables).
+// ShroudFoldAvailable tells mesh submission whether to fold the shroud pass;
+// SetShroudFold marks the following base draws as folded.
+extern "C" void d3d8gles_SetShroudTexture(IDirect3DBaseTexture8 *texture,const float *worldToUV);
+extern "C" int d3d8gles_ShroudFoldAvailable();
+extern "C" void d3d8gles_SetShroudFold(int active);
 extern "C" unsigned d3d8gles_XROrdinarySkipped();
 extern "C" bool d3d8gles_BeginXRUI(bool elideWorldCopy=false);
 extern "C" bool d3d8gles_XRSplitReady();

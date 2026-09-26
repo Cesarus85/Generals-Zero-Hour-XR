@@ -24,6 +24,12 @@ struct XrWorldFrame {
 constexpr float kXrObserverUnitsPerMetre=10.0f;
 constexpr float kXrObserverEyeHeightMetres=1.65f;
 constexpr float kXrObserverFarMetres=60.0f;
+// GeneralsX @bugfix Claude 25/09/2026 kXrObserverFarMetres is the horizontal
+// horizon radius, enforced per fragment. The depth far plane sits beyond it so
+// planar clipping never cuts inside that circle: a flat far plane at the same
+// distance hid distant hills straight ahead but showed them when the head
+// turned away (a point at angle a from the view axis has depth d*cos(a)).
+constexpr float kXrObserverClipFarMetres=kXrObserverFarMetres*1.5f;
 constexpr float kXrObserverWalkMetresPerSecond=2.0f;
 constexpr float kXrObserverTurnRadiansPerSecond=1.309f; // 75 degrees/s.
 enum class XrObserverMode {Off,Armed,Active};
@@ -204,7 +210,7 @@ inline bool xrWorldToBoard(float *m,XrVector3f center,XrVector3f right,float spa
 inline void xrWorldEyeClip(float *out,const XrWorldFrame &frame,int eye,const float *worldToBoard) {
 	if(frame.observer) {
 		float view[16],proj[16];matViewFromPose(view,frame.eyes[eye]);
-		matPerspectiveFromFov(proj,frame.fov[eye],.05f,kXrObserverFarMetres);
+		matPerspectiveFromFov(proj,frame.fov[eye],.05f,kXrObserverClipFarMetres);
 		float vm[16];matMultiply(vm,view,worldToBoard);matMultiply(out,proj,vm);return;
 	}
 	float board[16],view[16],proj[16],room[16],vm[16];surfaceMatrix(frame.board,board);

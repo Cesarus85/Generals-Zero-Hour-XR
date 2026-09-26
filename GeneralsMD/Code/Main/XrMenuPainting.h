@@ -1,5 +1,36 @@
 // GeneralsX @feature Codex 13/09/2026 Android Canvas to native panel textures.
 #pragma once
+// GeneralsX @bugfix Claude 25/09/2026 Canvas panels carry fine detail (1-2 px
+// brass trim, small text, a 4 px scanline raster). Seen smaller than their
+// texel size -- distance, or the Commands console's 45 degree inward yaw --
+// single-level linear sampling skips texels and the detail shimmers with every
+// head movement. Trilinear mipmaps plus modest anisotropy average it instead.
+// Close-up panels still sample level 0, so magnified text keeps its sharpness.
+static float xrPanelAnisotropy() {
+	static float level=-1;
+	if(level<0) {
+		level=1;
+		const auto *extensions=reinterpret_cast<const char *>(xr_glGetString(GL_EXTENSIONS));
+		if(extensions && strstr(extensions,"GL_EXT_texture_filter_anisotropic")) {
+			float maximum=1;xr_glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT,&maximum);
+			level=std::clamp(maximum,1.0f,4.0f);
+		}
+		XR_LOG("Panel textures: trilinear mipmaps, anisotropy %.0fx",level);
+	}
+	return level;
+}
+static void xrUploadPanelTexture(GLuint &texture,int w,int h,const unsigned char *rgba) {
+	if(!texture) xr_glGenTextures(1,&texture);
+	xr_glActiveTexture(GL_TEXTURE2);xr_glBindTexture(GL_TEXTURE_2D,texture);
+	xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+	const float anisotropy=xrPanelAnisotropy();
+	if(anisotropy>1)xr_glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAX_ANISOTROPY_EXT,anisotropy);
+	xr_glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);xr_glPixelStorei(GL_UNPACK_ALIGNMENT,4);
+	xr_glPixelStorei(GL_UNPACK_ROW_LENGTH,0);xr_glPixelStorei(GL_UNPACK_SKIP_ROWS,0);xr_glPixelStorei(GL_UNPACK_SKIP_PIXELS,0);
+	xr_glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,rgba);
+	xr_glGenerateMipmap(GL_TEXTURE_2D);
+}
 static bool paintPanel(XrHello &x,GLuint &texture,const std::string &title,const std::string &detail,
 	const std::string &labels,int hover,int kind) {
 	if(!x.panelEnv || !x.panelPainter) return false;
@@ -19,13 +50,7 @@ static bool paintPanel(XrHello &x,GLuint &texture,const std::string &title,const
 		const unsigned color=argb[y*w+px];const int i=((h-y-1)*w+px)*4;
 		rgba[i]=color>>16;rgba[i+1]=color>>8;rgba[i+2]=color;rgba[i+3]=color>>24;
 	}
-	if(!texture) xr_glGenTextures(1,&texture);
-	xr_glActiveTexture(GL_TEXTURE2);xr_glBindTexture(GL_TEXTURE_2D,texture);
-	xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-	xr_glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);xr_glPixelStorei(GL_UNPACK_ALIGNMENT,4);
-	xr_glPixelStorei(GL_UNPACK_ROW_LENGTH,0);xr_glPixelStorei(GL_UNPACK_SKIP_ROWS,0);xr_glPixelStorei(GL_UNPACK_SKIP_PIXELS,0);
-	xr_glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,rgba.data());return true;
+	xrUploadPanelTexture(texture,w,h,rgba.data());return true;
 }
 // GeneralsX @feature Ultron 15/09/2026 P21 structured panel painting: the
 // native control table (XrPanelLayout.h) is packed 8 ints per control and
@@ -52,13 +77,7 @@ static bool paintPanel2(XrHello &x,GLuint &texture,const std::string &title,cons
 		const unsigned color=argb[y*w+px];const int i=((h-y-1)*w+px)*4;
 		rgba[i]=color>>16;rgba[i+1]=color>>8;rgba[i+2]=color;rgba[i+3]=color>>24;
 	}
-	if(!texture) xr_glGenTextures(1,&texture);
-	xr_glActiveTexture(GL_TEXTURE2);xr_glBindTexture(GL_TEXTURE_2D,texture);
-	xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);xr_glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-	xr_glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);xr_glPixelStorei(GL_UNPACK_ALIGNMENT,4);
-	xr_glPixelStorei(GL_UNPACK_ROW_LENGTH,0);xr_glPixelStorei(GL_UNPACK_SKIP_ROWS,0);xr_glPixelStorei(GL_UNPACK_SKIP_PIXELS,0);
-	xr_glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,rgba.data());return true;
+	xrUploadPanelTexture(texture,w,h,rgba.data());return true;
 }
 static std::string commandExplanation(const XrHello &x) {
 	const int hit=x.commands.input.hover;
