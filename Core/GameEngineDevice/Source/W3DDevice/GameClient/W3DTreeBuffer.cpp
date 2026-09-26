@@ -309,6 +309,16 @@ void W3DTreeBuffer::cull(const CameraClass * camera)
 	for (curTree=0; curTree<m_numTrees; curTree++) {
 		Bool doKey = false;	// We calculate the key when a tree becomes visible.
 		Bool visible = !camera->Cull_Sphere(m_trees[curTree].bounds);
+#ifdef __ANDROID__
+		// GeneralsX @performance Claude 26/09/2026 In XR the render camera is the
+		// head. XR terrain coverage requests a full tree update every frame, so
+		// head-frustum culling flipped edge trees on each small head movement and
+		// forced a full vertex rebuild plus relighting per frame. Use the same
+		// head-independent table/observer volume as scene objects (W3DScene.cpp).
+		extern int GX_XR_CullSphere(const SphereClass &);
+		const int xrCull=GX_XR_CullSphere(m_trees[curTree].bounds);
+		if(xrCull>=0) visible=xrCull==0;
+#endif
 		if (visible != m_trees[curTree].visible) {
 			m_trees[curTree].visible=visible;
 			m_anythingChanged = true;
