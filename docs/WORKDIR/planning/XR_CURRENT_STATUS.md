@@ -19,8 +19,9 @@ Open items in the owner's current order. Details live in the linked plans.
    panels with a -0.75 LOD bias. The owner wants 1-2 more features before
    merging to main.
 2. **Voice chat for LAN matches:** [PLAN-027](PLAN-027_QUEST_LAN_VOICE_CHAT.md).
-   Test Meta system calls first; built-in push-to-talk (Opus over its own UDP
-   port, outside lockstep) is the implementation candidate.
+   Owner decision: built-in push-to-talk (Opus over its own UDP port, outside
+   lockstep) is scheduled after the 1.2.35 release. Meta system calls work as
+   a no-code interim.
 3. **Performance for higher resolution:** measure frame time at the existing
    Balanced/High/Ultra+ tiers with "Messung" on. Then take a simpleperf CPU
    profile of the engine/D3D8-to-GLES path (about 50 µs per draw today; the

@@ -2,6 +2,10 @@
 
 **Status:** Roadmap. Nothing is implemented. Added 2026-09-26 at the owner's request.
 
+**Decision 2026-09-26:** the owner schedules Option B (built-in push-to-talk) for
+later, after the 1.2.35 release. Until then, Option A remains the no-code
+interim option.
+
 ## Finding
 
 Generals: Zero Hour has no voice chat, and the codebase contains none (LAN,
@@ -62,6 +66,6 @@ echo/latency tuning, and a free controller button for push-to-talk.
 
 ## Order
 
-1. Test Option A with the owner (minutes, no build).
-2. If it is good enough, keep Option B on the roadmap as a comfort feature.
-   Otherwise schedule B after the 1.2.35 release.
+1. Release 1.2.35 first (horizon and panel fixes plus the owner's next 1-2 features).
+2. Then implement Option B on its own branch from main, with the acceptance gates above.
+3. Option A can be used at any time as an interim; it needs no build.
