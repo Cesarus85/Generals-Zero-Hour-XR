@@ -221,3 +221,32 @@ The next implementation branch is selected from Gate 0, not preference:
 
 This keeps every optimization attributable, reversible and testable, while
 protecting the currently working controls, visual readability and simulation.
+
+## Resolution-tier measurement, 2026-09-26
+
+Quest 3 `2G0YC5ZG9609PY`, test build `1.2.35-xr-test.4` (panel mipmaps and
+Ground View horizon; no engine change against 1.2.34). Settings: Skirmish, same
+scene at the player base, Light shadows, Multiview, automatic world copy,
+"Messung" on. The in-game P12 reporter logs a sample every two seconds. The
+first sample after each tier switch is dropped as warm-up.
+
+| Coverage | Eye extent (tier) | Samples | Engine CPU | Frame | Derived FPS |
+|---:|---|---:|---:|---:|---:|
+| 2.181 | 1536x1609 (Balanced) | 37 | 20.29 ms | 21.78 ms | 45.9 |
+| 2.181 | 1920x2011 (High) | 14 | 21.51 ms | 23.07 ms | 43.4 |
+| 2.181 | 2304x2413 (Ultra+) | 19 | 22.19 ms | 24.06 ms | 41.6 |
+| 4.500 | 1536x1609 (Balanced) | 8 | 29.17 ms | 30.78 ms | 32.5 |
+| 4.500 | 1920x2011 (High) | 11 | 32.40 ms | 34.56 ms | 28.9 |
+| 4.500 | 2304x2413 (Ultra+) | 10 | 34.00 ms | 35.58 ms | 28.1 |
+
+At the normal zoom, High costs +1.3 ms (+6%) and Ultra+ +2.3 ms (+10%) per
+frame. At maximum zoom-out, High costs +3.8 ms (+12%) and Ultra+ +4.8 ms (+16%).
+Engine CPU rises with the tier too. Draw submission likely waits on the
+GPU/driver, so part of the GPU cost shows up as CPU time. The frame stays
+CPU-dominated at every tier: the Balanced engine CPU alone is about 20 ms. The
+Balanced max-zoom row has only 8 samples.
+
+Conclusion: a High default is affordable at the normal zoom. The lever that
+makes higher tiers free is lower engine CPU. Next steps are a simpleperf
+profile of the engine/D3D8-to-GLES path in a profileable test build, then
+fixed foveation (P26-3) to absorb the remaining GPU share.
