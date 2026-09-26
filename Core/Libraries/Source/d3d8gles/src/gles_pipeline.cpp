@@ -1689,6 +1689,7 @@ void WebGLPipeline::bindShroud(ProgramInfo *prog)
 
 void WebGLPipeline::setShroudTexture(WebGLTexture *tex,const float *worldToUV)
 {
+	if (m_xrMode) pollShroudMarker();
 	if (tex != m_shroudTex) {
 		if (tex) tex->AddRef();
 		if (m_shroudTex) m_shroudTex->Release();
@@ -1698,20 +1699,24 @@ void WebGLPipeline::setShroudTexture(WebGLTexture *tex,const float *worldToUV)
 	if (worldToUV) memcpy(m_shroudST, worldToUV, sizeof(m_shroudST));
 }
 
-// A/B switch for device comparison: gx_shroud_twopass.txt in the game's working
-// directory restores the original two-pass shroud. Polled every 4096 queries.
+// A/B and rollback switch: gx_shroud_twopass.txt in the game's working
+// directory restores the original two-pass shroud. The marker is polled from
+// setShroudTexture, i.e. once per rendered scene frame (every 60th frame),
+// independent of how many fogged meshes are in view.
+void WebGLPipeline::pollShroudMarker()
+{
+	if ((m_shroudMarkerPoll++ % 60) != 0) return;
+	FILE *marker = fopen("gx_shroud_twopass.txt", "r");
+	const bool disabled = marker != nullptr;
+	if (marker) fclose(marker);
+	if (disabled != m_shroudFoldDisabled || m_shroudMarkerPoll == 1)
+		fprintf(stderr, "[d3d8gles] shroud %s\n", disabled ? "two-pass (marker)" : "single-pass fold");
+	m_shroudFoldDisabled = disabled;
+}
+
 bool WebGLPipeline::shroudFoldAvailable()
 {
-	if (!m_xrMode) return false;
-	if ((m_shroudMarkerPoll++ % 4096) == 0) {
-		FILE *marker = fopen("gx_shroud_twopass.txt", "r");
-		const bool disabled = marker != nullptr;
-		if (marker) fclose(marker);
-		if (disabled != m_shroudFoldDisabled || m_shroudMarkerPoll == 1)
-			fprintf(stderr, "[d3d8gles] shroud %s\n", disabled ? "two-pass (marker)" : "single-pass fold");
-		m_shroudFoldDisabled = disabled;
-	}
-	return !m_shroudFoldDisabled;
+	return m_xrMode && !m_shroudFoldDisabled;
 }
 
 // ---------------------------------------------------------------------------

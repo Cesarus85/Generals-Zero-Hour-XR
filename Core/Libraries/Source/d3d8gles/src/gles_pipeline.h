@@ -507,6 +507,7 @@ private:
 	GLuint m_shroudSampler=0,m_lastShroudBound=~0u;
 	bool shroudFoldFor(bool xyzrhw) const {return m_xrMode && m_shroudFoldActive && m_shroudTex && !xyzrhw;}
 	void bindShroud(ProgramInfo *prog);
+	void pollShroudMarker();
 
 	// Perf counters logged once every couple of seconds by present(), not
 	// per frame -- draws/frame and cache hit rate are the numbers that

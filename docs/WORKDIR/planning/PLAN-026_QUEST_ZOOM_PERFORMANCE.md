@@ -311,3 +311,27 @@ between phases (1.76 to 4.21). At similar coverage (~1.9), fold averaged
 about 23.4 ms and two-pass about 24.3 ms. Fold at coverage 2.18 ran 14-21 ms
 against 21.8 ms in the earlier baseline, but in a different scene. A
 fixed-zoom alternating A/B is still needed before quoting an FPS gain.
+
+## Accepted 2026-09-26: change record and rollback for troubleshooting
+
+The owner accepted tree culling and the single-pass shroud without a clean FPS
+A/B. The evidence is the CPU profile plus visual equivalence (see above). If
+fog, shading, trees or props look wrong later, or a mesh renders black,
+unfogged or wrongly fogged, check these changes first (branch
+`codex/xr-engine-cpu-opt`):
+
+| Change | Files | What it does | Rollback / check |
+|---|---|---|---|
+| Tree culling | `Core/GameEngineDevice/.../W3DTreeBuffer.cpp` (`cull`) | On Android XR, tree visibility uses `GX_XR_CullSphere` (table/observer volume) instead of the head frustum; the buffer is only rebuilt when visibility really changes | Symptoms: trees missing at board edges or in Ground View, or stale dynamic tree lighting. Remove the `#ifdef __ANDROID__` block to restore head culling |
+| Shroud fold decision | `GeneralsMD/.../WW3D2/mesh.cpp` (`MeshClass::Render`), `Core/.../WW3D2/matpass.h` (`Fold_Into_Base_Pass`) | Opaque, rigid, unsorted meshes at alpha 1 fold the shroud pass instead of queuing a second pass | Skins, translucent/sorted/fading meshes and pass-only renders keep the second pass |
+| Shroud per task | `Core/.../WW3D2/dx8renderer.{h,cpp}` (`PolyRenderTaskClass::FoldShroud`) | `d3d8gles_SetShroudFold` per render task; reset after the category loop | A fold flag leaking to a later draw would fog something unexpected |
+| Shroud parameters | `GeneralsMD/.../W3DScene.cpp` (`Customized_Render`), `W3DShroud.{h,cpp}` | Publishes the shroud texture and `uv = (world.xy + offset) * scale` each frame, same mapping as `ShroudTextureShader::set` | Symptoms: fog offset or scaled on objects relative to terrain |
+| GLES shader | `Core/Libraries/Source/d3d8gles/src/gles_pipeline.{h,cpp}`, `include/d3d8gles.h`, `src/d3d8gles.cpp` | Program-key bit; `vShroudUV` from world position; `cur.rgb *= texture(uShroudTex, vShroudUV).rgb` after fog; texture unit 5 with its own linear/clamp sampler | Log `[d3d8gles] shroud ...`; shader compile errors would appear in stderr |
+
+**Runtime rollback without a rebuild:** create `gx_shroud_twopass.txt` in the
+game-data working directory (for example
+`Download/Command & Conquer Generals - Zero Hour/`). It is polled every 60th
+scene frame and logged as `[d3d8gles] shroud two-pass (marker)`; deleting it
+switches back. The first device build (`1.2.35-xr-perf.6`) still polled per
+4096 fold queries, which could take minutes in scenes with little fogged
+scenery. The frame-based poll is implemented after that build.
