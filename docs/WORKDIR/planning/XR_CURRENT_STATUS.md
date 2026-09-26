@@ -1,6 +1,6 @@
 # Generals: Zero Hour XR - Current Handoff Status
 
-**Updated:** 2026-09-25
+**Updated:** 2026-09-26
 **Audience:** maintainers and coding agents continuing the Quest/XR work  
 **Active target:** Meta Quest 3, native OpenXR with OpenGL ES 3  
 **Product package:** `com.generalsx.zerohour.xr`
@@ -9,6 +9,30 @@ This is the short, maintained entry point for the XR branch. Read it before the
 long implementation record. It distinguishes source completion, automated
 verification, device installation and actual worn-headset acceptance; those are
 not interchangeable.
+
+## XR roadmap — 2026-09-26
+
+Open items in the owner's current order. Details live in the linked plans.
+
+1. **Release 1.2.35:** branch `codex/xr-panel-mipmaps` holds two owner-accepted
+   fixes: the radial Ground View horizon and mipmapped/anisotropic Canvas
+   panels with a -0.75 LOD bias. The owner wants 1-2 more features before
+   merging to main.
+2. **Voice chat for LAN matches:** [PLAN-027](PLAN-027_QUEST_LAN_VOICE_CHAT.md).
+   Test Meta system calls first; built-in push-to-talk (Opus over its own UDP
+   port, outside lockstep) is the implementation candidate.
+3. **Performance for higher resolution:** measure frame time at the existing
+   Balanced/High/Ultra+ tiers with "Messung" on. Then take a simpleperf CPU
+   profile of the engine/D3D8-to-GLES path (about 50 µs per draw today; the
+   engine is CPU-bound at about 21 ms/frame). Foveation (PR #28, split per
+   P26-3) is the GPU lever if a higher tier becomes GPU-bound. See
+   [PLAN-026](PLAN-026_QUEST_ZOOM_PERFORMANCE.md).
+4. **LAN hardening:** a 15-minute two-human Quest-to-Quest match with orders
+   from both sides.
+5. **Later:** Ground View in LAN matches (presentation only; needs review);
+   Quest <-> PC/Steam research (PLAN-025B).
+6. **Housekeeping:** remove the diagnostic markers `gx_lan_snapshot.txt` (done
+   on `2G0YC5ZG9609PY`) and `gx_lan_crc.txt` from both headsets.
 
 ## Quest-to-Quest LAN release candidate — 2026-09-25
 
