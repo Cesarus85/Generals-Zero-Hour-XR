@@ -292,3 +292,22 @@ Candidates, by expected gain per risk:
    lighting/buffer reloads when nothing changed (about 2-5% each).
 4. Long term: per-draw driver overhead is the structural limit of GLES on
    Adreno. A Vulkan XR path would lower it, but that is a large project.
+
+## Tree culling and single-pass shroud: first device check, 2026-09-26
+
+Test APK `1.2.35-xr-perf.6` on Quest `2G0YC5ZG9609PY`. The log shows
+`[d3d8gles] shroud single-pass fold` and no shader compile errors. The owner
+compared fold against two-pass (`gx_shroud_twopass.txt` pushed and removed
+during the session) and saw no visual difference or artifact.
+
+The 35 s CPU profile (fold active) compared with the baseline profile, as
+shares of the game thread: procedural material passes 18.8% -> 6.3% (the
+remaining skins and the second prop pass in fog keep the original path);
+tree rebuild plus lighting 2.4% -> 0.2%; terrain object including props
+20.4% -> 10.0%; `W3DView::draw` 59.8% -> 48.2%.
+
+Frame times in this session are not a clean A/B: board coverage changed
+between phases (1.76 to 4.21). At similar coverage (~1.9), fold averaged
+about 23.4 ms and two-pass about 24.3 ms. Fold at coverage 2.18 ran 14-21 ms
+against 21.8 ms in the earlier baseline, but in a different scene. A
+fixed-zoom alternating A/B is still needed before quoting an FPS gain.
