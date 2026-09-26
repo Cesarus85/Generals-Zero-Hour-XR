@@ -739,6 +739,27 @@ void MeshClass::Render(RenderInfoClass & rinfo)
 				render_base_passes = true;
 			}
 
+			/*
+			** GeneralsX @performance Claude 26/09/2026 A pass that allows folding
+			** (the XR shroud) is applied inside the base draws of an opaque, rigid,
+			** unsorted mesh at full opacity instead of re-drawing the whole mesh.
+			** Skins, translucent/sorted or fading meshes and pass-only renders keep
+			** the original separate procedural pass.
+			*/
+			const MaterialPassClass * fold_pass = nullptr;
+			if (	render_base_passes &&
+					((rinfo.Current_Override_Flags() & RenderInfoClass::RINFO_OVERRIDE_ADDITIONAL_PASSES_ONLY) == 0) &&
+					!Model->Get_Flag(MeshGeometryClass::SKIN) && !Model->Get_Flag(MeshGeometryClass::SORT) &&
+					!Is_Translucent() && Get_Alpha_Override() == 1.0f)
+			{
+				for (int i=0; i<rinfo.Additional_Pass_Count(); i++) {
+					if (rinfo.Peek_Additional_Pass(i)->Fold_Into_Base_Pass()) {
+						fold_pass = rinfo.Peek_Additional_Pass(i);
+						break;
+					}
+				}
+			}
+
 			if (render_base_passes) {
 
 				/*
@@ -747,7 +768,7 @@ void MeshClass::Render(RenderInfoClass & rinfo)
 				DX8PolygonRendererListIterator it(&(Model->PolygonRendererList));
 				while (!it.Is_Done()) {
 					DX8PolygonRendererClass* polygon_renderer=it.Peek_Obj();
-					polygon_renderer->Get_Texture_Category()->Add_Render_Task(polygon_renderer,this);
+					polygon_renderer->Get_Texture_Category()->Add_Render_Task(polygon_renderer,this,fold_pass != nullptr);
 					it.Next();
 				}
 
@@ -762,6 +783,7 @@ void MeshClass::Render(RenderInfoClass & rinfo)
 			for (int i=0; i<rinfo.Additional_Pass_Count(); i++) {
 
 				MaterialPassClass * matpass = rinfo.Peek_Additional_Pass(i);
+				if (matpass == fold_pass) continue;	// already folded into the base draws above
 
 				if ((!Is_Translucent()) || (matpass->Is_Enabled_On_Translucent_Meshes())) {
 

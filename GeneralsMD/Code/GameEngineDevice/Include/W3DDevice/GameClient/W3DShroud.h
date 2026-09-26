@@ -45,6 +45,7 @@ public:
 	W3DShroudMaterialPassClass() : m_isTransparentObjectPass(FALSE) {}
 	virtual void	Install_Materials() const override;
 	virtual void	UnInstall_Materials() const override;
+	virtual bool	Fold_Into_Base_Pass() const override;
 	void enableTransparentObjectPass(Bool enable) {m_isTransparentObjectPass = enable;}
 protected:
 	//customized version to deal with transparent (alpha-tested) polys.

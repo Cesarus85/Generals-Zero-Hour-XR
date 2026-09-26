@@ -38,6 +38,9 @@
 #include "W3DDevice/GameClient/W3DShaderManager.h"
 #include "assetmgr.h"
 #include "W3DDevice/GameClient/W3DShroud.h"
+#ifdef __ANDROID__
+extern "C" int d3d8gles_ShroudFoldAvailable(); // d3d8gles.h; not on this module's include path
+#endif
 #include "WW3D2/textureloader.h"
 #include "Common/GlobalData.h"
 #include "GameLogic/PartitionManager.h"
@@ -799,6 +802,19 @@ void W3DShroudMaterialPassClass::Install_Materials() const
 void W3DShroudMaterialPassClass::UnInstall_Materials() const
 {
 	W3DShaderManager::resetShader(W3DShaderManager::ST_SHROUD_TEXTURE);
+}
+
+//-----------------------------------------------------------------------------
+// GeneralsX @performance Claude 26/09/2026 The XR GLES backend multiplies the
+// shroud texel into the base draw of opaque rigid meshes, saving the second
+// multiplicative draw per mesh. Everything else keeps this two-pass path.
+bool W3DShroudMaterialPassClass::Fold_Into_Base_Pass() const
+{
+#ifdef __ANDROID__
+	return d3d8gles_ShroudFoldAvailable() != 0;
+#else
+	return false;
+#endif
 }
 
 //-----------------------------------------------------------------------------

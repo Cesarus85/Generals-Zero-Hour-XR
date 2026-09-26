@@ -253,6 +253,7 @@ struct WebGLPipeline::ProgramInfo {
 	GLint uWorld = -1;
 	GLint uXrActive=-1,uXrEyeClip=-1,uXrBoard=-1,uXrAspect=-1,uXrOpaque=-1;
 	GLint uXrCamera=-1,uXrViewSpace=-1;
+	GLint uShroudTex=-1,uShroudST=-1;
 	// uView/uProj moved into the ViewProjBlock UBO (kViewProjUBOBinding) --
 	// no per-program location for them anymore, see getProgram()'s shader
 	// declaration and the post-link glUniformBlockBinding() call below.
@@ -708,6 +709,7 @@ uint64_t WebGLPipeline::computeProgramKey(WebGLDevice *dev, unsigned fvf) const
 
 	const bool fog = dev->getRenderState(D3DRS_FOGENABLE) != 0 && !l.xyzrhw;
 	put(fog ? 1 : 0, 1);
+	put(shroudFoldFor(l.xyzrhw) ? 1 : 0, 1);
 
 	const bool alphaTest = dev->getRenderState(D3DRS_ALPHATESTENABLE) != 0;
 	put(alphaTest ? 1 : 0, 1);
@@ -895,6 +897,7 @@ WebGLPipeline::ProgramInfo *WebGLPipeline::getProgram(WebGLDevice *dev, unsigned
 	const bool ambFromVertex = lighting && cvOn && dev->getRenderState(D3DRS_AMBIENTMATERIALSOURCE) == 1;
 	const bool emisFromVertex = lighting && cvOn && dev->getRenderState(D3DRS_EMISSIVEMATERIALSOURCE) == 1;
 	const bool fog = dev->getRenderState(D3DRS_FOGENABLE) != 0 && !l.xyzrhw;
+	const bool shroud = shroudFoldFor(l.xyzrhw);
 	const bool alphaTest = dev->getRenderState(D3DRS_ALPHATESTENABLE) != 0;
 	const unsigned alphaFunc = dev->getRenderState(D3DRS_ALPHAFUNC) ? dev->getRenderState(D3DRS_ALPHAFUNC) : D3DCMP_ALWAYS;
 
@@ -933,6 +936,7 @@ WebGLPipeline::ProgramInfo *WebGLPipeline::getProgram(WebGLDevice *dev, unsigned
 	vs += "uniform ViewProjBlock { mat4 uView; mat4 uProj; };\n";
 	vs += "uniform vec4 uViewportPos;\n"; // x, y, w, h
 	vs += "uniform float uYFlip;\n"; // +1 backbuffer, -1 render-to-texture
+	if (shroud) vs += "uniform vec4 uShroudST;\nout highp vec2 vShroudUV;\n";
 	vs += "uniform mat4 uTexMat0, uTexMat1;\n";
 	vs += "out vec4 vCol;\nout vec4 vSpec;\nout vec2 vUV0;\nout vec2 vUV1;\nout float vFogDepth;\n";
 	if (lighting) {
@@ -972,6 +976,9 @@ WebGLPipeline::ProgramInfo *WebGLPipeline::getProgram(WebGLDevice *dev, unsigned
 			vs += "  gl_Position = vec4(cpos.x, cpos.y * uYFlip, cpos.z * 2.0 - cpos.w, cpos.w);\n";
 			vs += "  vFogDepth = -vpos.z;\n";
 		if(m_xrMode) vs += multiview ? GX_XR_MULTIVIEW_VERTEX_BODY:GX_XR_STEREO_VERTEX_BODY;
+		// Shroud UV from the world position, as the D3D shroud pass derived it
+		// from camera-space position times (inverse view * offset * scale).
+		if (shroud) vs += "  vShroudUV = (wpos.xy + uShroudST.zw) * uShroudST.xy;\n";
 	}
 	// Diffuse color: vertex color (BGRA attribute swizzle) / lighting / white.
 	if (lighting) {
@@ -1039,6 +1046,7 @@ WebGLPipeline::ProgramInfo *WebGLPipeline::getProgram(WebGLDevice *dev, unsigned
 	fs += "uniform vec4 uTFactor;\nuniform float uAlphaRef;\n";
 	fs += "uniform vec4 uFogColor;\nuniform vec2 uFogParams;\n"; // start, end
 	fs += "in vec4 vCol;\nin vec4 vSpec;\nin vec2 vUV0;\nin vec2 vUV1;\nin float vFogDepth;\n";
+	if (shroud) fs += "uniform sampler2D uShroudTex;\nin highp vec2 vShroudUV;\n";
 	fs += "layout(location=0) out vec4 fragColor;\n";
 	if(m_xrMode) fs += "layout(location=1) out vec4 xrUI;\n";
 	if(m_xrMode) fs += GX_XR_STEREO_FRAGMENT_DECL;
@@ -1086,6 +1094,9 @@ WebGLPipeline::ProgramInfo *WebGLPipeline::getProgram(WebGLDevice *dev, unsigned
 		fs += "  float f = clamp((uFogParams.y - vFogDepth) / max(uFogParams.y - uFogParams.x, 0.0001), 0.0, 1.0);\n";
 		fs += "  cur.rgb = mix(uFogColor.rgb, cur.rgb, f);\n";
 	}
+	// The original second pass multiplied the finished (fogged) opaque pixel
+	// by the shroud texel; folding applies the same product to this fragment.
+	if (shroud) fs += "  cur.rgb *= texture(uShroudTex, vShroudUV).rgb;\n";
 	if(m_xrMode) fs += GX_XR_STEREO_COVERAGE_BODY;
 	fs += "  fragColor = cur;\n";
 	if(m_xrMode) fs += "  xrUI = cur;\n";
@@ -1143,6 +1154,7 @@ WebGLPipeline::ProgramInfo *WebGLPipeline::getProgram(WebGLDevice *dev, unsigned
 	if (info->prog) {
 		GLuint p = info->prog;
 		info->uWorld = glGetUniformLocation(p, "uWorld");
+		info->uShroudTex = glGetUniformLocation(p, "uShroudTex");info->uShroudST = glGetUniformLocation(p, "uShroudST");
 		if(m_xrMode) {
 			info->uXrActive=glGetUniformLocation(p,"uXrActive");info->uXrEyeClip=glGetUniformLocation(p,multiview ? "uXrEyes[0]":"uXrEyeClip");
 			info->uXrCamera=glGetUniformLocation(p,"uXrCamera");info->uXrViewSpace=glGetUniformLocation(p,"uXrViewSpace");
@@ -1643,6 +1655,63 @@ void WebGLPipeline::bindTextures(WebGLDevice *dev, ProgramInfo *prog)
 	}
 	if (prog->uTex0 >= 0) glUniform1i(prog->uTex0, 0);
 	if (prog->uTex1 >= 0) glUniform1i(prog->uTex1, 1);
+	if (prog->uShroudTex >= 0) bindShroud(prog);
+}
+
+// GeneralsX @performance Claude 26/09/2026 Texture unit 5 is reserved for the
+// folded shroud (units 0-1 are D3D stages, 2-4 belong to XR panels/keyboard).
+// A sampler object keeps its filter/wrap independent of the terrain shroud
+// pass, which binds the same texture through the D3D stage path.
+static const int kShroudUnit=5;
+void WebGLPipeline::bindShroud(ProgramInfo *prog)
+{
+	if (!m_shroudTex) return;
+	glActiveTexture(GL_TEXTURE0 + kShroudUnit);
+	if (m_shroudTex->m_gl.dirty || m_shroudTex->m_gl.name == 0) {
+		uploadTexture(m_shroudTex); // binds as a side effect
+		m_lastShroudBound = m_shroudTex->m_gl.name;
+	} else if (m_lastShroudBound != m_shroudTex->m_gl.name) {
+		glBindTexture(GL_TEXTURE_2D, m_shroudTex->m_gl.name);
+		m_lastShroudBound = m_shroudTex->m_gl.name;
+	}
+	if (!m_shroudSampler) {
+		glGenSamplers(1, &m_shroudSampler);
+		glSamplerParameteri(m_shroudSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glSamplerParameteri(m_shroudSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glSamplerParameteri(m_shroudSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glSamplerParameteri(m_shroudSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+	glBindSampler(kShroudUnit, m_shroudSampler);
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(prog->uShroudTex, kShroudUnit);
+	if (prog->uShroudST >= 0) glUniform4fv(prog->uShroudST, 1, m_shroudST);
+}
+
+void WebGLPipeline::setShroudTexture(WebGLTexture *tex,const float *worldToUV)
+{
+	if (tex != m_shroudTex) {
+		if (tex) tex->AddRef();
+		if (m_shroudTex) m_shroudTex->Release();
+		m_shroudTex = tex;
+		m_lastShroudBound = ~0u;
+	}
+	if (worldToUV) memcpy(m_shroudST, worldToUV, sizeof(m_shroudST));
+}
+
+// A/B switch for device comparison: gx_shroud_twopass.txt in the game's working
+// directory restores the original two-pass shroud. Polled every 4096 queries.
+bool WebGLPipeline::shroudFoldAvailable()
+{
+	if (!m_xrMode) return false;
+	if ((m_shroudMarkerPoll++ % 4096) == 0) {
+		FILE *marker = fopen("gx_shroud_twopass.txt", "r");
+		const bool disabled = marker != nullptr;
+		if (marker) fclose(marker);
+		if (disabled != m_shroudFoldDisabled || m_shroudMarkerPoll == 1)
+			fprintf(stderr, "[d3d8gles] shroud %s\n", disabled ? "two-pass (marker)" : "single-pass fold");
+		m_shroudFoldDisabled = disabled;
+	}
+	return !m_shroudFoldDisabled;
 }
 
 // ---------------------------------------------------------------------------
@@ -2744,6 +2813,7 @@ void WebGLPipeline::invalidateCachedGLState()
 	m_haveFixedStateKey = false;
 	m_lastArrayBuffer = ~0u;
 	m_lastBoundTex[0] = m_lastBoundTex[1] = ~0u;
+	m_lastShroudBound = ~0u;
 	if (m_xrMode && m_curFBO == 0) {
 		if (m_offFBO != 0) {
 			glBindFramebuffer(GL_FRAMEBUFFER, m_offFBO);

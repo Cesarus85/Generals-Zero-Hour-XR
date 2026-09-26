@@ -105,10 +105,11 @@ typedef MultiListIterator<PolyRemover>		PolyRemoverListIterator;
 class PolyRenderTaskClass : public AutoPoolClass<PolyRenderTaskClass, 256>
 {
 public:
-	PolyRenderTaskClass(DX8PolygonRendererClass * p_renderer,MeshClass * p_mesh) :
+	PolyRenderTaskClass(DX8PolygonRendererClass * p_renderer,MeshClass * p_mesh,bool fold_shroud=false) :
 		Renderer(p_renderer),
 		Mesh(p_mesh),
-		NextVisible(nullptr)
+		NextVisible(nullptr),
+		FoldShroud(fold_shroud)
 	{
 		WWASSERT(Renderer != nullptr);
 		WWASSERT(Mesh != nullptr);
@@ -125,12 +126,14 @@ public:
 
 	PolyRenderTaskClass *		Get_Next_Visible()									{ return NextVisible; }
 	void								Set_Next_Visible(PolyRenderTaskClass * prtc)		{ NextVisible = prtc; }
+	bool								Fold_Shroud() const									{ return FoldShroud; }
 
 protected:
 
 	DX8PolygonRendererClass *	Renderer;
 	MeshClass *						Mesh;
 	PolyRenderTaskClass *		NextVisible;
+	bool							FoldShroud; // GeneralsX @performance Claude 26/09/2026 single-pass shroud
 
 };
 
@@ -231,9 +234,9 @@ DX8TextureCategoryClass::~DX8TextureCategoryClass()
 	DEBUG_ASSERTCRASH(render_task_head == nullptr, ("~DX8TextureCategoryClass: Leaking render tasks"));
 }
 
-void DX8TextureCategoryClass::Add_Render_Task(DX8PolygonRendererClass * p_renderer,MeshClass * p_mesh)
+void DX8TextureCategoryClass::Add_Render_Task(DX8PolygonRendererClass * p_renderer,MeshClass * p_mesh,bool foldShroud)
 {
-	PolyRenderTaskClass * new_prt = new PolyRenderTaskClass(p_renderer,p_mesh);
+	PolyRenderTaskClass * new_prt = new PolyRenderTaskClass(p_renderer,p_mesh,foldShroud);
 	new_prt->Set_Next_Visible(render_task_head);
 	render_task_head = new_prt;
 
@@ -1758,6 +1761,11 @@ void DX8TextureCategoryClass::Render()
 		}
 
 		SNAPSHOT_SAY(("mesh = %s",mesh->Get_Name()));
+#if defined(__ANDROID__)
+		// GeneralsX @performance Claude 26/09/2026 This task's base draws carry
+		// the shroud multiply instead of a queued second pass (MeshClass::Render).
+		d3d8gles_SetShroudFold(prt->Fold_Shroud() ? 1 : 0);
+#endif
 
 		#ifdef WWDEBUG
 		// Debug rendering: if it exists, expose prelighting on this mesh by disabling all base textures.
@@ -1965,6 +1973,9 @@ void DX8TextureCategoryClass::Render()
 		delete prt;
 		prt = next_prt;
 	}
+#if defined(__ANDROID__)
+	d3d8gles_SetShroudFold(0);
+#endif
 
 	if (!renderTasksRemaining)
 	{
