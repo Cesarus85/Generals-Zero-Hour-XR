@@ -104,6 +104,10 @@
         android:supportsRtl="true"
         android:requestLegacyExternalStorage="false">
 
+        <!-- GeneralsX @performance Claude 26/09/2026 Profiling test builds only
+             (see gxProfileable in build.gradle); false in every release APK. -->
+        <profileable android:shell="${gxProfileable}" />
+
         <activity
             android:name=".GeneralsZHActivity"
             android:exported="false"
