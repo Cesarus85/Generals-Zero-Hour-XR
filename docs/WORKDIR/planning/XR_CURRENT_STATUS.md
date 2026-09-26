@@ -14,14 +14,12 @@ not interchangeable.
 
 Open items in the owner's current order. Details live in the linked plans.
 
-1. **Release 1.2.35:** branch `codex/xr-engine-cpu-opt` (on top of
-   `codex/xr-panel-mipmaps`) holds owner-accepted changes: the radial Ground
+1. **Released 1.2.35 (2026-09-26, PR #45):** it contains the owner-accepted changes: the radial Ground
    View horizon; mipmapped/anisotropic Canvas panels with a -0.75 LOD bias;
    tree culling against the table volume; and the single-pass shroud for opaque
    rigid meshes. For fog, tree or prop rendering problems, first read the
    change record and rollback marker in
-   [PLAN-026](PLAN-026_QUEST_ZOOM_PERFORMANCE.md). The owner wants 1-2 more
-   features before merging to main.
+   [PLAN-026](PLAN-026_QUEST_ZOOM_PERFORMANCE.md).
 2. **Voice chat for LAN matches:** [PLAN-027](PLAN-027_QUEST_LAN_VOICE_CHAT.md).
    Owner decision: built-in push-to-talk (Opus over its own UDP port, outside
    lockstep) is scheduled after the 1.2.35 release. Meta system calls work as

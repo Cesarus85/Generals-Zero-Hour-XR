@@ -1,10 +1,33 @@
 # XR release preparation and checkpoints
 
-**Updated:** 2026-09-25 — 1.2.34 Quest-to-Quest LAN multiplayer preview
+**Updated:** 2026-09-26 — 1.2.35 performance and visual preview
 
-**Publication state:** The nondebuggable 1.2.34 APK (experimental Quest-to-Quest LAN) is the current public preview and GitHub Latest release; 1.2.33 remains published. Older releases, including debug-signed APKs, are retained as maintainer-only drafts. This leaves one current public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
+**Publication state:** The nondebuggable 1.2.35 APK is the current public preview and GitHub Latest release; 1.2.34 and 1.2.33 remain published. Older releases, including debug-signed APKs, are retained as maintainer-only drafts. This leaves one current public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
 
-## Current public release checkpoint: 1.2.34
+## Current public release checkpoint: 1.2.35
+
+PR #45 (merge `b35144bb884323c5d1cd77692eb3f1f49b57c32e`) ships the single-pass
+shroud for opaque rigid meshes and tree culling against the table volume. The
+on-device profile showed procedural material passes 18.8% -> 6.3% and tree
+rebuilds 2.4% -> 0.2% of the game thread; no clean FPS A/B was taken. It also
+ships mipmapped/anisotropic Canvas panels with a -0.75 LOD bias and the radial
+Ground View horizon. Change record and rollback marker: PLAN-026.
+
+The release-signed APK is 57,198,774 bytes, versionCode `10235`, versionName
+`1.2.35-xr-preview`, package `com.generalsx.zerohour.xr`, ARM64 only,
+nondebuggable and not profileable. SHA-256 is
+`f234d02298b4e87777611d5e568e616a639bb4b50b3db9f41e68046c526474e9`.
+APK Signature Scheme v3 verifies with certificate SHA-256
+`a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`.
+Archive inspection found no retail `.big`, `.scb`, `.map` or `.w3d` files.
+Local checks pass: workspace 788, panel text 20,765, menu 2,890, routing 363,
+ground observer 75, shadow scope 449, and LAN snapshot/detector/trace.
+GitHub Actions was not run. Release tag `v1.2.35-xr-preview` targets
+documentation checkpoint `54f814ef36d3649dcc56c0c8c34a568880abd228`.
+GitHub marks it as Latest. A fresh download passes the `.sha256` sidecar and
+is byte-identical to the local artifact.
+
+## Previous public release checkpoint: 1.2.34
 
 PR #43 (merge `909a2a82d9c49b022938db357107a9faa5923e1d`) ships experimental
 LAN multiplayer between two Quest 3 headsets on the 1.2.33 UI: the PR #42 LAN
@@ -39,7 +62,7 @@ Release tag `v1.2.34-xr-preview` targets documentation checkpoint
 download passes the uploaded `.sha256` sidecar and is byte-identical to the
 local artifact.
 
-## Previous public release checkpoint: 1.2.33
+## Older public release checkpoint: 1.2.33
 
 PR #41 integrates PR #40's accepted military-console visual redesign and
 transparent board-side shortcut plates, then replaces rejected custom/Android
