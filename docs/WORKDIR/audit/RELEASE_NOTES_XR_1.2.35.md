@@ -47,6 +47,6 @@ frame, a calmer Commands console and a stable horizon in Ground View.
 - This is an independent community project, not an Electronic Arts product or
   endorsement.
 
-APK SHA-256: `<filled in after signing>`
+APK SHA-256: `f234d02298b4e87777611d5e568e616a639bb4b50b3db9f41e68046c526474e9`
 
 See the repository README and Quest installation guide for setup and controls.
