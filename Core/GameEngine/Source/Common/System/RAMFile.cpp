@@ -58,6 +58,7 @@
 #include <sys/stat.h>
 
 #include "Common/AsciiString.h"
+#include "Common/ArchiveFile.h"
 #include "Common/FileSystem.h"
 #include "Common/RAMFile.h"
 #include "Common/PerfTimer.h"
@@ -221,11 +222,15 @@ Bool RAMFile::openFromArchive(File *archiveFile, const AsciiString& filename, In
 	m_data = MSGNEW("RAMFILE") Char [size];	// pool[]ify
 	m_size = size;
 
-	if (archiveFile->seek(offset, File::START) != offset) {
-		return FALSE;
-	}
-	if (archiveFile->read(m_data, size) != size) {
-		return FALSE;
+	{
+		// Serialize the seek+read pair on the shared archive handle.
+		ScopedCriticalSection lock(&GX_ArchiveReadLock());
+		if (archiveFile->seek(offset, File::START) != offset) {
+			return FALSE;
+		}
+		if (archiveFile->read(m_data, size) != size) {
+			return FALSE;
+		}
 	}
 	m_nameStr = filename;
 

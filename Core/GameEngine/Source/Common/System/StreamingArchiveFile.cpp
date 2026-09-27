@@ -58,6 +58,7 @@
 #include <sys/stat.h>
 
 #include "Common/AsciiString.h"
+#include "Common/ArchiveFile.h"
 #include "Common/FileSystem.h"
 #include "Common/StreamingArchiveFile.h"
 #include "Common/PerfTimer.h"
@@ -182,16 +183,21 @@ Bool StreamingArchiveFile::openFromArchive(File *archiveFile, const AsciiString&
 	m_size = size;
 	m_curPos = 0;
 
-	if (m_file->seek(offset, File::START) != offset) {
-		return FALSE;
-	}
+	{
+		// Serialize positioning on the shared archive handle; a stray seek
+		// here would corrupt another thread's seek+read pair.
+		ScopedCriticalSection lock(&GX_ArchiveReadLock());
+		if (m_file->seek(offset, File::START) != offset) {
+			return FALSE;
+		}
 
-	if (m_file->seek(size) != m_startingPos + size) {
-		return FALSE;
-	}
+		if (m_file->seek(size) != m_startingPos + size) {
+			return FALSE;
+		}
 
-	// We know this will succeed.
-	m_file->seek(offset, File::START);
+		// We know this will succeed.
+		m_file->seek(offset, File::START);
+	}
 
 	m_nameStr = filename;
 
@@ -224,12 +230,17 @@ Int StreamingArchiveFile::read( void *buffer, Int bytes )
 
 	// There shouldn't be a way that this can fail, because we've already verified that the file
 	// contains at least this many bits.
-	m_file->seek(m_startingPos + m_curPos, File::START);
+	Int bytesRead = 0;
+	{
+		// Serialize the seek+read pair on the shared archive handle.
+		ScopedCriticalSection lock(&GX_ArchiveReadLock());
+		m_file->seek(m_startingPos + m_curPos, File::START);
 
-	if (bytes + m_curPos > m_size)
-		bytes = m_size - m_curPos;
+		if (bytes + m_curPos > m_size)
+			bytes = m_size - m_curPos;
 
-	Int bytesRead = m_file->read(buffer, bytes);
+		bytesRead = m_file->read(buffer, bytes);
+	}
 
 	m_curPos += bytesRead;
 
