@@ -50,9 +50,31 @@ public class XrHelloActivity extends Activity {
         });
         return 2;
     }
+    // GeneralsX @feature Claude 29/09/2026 PLAN-027 microphone permission for
+    // LAN voice chat. Requested only when the player switches voice chat on,
+    // never at launch. Same XR-thread/UI-thread split as the scene permission.
+    private static final String MIC_PERMISSION = android.Manifest.permission.RECORD_AUDIO;
+    private static final int MIC_REQUEST = 1902;
+    private volatile boolean micRequestPending = false;
+    public synchronized int micPermission(boolean request) {
+        if (checkSelfPermission(MIC_PERMISSION) == android.content.pm.PackageManager.PERMISSION_GRANTED) return 1;
+        if (micRequestPending) return 2;
+        if (!request || isFinishing() || isDestroyed()) return 0;
+        micRequestPending = true;
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) { micRequestPending = false; return; }
+            try { requestPermissions(new String[]{MIC_PERMISSION}, MIC_REQUEST); }
+            catch (RuntimeException failure) {
+                micRequestPending = false;
+                Log.w(TAG, "Microphone permission unavailable; voice chat stays receive-only", failure);
+            }
+        });
+        return 2;
+    }
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(requestCode, permissions, results);
         if (requestCode == SCENE_REQUEST) sceneRequestPending = false;
+        if (requestCode == MIC_REQUEST) micRequestPending = false;
     }
 
     private Thread mThread;
@@ -263,6 +285,7 @@ public class XrHelloActivity extends Activity {
         // A setup redirect must not stop a newly approved XR activity when
         // Android destroys the old, never-started entry asynchronously.
         if (mXrStarted) stopHello();
+        LanVoiceChat.shutdown();
         releaseLanDiscoveryLock();
         super.onDestroy();
         // The engine's singletons are not restart-safe: a second boot in

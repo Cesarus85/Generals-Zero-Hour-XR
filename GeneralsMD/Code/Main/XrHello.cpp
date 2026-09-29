@@ -428,6 +428,9 @@ struct XrHello {
 	XrReferenceChanges referenceChanges;bool roomPoseLost=false,headTrackingLost=false;
 	GLuint sceneTexture=0;std::string sceneKey;
 	JNIEnv *panelEnv=nullptr;jclass panelPainter=nullptr;
+	// GeneralsX @feature Claude 29/09/2026 PLAN-027 LAN voice chat bridge.
+	jclass voiceClass=nullptr;int voiceStatus=0;unsigned voiceFrame=0;bool voiceMicRequest=false;
+	GLuint voiceTexture=0;std::string voiceKey;
 	XrMenuState menu;XrCommandState commands;float worldZoom=1.0f;bool startViewApplied=false;
 	// GeneralsX @feature Codex 23/09/2026 Meta runtime-owned Quest keyboard.
 	XrMetaKeyboard keyboard;bool keyboardPointerHeld=false;
@@ -1019,6 +1022,7 @@ static void xrSceneMenuText(const XrHello &,std::string &,char *,size_t);
 #include "XrMenuPainting.h"
 #include "XrInteraction.h"
 #include "XrSceneUI.h"
+#include "XrVoiceChat.h"
 
 // GeneralsX @bugfix Codex 15/09/2026 Movies and gameplay consume origin changes
 // before rendering with current eye poses, exactly once through the same path.
@@ -1225,6 +1229,8 @@ static bool renderEye(XrHello &x, int eye, const XrPosef &pose, const XrFovf &fo
 		if(!x.loadingPresentation && !hideWorkspace && !observing)panel(uiButtonSurface(x),128.0f/192,x.uiButtonTexture);
 		if(!x.loadingPresentation && !hideWorkspace && !observing && groundButtonAvailable(x))
 			panel(groundButtonSurface(x),128.0f/192,x.groundButtonTexture);
+		if(!x.loadingPresentation && !hideWorkspace && !observing && voiceIndicatorVisible(x))
+			panel(voiceIndicatorSurface(x),128.0f/192,x.voiceTexture);
 		if(x.menu.open && !observing) panel(x.menu.surface,float(kXrMenuHeight)/kXrMenuWidth,x.settingsTexture);
 		if(observing || x.observer.mode==XrObserverMode::Armed)
 			panel(x.observerHintSurface,.5f,x.observerHintTexture);
@@ -1652,6 +1658,7 @@ static void runLoop(XrHello &x)
 					if(!x.stereoVisible || perfEngine>=1000){perfMeasured=false;x.performance.invalidate();}
 					if(x.frame%120==0)XR_LOG("P17 presentation: %s requested=%d upright=%d split=%d quality=%s",
 						XrGameBoot_PresentationStatus(x.stereoVisible,x.stereoWorld).c_str(),int(x.stereoWorld),int(x.uprightGame),int(x.splitVisible),x.layout.resolutionTier==2 ? "ultra+":x.layout.resolutionTier==1 ? "high":"balanced");
+					updateVoiceChat(x);
 					updateMenuTextures(x,frameState.predictedDisplayTime);
 					if(x.observer.mode!=XrObserverMode::Off) {
 						float fx=0,fz=-1;yawForwardFromQuat(views[0].pose.orientation,&fx,&fz);
@@ -1795,6 +1802,7 @@ static void shutdownXr(XrHello &x)
 	for(int i=0;i<2;++i) if(x.controls.aimSpace[i]!=XR_NULL_HANDLE) xrDestroySpace(x.controls.aimSpace[i]);
 	if (x.uiButtonTexture) xr_glDeleteTextures(1,&x.uiButtonTexture);
 	if (x.groundButtonTexture) xr_glDeleteTextures(1,&x.groundButtonTexture);
+	if (x.voiceTexture) xr_glDeleteTextures(1,&x.voiceTexture);
 	if (x.settingsTexture) xr_glDeleteTextures(1,&x.settingsTexture);
 	if (x.hoverTexture) xr_glDeleteTextures(1,&x.hoverTexture);
 	if (x.sceneTexture) xr_glDeleteTextures(1,&x.sceneTexture);
@@ -1874,6 +1882,8 @@ Java_com_generalsx_zerohour_XrHelloActivity_runHello(JNIEnv *env, jclass, jobjec
 	x.activityRef=activityRef;
 	x.panelEnv=env;x.panelPainter=env->FindClass("com/generalsx/zerohour/XrPanelPainter");
 	if(env->ExceptionCheck()) {env->ExceptionClear();x.panelPainter=nullptr;}
+	x.voiceClass=env->FindClass("com/generalsx/zerohour/LanVoiceChat");
+	if(env->ExceptionCheck()) {env->ExceptionClear();x.voiceClass=nullptr;}
 	if (initXr(x, vm, activityRef)) {
 		// Phase 1.0: boot the game on the XR thread (same thread, same
 		// GL context as the loop below). Synchronous and slow (~a

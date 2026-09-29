@@ -1,6 +1,6 @@
 # PLAN-027: voice chat for Quest LAN matches
 
-**Status:** Roadmap. Nothing is implemented. Added 2026-09-26 at the owner's request.
+**Status:** Implemented 2026-09-29 on `codex/xr-high-default-voice`; device test with two Quests pending.
 
 **Decision 2026-09-26:** the owner schedules Option B (built-in push-to-talk) for
 later, after the 1.2.35 release. Until then, Option A remains the no-code
@@ -69,3 +69,41 @@ echo/latency tuning, and a free controller button for push-to-talk.
 1. Release 1.2.35 first (horizon and panel fixes plus the owner's next 1-2 features).
 2. Then implement Option B on its own branch from main, with the acceptance gates above.
 3. Option A can be used at any time as an interim; it needs no build.
+
+## Implementation, 2026-09-29
+
+The owner chose **voice activation** instead of push-to-talk, because every
+controller button already has a function. Deviations from the plan above:
+uncompressed 16 kHz mono PCM16 instead of Opus (about 256 kbit/s per active
+speaker, fine on a LAN; Opus is a follow-up for internet play), and no
+per-player mute yet.
+
+- `android/.../LanVoiceChat.java`: capture with `AudioRecord`
+  (`VOICE_COMMUNICATION` source, `AcousticEchoCanceler` and `NoiseSuppressor`
+  when available), 20 ms frames, adaptive energy gate with a 300 ms hangover.
+  Unicast UDP on port **8094** (lobby 8086 and match 8088 stay untouched);
+  packets are `GXV1` + seq + sample count + PCM, and only accepted from the
+  current game's peer addresses. Playback uses one
+  `USAGE_VOICE_COMMUNICATION` `AudioTrack` with per-peer jitter queues
+  (primed at 2 frames, capped at 10) and clipped mixing. Sessions and capture
+  runs are separate objects that end on their own, so the XR thread never
+  waits.
+- `XrHelloActivity.micPermission`: `RECORD_AUDIO` runtime prompt, requested
+  once when the player switches voice chat on (never at launch). Voice is
+  shut down in `onDestroy`.
+- Native: `XrGameBoot_LanVoicePeers` reads the human slots of
+  `TheLAN->GetMyGame()` (read-only; own IP excluded). `XrVoiceChat.h`
+  publishes peers and mode about twice a second over JNI and reads status
+  bits (active, you speak, a player speaks, no microphone).
+- UI: Display page → "Sprachchat: AUS / AN / STUMM" (menu id 18; 17 is the
+  global close). The layout stores the choice (v12 field, default off). A
+  non-interactive plate below the UI/Commands/Ground View column shows
+  SPRACHE / DU SPRICHST / SPIELER SPRICHT / STUMM / MIKRO FEHLT while a
+  session is active.
+- Tests: menu routing (Off→On asks for the microphone→Muted→Off), layout v12
+  voice persistence and rejection of invalid values, menu geometry, bilingual
+  panel text.
+
+Device acceptance still open: two Quests in a LAN lobby and match; speech in
+both directions; echo with game audio; latency; permission prompt in the
+immersive session; no frame-time change.

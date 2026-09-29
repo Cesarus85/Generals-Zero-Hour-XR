@@ -136,6 +136,15 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 	if(!x.groundButtonTexture || groundButtonLanguage!=g_xrLanguage)
 		if(paintPanel(x,x.groundButtonTexture,xrTr("BODENANSICHT"),"","",-1,0))
 			groundButtonLanguage=g_xrLanguage;
+	// GeneralsX @feature Claude 29/09/2026 PLAN-027 voice indicator plate.
+	{
+		const int v=x.voiceStatus;
+		const char *voiceTitle=(v&8) ? "MIKRO FEHLT":(v&4) ? "SPIELER SPRICHT":(v&2) ? "DU SPRICHST":
+			x.layout.voiceChat==2 ? "STUMM":"SPRACHE";
+		const std::string voiceKey=std::string(voiceTitle)+char('0'+int(g_xrLanguage));
+		if(!x.voiceTexture || x.voiceKey!=voiceKey)
+			if(paintPanel(x,x.voiceTexture,xrTr(voiceTitle),"","",-1,0))x.voiceKey=voiceKey;
+	}
 	static XrLanguage buttonLanguage=XrLanguage::German;
 	if(!x.commandButtonTexture || buttonLanguage!=g_xrLanguage)
 		if(paintPanel(x,x.commandButtonTexture,xrTr("BEFEHLE"),"","",-1,0))buttonLanguage=g_xrLanguage;
@@ -297,7 +306,8 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 				label(14,xrTr("Einheitenbefehle"));label(15,xrTr("Fenster einstellen"));label(17,xrTr("Schließen"));
 			} else {
 				detail=XrGameBoot_PresentationStatus(x.stereoVisible,x.stereoWorld)+"\n"+
-					(x.menu.hover==11 ? XrGameBoot_LanguageStatus():x.menu.hover==16 ?
+					(x.menu.hover==11 ? XrGameBoot_LanguageStatus():x.menu.hover==18 ?
+						xrTr("LAN-Sprachchat: sendet nur, während du sprichst. Stumm = nur zuhören. Aktiv in LAN-Lobby und LAN-Match mit gleicher Version; nutzt das Mikrofon."):x.menu.hover==16 ?
 						xrTr("Nur Offline-Gefecht: Bodenansicht wählen, dann sichtbaren freien Boden anklicken. B/Y kehrt zurück."):x.performance.status());
 				label(-10,xrTr("Darstellung"));
 				label(-20,xrTr("Spiel: Tisch; Bodenansicht optional"));label(-21,xrTr("Videos: Bildschirm"));
@@ -318,6 +328,8 @@ static void updateMenuTextures(XrHello &x,XrTime time) {
 				toggle(8,"Linkshändig",x.layout.leftHanded);
 				label(11,std::string(xrTr("Sprache"))+"|"+xrTr(x.layout.language==XrLanguage::German ? "Deutsch":"English"));
 				label(9,xrTr("Foto-Anordnung"));label(7,xrTr("Schließen"));
+				label(18,std::string(xrTr("Sprachchat"))+"|"+xrTr(x.layout.voiceChat==2 ? "STUMM":x.layout.voiceChat==1 ? "AN":"AUS"));
+				if(x.layout.voiceChat)mark(18,kXrStateOn);
 				label(16,xrTr("Bodenansicht · Ort wählen"));
 				if(!x.stereoVisible || !XrGameBoot_CanObserveGround())mark(16,kXrStateDisabled);
 			}

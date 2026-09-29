@@ -93,7 +93,7 @@ static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 		return;
 	}
 	if(x.menu.page==3) {
-		if(action<0 || action>16) return;
+		if(action<0 || action>18) return;
 		if(action<=3)return; // P15 reserved status/help slots; no flat mode.
 		if(action==16) {
 			armGroundView(x);
@@ -127,6 +127,12 @@ static void applyMenuAction(XrHello &x,int action,const XrView *views) {
 			x.menu.open=false;x.controlsArmed=false;x.grab.cancel();
 		}
 		if(action==10)x.layout.resolutionTier=(x.layout.resolutionTier+1)%3;
+		// GeneralsX @feature Claude 29/09/2026 PLAN-027 Off -> On -> Muted. Switching on
+		// asks for the microphone once (XrVoiceChat.h); muted keeps listening.
+		if(action==18) {
+			x.layout.voiceChat=(x.layout.voiceChat+1)%3;
+			if(x.layout.voiceChat==1)x.voiceMicRequest=true;
+		}
 		// GeneralsX @feature Codex 14/09/2026 XR text switches immediately;
 		// native game strings are validated and staged for a clean restart.
 		if(action==11) {

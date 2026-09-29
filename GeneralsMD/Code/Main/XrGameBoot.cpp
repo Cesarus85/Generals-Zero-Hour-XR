@@ -71,6 +71,9 @@
 #include "Common/ThingTemplate.h"
 #include "Common/Energy.h"
 #include "GameClient/CommandXlat.h"
+#include "GameNetwork/LANAPI.h"
+#include "GameNetwork/LANAPICallbacks.h"
+#include "GameNetwork/LANGameInfo.h"
 #include "GameLogic/Object.h"
 #include "GameLogic/TerrainLogic.h"
 #include "GameLogic/PartitionManager.h"
@@ -538,6 +541,24 @@ const char *XrGameBoot_PerformanceScene() {
 	if(!TheGameLogic)return "shell";
 	const auto mode=TheGameLogic->getGameMode();
 	return mode==GAME_SINGLE_PLAYER ? "campaign":mode==GAME_SKIRMISH ? "skirmish":"other";
+}
+// GeneralsX @feature Claude 29/09/2026 PLAN-027 LAN voice peers. Read-only view
+// of the LAN game's human slots; voice itself never enters lockstep.
+bool XrGameBoot_LanVoicePeers(std::vector<std::string> &peers) {
+	peers.clear();
+	if(!s_booted || !TheLAN)return false;
+	LANGameInfo *game=TheLAN->GetMyGame();
+	if(!game)return false;
+	const UnsignedInt local=TheLAN->GetLocalIP();
+	for(Int i=0;i<MAX_SLOTS;++i) {
+		const GameSlot *slot=game->getConstSlot(i);
+		if(!slot || !slot->isHuman())continue;
+		const UnsignedInt ip=game->getIP(i);
+		if(ip==0 || ip==local)continue;
+		char text[20];snprintf(text,sizeof(text),"%u.%u.%u.%u",PRINTF_IP_AS_4_INTS(ip));
+		peers.emplace_back(text);
+	}
+	return true;
 }
 bool XrGameBoot_CanAdjustWorld() {
 	return XrGameBoot_CanStereoWorld() && GX_XR_SplitUIAllowed() && XrGameBoot_CanControlCamera();

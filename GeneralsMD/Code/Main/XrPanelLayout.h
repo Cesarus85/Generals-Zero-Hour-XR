@@ -173,9 +173,12 @@ inline int xrMenuLayout(int page,XrPanelControl *out,int max) {
 		b.add(8,32,680,344,64,kXrRoleButton);
 		b.add(11,392,680,344,64,kXrRoleButton);
 		b.add(9,32,752,344,64,kXrRoleButton);
-		b.add(7,392,752,344,64,kXrRoleButton);
+		// GeneralsX @feature Claude 29/09/2026 PLAN-027 LAN voice chat Off/On/Muted.
+		// Id 18: 17 is the global close action (applyMenuAction), 18 is page-local.
+		b.add(18,392,752,344,64,kXrRoleButton);
+		b.add(7,392,824,344,64,kXrRoleButton);
 		// GeneralsX @feature Codex 17/09/2026 P25 temporary, offline-only observer.
-		b.add(16,32,838,704,72,kXrRoleImmediate);
+		b.add(16,32,906,704,72,kXrRoleImmediate);
 	}
 	return b.count;
 }

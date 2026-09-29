@@ -254,6 +254,17 @@ int main(int argc,char **argv) {
 		XrLayout balanced;balanced.resolutionTier=0;check(balanced.save(argv[1]));
 		XrLayout kept;check(kept.load(argv[1]) && kept.formatVersion==12 && !kept.upgradeDefaults() && kept.resolutionTier==0);
 	}
+	// PLAN-027 voice chat mode persists in v12; defaults off; bad values reject the file.
+	for(int voice:{0,1,2}) {
+		XrLayout v;check(v.voiceChat==0);v.voiceChat=voice;check(v.save(argv[1]));
+		XrLayout r;check(r.load(argv[1]) && r.voiceChat==voice);
+	}
+	for(const char *voice:{"3","-1",""}) {
+		FILE *bad=fopen(argv[1],"w");check(bad!=nullptr);fprintf(bad,"GENERALS_XR_LAYOUT 12\n");
+		for(int i=0;i<3;++i)fprintf(bad,"1 0 0 -1 0 0 0 1 0\n");
+		fprintf(bad,"1\n1 1 1 1\n1\n0\n1\n0\n%s\n",voice);fclose(bad);
+		XrLayout r;r.relative[2].width=1.9f;check(!r.load(argv[1]));near(r.relative[2].width,1.9f);
+	}
 	for(const char *language:{"2","-1",""}) {
 		FILE *bad=fopen(argv[1],"w");check(bad!=nullptr);fprintf(bad,"GENERALS_XR_LAYOUT 8\n");
 		for(int i=0;i<3;++i)fprintf(bad,"1 0 0 -1 0 0 0 1 0\n");

@@ -15,6 +15,9 @@ struct XrLayout {
 	// GeneralsX @tweak Claude 29/09/2026 High is the default since the P26 CPU work
 	// (single-pass shroud, tree culling) paid for its ~1.3 ms GPU/driver cost.
 	int resolutionTier=1;
+	// GeneralsX @feature Claude 29/09/2026 PLAN-027 LAN voice chat: 0 off (default),
+	// 1 on (voice-activated), 2 muted (listen only). Stored from layout v12.
+	int voiceChat=0;
 	int formatVersion=12;
 	XrLanguage language=XrLanguage::German;
 	// GeneralsX @feature Codex 14/09/2026 Only a fresh layout adopts the OS
@@ -86,6 +89,7 @@ struct XrLayout {
 		if(ok && version>=6) {int left=0;ok=fscanf(f," %d",&left)==1 && (left==0 || left==1);parsed.leftHanded=left;}
 		if(ok && version>=7) {int tier=0;ok=fscanf(f," %d",&tier)==1 && tier>=0 && tier<=(version>=11 ? 2:1);parsed.resolutionTier=tier;}
 		if(ok && version>=8) {int language=0;ok=fscanf(f," %d",&language)==1 && language>=0 && language<=1;parsed.language=static_cast<XrLanguage>(language);}
+		if(ok && version>=12) {int voice=0;ok=fscanf(f," %d",&voice)==1 && voice>=0 && voice<=2;parsed.voiceChat=voice;}
 		parsed.formatVersion=version;
 		fclose(f); if(ok) *this=parsed; return ok;
 	}
@@ -104,6 +108,7 @@ struct XrLayout {
 		ok=(fprintf(f,"%d\n",int(leftHanded))>0)&&ok;
 		ok=(fprintf(f,"%d\n",resolutionTier)>0)&&ok;
 		ok=(fprintf(f,"%d\n",int(language))>0)&&ok;
+		ok=(fprintf(f,"%d\n",voiceChat)>0)&&ok;
 		ok=fclose(f)==0 && ok;
 		return ok && rename(temp.c_str(),path)==0;
 	}

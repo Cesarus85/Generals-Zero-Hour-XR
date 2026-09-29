@@ -10,6 +10,7 @@
 // Single-threaded by design: init, frames, and shutdown all run on the XR
 // thread, the only thread that ever touches this GL context.
 #pragma once
+#include <vector>
 
 #ifdef __ANDROID__
 
@@ -122,6 +123,9 @@ bool XrGameBoot_PickObserverGround(const XrSurface &board,const XrPosef &aim,XrV
 bool XrGameBoot_ObserverStep(XrVector3f current,XrVector3f delta,XrVector3f &next);
 const char *XrGameBoot_PerformanceScene();
 std::string XrGameBoot_PresentationStatus(bool stereoVisible,bool requested);
+// GeneralsX @feature Claude 29/09/2026 PLAN-027: dotted IPv4 addresses of the
+// other human players in the current LAN lobby or match (false otherwise).
+bool XrGameBoot_LanVoicePeers(std::vector<std::string> &peers);
 void XrGameBoot_SetWorldFrame(const XrWorldFrame &frame);
 unsigned int XrGameBoot_StereoTexture(int eye);
 bool XrGameBoot_StereoAtlas();
