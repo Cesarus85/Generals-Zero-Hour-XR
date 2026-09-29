@@ -179,6 +179,8 @@ int main(){
 	x.menu.open=true;x.controlsArmed=true;applyMenuAction(x,8,views);
 	check(x.layout.leftHanded && !x.menu.open && !x.controlsArmed);
 	applyMenuAction(x,8,views);check(!x.layout.leftHanded);
+	// High (1) is the default since layout v12; cycle from Balanced explicitly.
+	check(x.layout.resolutionTier==1);x.layout.resolutionTier=0;
 	applyMenuAction(x,10,views);check(x.layout.resolutionTier==1);
 	applyMenuAction(x,10,views);check(x.layout.resolutionTier==2);
 	applyMenuAction(x,10,views);check(x.layout.resolutionTier==0);

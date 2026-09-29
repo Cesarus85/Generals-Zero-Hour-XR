@@ -12,8 +12,10 @@ struct XrLayout {
 	bool commandsVisible=true,leftHanded=false;
 	// GeneralsX @feature Codex 14/09/2026 P15 agreed first-run quality.
 	// 0 Balanced, 1 High, 2 Ultra+ (opt-in); old v7-v10 boolean values migrate unchanged.
-	int resolutionTier=0;
-	int formatVersion=11;
+	// GeneralsX @tweak Claude 29/09/2026 High is the default since the P26 CPU work
+	// (single-pass shroud, tree culling) paid for its ~1.3 ms GPU/driver cost.
+	int resolutionTier=1;
+	int formatVersion=12;
 	XrLanguage language=XrLanguage::German;
 	// GeneralsX @feature Codex 14/09/2026 Only a fresh layout adopts the OS
 	// preference. Even migrated old layouts retain their previous language.
@@ -47,7 +49,7 @@ struct XrLayout {
 		snap[1]=true;snap[2]=false;startStereo=true;commandsVisible=true;
 	}
 	bool upgradeDefaults() {
-		if(formatVersion>=11)return false;
+		if(formatVersion>=12)return false;
 		if(formatVersion<7)applyTabletopPreset();
 		else if(formatVersion<10) {
 			// GeneralsX @tweak Codex 14/09/2026 Once only, away from launch heading,
@@ -57,12 +59,15 @@ struct XrLayout {
 		}
 		// P15 quality migration stays limited to pre-v9; deliberate v9 choices survive.
 		if(formatVersion<9) {resolutionTier=0;startStereo=true;}
-		formatVersion=11;return true;
+		// v12: lift Balanced to the new High default once. Ultra+ and every
+		// choice saved as v12 or later survive unchanged.
+		if(resolutionTier==0)resolutionTier=1;
+		formatVersion=12;return true;
 	}
 	bool load(const char *path) {
 		FILE *f=fopen(path,"r"); if(!f) return false;
 		XrLayout parsed;parsed.startStereo=false;int version=0;
-		bool ok=fscanf(f,"GENERALS_XR_LAYOUT %d",&version)==1 && version>=1 && version<=11;
+		bool ok=fscanf(f,"GENERALS_XR_LAYOUT %d",&version)==1 && version>=1 && version<=12;
 		for(int i=0;i<(version==1 ? 2:3) && ok;++i) {
 			auto &s=parsed.relative[i]; auto &p=s.pose.position; auto &q=s.pose.orientation; int snapFlag=0;
 			ok=fscanf(f,"%f %f %f %f %f %f %f %f %d",&s.width,&p.x,&p.y,&p.z,&q.x,&q.y,&q.z,&q.w,&snapFlag)==9;
@@ -88,7 +93,7 @@ struct XrLayout {
 		if(!path || !*path) return false;
 		const std::string temp=std::string(path)+".tmp";
 		FILE *f=fopen(temp.c_str(),"w"); if(!f) return false;
-		bool ok=fprintf(f,"GENERALS_XR_LAYOUT 11\n")>0;
+		bool ok=fprintf(f,"GENERALS_XR_LAYOUT 12\n")>0;
 		for(int i=0;i<3;++i) {
 			const auto &s=relative[i];const auto &p=s.pose.position;const auto &q=s.pose.orientation;
 			ok=(fprintf(f,"%.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g %d\n",s.width,p.x,p.y,p.z,q.x,q.y,q.z,q.w,(int)snap[i])>0)&&ok;
