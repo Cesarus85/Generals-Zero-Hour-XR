@@ -22,6 +22,7 @@ struct XrHello {
 	bool splitVisible=true,panelLatched=true,arranging=false,controlsArmed=true,interactiveGame=true;
 	bool stereoWorld=false,stereoVisible=false,recoveryVisible=false,layoutDirty=false,rayVisible=false,rayHit=false,pointerPressed=false,hoverVisible=false;
 	int arrangeSlot=1;float worldZoom=1;XrVector3f rayStart={},rayEnd={};
+	bool voiceMicRequest=false; // PLAN-027
 };
 static int checks=0,releases=0,saves=0;static bool locked=false;
 static void checkAt(bool b,int line){++checks;if(!b){fprintf(stderr,"menu route check %d failed at line %d\n",checks,line);exit(1);}}
@@ -179,9 +180,16 @@ int main(){
 	x.menu.open=true;x.controlsArmed=true;applyMenuAction(x,8,views);
 	check(x.layout.leftHanded && !x.menu.open && !x.controlsArmed);
 	applyMenuAction(x,8,views);check(!x.layout.leftHanded);
+	// High (1) is the default since layout v12; cycle from Balanced explicitly.
+	check(x.layout.resolutionTier==1);x.layout.resolutionTier=0;
 	applyMenuAction(x,10,views);check(x.layout.resolutionTier==1);
 	applyMenuAction(x,10,views);check(x.layout.resolutionTier==2);
 	applyMenuAction(x,10,views);check(x.layout.resolutionTier==0);
+	// GeneralsX @test Claude 29/09/2026 PLAN-027 voice chat Off -> On (asks mic) -> Muted -> Off.
+	check(x.layout.voiceChat==0 && !x.voiceMicRequest);
+	applyMenuAction(x,18,views);check(x.layout.voiceChat==1 && x.voiceMicRequest);x.voiceMicRequest=false;
+	applyMenuAction(x,18,views);check(x.layout.voiceChat==2 && !x.voiceMicRequest);
+	applyMenuAction(x,18,views);check(x.layout.voiceChat==0 && !x.voiceMicRequest);
 	applyMenuAction(x,11,views);check(language==1 && x.layout.language==XrLanguage::English && g_xrLanguage==XrLanguage::English);
 	applyMenuAction(x,11,views);check(language==0 && x.layout.language==XrLanguage::German);
 	x.surfaces[1].width=4;applyMenuAction(x,9,views);

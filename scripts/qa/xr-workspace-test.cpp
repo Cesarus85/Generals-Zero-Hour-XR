@@ -142,9 +142,9 @@ int main(int argc,char **argv) {
 	GX_XR_OffscreenBoot=false;check(!XrGameBoot_ExpandedUI());GX_XR_OffscreenBoot=true;
 	interactive=false;check(!XrGameBoot_ExpandedUI());interactive=true;options.hidden=true;
 	// Full UI expands upward from the original bottom edge, not into the table.
-	XrLayout layout;check(layout.startStereo && layout.resolutionTier==0 && layout.commandsVisible);
+	XrLayout layout;check(layout.startStereo && layout.resolutionTier==1 && layout.commandsVisible);
 	near(layout.relative[2].pose.position.z,-1.18f);
-	check(layout.formatVersion==11 && !layout.upgradeDefaults());
+	check(layout.formatVersion==12 && !layout.upgradeDefaults());
 	XrHello x;for(int i=0;i<3;++i)x.surfaces[i]=layout.relative[i];
 	for(float crop:{.18f,.3f,.6f}) for(float pitch:{0.0f,-.42f,-1.2f}) {
 		bar=xrCommandRect(crop);x.surfaces[2].pose.orientation=xrAxisAngle({1,0,0},pitch);
@@ -195,7 +195,7 @@ int main(int argc,char **argv) {
 	layout.relative[1].width=2.7f;layout.relative[1].pose.position={.2f,-.7f,-.9f};
 	layout.relative[2].pose.orientation=xrAxisAngle({1,0,0},-.31f);
 	const auto previous=layout;
-	check(layout.upgradeDefaults() && layout.formatVersion==11 && layout.resolutionTier==0 && layout.startStereo);
+	check(layout.upgradeDefaults() && layout.formatVersion==12 && layout.resolutionTier==1 && layout.startStereo);
 	for(int i=0;i<3;++i){
 		near(layout.relative[i].width,previous.relative[i].width);
 		const auto &a=layout.relative[i].pose;const auto &b=previous.relative[i].pose;
@@ -224,7 +224,7 @@ int main(int argc,char **argv) {
 		near(a.pose.orientation.x,b.pose.orientation.x);near(a.pose.orientation.y,b.pose.orientation.y);
 		near(a.pose.orientation.z,b.pose.orientation.z);near(a.pose.orientation.w,b.pose.orientation.w);check(v9.snap[i]==layout.snap[i]);}
 	const float migratedZ=v9.relative[2].pose.position.z;check(v9.save(argv[1]));
-	XrLayout current;check(current.load(argv[1]) && current.formatVersion==11 && !current.upgradeDefaults());
+	XrLayout current;check(current.load(argv[1]) && current.formatVersion==12 && !current.upgradeDefaults());
 	near(current.relative[2].pose.position.z,migratedZ);
 	current.relative[2].pose.position.z=-1.6f;check(current.save(argv[1]));
 	check(current.load(argv[1]) && !current.upgradeDefaults());near(current.relative[2].pose.position.z,-1.6f);
@@ -235,11 +235,36 @@ int main(int argc,char **argv) {
 		fprintf(v10,"%.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g %d\n",s.width,p.x,p.y,p.z,q.x,q.y,q.z,q.w,int(current.snap[i]));}
 	fprintf(v10,"%.9g\n%d %d %d %d\n%d\n%d\n1\n%d\n",current.worldZoom,int(current.startStereo),int(current.healthBars),int(current.unitRings),int(current.boardFrame),int(current.commandsVisible),int(current.leftHanded),int(current.language));fclose(v10);
 	XrLayout oldV10;check(oldV10.load(argv[1]) && oldV10.formatVersion==10 && oldV10.resolutionTier==1);
-	check(oldV10.upgradeDefaults() && oldV10.formatVersion==11 && oldV10.resolutionTier==1);
+	check(oldV10.upgradeDefaults() && oldV10.formatVersion==12 && oldV10.resolutionTier==1);
 	near(oldV10.relative[2].pose.position.z,-1.6f);
 	// Keep an unusually distant valid custom pose valid instead of crossing the 5 m limit.
 	current.formatVersion=9;current.relative[2].pose.position={0,0,-4.95f};check(current.upgradeDefaults());
 	near(current.relative[2].pose.position.z,-4.95f);check(current.save(argv[1]));check(current.load(argv[1]));
+	// GeneralsX @test Claude 29/09/2026 v12: a v11 Balanced tier becomes High once;
+	// v11 Ultra+ and a deliberate v12 Balanced choice are preserved.
+	for(int tier:{0,1,2}) {
+		FILE *v11=fopen(argv[1],"w");check(v11!=nullptr);fprintf(v11,"GENERALS_XR_LAYOUT 11\n");
+		for(int i=0;i<3;++i)fprintf(v11,"1.8 0 -0.38 -1.18 0 0 0 1 0\n");
+		fprintf(v11,"1\n1 1 1 1\n1\n0\n%d\n0\n",tier);fclose(v11);
+		XrLayout oldV11;check(oldV11.load(argv[1]) && oldV11.formatVersion==11 && oldV11.resolutionTier==tier);
+		check(oldV11.upgradeDefaults() && oldV11.formatVersion==12 && oldV11.resolutionTier==(tier==0 ? 1:tier));
+		near(oldV11.relative[2].pose.position.z,-1.18f);
+	}
+	{
+		XrLayout balanced;balanced.resolutionTier=0;check(balanced.save(argv[1]));
+		XrLayout kept;check(kept.load(argv[1]) && kept.formatVersion==12 && !kept.upgradeDefaults() && kept.resolutionTier==0);
+	}
+	// PLAN-027 voice chat mode persists in v12; defaults off; bad values reject the file.
+	for(int voice:{0,1,2}) {
+		XrLayout v;check(v.voiceChat==0);v.voiceChat=voice;check(v.save(argv[1]));
+		XrLayout r;check(r.load(argv[1]) && r.voiceChat==voice);
+	}
+	for(const char *voice:{"3","-1",""}) {
+		FILE *bad=fopen(argv[1],"w");check(bad!=nullptr);fprintf(bad,"GENERALS_XR_LAYOUT 12\n");
+		for(int i=0;i<3;++i)fprintf(bad,"1 0 0 -1 0 0 0 1 0\n");
+		fprintf(bad,"1\n1 1 1 1\n1\n0\n1\n0\n%s\n",voice);fclose(bad);
+		XrLayout r;r.relative[2].width=1.9f;check(!r.load(argv[1]));near(r.relative[2].width,1.9f);
+	}
 	for(const char *language:{"2","-1",""}) {
 		FILE *bad=fopen(argv[1],"w");check(bad!=nullptr);fprintf(bad,"GENERALS_XR_LAYOUT 8\n");
 		for(int i=0;i<3;++i)fprintf(bad,"1 0 0 -1 0 0 0 1 0\n");

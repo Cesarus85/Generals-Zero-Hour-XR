@@ -29,6 +29,7 @@ struct XrHello {
  bool splitVisible=true,arranging=false,pointerVisible=false,pointerPressed=false,hoverVisible=false;
 	int pointerPiece=0;float pointerU=0,pointerV=0,worldZoom=1;XrTime hoverSince=0;
  int arrangeSlot=1;
+ int voiceStatus=0;GLuint voiceTexture=0;std::string voiceKey; // PLAN-027 indicator
 };
 static bool commandsAvailable(const XrHello &x){return !x.menu.open;}
 static std::string XrGameBoot_PresentationStatus(bool stereo,bool){return stereo ? "Stereo 1920x2011 · P12.1":"Flat 1280x720 · Video";}

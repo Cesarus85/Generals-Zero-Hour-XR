@@ -82,6 +82,9 @@
          for the Wi-Fi multicast lock that lets the LAN lobby receive broadcast
          game announcements (XrHelloActivity). -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <!-- GeneralsX @feature Claude 29/09/2026 LAN voice chat (PLAN-027). Runtime
+         permission, requested only when the player enables voice chat. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <!-- GeneralsX @bugfix Android port 10/07/2026 the sign-in flow backgrounds
          this app for the whole browser round-trip (open playgenerals.online,
