@@ -20,7 +20,9 @@ Open items in the owner's current order. Details live in the linked plans.
    rigid meshes. For fog, tree or prop rendering problems, first read the
    change record and rollback marker in
    [PLAN-026](PLAN-026_QUEST_ZOOM_PERFORMANCE.md).
-2. **Voice chat for LAN matches:** [PLAN-027](PLAN-027_QUEST_LAN_VOICE_CHAT.md).
+2. **Voice chat for LAN matches:** released experimental in 1.2.36 (voice
+   activation, default off), without a two-headset test so far; see
+   [PLAN-027](PLAN-027_QUEST_LAN_VOICE_CHAT.md).
    Owner decision: built-in push-to-talk (Opus over its own UDP port, outside
    lockstep) is scheduled after the 1.2.35 release. Meta system calls work as
    a no-code interim.

@@ -22,6 +22,10 @@ APK Signature Scheme v3 verifies with certificate SHA-256
 Archive inspection found no retail `.big`, `.scb`, `.map` or `.w3d` files.
 Local checks pass: workspace 820, menu routing 368, menu 2,912, panel text
 21,469, comfort 264, placement 106. GitHub Actions was not run.
+Release tag `v1.2.36-xr-preview` targets documentation checkpoint
+`0daf9b9161182a6e7ca5be90dfab8200c0bc14c6`. GitHub marks it as Latest. A fresh
+download passes the `.sha256` sidecar and is byte-identical to the local
+artifact.
 
 ## Previous public release checkpoint: 1.2.35
 
