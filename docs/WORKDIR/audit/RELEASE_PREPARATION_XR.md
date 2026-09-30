@@ -1,10 +1,29 @@
 # XR release preparation and checkpoints
 
-**Updated:** 2026-09-26 — 1.2.35 performance and visual preview
+**Updated:** 2026-09-30 — 1.2.36 LAN voice chat and High default
 
-**Publication state:** The nondebuggable 1.2.35 APK is the current public preview and GitHub Latest release; 1.2.34 and 1.2.33 remain published. Older releases, including debug-signed APKs, are retained as maintainer-only drafts. This leaves one current public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
+**Publication state:** The nondebuggable 1.2.36 APK is the current public preview and GitHub Latest release; 1.2.35, 1.2.34 and 1.2.33 remain published. Older releases, including debug-signed APKs, are retained as maintainer-only drafts. This leaves one current public download without destroying historical artifacts. The maintainer chose to retain the product name after being informed that EA's source license grants no trademark rights; the project makes no EA affiliation claim.
 
-## Current public release checkpoint: 1.2.35
+## Current public release checkpoint: 1.2.36
+
+PR #46 (merge `4623f7ea6fa18107b64b19ee06a45f0f1c5dbe46`) ships experimental,
+voice-activated LAN voice chat (PLAN-027; UDP 8094, outside lockstep, default
+off) and High as the default resolution tier (layout v12 migration). Voice chat
+had no two-headset device test before publication; the owner requested the
+release anyway, and the notes call it experimental.
+
+The release-signed APK is 57,211,062 bytes, versionCode `10236`, versionName
+`1.2.36-xr-preview`, package `com.generalsx.zerohour.xr`, ARM64 only,
+nondebuggable and not profileable, and requests `RECORD_AUDIO` at runtime only
+when voice chat is enabled. SHA-256 is
+`db595f429d3f287a18717666950537c98c1123a47894ac1694ae53f700904513`.
+APK Signature Scheme v3 verifies with certificate SHA-256
+`a3774568b341adc8abaa1e4200014020e6e2b80ca77c8a66e12bfa7a4498018f`.
+Archive inspection found no retail `.big`, `.scb`, `.map` or `.w3d` files.
+Local checks pass: workspace 820, menu routing 368, menu 2,912, panel text
+21,469, comfort 264, placement 106. GitHub Actions was not run.
+
+## Previous public release checkpoint: 1.2.35
 
 PR #45 (merge `b35144bb884323c5d1cd77692eb3f1f49b57c32e`) ships the single-pass
 shroud for opaque rigid meshes and tree culling against the table volume. The
@@ -27,7 +46,7 @@ documentation checkpoint `54f814ef36d3649dcc56c0c8c34a568880abd228`.
 GitHub marks it as Latest. A fresh download passes the `.sha256` sidecar and
 is byte-identical to the local artifact.
 
-## Previous public release checkpoint: 1.2.34
+## Older public release checkpoint: 1.2.34
 
 PR #43 (merge `909a2a82d9c49b022938db357107a9faa5923e1d`) ships experimental
 LAN multiplayer between two Quest 3 headsets on the 1.2.33 UI: the PR #42 LAN

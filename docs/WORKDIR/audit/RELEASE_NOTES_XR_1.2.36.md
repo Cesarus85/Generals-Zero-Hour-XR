@@ -47,6 +47,6 @@ Talk to your opponent in LAN matches, and enjoy a sharper tabletop by default.
 - This is an independent community project, not an Electronic Arts product or
   endorsement.
 
-APK SHA-256: `<filled in after signing>`
+APK SHA-256: `db595f429d3f287a18717666950537c98c1123a47894ac1694ae53f700904513`
 
 See the repository README and Quest installation guide for setup and controls.
