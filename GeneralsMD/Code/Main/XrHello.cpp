@@ -564,6 +564,47 @@ static bool hasExtension(const char *name)
 	return false;
 }
 
+// GeneralsX @feature Claude 01/10/2026 Steam Frame bring-up: dump the full
+// runtime extension list once so a single logcat capture shows what a
+// non-Meta runtime (SteamVR under Lepton) actually offers.
+static void logRuntimeExtensions()
+{
+	uint32_t count = 0;
+	if (!XR_SUCCEEDED(xrEnumerateInstanceExtensionProperties(nullptr, 0, &count, nullptr)) || count == 0) {
+		XR_LOGE("runtime extension enumeration failed");
+		return;
+	}
+	std::vector<XrExtensionProperties> props(count, { XR_TYPE_EXTENSION_PROPERTIES, nullptr });
+	if (!XR_SUCCEEDED(xrEnumerateInstanceExtensionProperties(nullptr, count, &count, props.data()))) {
+		XR_LOGE("runtime extension enumeration failed");
+		return;
+	}
+	XR_LOG("runtime extensions: %u", count);
+	for (uint32_t i = 0; i < count; i++)
+		XR_LOG("  ext %s v%u", props[i].extensionName, props[i].extensionVersion);
+}
+
+// GeneralsX @feature Claude 01/10/2026 Steam Frame bring-up: log the blend
+// modes the runtime supports. Passthrough on runtimes without
+// XR_FB_passthrough can only come from ALPHA_BLEND/ADDITIVE.
+static void logEnvironmentBlendModes(XrInstance instance, XrSystemId systemId)
+{
+	uint32_t count = 0;
+	if (!XR_SUCCEEDED(xrEnumerateEnvironmentBlendModes(instance, systemId,
+			XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, 0, &count, nullptr)) || count == 0) {
+		XR_LOGE("environment blend mode enumeration failed");
+		return;
+	}
+	std::vector<XrEnvironmentBlendMode> modes(count);
+	if (!XR_SUCCEEDED(xrEnumerateEnvironmentBlendModes(instance, systemId,
+			XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, count, &count, modes.data()))) {
+		XR_LOGE("environment blend mode enumeration failed");
+		return;
+	}
+	for (uint32_t i = 0; i < count; i++)
+		XR_LOG("environment blend mode %u: %d (1=opaque 2=additive 3=alpha_blend)", i, (int)modes[i]);
+}
+
 static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 {
 	// Loader init (Android): must precede every other xr call.
@@ -579,6 +620,7 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 	loaderInfo.applicationContext = activity;
 	XR_CHECK(initLoader(reinterpret_cast<const XrLoaderInitInfoBaseHeaderKHR *>(&loaderInfo)),
 		"xrInitializeLoaderKHR");
+	logRuntimeExtensions();
 
 	const char *wantExts[] = {
 		XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME,
@@ -627,7 +669,19 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 	ici.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
 	ici.enabledExtensionCount = uint32_t(allExts.size());
 	ici.enabledExtensionNames = allExts.data();
-	XR_CHECK(xrCreateInstance(&ici, &x.instance), "xrCreateInstance");
+	// GeneralsX @bugfix Claude 01/10/2026 SteamVR's Android runtime on Steam
+	// Frame only implements OpenXR 1.0 and rejects a 1.1 request. Nothing here
+	// depends on 1.1 core features, so retry with 1.0 instead of aborting.
+	XrResult createResult = xrCreateInstance(&ici, &x.instance);
+	if (createResult == XR_ERROR_API_VERSION_UNSUPPORTED) {
+		XR_LOG("runtime rejected OpenXR %d.%d; retrying with 1.0",
+			(int)XR_VERSION_MAJOR(XR_CURRENT_API_VERSION), (int)XR_VERSION_MINOR(XR_CURRENT_API_VERSION));
+		ici.applicationInfo.apiVersion = XR_API_VERSION_1_0;
+		createResult = xrCreateInstance(&ici, &x.instance);
+	}
+	XR_CHECK(createResult, "xrCreateInstance");
+	XR_LOG("OpenXR API version: %d.%d",
+		(int)XR_VERSION_MAJOR(ici.applicationInfo.apiVersion), (int)XR_VERSION_MINOR(ici.applicationInfo.apiVersion));
 	x.scene.init(x.instance,wantScene,wantCapture);
 	XR_LOG("P19 scene=%d capture=%d",int(x.scene.available),int(wantCapture));
 
@@ -654,6 +708,7 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 		x.maxLayerCount,
 		(int)systemProps.trackingProperties.positionTracking,
 		(int)systemProps.trackingProperties.orientationTracking);
+	logEnvironmentBlendModes(x.instance, systemId);
 	if (x.maxLayerCount < 2) {
 		XR_LOGE("runtime exposes only %u composition layer(s); hybrid tabletop will require fallback",
 			x.maxLayerCount);
@@ -881,6 +936,23 @@ static void pollEvents(XrHello &x, bool &quit)
 			if (change->session == x.session && change->referenceSpaceType == XR_REFERENCE_SPACE_TYPE_LOCAL) {
 				x.referenceChanges.enqueue(*change);
 				XR_LOG("P19.1 reference change queued valid=%d",int(change->poseValid));
+			}
+		} else if (ev.type == XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED) {
+			// GeneralsX @feature Claude 01/10/2026 Steam Frame bring-up: only the
+			// Oculus Touch profile is suggested, so log which profile the
+			// runtime actually bound (SteamVR emulates Touch for Frame controllers).
+			const char *hands[] = { "/user/hand/left", "/user/hand/right" };
+			for (const char *hand : hands) {
+				XrPath handPath = XR_NULL_PATH;
+				XrInteractionProfileState state = { XR_TYPE_INTERACTION_PROFILE_STATE, nullptr };
+				if (!XR_SUCCEEDED(xrStringToPath(x.instance, hand, &handPath)) ||
+				    !XR_SUCCEEDED(xrGetCurrentInteractionProfile(x.session, handPath, &state)))
+					continue;
+				char profile[XR_MAX_PATH_LENGTH] = "(none)";
+				uint32_t len = 0;
+				if (state.interactionProfile != XR_NULL_PATH)
+					xrPathToString(x.instance, state.interactionProfile, sizeof(profile), &len, profile);
+				XR_LOG("interaction profile %s: %s", hand, profile);
 			}
 		}
 		ev.type = XR_TYPE_EVENT_DATA_BUFFER;
