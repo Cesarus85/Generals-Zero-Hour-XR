@@ -81,6 +81,11 @@ public:
 	static void	Flush_Pending_Load_Tasks();
 	static void Update(void(*network_callback)() = nullptr);
 
+	// GeneralsX @feature 19/09/2026 True while the background loader thread
+	// is alive; callers use it to enable background streaming only when the
+	// thread exists to drain the queue.
+	static bool Is_Background_Thread_Running();
+
 	// returns true if current thread of execution is allowed to make DX8 calls.
 	static bool Is_DX8_Thread();
 

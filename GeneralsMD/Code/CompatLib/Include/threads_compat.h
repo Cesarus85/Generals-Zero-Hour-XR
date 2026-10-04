@@ -72,13 +72,17 @@ inline void EnterCriticalSection(CRITICAL_SECTION *cs) {
 }
 
 // Leave a critical section (unlock)
+// GeneralsX @bugfix 19/09/2026 Every Enter performs one pthread_mutex_lock
+// on the recursive mutex, so every Leave must unlock exactly once. The old
+// code skipped the unlock until ref_count hit zero, permanently jamming the
+// mutex (still held once) after any nested use and hanging other threads.
 inline void LeaveCriticalSection(CRITICAL_SECTION *cs) {
     cs->ref_count--;
-    
+
     if (cs->ref_count == 0) {
         cs->owner = 0;
-        pthread_mutex_unlock(&cs->mutex);
     }
+    pthread_mutex_unlock(&cs->mutex);
 }
 
 #ifdef __cplusplus
