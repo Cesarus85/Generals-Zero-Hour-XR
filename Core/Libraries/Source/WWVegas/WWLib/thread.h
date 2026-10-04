@@ -20,6 +20,10 @@
 
 #include "always.h"
 #include "Vector.h"
+#ifdef _UNIX
+#include <atomic>
+#include <pthread.h>
+#endif
 
 struct _EXCEPTION_POINTERS;
 
@@ -91,6 +95,16 @@ protected:
 
 private:
 	static void __cdecl Internal_Thread_Function(void*);
+#ifdef _UNIX
+	// GeneralsX @feature 19/09/2026 POSIX thread revival: posixThread owns
+	// the joinable thread while posixHasThread is set (main-thread owned,
+	// like handle on Windows); posixFinished is set by the exiting thread so
+	// Stop() can time out without pthread_cancel (absent on bionic).
+	static void *Posix_Trampoline(void *);
+	pthread_t posixThread{};
+	bool posixHasThread = false;
+	std::atomic<bool> posixFinished{false};
+#endif
 	volatile unsigned long handle;
 	int thread_priority;
 };

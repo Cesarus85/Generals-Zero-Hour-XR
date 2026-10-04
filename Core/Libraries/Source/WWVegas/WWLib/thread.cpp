@@ -32,6 +32,10 @@
 // GeneralsX @bugfix BenderAI 24/02/2026 Phase 5 - GetCurrentThreadIdAsInt for non-Windows
 #include "thread_compat.h"
 #endif
+#ifdef _UNIX
+#include <cstdio>
+#include <time.h>
+#endif
 
 ThreadClass::ThreadClass(const char *thread_name, ExceptionHandlerType exception_handler) : handle(0), running(false), thread_priority(0)
 {
@@ -82,6 +86,16 @@ void __cdecl ThreadClass::Internal_Thread_Function(void* params)
 #endif
 
 #else //_WIN32
+#ifdef _UNIX
+	// Name the thread for ps/Perfetto/simpleperf (the kernel truncates to 15
+	// chars). glibc hides pthread_setname_np without _GNU_SOURCE, so only use
+	// it where it is unconditionally declared (Apple 1-arg, bionic 2-arg).
+#if defined(__APPLE__)
+	pthread_setname_np(tc->ThreadName);
+#elif defined(__ANDROID__)
+	pthread_setname_np(pthread_self(), tc->ThreadName);
+#endif
+#endif
 	tc->Thread_Function();
 #endif //_WIN32
 
@@ -90,15 +104,39 @@ void __cdecl ThreadClass::Internal_Thread_Function(void* params)
 #endif // _WIN32
 	tc->handle=0;
 	tc->ThreadID = 0;
+#ifdef _UNIX
+	tc->posixFinished = true;
+#endif
 }
+
+#ifdef _UNIX
+void *ThreadClass::Posix_Trampoline(void *params)
+{
+	Internal_Thread_Function(params);
+	return nullptr;
+}
+#endif
 
 void ThreadClass::Execute()
 {
-	WWASSERT(!handle);	// Only one thread at a time!
 	#ifdef _UNIX
-		// assert(0);
-		return;
+		// GeneralsX @feature 19/09/2026 POSIX revival: actually spawn the
+		// thread. Only one at a time; failures are logged, never fatal.
+		WWASSERT(!posixHasThread);
+		if (posixHasThread) {
+			return;
+		}
+		running = false;
+		posixFinished = false;
+		const int rc = pthread_create(&posixThread, nullptr, &Posix_Trampoline, this);
+		if (rc != 0) {
+			fprintf(stderr, "[ThreadClass] pthread_create '%s' failed: %d\n", ThreadName, rc);
+			return;
+		}
+		posixHasThread = true;
+		fprintf(stderr, "[ThreadClass] started '%s'\n", ThreadName);
 	#else
+		WWASSERT(!handle);	// Only one thread at a time!
 		handle=_beginthread(&Internal_Thread_Function,0,this);
 		SetThreadPriority((HANDLE)handle,THREAD_PRIORITY_NORMAL+thread_priority);
 		WWDEBUG_SAY(("ThreadClass::Execute: Started thread %s, thread ID is %X", ThreadName, handle));
@@ -108,7 +146,9 @@ void ThreadClass::Execute()
 void ThreadClass::Set_Priority(int priority)
 {
 	#ifdef _UNIX
-		// assert(0);
+		// POSIX has no unprivileged per-thread priority (sched params need
+		// privileges, nice is process-wide): record the hint only.
+		thread_priority=priority;
 		return;
 	#else
 		thread_priority=priority;
@@ -119,8 +159,29 @@ void ThreadClass::Set_Priority(int priority)
 void ThreadClass::Stop(unsigned ms)
 {
 	#ifdef _UNIX
-		// assert(0);
-		return;
+		// GeneralsX @feature 19/09/2026 POSIX revival: bounded join. Never
+		// cancel: bionic has no pthread_cancel, and a thread stuck holding a
+		// spinlock must not be killed. On timeout the thread is detached and
+		// runs out on its own, mirroring thread_compat's TerminateThread.
+		running=false;
+		if (!posixHasThread) {
+			return;
+		}
+		const unsigned sliceMs = 10;
+		unsigned waited = 0;
+		while (!posixFinished && waited < ms) {
+			const struct timespec slice{0, (long)sliceMs * 1000000L};
+			nanosleep(&slice, nullptr);
+			waited += sliceMs;
+		}
+		if (posixFinished) {
+			pthread_join(posixThread, nullptr);
+			fprintf(stderr, "[ThreadClass] joined '%s'\n", ThreadName);
+		} else {
+			pthread_detach(posixThread);
+			fprintf(stderr, "[ThreadClass] '%s' did not exit in %ums, detached\n", ThreadName, ms);
+		}
+		posixHasThread = false;
 	#else
 		running=false;
 		unsigned time=TIMEGETTIME();
@@ -148,7 +209,11 @@ HANDLE test_event = ::CreateEvent (nullptr, FALSE, FALSE, "");
 void ThreadClass::Switch_Thread()
 {
 	#ifdef _UNIX
-		return;
+		// Windows waits 1ms on an unsignalled event here; mirror that so idle
+		// thread spins yield the core instead of busy-waiting. All callers
+		// are idle loops (loader, flush pump, legacy network threads).
+		const struct timespec slice{0, 1000000L};
+		nanosleep(&slice, nullptr);
 	#else
 		//	::SwitchToThread ();
 		::WaitForSingleObject (test_event, 1);
@@ -160,7 +225,7 @@ void ThreadClass::Switch_Thread()
 unsigned ThreadClass::_Get_Current_Thread_ID()
 {
 	#ifdef _UNIX
-		return 0;
+		return (unsigned)GetCurrentThreadIdAsInt();
 	#else
 		return GetCurrentThreadId();
 	#endif
@@ -168,5 +233,9 @@ unsigned ThreadClass::_Get_Current_Thread_ID()
 
 bool ThreadClass::Is_Running()
 {
+#ifdef _UNIX
+	return posixHasThread;
+#else
 	return !!handle;
+#endif
 }
