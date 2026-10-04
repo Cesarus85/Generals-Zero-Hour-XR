@@ -12,6 +12,15 @@ static unsigned long gxNowMs()
     return (unsigned long)duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
 }
 
+// GeneralsX @perf 19/09/2026 Stream underrun telemetry (AUDIO-DROPOUT-AUDIT
+// measurement 1): starved update entries + per-cause EOF latch counts,
+// emitted once a second. Game thread only; revisit if refill moves threads.
+static unsigned s_gxStarvedEntries = 0;
+static unsigned s_gxEofDecoder = 0;
+static unsigned s_gxEofStalled = 0;
+static unsigned s_gxEofRefill = 0;
+static unsigned long s_gxLastEmitMs = 0;
+
 OpenALAudioStream::OpenALAudioStream()
 { 
     alGenSources(1, &m_source);
@@ -137,6 +146,8 @@ void OpenALAudioStream::update()
 
     ALint num_queued;
     alGetSourcei(m_source, AL_BUFFERS_QUEUED, &num_queued);
+    if (num_queued == 0)
+        s_gxStarvedEntries++;
 
     // GeneralsX @bugfix 14/06/2026 EOF probe — runs BEFORE the restart-on-stopped guard below.
     // If the source has stopped having fully played everything queued (no unplayed buffers left),
@@ -163,6 +174,7 @@ void OpenALAudioStream::update()
             if (!moreData) {
                 GX_AUDIO_TRACE("EOF latched: decoder said no more data (src=%u)\n", (unsigned)m_source);
                 m_endOfData = true;   // definitive EOF from the decoder
+                s_gxEofDecoder++;
             }
             else if (queuedAfter <= queuedBefore) {
                 // GeneralsX @bugfix 04/07/2026 The decoder claims more data is coming but
@@ -193,6 +205,7 @@ void OpenALAudioStream::update()
                     GX_AUDIO_TRACE("EOF latched: 3 stalled probes (src=%u, gap=%lums)\n",
                             (unsigned)m_source, followsLastClosely ? (nowMs - m_lastProbeMs) : 0UL);
                     m_endOfData = true;
+                    s_gxEofStalled++;
                 }
             }
             else {
@@ -289,6 +302,7 @@ void OpenALAudioStream::update()
             // mid-line is NOT mistaken for the end and the existing recovery path runs unchanged.
             if (!m_requireDataCallback()) {
                 m_endOfData = true;
+                s_gxEofRefill++;
                 break;
             }
 
@@ -339,6 +353,19 @@ void OpenALAudioStream::update()
                 finalState == AL_PLAYING ? "PLAYING" :
                 finalState == AL_STOPPED ? "STOPPED" :
                 finalState == AL_PAUSED  ? "PAUSED"  : "INITIAL");
+    }
+
+    // Per-second underrun summary (per-second counts, reset after emit, for
+    // direct correlation with hitches and the [GX-PERF] line). Unsigned
+    // subtraction is wrap-safe; the nonzero guard skips an empty first line.
+    const unsigned long emitNowMs = gxNowMs();
+    if (s_gxLastEmitMs != 0 && emitNowMs - s_gxLastEmitMs >= 1000) {
+        s_gxLastEmitMs = emitNowMs;
+        GX_PERF_TRACE("[GX-AUDIO] starved=%u eofDecoder=%u eofStalled=%u eofRefill=%u\n",
+                s_gxStarvedEntries, s_gxEofDecoder, s_gxEofStalled, s_gxEofRefill);
+        s_gxStarvedEntries = s_gxEofDecoder = s_gxEofStalled = s_gxEofRefill = 0;
+    } else if (s_gxLastEmitMs == 0) {
+        s_gxLastEmitMs = emitNowMs;
     }
 }
 
