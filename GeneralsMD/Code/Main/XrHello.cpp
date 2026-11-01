@@ -483,6 +483,9 @@ struct XrHello {
 	// shows through wherever the projection layer is transparent, so the
 	// flat board reads as lying on the user's own table.
 	bool passthroughActive = false;
+	// GeneralsX @feature Claude 01/11/2026 Steam Frame: runtime-composited
+	// passthrough through ALPHA_BLEND when XR_FB_passthrough is unavailable.
+	bool alphaBlendEnvironment = false;
 	XrPassthroughFB passthrough = XR_NULL_HANDLE;
 	XrPassthroughLayerFB passthroughLayer = XR_NULL_HANDLE;
 	// Head-relative panel placement (one-time latch): LOCAL-space origin
@@ -587,22 +590,26 @@ static void logRuntimeExtensions()
 // GeneralsX @feature Claude 01/10/2026 Steam Frame bring-up: log the blend
 // modes the runtime supports. Passthrough on runtimes without
 // XR_FB_passthrough can only come from ALPHA_BLEND/ADDITIVE.
-static void logEnvironmentBlendModes(XrInstance instance, XrSystemId systemId)
+static bool logEnvironmentBlendModes(XrInstance instance, XrSystemId systemId)
 {
 	uint32_t count = 0;
 	if (!XR_SUCCEEDED(xrEnumerateEnvironmentBlendModes(instance, systemId,
 			XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, 0, &count, nullptr)) || count == 0) {
 		XR_LOGE("environment blend mode enumeration failed");
-		return;
+		return false;
 	}
 	std::vector<XrEnvironmentBlendMode> modes(count);
 	if (!XR_SUCCEEDED(xrEnumerateEnvironmentBlendModes(instance, systemId,
 			XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, count, &count, modes.data()))) {
 		XR_LOGE("environment blend mode enumeration failed");
-		return;
+		return false;
 	}
-	for (uint32_t i = 0; i < count; i++)
+	bool alphaBlend = false;
+	for (uint32_t i = 0; i < count; i++) {
 		XR_LOG("environment blend mode %u: %d (1=opaque 2=additive 3=alpha_blend)", i, (int)modes[i]);
+		alphaBlend = alphaBlend || modes[i] == XR_ENVIRONMENT_BLEND_MODE_ALPHA_BLEND;
+	}
+	return alphaBlend;
 }
 
 static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
@@ -708,7 +715,7 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 		x.maxLayerCount,
 		(int)systemProps.trackingProperties.positionTracking,
 		(int)systemProps.trackingProperties.orientationTracking);
-	logEnvironmentBlendModes(x.instance, systemId);
+	const bool alphaBlendSupported = logEnvironmentBlendModes(x.instance, systemId);
 	if (x.maxLayerCount < 2) {
 		XR_LOGE("runtime exposes only %u composition layer(s); hybrid tabletop will require fallback",
 			x.maxLayerCount);
@@ -805,6 +812,13 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 		}
 	}
 
+	// GeneralsX @feature Claude 01/11/2026 SteamVR on Steam Frame has no
+	// XR_FB_passthrough but offers ALPHA_BLEND. The eye buffers already clear to
+	// alpha 0 outside game content (the Quest passthrough-layer contract), so the
+	// runtime can composite its own camera view behind them. Quest keeps OPAQUE.
+	x.alphaBlendEnvironment = !x.passthroughActive && alphaBlendSupported;
+	if (x.alphaBlendEnvironment) XR_LOG("passthrough via ALPHA_BLEND environment (runtime-composited)");
+
 	// Swapchain format: sRGB preferred, plain RGBA fallback.
 	uint32_t fmtCount = 0;
 	XR_CHECK(xrEnumerateSwapchainFormats(x.session, 0, &fmtCount, nullptr),
@@ -888,6 +902,14 @@ static bool initXr(XrHello &x, JavaVM *vm, jobject activity)
 	xr_glBindBuffer(GL_ARRAY_BUFFER, 0);
 	XR_LOG("XR init complete");
 	return true;
+}
+
+// GeneralsX @feature Claude 01/11/2026 Frame blend mode: ALPHA_BLEND lets SteamVR
+// show its passthrough behind alpha-0 pixels. Ground View renders a complete
+// opaque world and stays OPAQUE, as it hides the Quest passthrough layer too.
+static XrEnvironmentBlendMode xrFrameBlendMode(const XrHello &x) {
+	return x.alphaBlendEnvironment && !x.renderedObserver ? XR_ENVIRONMENT_BLEND_MODE_ALPHA_BLEND
+		: XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 }
 
 static void pollEvents(XrHello &x, bool &quit)
@@ -1404,7 +1426,7 @@ struct XrLoadingPresenter {
 			// End the already-begun outer frame exactly once. It must not later
 			// submit stale eye poses or an incomplete game-world capture.
 			XrFrameEndInfo end={XR_TYPE_FRAME_END_INFO,nullptr};end.displayTime=outerTime;
-			end.environmentBlendMode=XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+			end.environmentBlendMode=xrFrameBlendMode(x);
 			const bool ended=XR_SUCCEEDED(xrEndFrame(x.session,&end));
 			x.splitVisible=false;x.stereoVisible=false;x.diorama=false;
 			x.loadingPresentation=true;x.previousInputTime=0;
@@ -1461,7 +1483,7 @@ struct XrLoadingPresenter {
 			return true;
 		},[&] {
 			XrFrameEndInfo end={XR_TYPE_FRAME_END_INFO,nullptr};end.displayTime=state.predictedDisplayTime;
-			end.environmentBlendMode=XR_ENVIRONMENT_BLEND_MODE_OPAQUE;end.layerCount=count;end.layers=layers;
+			end.environmentBlendMode=xrFrameBlendMode(x);end.layerCount=count;end.layers=layers;
 			const bool ended=XR_SUCCEEDED(xrEndFrame(x.session,&end));
 			++x.frame;if(x.frame%120==0)XR_LOG("P11.1 loading XR frame %u",x.frame);
 			return ended;
@@ -1787,7 +1809,8 @@ static void runLoop(XrHello &x)
 		endInfo.displayTime = frameState.predictedDisplayTime;
 		// Meta Quest requires OPAQUE even with an XR_FB_passthrough layer;
 		// passthrough visibility comes from layer order and source alpha.
-		endInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+		// Steam Frame (no FB passthrough) uses ALPHA_BLEND instead; see xrFrameBlendMode.
+		endInfo.environmentBlendMode = xrFrameBlendMode(x);
 		endInfo.layerCount = layerCount;
 		endInfo.layers = layers + (layerBase ? 0 : 1);
 		if (!XR_SUCCEEDED(xrEndFrame(x.session, &endInfo)))

@@ -199,6 +199,9 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="com.oculus.intent.category.VR" />
+                <!-- GeneralsX @feature Claude 01/11/2026 Standard OpenXR immersive-app
+                     category for non-Meta runtimes (Steam Frame / Lepton / SteamVR). -->
+                <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD" />
             </intent-filter>
             <meta-data
                 android:name="com.oculus.supportedDevices"
