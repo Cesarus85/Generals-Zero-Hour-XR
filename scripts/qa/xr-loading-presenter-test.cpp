@@ -19,13 +19,14 @@ struct XrControllerState {bool aimValid=true,back=false,select=false;};
 struct XrHello {
 	struct Perf {void invalidate(){}} performance;
 	struct Timer {void end(bool){}} gpuTimer;
+	struct Keyboard {void hide(){}} keyboard;
 	XrSession session=XR_NULL_HANDLE;XrSpace localSpace=XR_NULL_HANDLE;
 	XrPassthroughLayerFB passthroughLayer=XR_NULL_HANDLE;
 	XrSessionState state=XR_SESSION_STATE_FOCUSED;
 	bool sessionRunning=true,passthroughActive=true,splitVisible=true,stereoVisible=true,diorama=false;
 	bool loadingPresentation=false,arranging=true,controlsArmed=true,inputArmed=true;
 	bool rayVisible=true,pointerVisible=true,hoverVisible=true;
-	bool recoveryVisible=false;
+	bool recoveryVisible=false,alphaBlendEnvironment=false;
 	XrObserverState observer;bool renderedObserver=true;XrTime observerFadeStart=0;
 	XrMenuState menu;XrCommandState commands;XrSurfaceGrab grab;XrLayout layout;
 	XrTime previousInputTime=1;int controls=0;
@@ -40,6 +41,7 @@ static void XrGameBoot_Key(XrGameKey,bool down){keys.push_back(down);}
 static int waits=0,begins=0,ends=0,draws=0,invalidations=0;
 static bool begun=true,render=true,valid=true,drawOK=true,endOK=true,waitOK=true;
 static XrTime predicted=100;
+static XrEnvironmentBlendMode expectedBlend=XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 static XrControllerState controller;
 static void pollEvents(XrHello &,bool &){}
 static XrControllerState pollControls(int,XrSession,XrSpace,XrTime time,bool,bool){check(time==predicted);return controller;}
@@ -66,7 +68,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrLocateViews(XrSession,const XrViewLocateInfo *i
 	return XR_SUCCESS;
 }
 XRAPI_ATTR XrResult XRAPI_CALL xrEndFrame(XrSession,const XrFrameEndInfo *end){
-	check(begun);begun=false;++ends;check(end->environmentBlendMode==XR_ENVIRONMENT_BLEND_MODE_OPAQUE);
+	check(begun);begun=false;++ends;check(end->environmentBlendMode==expectedBlend);
 	if(end->displayTime==42)check(end->layerCount==0);
 	else {
 		check(end->displayTime==predicted);
@@ -110,5 +112,14 @@ int main(){
 	// A failed eye still balances the frame and leaves via the movie abort path.
 	drawOK=false;{XrLoadingPresenter broken(x,42,quit);callback(callbackContext);check(quit && broken.frame.failed && !begun);}
 	check(!keys.back() && !callback);
+	// GeneralsX @test Claude 01/11/2026 Steam Frame: no FB passthrough layer, so
+	// the runtime composites the room behind ALPHA_BLEND frames. The opaque
+	// ground observer and every Quest frame stay OPAQUE.
+	check(xrFrameBlendMode(x)==XR_ENVIRONMENT_BLEND_MODE_OPAQUE);
+	x.alphaBlendEnvironment=true;x.renderedObserver=true;
+	check(xrFrameBlendMode(x)==XR_ENVIRONMENT_BLEND_MODE_OPAQUE);
+	x.renderedObserver=false;check(xrFrameBlendMode(x)==XR_ENVIRONMENT_BLEND_MODE_ALPHA_BLEND);
+	drawOK=true;quit=false;begun=true;expectedBlend=XR_ENVIRONMENT_BLEND_MODE_ALPHA_BLEND;
+	{XrLoadingPresenter frame(x,42,quit);callback(callbackContext);check(!quit && !begun);}
 	printf("PASS %d production XR loading presenter checks\n",checks);
 }

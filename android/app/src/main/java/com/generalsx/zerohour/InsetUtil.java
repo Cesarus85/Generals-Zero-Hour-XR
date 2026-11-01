@@ -28,7 +28,12 @@
 
 package com.generalsx.zerohour;
 
+import android.app.Activity;
+import android.content.res.Resources;
+import android.graphics.Rect;
+import android.os.Build;
 import android.view.View;
+import android.view.WindowManager;
 
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -50,9 +55,33 @@ final class InsetUtil {
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
             Insets bars = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            int bottom = bars.bottom > 0 ? bars.bottom : withheldNavigationBar(v);
             v.setPadding(baseLeft + bars.left, baseTop + bars.top,
-                baseRight + bars.right, baseBottom + bars.bottom);
+                baseRight + bars.right, baseBottom + bottom);
             return insets;
         });
+    }
+
+    // GeneralsX @bugfix Claude 01/11/2026 Steam Frame (Lepton, Android 11)
+    // runs every 2D activity in a maximized freeform window. Android 11
+    // withholds system bar insets from floating windows, yet Lepton's
+    // navigation bar still overlays the bottom of the display, which hid the
+    // folder picker's Cancel / Use This Folder actions. Reconstruct the
+    // overlap from the window and display bounds -- only for multi-window
+    // activities on a device that shows a navigation bar, and only when the
+    // framework reported no bottom inset itself.
+    private static int withheldNavigationBar(View v) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || !(v.getContext() instanceof Activity)) return 0;
+        Activity activity = (Activity) v.getContext();
+        if (!activity.isInMultiWindowMode()) return 0;
+        Resources res = v.getResources();
+        int shown = res.getIdentifier("config_showNavigationBar", "bool", "android");
+        int height = res.getIdentifier("navigation_bar_height", "dimen", "android");
+        if (shown == 0 || height == 0 || !res.getBoolean(shown)) return 0;
+        int bar = res.getDimensionPixelSize(height);
+        WindowManager wm = activity.getWindowManager();
+        Rect window = wm.getCurrentWindowMetrics().getBounds();
+        Rect display = wm.getMaximumWindowMetrics().getBounds();
+        return Math.max(0, Math.min(bar, window.bottom - (display.bottom - bar)));
     }
 }
